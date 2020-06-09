@@ -16,7 +16,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://gitlab.com/aspecto/aspecto-open-telemetry-js.git"
+    "url": "https://github.com/aspecto-io/opentelemetry-ext-js.git"
   },
   "scripts": {
     "build": "tsc",
@@ -25,7 +25,7 @@
     "watch": "tsc -w"
   },
   "bugs": {
-    "url": "https://gitlab.com/aspecto/aspecto-open-telemetry-js/issues"
+    "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
   },
   "devDependencies": {
     "@opentelemetry/node": "^0.8.3",
