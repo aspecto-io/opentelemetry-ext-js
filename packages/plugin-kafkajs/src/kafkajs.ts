@@ -19,7 +19,7 @@ import { KafkaJsPluginConfig } from './types';
 import { AttributeNames } from './enums';
 import { getHeaderAsString } from './utils';
 
-const pluginVersion = require('../package.json')?.version;
+const pluginVersion = '0.0.3';
 
 export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
     protected _config!: KafkaJsPluginConfig;
