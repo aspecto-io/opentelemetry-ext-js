@@ -1,0 +1,9 @@
+language: node_js
+node_js:
+  - "node"
+  - "lts/*"
+script:
+  - cd packages/plugin-kafkajs
+  - yarn install
+  - yarn build
+  - yarn test
