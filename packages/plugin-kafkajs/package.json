@@ -1,5 +1,5 @@
 {
-    "name": "@aspecto/plugin-kafkajs",
+    "name": "opentelemetry-plugin-kafkajs",
     "version": "0.0.1",
     "description": "open telemetry instrumentation for the `kafkajs` kafka client",
     "keywords": [

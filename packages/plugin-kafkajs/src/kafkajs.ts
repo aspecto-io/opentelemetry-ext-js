@@ -25,7 +25,7 @@ export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
     protected _config!: KafkaJsPluginConfig;
 
     constructor(readonly moduleName: string) {
-        super('@aspecto/plugin-kafkajs', pluginVersion);
+        super('opentelemetry-plugin-kafkajs', pluginVersion);
     }
 
     protected patch() {

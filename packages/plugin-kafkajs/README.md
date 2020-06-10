@@ -5,7 +5,7 @@ This module provides automatic instrumentation for [`kafkajs`](https://kafka.js.
 ## Installation
 
 ```
-npm install --save @aspecto/plugin-kafkajs
+npm install --save opentelemetry-plugin-kafkajs
 ```
 
 ## Usage
@@ -13,14 +13,14 @@ npm install --save @aspecto/plugin-kafkajs
 To load a specific plugin (**kafkajs** in this case), specify it in the Node Tracer's configuration
 
 ```js
-const { NodeTracerProvider } = require("@opentelemetry/node");
+const { NodeTracerProvider } = require("opentelemetry-plugin-kafkajs");
 
 const provider = new NodeTracerProvider({
   plugins: {
     kafkajs: {
       enabled: true,
       // You may use a package name or absolute path to the file.
-      path: "@aspecto/plugin-kafkajs",
+      path: "opentelemetry-plugin-kafkajs",
     },
   },
 });
