@@ -11,17 +11,18 @@ npm install --save @mzahor-test-org/open-telemetry-kafkajs
 ## Usage
 
 To load a specific plugin (**kafkajs** in this case), specify it in the Node Tracer's configuration
+
 ```js
-const { NodeTracerProvider } = require('@opentelemetry/node');
+const { NodeTracerProvider } = require("@opentelemetry/node");
 
 const provider = new NodeTracerProvider({
   plugins: {
     kafkajs: {
       enabled: true,
       // You may use a package name or absolute path to the file.
-      path: '@mzahor-test-org/open-telemetry-kafkajs',
-    }
-  }
+      path: "@mzahor-test-org/open-telemetry-kafkajs",
+    },
+  },
 });
 ```
 
@@ -29,8 +30,7 @@ const provider = new NodeTracerProvider({
 
 kafkajs plugin has few options available to choose from. You can set the following:
 
-| Options | Type | Description |
-| ------- | ---- | ----------- |
-| `producerHook` | `KafkaProducerCustomAttributeFunction` | Hook called before producer message is sent, which allow to add custom attributes to span. |
+| Options        | Type                                   | Description                                                                                     |
+| -------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `producerHook` | `KafkaProducerCustomAttributeFunction` | Hook called before producer message is sent, which allow to add custom attributes to span.      |
 | `consumerHook` | `KafkaConsumerCustomAttributeFunction` | Hook called before consumer message is processed, which allow to add custom attributes to span. |
-

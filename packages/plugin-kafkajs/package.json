@@ -34,6 +34,7 @@
     "@types/shimmer": "^1.0.1",
     "jest": "^26.0.1",
     "kafkajs": "^1.12.0",
+    "prettier": "2.0.5",
     "ts-jest": "^26.1.0",
     "typescript": "^3.9.5"
   },
