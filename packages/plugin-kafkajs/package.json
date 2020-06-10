@@ -22,7 +22,8 @@
     "build": "tsc",
     "prepare": "yarn run build",
     "test": "jest",
-    "watch": "tsc -w"
+    "watch": "tsc -w",
+    "prettier": "prettier --config .prettierrc --write \"src/**/*.{ts,tsx,js,jsx,json}\""
   },
   "bugs": {
     "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
