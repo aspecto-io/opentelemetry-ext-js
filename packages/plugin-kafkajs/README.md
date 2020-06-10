@@ -5,7 +5,7 @@ This module provides automatic instrumentation for [`kafkajs`](https://kafka.js.
 ## Installation
 
 ```
-npm install --save @mzahor-test-org/open-telemetry-kafkajs
+npm install --save @aspecto/plugin-kafkajs
 ```
 
 ## Usage
@@ -20,7 +20,7 @@ const provider = new NodeTracerProvider({
     kafkajs: {
       enabled: true,
       // You may use a package name or absolute path to the file.
-      path: "@mzahor-test-org/open-telemetry-kafkajs",
+      path: "@aspecto/plugin-kafkajs",
     },
   },
 });
