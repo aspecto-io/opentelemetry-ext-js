@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-plugin-kafkajs",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "open telemetry instrumentation for the `kafkajs` kafka client",
     "keywords": [
         "kafka",
@@ -12,7 +12,10 @@
     "license": "Apache-2.0",
     "main": "dist/src/index.js",
     "files": [
-        "lib"
+        "dist/src/**/*.js",
+        "dist/src/**/*.d.ts",
+        "LICENSE",
+        "README.md"
     ],
     "repository": {
         "type": "git",
