@@ -8,6 +8,9 @@
     "aws-sdk"
   ],
   "author": "Victor Livar <victor@aspecto.io>",
+  "contributors": [
+    "Amir Blum <amir@aspecto.io>"
+  ],
   "homepage": "https://github.com/aspecto-io/opentelemetry-ext-js",
   "license": "Apache-2.0",
   "main": "dist/src/index.js",
