@@ -25,3 +25,11 @@ const provider = new NodeTracerProvider({
   },
 });
 ```
+
+### aws-sdk Plugin Options
+
+aws-sdk plugin has few options available to choose from. You can set the following:
+
+| Options        | Type                                   | Description                                                                                     |
+| -------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `preRequestHook` | `AwsSdkRequestCustomAttributeFunction` | Hook called before request send, which allow to add custom attributes to span. |
