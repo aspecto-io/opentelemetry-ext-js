@@ -12,7 +12,7 @@ import { ContextManager } from "@opentelemetry/context-base";
 import { AsyncHooksContextManager } from "@opentelemetry/context-async-hooks";
 import { AttributeNames } from "../src/enums";
 
-describe("aspecto-open-telemetry-aws", () => {
+describe("plugin-aws-sdk", () => {
   const logger = new NoopLogger();
   const provider = new NodeTracerProvider();
   const memoryExporter = new InMemorySpanExporter();

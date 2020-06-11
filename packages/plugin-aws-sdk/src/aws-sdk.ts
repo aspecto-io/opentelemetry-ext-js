@@ -76,7 +76,6 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
 
         span = thisPlugin._tracer.startSpan(thisPlugin._getSpanName(this), {
           attributes: {
-            // [AspectoAttributeNames.PLUGIN_NAME]: awsModuleName,
             [AttributeNames.COMPONENT]: thisPlugin.moduleName,
             [AttributeNames.AWS_OPERATION]: this.operation,
             [AttributeNames.AWS_PARAMS]: JSON.stringify(this.params),
