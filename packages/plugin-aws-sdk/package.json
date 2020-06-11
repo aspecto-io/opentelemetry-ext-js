@@ -1,0 +1,75 @@
+{
+  "name": "opentelemetry-plugin-aws-sdk",
+  "version": "0.0.3",
+  "description": "open telemetry instrumentation for the `aws-sdk` package",
+  "keywords": [
+    "aws",
+    "opentelemetry",
+    "aws-sdk"
+  ],
+  "author": "Victor Livar <victor@aspecto.io>",
+  "homepage": "https://github.com/aspecto-io/opentelemetry-ext-js",
+  "license": "Apache-2.0",
+  "main": "dist/src/index.js",
+  "files": [
+    "dist/src/**/*.js",
+    "dist/src/**/*.d.ts",
+    "LICENSE",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aspecto-io/opentelemetry-ext-js.git"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepare": "yarn run build",
+    "test": "jest",
+    "watch": "tsc -w",
+    "prettier": "prettier --config .prettierrc --write \"src/**/*.{ts,tsx,js,jsx,json}\""
+  },
+  "bugs": {
+    "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
+  },
+  "devDependencies": {
+    "@opentelemetry/node": "^0.8.3",
+    "@opentelemetry/tracing": "^0.8.3",
+    "@types/jest": "^25.2.3",
+    "@types/shimmer": "^1.0.1",
+    "aws-sdk": "^2.694.0",
+    "husky": "^4.2.5",
+    "jest": "^26.0.1",
+    "lint-staged": "^10.2.9",
+    "prettier": "2.0.5",
+    "ts-jest": "^26.1.0",
+    "typescript": "^3.9.5"
+  },
+  "peerDependencies": {},
+  "dependencies": {
+    "@opentelemetry/core": "^0.8.3",
+    "shimmer": "^1.2.1"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "globals": {
+      "ts-jest": {
+        "tsConfig": "./tsconfig.json"
+      }
+    },
+    "testMatch": [
+      "**/test/**/*.spec.+(ts|tsx)"
+    ],
+    "testEnvironment": "node"
+  },
+  "husky": {
+    "hooks": {
+      "pre-push": "yarn test",
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{ts,js,json}": [
+      "prettier --write"
+    ]
+  }
+}
