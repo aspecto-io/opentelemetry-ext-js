@@ -13,3 +13,4 @@ js extensions for the [open-telemetry](https://opentelemetry.io/) project, from 
 
 ## Plugins
 - [opentelemetry-plugin-kafkajs](./packages/plugin-kafkajs) - auto instrumentation for [`kafkajs`](https://kafka.js.org) kafka client
+- [opentelemetry-plugin-aws-sdk](./packages/plugin-aws-sdk) - auto instrumentation for [`aws-sdk`](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/)
