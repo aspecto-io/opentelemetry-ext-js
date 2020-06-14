@@ -19,7 +19,7 @@ import {
 } from "./services";
 import { AwsSdkPluginConfig } from "./types";
 
-const VERSION = "0.0.3";
+const VERSION = "0.0.4";
 
 class AwsPlugin extends BasePlugin<typeof AWS> {
   readonly component: string;
