@@ -19,16 +19,16 @@ describe("plugin-aws-sdk", () => {
   const memoryExporter = new InMemorySpanExporter();
   const spanProcessor = new SimpleSpanProcessor(memoryExporter);
   provider.addSpanProcessor(spanProcessor);
-  let contextManager: AsyncHooksContextManager;
+  let contextManager: ContextManager;
 
-  const responseMock = {
+  const responseMockSuccess = {
     requestId: "0000000000000",
     error: null,
     data: null,
   };
 
   const responseMockWithError = {
-    ...responseMock,
+    ...responseMockSuccess,
     error: "something went wrong",
   };
 
@@ -39,8 +39,30 @@ describe("plugin-aws-sdk", () => {
       .filter((s) => s.attributes[AttributeNames.COMPONENT] === "aws-sdk");
   };
 
-  let mockWithError = false;
-  const getMock = () => (mockWithError ? responseMockWithError : responseMock);
+  const mockAwsSend = (sendResult: any) => {
+    AWS.Request.prototype.send = function (cb: (error, response) => void) {
+      (this as AWS.Request<any, any>).on("complete", (response) => {
+        cb(response.error, response);
+      });
+      const response = {
+        ...sendResult,
+        request: this,
+      };
+      setImmediate(() => {
+        this._events.complete.forEach((handler) => handler(response));
+      });
+      return response;
+    };
+
+    AWS.Request.prototype.promise = function () {
+      const response = {
+        ...sendResult,
+        request: this,
+      };
+      this._events.complete.forEach((handler) => handler(response));
+      return Promise.resolve(response);
+    };
+  };
 
   beforeAll(() => {
     AWS.config.credentials = {
@@ -49,29 +71,6 @@ describe("plugin-aws-sdk", () => {
       expireTime: null,
       secretAccessKey: "test acc key",
       sessionToken: "test token",
-    };
-
-    AWS.Request.prototype.send = function (cb: (error, response) => void) {
-      (this as AWS.Request<any, any>).on("complete", (response) => {
-        cb(response.error, response);
-      });
-      const response = {
-        ...getMock(),
-        request: this,
-      };
-      setTimeout(() => {
-        this._events.complete.forEach((handler) => handler(response));
-      }, 0);
-      return response;
-    };
-
-    AWS.Request.prototype.promise = function () {
-      const response = {
-        ...getMock(),
-        request: this,
-      };
-      this._events.complete.forEach((handler) => handler(response));
-      return Promise.resolve(response);
     };
   });
 
@@ -86,188 +85,198 @@ describe("plugin-aws-sdk", () => {
   });
 
   describe("functional", () => {
-    beforeAll(() => {
-      plugin.enable(AWS, provider, logger);
-    });
-
-    it("adds proper number of spans with correct attributes", async (done) => {
-      mockWithError = false;
-      const s3 = new AWS.S3();
-      const bucketName = "aws-test-bucket";
-      const keyName = "aws-test-object.txt";
-      await new Promise((resolve) => {
-        // span 1
-        s3.createBucket({ Bucket: bucketName }, async function (err, data) {
-          const params = {
-            Bucket: bucketName,
-            Key: keyName,
-            Body: "Hello World!",
-          };
-          // span 2
-          s3.putObject(params, function (err, data) {
-            if (err) console.log(err);
-            resolve();
-          });
-        });
+    describe("successful send", () => {
+      beforeAll(() => {
+        mockAwsSend(responseMockSuccess);
+        plugin.enable(AWS, provider, logger);
       });
 
-      const awsSpans = getAwsSpans();
-      expect(awsSpans.length).toBe(2);
-      const [spanCreateBucket, spanPutObject] = awsSpans;
-
-      expect(spanCreateBucket.attributes[AttributeNames.COMPONENT]).toBe(
-        "aws-sdk"
-      );
-      expect(spanCreateBucket.attributes[AttributeNames.AWS_OPERATION]).toBe(
-        "createBucket"
-      );
-      expect(
-        spanCreateBucket.attributes[AttributeNames.AWS_SIGNATURE_VERSION]
-      ).toBe("s3");
-      expect(spanCreateBucket.attributes[AttributeNames.AWS_SERVICE_API]).toBe(
-        "S3"
-      );
-      expect(
-        spanCreateBucket.attributes[AttributeNames.AWS_SERVICE_IDENTIFIER]
-      ).toBe("s3");
-      expect(spanCreateBucket.attributes[AttributeNames.AWS_SERVICE_NAME]).toBe(
-        "Amazon S3"
-      );
-      expect(spanCreateBucket.attributes[AttributeNames.AWS_REQUEST_ID]).toBe(
-        responseMock.requestId
-      );
-      expect(spanCreateBucket.name).toBe("aws.s3.createBucket");
-
-      expect(spanPutObject.attributes[AttributeNames.COMPONENT]).toBe(
-        "aws-sdk"
-      );
-      expect(spanPutObject.attributes[AttributeNames.AWS_OPERATION]).toBe(
-        "putObject"
-      );
-      expect(
-        spanPutObject.attributes[AttributeNames.AWS_SIGNATURE_VERSION]
-      ).toBe("s3");
-      expect(spanPutObject.attributes[AttributeNames.AWS_SERVICE_API]).toBe(
-        "S3"
-      );
-      expect(
-        spanPutObject.attributes[AttributeNames.AWS_SERVICE_IDENTIFIER]
-      ).toBe("s3");
-      expect(spanPutObject.attributes[AttributeNames.AWS_SERVICE_NAME]).toBe(
-        "Amazon S3"
-      );
-      expect(spanPutObject.attributes[AttributeNames.AWS_REQUEST_ID]).toBe(
-        responseMock.requestId
-      );
-      expect(spanPutObject.name).toBe("aws.s3.putObject");
-
-      done();
-    });
-
-    it("adds error attribute properly", async (done) => {
-      mockWithError = true;
-      const s3 = new AWS.S3();
-      const bucketName = "aws-test-bucket";
-      const keyName = "aws-test-object.txt";
-      await new Promise((resolve) => {
-        s3.createBucket({ Bucket: bucketName }, async function () {
-          resolve();
-        });
-      });
-
-      const awsSpans = getAwsSpans();
-      expect(awsSpans.length).toBe(1);
-      const [spanCreateBucket] = awsSpans;
-      expect(spanCreateBucket.attributes[AttributeNames.AWS_ERROR]).toBe(
-        responseMockWithError.error
-      );
-      done();
-    });
-
-    it("adds proper number of spans with correct attributes if both, promise and callback were used", async (done) => {
-      mockWithError = false;
-      const s3 = new AWS.S3();
-      const bucketName = "aws-test-bucket";
-      const keyName = "aws-test-object.txt";
-      await new Promise((resolve) => {
-        // span 1
-        s3.createBucket({ Bucket: bucketName }, async function (err, data) {
-          const params = {
-            Bucket: bucketName,
-            Key: keyName,
-            Body: "Hello World!",
-          };
-
-          let reqPromise: Promise<any> | null = null;
-          let numberOfCalls = 0;
-          const cbPromise = new Promise(async (resolveCb) => {
+      it("adds proper number of spans with correct attributes", async (done) => {
+        const s3 = new AWS.S3();
+        const bucketName = "aws-test-bucket";
+        const keyName = "aws-test-object.txt";
+        await new Promise((resolve) => {
+          // span 1
+          s3.createBucket({ Bucket: bucketName }, async function (err, data) {
+            const params = {
+              Bucket: bucketName,
+              Key: keyName,
+              Body: "Hello World!",
+            };
             // span 2
-            const request = s3.putObject(params, function (err, data) {
+            s3.putObject(params, function (err, data) {
               if (err) console.log(err);
-              numberOfCalls++;
-              if (numberOfCalls === 2) {
-                resolveCb();
-              }
+              resolve();
             });
-            // NO span
-            reqPromise = request.promise();
           });
+        });
 
-          await Promise.all([cbPromise, reqPromise]).then(() => {
+        const awsSpans = getAwsSpans();
+        expect(awsSpans.length).toBe(2);
+        const [spanCreateBucket, spanPutObject] = awsSpans;
+
+        expect(spanCreateBucket.attributes[AttributeNames.COMPONENT]).toBe(
+          "aws-sdk"
+        );
+        expect(spanCreateBucket.attributes[AttributeNames.AWS_OPERATION]).toBe(
+          "createBucket"
+        );
+        expect(
+          spanCreateBucket.attributes[AttributeNames.AWS_SIGNATURE_VERSION]
+        ).toBe("s3");
+        expect(
+          spanCreateBucket.attributes[AttributeNames.AWS_SERVICE_API]
+        ).toBe("S3");
+        expect(
+          spanCreateBucket.attributes[AttributeNames.AWS_SERVICE_IDENTIFIER]
+        ).toBe("s3");
+        expect(
+          spanCreateBucket.attributes[AttributeNames.AWS_SERVICE_NAME]
+        ).toBe("Amazon S3");
+        expect(spanCreateBucket.attributes[AttributeNames.AWS_REQUEST_ID]).toBe(
+          responseMockSuccess.requestId
+        );
+        expect(spanCreateBucket.name).toBe("aws.s3.createBucket");
+
+        expect(spanPutObject.attributes[AttributeNames.COMPONENT]).toBe(
+          "aws-sdk"
+        );
+        expect(spanPutObject.attributes[AttributeNames.AWS_OPERATION]).toBe(
+          "putObject"
+        );
+        expect(
+          spanPutObject.attributes[AttributeNames.AWS_SIGNATURE_VERSION]
+        ).toBe("s3");
+        expect(spanPutObject.attributes[AttributeNames.AWS_SERVICE_API]).toBe(
+          "S3"
+        );
+        expect(
+          spanPutObject.attributes[AttributeNames.AWS_SERVICE_IDENTIFIER]
+        ).toBe("s3");
+        expect(spanPutObject.attributes[AttributeNames.AWS_SERVICE_NAME]).toBe(
+          "Amazon S3"
+        );
+        expect(spanPutObject.attributes[AttributeNames.AWS_REQUEST_ID]).toBe(
+          responseMockSuccess.requestId
+        );
+        expect(spanPutObject.name).toBe("aws.s3.putObject");
+
+        done();
+      });
+
+      it("adds proper number of spans with correct attributes if both, promise and callback were used", async (done) => {
+        const s3 = new AWS.S3();
+        const bucketName = "aws-test-bucket";
+        const keyName = "aws-test-object.txt";
+        await new Promise((resolve) => {
+          // span 1
+          s3.createBucket({ Bucket: bucketName }, async function (err, data) {
+            const params = {
+              Bucket: bucketName,
+              Key: keyName,
+              Body: "Hello World!",
+            };
+
+            let reqPromise: Promise<any> | null = null;
+            let numberOfCalls = 0;
+            const cbPromise = new Promise(async (resolveCb) => {
+              // span 2
+              const request = s3.putObject(params, function (err, data) {
+                if (err) console.log(err);
+                numberOfCalls++;
+                if (numberOfCalls === 2) {
+                  resolveCb();
+                }
+              });
+              // NO span
+              reqPromise = request.promise();
+            });
+
+            await Promise.all([cbPromise, reqPromise]).then(() => {
+              resolve();
+            });
+          });
+        });
+
+        const awsSpans = getAwsSpans();
+        expect(awsSpans.length).toBe(2);
+        const [spanCreateBucket, spanPutObjectCb] = awsSpans;
+        expect(spanCreateBucket.attributes[AttributeNames.AWS_OPERATION]).toBe(
+          "createBucket"
+        );
+        expect(spanPutObjectCb.attributes[AttributeNames.AWS_OPERATION]).toBe(
+          "putObject"
+        );
+        done();
+      });
+
+      it("adds proper number of spans with correct attributes if only promise was used", async (done) => {
+        const s3 = new AWS.S3();
+        const bucketName = "aws-test-bucket";
+        const keyName = "aws-test-object.txt";
+        await new Promise((resolve) => {
+          // span 1
+          s3.createBucket({ Bucket: bucketName }, async function (err, data) {
+            const params = {
+              Bucket: bucketName,
+              Key: keyName,
+              Body: "Hello World!",
+            };
+
+            let reqPromise: Promise<any> | null = null;
+            // NO span
+            const request = s3.putObject(params);
+            // span 2
+            await request.promise();
             resolve();
           });
         });
-      });
 
-      const awsSpans = getAwsSpans();
-      expect(awsSpans.length).toBe(2);
-      const [spanCreateBucket, spanPutObjectCb] = awsSpans;
-      expect(spanCreateBucket.attributes[AttributeNames.AWS_OPERATION]).toBe(
-        "createBucket"
-      );
-      expect(spanPutObjectCb.attributes[AttributeNames.AWS_OPERATION]).toBe(
-        "putObject"
-      );
-      done();
+        const awsSpans = getAwsSpans();
+        expect(awsSpans.length).toBe(2);
+        const [spanCreateBucket, spanPutObjectCb] = awsSpans;
+        expect(spanCreateBucket.attributes[AttributeNames.AWS_OPERATION]).toBe(
+          "createBucket"
+        );
+        expect(spanPutObjectCb.attributes[AttributeNames.AWS_OPERATION]).toBe(
+          "putObject"
+        );
+        done();
+      });
     });
 
-    it("adds proper number of spans with correct attributes if only promise was used", async (done) => {
-      mockWithError = false;
-      const s3 = new AWS.S3();
-      const bucketName = "aws-test-bucket";
-      const keyName = "aws-test-object.txt";
-      await new Promise((resolve) => {
-        // span 1
-        s3.createBucket({ Bucket: bucketName }, async function (err, data) {
-          const params = {
-            Bucket: bucketName,
-            Key: keyName,
-            Body: "Hello World!",
-          };
-
-          let reqPromise: Promise<any> | null = null;
-          // NO span
-          const request = s3.putObject(params);
-          // span 2
-          await request.promise();
-          resolve();
-        });
+    describe("send return error", () => {
+      beforeAll(() => {
+        mockAwsSend(responseMockWithError);
+        plugin.enable(AWS, provider, logger);
       });
 
-      const awsSpans = getAwsSpans();
-      expect(awsSpans.length).toBe(2);
-      const [spanCreateBucket, spanPutObjectCb] = awsSpans;
-      expect(spanCreateBucket.attributes[AttributeNames.AWS_OPERATION]).toBe(
-        "createBucket"
-      );
-      expect(spanPutObjectCb.attributes[AttributeNames.AWS_OPERATION]).toBe(
-        "putObject"
-      );
-      done();
+      it("adds error attribute properly", async (done) => {
+        const s3 = new AWS.S3();
+        const bucketName = "aws-test-bucket";
+        const keyName = "aws-test-object.txt";
+        await new Promise((resolve) => {
+          s3.createBucket({ Bucket: bucketName }, async function () {
+            resolve();
+          });
+        });
+
+        const awsSpans = getAwsSpans();
+        expect(awsSpans.length).toBe(1);
+        const [spanCreateBucket] = awsSpans;
+        expect(spanCreateBucket.attributes[AttributeNames.AWS_ERROR]).toBe(
+          responseMockWithError.error
+        );
+        done();
+      });
     });
   });
 
   describe("plugin config", () => {
+    beforeAll(() => {
+      mockAwsSend(responseMockSuccess);
+    });
+
     it("preRequestHook called and add request attribute to span", (done) => {
       const pluginConfig = {
         enabled: true,
