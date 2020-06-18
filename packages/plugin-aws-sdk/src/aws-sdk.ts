@@ -142,8 +142,9 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
       thisPlugin._callPreRequestHooks(span, awsRequest);
       thisPlugin._registerCompletedEvent(span, awsRequest);
 
+      const callbackWithContext = thisPlugin._tracer.bind(callback, span);
       return thisPlugin._tracer.withSpan(span, () => {
-        return original.call(awsRequest, callback);
+        return original.call(awsRequest, callbackWithContext);
       });
     };
   }
