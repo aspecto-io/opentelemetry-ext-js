@@ -24,7 +24,7 @@ const VERSION = "0.0.4";
 class AwsPlugin extends BasePlugin<typeof AWS> {
   readonly component: string;
   protected _config: AwsSdkPluginConfig;
-  private activeRequests: Set<AWS.Request<any, any>> = new Set();
+  private REQUEST_SPAN_KEY = Symbol("opentelemetry.plugin.aws-sdk.span");
 
   constructor(readonly moduleName: string) {
     super(`opentelemetry-plugin-aws-sdk`, VERSION);
@@ -40,12 +40,12 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
     shimmer.wrap(
       this._moduleExports?.Request.prototype,
       "send",
-      this._patchRequestMethod()
+      this._getRequestSendPatch.bind(this)
     );
     shimmer.wrap(
       this._moduleExports?.Request.prototype,
       "promise",
-      this._patchRequestMethod()
+      this._getRequestPromisePatch.bind(this)
     );
 
     return this._moduleExports;
@@ -56,73 +56,126 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
     shimmer.unwrap(this._moduleExports?.Request.prototype, "promise");
   }
 
-  private _patchRequestMethod = () => {
-    return this._getPatchedRequestMethod;
-  };
-
-  private _getPatchedRequestMethod = (original: Function) => {
+  private _bindPromise(target: Promise<any>, span: Span) {
     const thisPlugin = this;
-    return function () {
-      let span: Span | null = null;
+
+    const origThen = target.then;
+    target.then = function (onFulfilled, onRejected) {
+      const newOnFulfilled = thisPlugin._tracer.bind(onFulfilled, span);
+      const newOnRejected = thisPlugin._tracer.bind(onRejected, span);
+      return origThen.call(this, newOnFulfilled, newOnRejected);
+    };
+
+    return target;
+  }
+
+  private _startAwsSpan(request: AWS.Request<any, any>): Span {
+    const operation = (request as any).operation;
+    const service = (request as any).service;
+
+    const newSpan = this._tracer.startSpan(this._getSpanName(request), {
+      attributes: {
+        [AttributeNames.COMPONENT]: this.moduleName,
+        [AttributeNames.AWS_OPERATION]: operation,
+        [AttributeNames.AWS_SIGNATURE_VERSION]:
+          service?.config?.signatureVersion,
+        [AttributeNames.AWS_REGION]: service?.config?.region,
+        [AttributeNames.AWS_SERVICE_API]: service?.api?.className,
+        [AttributeNames.AWS_SERVICE_IDENTIFIER]: service?.serviceIdentifier,
+        [AttributeNames.AWS_SERVICE_NAME]: service?.api?.abbreviation,
+        ...getRequestServiceAttributes(request),
+      },
+    });
+
+    request[this.REQUEST_SPAN_KEY] = newSpan;
+    return newSpan;
+  }
+
+  private _callPreRequestHooks(span: Span, request: AWS.Request<any, any>) {
+    if (this._config?.preRequestHook) {
+      this._safeExecute(
+        span,
+        () => this._config.preRequestHook(span, request),
+        false
+      );
+    }
+  }
+
+  private _registerCompletedEvent(span: Span, request: AWS.Request<any, any>) {
+    const thisPlugin = this;
+    request.on("complete", (response) => {
+      if (!request[thisPlugin.REQUEST_SPAN_KEY]) {
+        return;
+      }
+      request[thisPlugin.REQUEST_SPAN_KEY] = undefined;
+
+      if (response.error) {
+        span.setAttribute(AttributeNames.AWS_ERROR, response.error);
+      }
+
+      span.setAttributes({
+        [AttributeNames.AWS_REQUEST_ID]: response.requestId,
+        ...getResponseServiceAttributes(response),
+      });
+      span.end();
+    });
+  }
+
+  private _getRequestSendPatch(
+    original: (callback?: (err: any, data: any) => void) => void
+  ) {
+    const thisPlugin = this;
+    return function (callback?: (err: any, data: any) => void) {
+      const awsRequest: AWS.Request<any, any> = this;
       /* 
         if the span was already started, we don't want to start a new one 
         when Request.promise() is called
       */
-
       if (
-        this._asm.currentState !== "complete" &&
-        !thisPlugin.activeRequests.has(this)
+        this._asm.currentState === "complete" ||
+        awsRequest[thisPlugin.REQUEST_SPAN_KEY]
       ) {
-        thisPlugin.activeRequests.add(this);
-
-        span = thisPlugin._tracer.startSpan(thisPlugin._getSpanName(this), {
-          attributes: {
-            [AttributeNames.COMPONENT]: thisPlugin.moduleName,
-            [AttributeNames.AWS_OPERATION]: this.operation,
-            [AttributeNames.AWS_SIGNATURE_VERSION]: this.service?.config
-              ?.signatureVersion,
-            [AttributeNames.AWS_REGION]: this.service?.config?.region,
-            [AttributeNames.AWS_SERVICE_API]: this.service?.api?.className,
-            [AttributeNames.AWS_SERVICE_IDENTIFIER]: this.service
-              ?.serviceIdentifier,
-            [AttributeNames.AWS_SERVICE_NAME]: this.service?.api?.abbreviation,
-            ...getRequestServiceAttributes(this),
-          },
-        });
-
-        if (thisPlugin._config?.preRequestHook) {
-          thisPlugin._safeExecute(
-            span,
-            () => thisPlugin._config.preRequestHook(span, this),
-            false
-          );
-        }
-
-        (this as AWS.Request<any, any>).on("complete", (response) => {
-          if (thisPlugin.activeRequests.has(this)) {
-            thisPlugin.activeRequests.delete(this);
-          }
-          if (!span) return;
-
-          if (response.error) {
-            span.setAttribute(AttributeNames.AWS_ERROR, response.error);
-          }
-
-          span.setAttributes({
-            [AttributeNames.AWS_REQUEST_ID]: response.requestId,
-            ...getResponseServiceAttributes(response),
-          });
-          span.end();
-          span = null;
-        });
+        return original.apply(this, arguments);
       }
 
-      const awsRequest = this;
+      const span = thisPlugin._startAwsSpan(awsRequest);
+      thisPlugin._callPreRequestHooks(span, awsRequest);
+      thisPlugin._registerCompletedEvent(span, awsRequest);
+
       return thisPlugin._tracer.withSpan(span, () => {
-        return original.apply(awsRequest, arguments);
+        return original.call(awsRequest, callback);
       });
     };
-  };
+  }
+
+  private _getRequestPromisePatch(original: () => Promise<any>) {
+    const thisPlugin = this;
+    return function (): Promise<any> {
+      const awsRequest: AWS.Request<any, any> = this;
+      /* 
+        if the span was already started, we don't want to start a new one 
+        when Request.promise() is called
+      */
+      if (
+        this._asm.currentState === "complete" ||
+        awsRequest[thisPlugin.REQUEST_SPAN_KEY]
+      ) {
+        return original.apply(this, arguments);
+      }
+
+      const span = thisPlugin._startAwsSpan(awsRequest);
+      thisPlugin._callPreRequestHooks(span, awsRequest);
+      thisPlugin._registerCompletedEvent(span, awsRequest);
+
+      const promiseToReturn: Promise<any> = thisPlugin._tracer.withSpan(
+        span,
+        () => {
+          return original.apply(awsRequest, arguments);
+        }
+      );
+      return thisPlugin._bindPromise(promiseToReturn, span);
+    };
+  }
 
   private _getSpanName = (request: any) => {
     return `aws.${request.service?.serviceIdentifier ?? "request"}.${
