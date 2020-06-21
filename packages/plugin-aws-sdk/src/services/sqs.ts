@@ -12,11 +12,11 @@ export enum SqsAttributeNames {
 }
 
 export const START_SPAN_FUNCTION = Symbol(
-  "opentelemetry.plugin.aws-sdk.start_span"
+  "opentelemetry.plugin.aws-sdk.sqs.start_span"
 );
 
 export const END_SPAN_FUNCTION = Symbol(
-  "opentelemetry.plugin.aws-sdk.end_span"
+  "opentelemetry.plugin.aws-sdk.sqs.end_span"
 );
 
 function extractQueueUrl(request: AWS.Request<any, any>): string {
@@ -73,52 +73,58 @@ function patchArrayFunction(
   messages[functionName] = function (callback) {
     return origFunc.call(this, function (message: AWS.SQS.Message) {
       const messageSpan = message[START_SPAN_FUNCTION]();
-      tracer.withSpan(messageSpan, () => callback.apply(this, arguments));
+      const res = tracer.withSpan(messageSpan, () =>
+        callback.apply(this, arguments)
+      );
       message[END_SPAN_FUNCTION]();
+      return res;
     });
   };
 }
 
 export function getSqsRequestSpanAttributes(
-  request: AWS.Request<any, any>
+  request: AWS.Request<any, any>,
+  span: Span
 ): RequestMetadata {
   const queueUrl = extractQueueUrl(request);
   const queueName = extractQueueNameFromUrl(queueUrl);
 
+  span.setAttribute(SqsAttributeNames.MESSAGING_SYSTEM, "aws.sqs");
+  span.setAttribute(SqsAttributeNames.MESSAGING_DESTINATIONKIND, "queue");
+  span.setAttribute(SqsAttributeNames.MESSAGING_DESTINATION, queueName);
+  span.setAttribute(SqsAttributeNames.MESSAGING_URL, queueUrl);
+
   let isIncoming = false;
-  const attributes = {
-    [SqsAttributeNames.MESSAGING_SYSTEM]: "aws.sqs",
-    [SqsAttributeNames.MESSAGING_DESTINATIONKIND]: "queue",
-    [SqsAttributeNames.MESSAGING_DESTINATION]: queueName,
-    [SqsAttributeNames.MESSAGING_URL]: queueUrl,
-  };
 
   const operation = (request as any)?.operation;
   switch (operation) {
     case "receiveMessage":
       isIncoming = true;
-      attributes[SqsAttributeNames.MESSAGING_OPERATION] = "receive";
+      span.setAttribute(SqsAttributeNames.MESSAGING_OPERATION, "receive");
       break;
   }
 
   return {
-    attributes,
     isIncoming,
   };
 }
 
 export function getSqsResponseSpanAttributes(
   response: AWS.Response<any, any>,
+  span: Span,
   tracer: Tracer
-): Attributes {
+) {
   const messages: AWS.SQS.Message[] = response.data.Messages;
   if (messages) {
     const queueUrl = extractQueueUrl((response as any)?.request);
     const queueName = extractQueueNameFromUrl(queueUrl);
 
     messages.forEach((message: AWS.SQS.Message) => {
-      message[START_SPAN_FUNCTION] = () =>
-        startSingleMessageSpan(tracer, queueUrl, queueName, message);
+      message[START_SPAN_FUNCTION] = () => {
+        return tracer.withSpan(span, () =>
+          startSingleMessageSpan(tracer, queueUrl, queueName, message)
+        );
+      };
       message[END_SPAN_FUNCTION] = () =>
         console.log(
           "open-telemetry aws-sdk plugin: end span called on sqs message which was not started"
@@ -128,5 +134,4 @@ export function getSqsResponseSpanAttributes(
     patchArrayFunction(messages, "forEach", tracer);
     patchArrayFunction(messages, "map", tracer);
   }
-  return {};
 }

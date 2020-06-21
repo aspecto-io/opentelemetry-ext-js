@@ -1,4 +1,4 @@
-import { Attributes, Tracer } from "@opentelemetry/api";
+import { Attributes, Tracer, Span } from "@opentelemetry/api";
 import { getS3RequestSpanAttributes, getS3ResponseSpanAttributes } from "./s3";
 import {
   getSqsRequestSpanAttributes,
@@ -6,19 +6,21 @@ import {
 } from "./sqs";
 
 /*
-attributes are additional span attributes that should be added to the span.
 isIncoming - if true, then the operation callback / promise should be bind with the operation's span 
 */
 export interface RequestMetadata {
-  attributes: Attributes;
   isIncoming: boolean;
 }
 
-type RequestAttrProcessor = (request: AWS.Request<any, any>) => RequestMetadata;
+type RequestAttrProcessor = (
+  request: AWS.Request<any, any>,
+  span: Span
+) => RequestMetadata;
 type ResponseAttrProcessor = (
   response: AWS.Response<any, any>,
+  span: Span,
   tracer: Tracer
-) => Attributes;
+) => void;
 
 class ServiceAttributes {
   public attributeProcessors: {
@@ -41,23 +43,29 @@ class ServiceAttributes {
 }
 
 export function getRequestServiceAttributes(
-  request: AWS.Request<any, any>
+  request: AWS.Request<any, any>,
+  span: Span
 ): RequestMetadata {
   const serviceId = (request as any)?.service?.serviceIdentifier;
   if (serviceId) {
-    return serviceAttributes.attributeProcessors[serviceId]?.request(request);
+    return serviceAttributes.attributeProcessors[serviceId]?.request(
+      request,
+      span
+    );
   }
 }
 
 export function getResponseServiceAttributes(
   response: AWS.Response<any, any>,
+  span: Span,
   tracer: Tracer
-): Attributes {
+): void {
   const serviceId = (response as any)?.request?.service?.serviceIdentifier;
   if (!serviceId) return;
 
   return serviceAttributes.attributeProcessors[serviceId]?.response(
     response,
+    span,
     tracer
   );
 }

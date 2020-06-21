@@ -69,10 +69,7 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
     return target;
   }
 
-  private _startAwsSpan(
-    request: AWS.Request<any, any>,
-    additionalAttributes?: Attributes
-  ): Span {
+  private _startAwsSpan(request: AWS.Request<any, any>): Span {
     const operation = (request as any).operation;
     const service = (request as any).service;
 
@@ -86,7 +83,6 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
         [AttributeNames.AWS_SERVICE_API]: service?.api?.className,
         [AttributeNames.AWS_SERVICE_IDENTIFIER]: service?.serviceIdentifier,
         [AttributeNames.AWS_SERVICE_NAME]: service?.api?.abbreviation,
-        ...additionalAttributes,
       },
     });
 
@@ -118,11 +114,12 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
 
       const responseAttributes = getResponseServiceAttributes(
         response,
+        span,
         thisPlugin._tracer
       );
+
       span.setAttributes({
         [AttributeNames.AWS_REQUEST_ID]: response.requestId,
-        ...responseAttributes,
       });
       span.end();
     });
@@ -145,11 +142,8 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
         return original.apply(this, arguments);
       }
 
-      const requestMetadata = getRequestServiceAttributes(awsRequest);
-      const span = thisPlugin._startAwsSpan(
-        awsRequest,
-        requestMetadata?.attributes
-      );
+      const span = thisPlugin._startAwsSpan(awsRequest);
+      const requestMetadata = getRequestServiceAttributes(awsRequest, span);
       thisPlugin._callPreRequestHooks(span, awsRequest);
       thisPlugin._registerCompletedEvent(span, awsRequest);
 
@@ -175,11 +169,8 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
         return original.apply(this, arguments);
       }
 
-      const requestMetadata = getRequestServiceAttributes(awsRequest);
-      const span = thisPlugin._startAwsSpan(
-        awsRequest,
-        requestMetadata?.attributes
-      );
+      const span = thisPlugin._startAwsSpan(awsRequest);
+      const requestMetadata = getRequestServiceAttributes(awsRequest, span);
       thisPlugin._callPreRequestHooks(span, awsRequest);
       thisPlugin._registerCompletedEvent(span, awsRequest);
 

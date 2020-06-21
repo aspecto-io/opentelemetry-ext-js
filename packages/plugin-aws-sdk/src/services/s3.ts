@@ -1,8 +1,9 @@
-import { Attributes } from "@opentelemetry/api";
+import { Attributes, Span } from "@opentelemetry/api";
 import { RequestMetadata } from "./service-attributes";
 
 export function getS3RequestSpanAttributes(
-  request: AWS.Request<any, any>
+  request: AWS.Request<any, any>,
+  span: Span
 ): RequestMetadata {
   return {
     attributes: {},
@@ -11,7 +12,8 @@ export function getS3RequestSpanAttributes(
 }
 
 export function getS3ResponseSpanAttributes(
-  response: AWS.Response<any, any>
+  response: AWS.Response<any, any>,
+  span: Span
 ): Attributes {
   return {};
 }
