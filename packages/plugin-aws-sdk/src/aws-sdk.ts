@@ -13,10 +13,7 @@ import { Span, CanonicalCode, Attributes } from "@opentelemetry/api";
 import * as shimmer from "shimmer";
 import AWS from "aws-sdk";
 import { AttributeNames } from "./enums";
-import {
-  getRequestServiceAttributes,
-  getResponseServiceAttributes,
-} from "./services";
+import { ServicesExtensions } from "./services";
 import { AwsSdkPluginConfig } from "./types";
 
 const VERSION = "0.0.4";
@@ -25,12 +22,15 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
   readonly component: string;
   protected _config: AwsSdkPluginConfig;
   private REQUEST_SPAN_KEY = Symbol("opentelemetry.plugin.aws-sdk.span");
+  private servicesExtensions: ServicesExtensions;
 
   constructor(readonly moduleName: string) {
     super(`opentelemetry-plugin-aws-sdk`, VERSION);
   }
 
   protected patch() {
+    this.servicesExtensions = new ServicesExtensions(this._tracer);
+
     this._logger.debug(
       "applying patch to %s@%s",
       this.moduleName,
@@ -112,11 +112,7 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
         span.setAttribute(AttributeNames.AWS_ERROR, response.error);
       }
 
-      const responseAttributes = getResponseServiceAttributes(
-        response,
-        span,
-        thisPlugin._tracer
-      );
+      this.servicesExtensions.responseHook(response, span);
 
       span.setAttributes({
         [AttributeNames.AWS_REQUEST_ID]: response.requestId,
@@ -143,7 +139,7 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
       }
 
       const span = thisPlugin._startAwsSpan(awsRequest);
-      const requestMetadata = getRequestServiceAttributes(awsRequest, span);
+      thisPlugin.servicesExtensions.requestHook(awsRequest, span);
       thisPlugin._callPreRequestHooks(span, awsRequest);
       thisPlugin._registerCompletedEvent(span, awsRequest);
 
@@ -170,7 +166,10 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
       }
 
       const span = thisPlugin._startAwsSpan(awsRequest);
-      const requestMetadata = getRequestServiceAttributes(awsRequest, span);
+      const requestMetadata = thisPlugin.servicesExtensions.requestHook(
+        awsRequest,
+        span
+      );
       thisPlugin._callPreRequestHooks(span, awsRequest);
       thisPlugin._registerCompletedEvent(span, awsRequest);
 
