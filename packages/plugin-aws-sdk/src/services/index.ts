@@ -1,4 +1,1 @@
-export {
-  getRequestServiceAttributes,
-  getResponseServiceAttributes,
-} from "./service-attributes";
+export { ServicesExtensions } from "./ServicesExtensions";
