@@ -116,9 +116,13 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
         span.setAttribute(AttributeNames.AWS_ERROR, response.error);
       }
 
+      const responseAttributes = getResponseServiceAttributes(
+        response,
+        thisPlugin._tracer
+      );
       span.setAttributes({
         [AttributeNames.AWS_REQUEST_ID]: response.requestId,
-        ...getResponseServiceAttributes(response),
+        ...responseAttributes,
       });
       span.end();
     });

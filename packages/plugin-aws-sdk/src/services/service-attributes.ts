@@ -1,4 +1,4 @@
-import { Attributes } from "@opentelemetry/api";
+import { Attributes, Tracer } from "@opentelemetry/api";
 import { getS3RequestSpanAttributes, getS3ResponseSpanAttributes } from "./s3";
 import {
   getSqsRequestSpanAttributes,
@@ -15,7 +15,10 @@ export interface RequestMetadata {
 }
 
 type RequestAttrProcessor = (request: AWS.Request<any, any>) => RequestMetadata;
-type ResponseAttrProcessor = (response: AWS.Response<any, any>) => Attributes;
+type ResponseAttrProcessor = (
+  response: AWS.Response<any, any>,
+  tracer: Tracer
+) => Attributes;
 
 class ServiceAttributes {
   public attributeProcessors: {
@@ -47,12 +50,16 @@ export function getRequestServiceAttributes(
 }
 
 export function getResponseServiceAttributes(
-  response: AWS.Response<any, any>
+  response: AWS.Response<any, any>,
+  tracer: Tracer
 ): Attributes {
   const serviceId = (response as any)?.request?.service?.serviceIdentifier;
   if (!serviceId) return;
 
-  return serviceAttributes.attributeProcessors[serviceId]?.response(response);
+  return serviceAttributes.attributeProcessors[serviceId]?.response(
+    response,
+    tracer
+  );
 }
 
 export const serviceAttributes = new ServiceAttributes();
