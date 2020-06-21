@@ -9,7 +9,7 @@
     callback    |       1           |       2   
  */
 import { BasePlugin } from "@opentelemetry/core";
-import { Span, CanonicalCode, Attributes } from "@opentelemetry/api";
+import { Span, CanonicalCode } from "@opentelemetry/api";
 import * as shimmer from "shimmer";
 import AWS from "aws-sdk";
 import { AttributeNames } from "./enums";
