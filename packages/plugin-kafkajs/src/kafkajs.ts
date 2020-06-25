@@ -169,7 +169,7 @@ export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
         const span = this._tracer.startSpan(
             topic,
             {
-                kind: SpanKind.PRODUCER,
+                kind: SpanKind.CONSUMER,
                 attributes: {
                     [AttributeNames.MESSAGING_SYSTEM]: 'kafka',
                     [AttributeNames.MESSAGING_DESTINATION]: topic,
