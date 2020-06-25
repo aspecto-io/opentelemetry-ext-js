@@ -47,7 +47,6 @@
     "ts-jest": "^26.1.0",
     "typescript": "^3.9.5"
   },
-  "peerDependencies": {},
   "dependencies": {
     "@opentelemetry/core": "^0.8.3",
     "shimmer": "^1.2.1"
