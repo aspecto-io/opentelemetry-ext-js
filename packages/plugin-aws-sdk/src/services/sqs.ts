@@ -27,14 +27,16 @@ export class SqsServiceExtension implements ServiceExtension {
     this.tracer = tracer;
   }
 
-  requestHook(request: AWS.Request<any, any>, span: Span): RequestMetadata {
+  requestHook(request: AWS.Request<any, any>): RequestMetadata {
     const queueUrl = this.extractQueueUrl(request);
     const queueName = this.extractQueueNameFromUrl(queueUrl);
 
-    span.setAttribute(SqsAttributeNames.MESSAGING_SYSTEM, "aws.sqs");
-    span.setAttribute(SqsAttributeNames.MESSAGING_DESTINATIONKIND, "queue");
-    span.setAttribute(SqsAttributeNames.MESSAGING_DESTINATION, queueName);
-    span.setAttribute(SqsAttributeNames.MESSAGING_URL, queueUrl);
+    const spanAttributes = {
+      [SqsAttributeNames.MESSAGING_SYSTEM]: "aws.sqs",
+      [SqsAttributeNames.MESSAGING_DESTINATIONKIND]: "queue",
+      [SqsAttributeNames.MESSAGING_DESTINATION]: queueName,
+      [SqsAttributeNames.MESSAGING_URL]: queueUrl,
+    };
 
     let isIncoming = false;
 
@@ -42,12 +44,13 @@ export class SqsServiceExtension implements ServiceExtension {
     switch (operation) {
       case "receiveMessage":
         isIncoming = true;
-        span.setAttribute(SqsAttributeNames.MESSAGING_OPERATION, "receive");
+        spanAttributes[SqsAttributeNames.MESSAGING_OPERATION] = "receive";
         break;
     }
 
     return {
       isIncoming,
+      spanAttributes,
     };
   }
 

@@ -9,7 +9,7 @@
     callback    |       1           |       2   
  */
 import { BasePlugin } from "@opentelemetry/core";
-import { Span, CanonicalCode } from "@opentelemetry/api";
+import { Span, CanonicalCode, Attributes } from "@opentelemetry/api";
 import * as shimmer from "shimmer";
 import AWS from "aws-sdk";
 import { AttributeNames } from "./enums";
@@ -69,7 +69,10 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
     return target;
   }
 
-  private _startAwsSpan(request: AWS.Request<any, any>): Span {
+  private _startAwsSpan(
+    request: AWS.Request<any, any>,
+    additionalAttributes?: Attributes
+  ): Span {
     const operation = (request as any).operation;
     const service = (request as any).service;
 
@@ -83,6 +86,7 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
         [AttributeNames.AWS_SERVICE_API]: service?.api?.className,
         [AttributeNames.AWS_SERVICE_IDENTIFIER]: service?.serviceIdentifier,
         [AttributeNames.AWS_SERVICE_NAME]: service?.api?.abbreviation,
+        ...additionalAttributes,
       },
     });
 
@@ -138,8 +142,13 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
         return original.apply(this, arguments);
       }
 
-      const span = thisPlugin._startAwsSpan(awsRequest);
-      thisPlugin.servicesExtensions.requestHook(awsRequest, span);
+      const requestMetadata = thisPlugin.servicesExtensions.requestHook(
+        awsRequest
+      );
+      const span = thisPlugin._startAwsSpan(
+        awsRequest,
+        requestMetadata.spanAttributes
+      );
       thisPlugin._callPreRequestHooks(span, awsRequest);
       thisPlugin._registerCompletedEvent(span, awsRequest);
 
@@ -165,10 +174,12 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
         return original.apply(this, arguments);
       }
 
-      const span = thisPlugin._startAwsSpan(awsRequest);
       const requestMetadata = thisPlugin.servicesExtensions.requestHook(
+        awsRequest
+      );
+      const span = thisPlugin._startAwsSpan(
         awsRequest,
-        span
+        requestMetadata.spanAttributes
       );
       thisPlugin._callPreRequestHooks(span, awsRequest);
       thisPlugin._registerCompletedEvent(span, awsRequest);
