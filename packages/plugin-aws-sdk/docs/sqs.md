@@ -2,22 +2,29 @@
 SQS is amazon's managed message queue. Thus, it should follow the [Open Telemetry specification for Messaging systems](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md).
 
 ## Specific trace semantic
-Following methods needs specific attention:
+The following methods are automatically enhanced:
 
 ### sendMessage / sendMessageBatch
-- Add [message attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#messaging-attributes) to span in addition to the default attributes. These attributes are covered by the library according to the spec.
-- Inject trace context as SQS MessageAttributes, so the service receiving the message can link cascading spans to the trace which created the message. This is not implemented yet.
+- [Message Attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#messaging-attributes) are added by this plugin according to the spec.
+- TODO: Inject trace context as SQS MessageAttributes, so the service receiving the message can link cascading spans to the trace which created the message. 
 
 ### receiveMessage
-- Add [message attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#messaging-attributes) to span in addition to the default attributes. These attributes are covered by the library according to the spec.
-- Create additional "processing spans" for each message received by the application. So if an application called `receiveMessage`, and got back 10 messages, a single `messaging.operation` = `receive` span will be created for the `receiveMessage` operation, and 10 `messaging.operation` = `process` spans will be created, one for each message. Those processing spans are created by the library. This behavior is partially implemented, [See discussion below](#processing-spans).
-- Set the inter process context correctly, so that additional spans created from message receiving and message processing will be linked to parent spans correctly. This behavior is partially implemented, [See discussion below](#processing-spans).
-- Extract trace context from SQS MessageAttributes, and set span's `parent` and `links` correctly according to the spec. This is not implemented yet.
+- [Message Attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#messaging-attributes) are added by this plugin according to the spec.
+- Additional "processing spans" are created for each message received by the application.   
+If an application invoked `receiveMessage`, and received a 10 messages batch, a single `messaging.operation` = `receive` span will be created for the `receiveMessage` operation, and 10 `messaging.operation` = `process` spans will be created, one for each message.  
+Those processing spans are created by the library. This behavior is partially implemented, [See discussion below](#processing-spans).
+- Sets the inter process context correctly, so that additional spans created through the process will be linked to parent spans correctly.  
+This behavior is partially implemented, [See discussion below](#processing-spans).
+- TODO: Extract trace context from SQS MessageAttributes, and set span's `parent` and `links` correctly according to the spec.
 
-#### Processing spans
-According to open telemetry specification (and to reasonable expectation for trace structure), user of this library would expect to see one span for the operation of receiving messages batch from sqs, and then, for each message, a span with it's own sub-tree for the processing of this specific message. 
+#### Processing Spans
+According to open telemetry specification (and to reasonable expectation for trace structure), user of this library would expect to see one span for the operation of receiving messages batch from SQS, and then, for each message, a span with it's own sub-tree for the processing of this specific message. 
 
-For example, if a `receiveMessages` returned 2 messages: msg1 is storing something to a DB, and msg2 is calling an external http endpoint, we should link the db span under msg1, and the http span under msg2, instead of mixing all those operations under the single `receive` span, or start a new trace for each of them.
+For example, if a `receiveMessages` returned 2 messages: 
+* `msg1` resulting in storing something to a DB.
+* `msg2` resulting in calling an external HTTP endpoint.  
+
+This will result in a creating a DB span that would be linked under `msg1` process, and an HTTP span that would be under `msg2` (in opposed to mixing all those operations under the single `receive` span, or start a new trace for each of them).
 
 Unfortunately, this is not so easy to implement in JS:
 1. The SDK is calling a single callback for the messages batch, and it's not straight forward to understand when each individual message processing starts and ends (and set the context correctly for cascading spans).
