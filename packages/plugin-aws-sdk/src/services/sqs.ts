@@ -31,6 +31,7 @@ export class SqsServiceExtension implements ServiceExtension {
     const queueUrl = this.extractQueueUrl(request);
     const queueName = this.extractQueueNameFromUrl(queueUrl);
     let spanKind: SpanKind = SpanKind.CLIENT;
+    let spanName: string;
 
     const spanAttributes = {
       [SqsAttributeNames.MESSAGING_SYSTEM]: "aws.sqs",
@@ -46,12 +47,14 @@ export class SqsServiceExtension implements ServiceExtension {
       case "receiveMessage":
         isIncoming = true;
         spanKind = SpanKind.CONSUMER;
+        spanName = queueName;
         spanAttributes[SqsAttributeNames.MESSAGING_OPERATION] = "receive";
         break;
 
       case "sendMessage":
       case "sendMessageBatch":
         spanKind = SpanKind.PRODUCER;
+        spanName = queueName;
         break;
     }
 
@@ -59,6 +62,7 @@ export class SqsServiceExtension implements ServiceExtension {
       isIncoming,
       spanAttributes,
       spanKind,
+      spanName,
     };
   }
 

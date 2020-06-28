@@ -7,6 +7,7 @@ export interface RequestMetadata {
   isIncoming: boolean;
   spanAttributes?: Attributes;
   spanKind?: SpanKind;
+  spanName?: string;
 }
 
 export interface ServiceExtension {

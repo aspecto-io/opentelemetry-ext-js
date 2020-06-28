@@ -72,12 +72,14 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
   private _startAwsSpan(
     request: AWS.Request<any, any>,
     additionalAttributes?: Attributes,
-    spanKind?: SpanKind
+    spanKind?: SpanKind,
+    spanName?: string
   ): Span {
     const operation = (request as any).operation;
     const service = (request as any).service;
+    const name = spanName ?? this._getSpanName(request);
 
-    const newSpan = this._tracer.startSpan(this._getSpanName(request), {
+    const newSpan = this._tracer.startSpan(name, {
       kind: spanKind,
       attributes: {
         [AttributeNames.COMPONENT]: this.moduleName,
@@ -150,7 +152,8 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
       const span = thisPlugin._startAwsSpan(
         awsRequest,
         requestMetadata.spanAttributes,
-        requestMetadata.spanKind
+        requestMetadata.spanKind,
+        requestMetadata.spanName
       );
       thisPlugin._callPreRequestHooks(span, awsRequest);
       thisPlugin._registerCompletedEvent(span, awsRequest);
@@ -183,7 +186,8 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
       const span = thisPlugin._startAwsSpan(
         awsRequest,
         requestMetadata.spanAttributes,
-        requestMetadata.spanKind
+        requestMetadata.spanKind,
+        requestMetadata.spanName
       );
       thisPlugin._callPreRequestHooks(span, awsRequest);
       thisPlugin._registerCompletedEvent(span, awsRequest);
