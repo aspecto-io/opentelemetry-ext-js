@@ -30,6 +30,7 @@ export class SqsServiceExtension implements ServiceExtension {
   requestHook(request: AWS.Request<any, any>): RequestMetadata {
     const queueUrl = this.extractQueueUrl(request);
     const queueName = this.extractQueueNameFromUrl(queueUrl);
+    let spanKind: SpanKind = SpanKind.CLIENT;
 
     const spanAttributes = {
       [SqsAttributeNames.MESSAGING_SYSTEM]: "aws.sqs",
@@ -44,18 +45,25 @@ export class SqsServiceExtension implements ServiceExtension {
     switch (operation) {
       case "receiveMessage":
         isIncoming = true;
+        spanKind = SpanKind.CONSUMER;
         spanAttributes[SqsAttributeNames.MESSAGING_OPERATION] = "receive";
+        break;
+
+      case "sendMessage":
+      case "sendMessageBatch":
+        spanKind = SpanKind.PRODUCER;
         break;
     }
 
     return {
       isIncoming,
       spanAttributes,
+      spanKind,
     };
   }
 
   responseHook = (response: AWS.Response<any, any>, span: Span) => {
-    const messages: AWS.SQS.Message[] = response.data.Messages;
+    const messages: AWS.SQS.Message[] = response?.data?.Messages;
     if (messages) {
       const queueUrl = this.extractQueueUrl((response as any)?.request);
       const queueName = this.extractQueueNameFromUrl(queueUrl);

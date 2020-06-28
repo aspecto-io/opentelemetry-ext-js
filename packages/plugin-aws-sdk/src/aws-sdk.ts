@@ -9,7 +9,7 @@
     callback    |       1           |       2   
  */
 import { BasePlugin } from "@opentelemetry/core";
-import { Span, CanonicalCode, Attributes } from "@opentelemetry/api";
+import { Span, CanonicalCode, Attributes, SpanKind } from "@opentelemetry/api";
 import * as shimmer from "shimmer";
 import AWS from "aws-sdk";
 import { AttributeNames } from "./enums";
@@ -71,12 +71,14 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
 
   private _startAwsSpan(
     request: AWS.Request<any, any>,
-    additionalAttributes?: Attributes
+    additionalAttributes?: Attributes,
+    spanKind?: SpanKind
   ): Span {
     const operation = (request as any).operation;
     const service = (request as any).service;
 
     const newSpan = this._tracer.startSpan(this._getSpanName(request), {
+      kind: spanKind,
       attributes: {
         [AttributeNames.COMPONENT]: this.moduleName,
         [AttributeNames.AWS_OPERATION]: operation,
@@ -147,7 +149,8 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
       );
       const span = thisPlugin._startAwsSpan(
         awsRequest,
-        requestMetadata.spanAttributes
+        requestMetadata.spanAttributes,
+        requestMetadata.spanKind
       );
       thisPlugin._callPreRequestHooks(span, awsRequest);
       thisPlugin._registerCompletedEvent(span, awsRequest);
@@ -179,7 +182,8 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
       );
       const span = thisPlugin._startAwsSpan(
         awsRequest,
-        requestMetadata.spanAttributes
+        requestMetadata.spanAttributes,
+        requestMetadata.spanKind
       );
       thisPlugin._callPreRequestHooks(span, awsRequest);
       thisPlugin._registerCompletedEvent(span, awsRequest);
