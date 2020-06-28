@@ -10,10 +10,10 @@ npm install --save opentelemetry-plugin-aws-sdk
 
 ## Usage
 
-To load a specific plugin (**aws-sdk** in this case), specify it in the Node Tracer's configuration
+To load this plugin, specify it in the Node Tracer's configuration:
 
 ```js
-const { NodeTracerProvider } = require("opentelemetry-plugin-aws-sdk");
+const { NodeTracerProvider } = require("@opentelemetry/node");
 
 const provider = new NodeTracerProvider({
   plugins: {
@@ -42,18 +42,32 @@ This plugin patch the internal `Request` object, which means that each sdk opera
 Each span will have the following attributes:
 | Attribute Name | Type | Description | Example |
 | -------------- | ---- | ----------- | ------- |
-| "component" | string | Always equals "aws-sdk" | "aws-sdk" |
-| "aws.operation" | string | The method name for the request. | for `SQS.sendMessage(...)` the operation is "sendMessage" |
-| "aws.signature.version" | string | Aws version of authentication signature on the request. | "v4" |
-| "aws.region" | string | Region name for the request | "eu-west-1" |
-| "aws.service.api" | string | The sdk class name for the service | "SQS" |
-| "aws.service.identifier" | string | Identifier for the service in the sdk | "sqs" |
-| "aws.service.name" | string | Abbreviation name for the service | "Amazon SQS" |
-| "aws.request.id" | uuid | Request unique id, as returned from aws on response | "01234567-89ab-cdef-0123-456789abcdef" |
-| "aws.error" | string | information about a service or networking error, as returned from aws | "UriParameterError: Expected uri parameter to have length >= 1, but found "" for params.Bucket" |
+| `component` | string | Always equals "aws-sdk" | "aws-sdk" |
+| `aws.operation` | string | The method name for the request. | for `SQS.sendMessage(...)` the operation is "sendMessage" |
+| `aws.signature.version` | string | AWS version of authentication signature on the request. | "v4" |
+| `aws.region` | string | Region name for the request | "eu-west-1" |
+| `aws.service.api` | string | The sdk class name for the service | "SQS" |
+| `aws.service.identifier` | string | Identifier for the service in the sdk | "sqs" |
+| `aws.service.name` | string | Abbreviation name for the service | "Amazon SQS" |
+| `aws.request.id` | uuid | Request unique id, as returned from aws on response | "01234567-89ab-cdef-0123-456789abcdef" |
+| `aws.error` | string | information about a service or networking error, as returned from AWS | "UriParameterError: Expected uri parameter to have length >= 1, but found "" for params.Bucket" |
 
 ### Custom User Attributes
-The plugin user can configure a hook function which will be called before each request, with the request object and the relevant span. This hook can be used to add custom attributes to the span with any logic. For example, user can add interesting attributes from the `request.params`, and write custom logic based on the service and operation.
+The plugin user can configure a `preRequestHook` function which will be called before each request, with the request object and the corrosponding span.  
+This hook can be used to add custom attributes to the span with any logic.  
+For example, user can add interesting attributes from the `request.params`, and write custom logic based on the service and operation.
+Usage example:
+```js
+awsPluginConfig = {
+  enabled: true,
+  path: "opentelemetry-plugin-aws-sdk",
+  preRequestHook: (span, request) => {
+    if (span.attributes["aws.service.api"] === 's3') {
+      span.setAttribute("s3.bucket.name", request.params["Bucket"]);
+    }
+  }
+};
+```
 
 ### Specific Service Logic
 AWS contains dozens of services accessible with the JS SDK. For many services, the default attributes specified above are enough, but other services have specific [trace semantic conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/master/specification/trace/semantic_conventions), or need to inject/extract intra-process context, or set intra-process context correctly.
