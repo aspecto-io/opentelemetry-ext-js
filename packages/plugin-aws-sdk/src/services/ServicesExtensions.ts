@@ -10,11 +10,14 @@ export class ServicesExtensions implements ServiceExtension {
     this.services.set("sqs", new SqsServiceExtension(tracer));
   }
 
-  requestHook(request: AWS.Request<any, any>, span: Span): RequestMetadata {
+  requestHook(request: AWS.Request<any, any>): RequestMetadata {
     const serviceId = (request as any)?.service?.serviceIdentifier;
     const serviceExtension = this.services.get(serviceId);
-    if (!serviceExtension) return { isIncoming: false };
-    return serviceExtension.requestHook(request, span);
+    if (!serviceExtension)
+      return {
+        isIncoming: false,
+      };
+    return serviceExtension.requestHook(request);
   }
 
   responseHook(response: AWS.Response<any, any>, span: Span) {

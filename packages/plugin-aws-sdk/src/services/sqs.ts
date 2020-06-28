@@ -27,14 +27,18 @@ export class SqsServiceExtension implements ServiceExtension {
     this.tracer = tracer;
   }
 
-  requestHook(request: AWS.Request<any, any>, span: Span): RequestMetadata {
+  requestHook(request: AWS.Request<any, any>): RequestMetadata {
     const queueUrl = this.extractQueueUrl(request);
     const queueName = this.extractQueueNameFromUrl(queueUrl);
+    let spanKind: SpanKind = SpanKind.CLIENT;
+    let spanName: string;
 
-    span.setAttribute(SqsAttributeNames.MESSAGING_SYSTEM, "aws.sqs");
-    span.setAttribute(SqsAttributeNames.MESSAGING_DESTINATIONKIND, "queue");
-    span.setAttribute(SqsAttributeNames.MESSAGING_DESTINATION, queueName);
-    span.setAttribute(SqsAttributeNames.MESSAGING_URL, queueUrl);
+    const spanAttributes = {
+      [SqsAttributeNames.MESSAGING_SYSTEM]: "aws.sqs",
+      [SqsAttributeNames.MESSAGING_DESTINATIONKIND]: "queue",
+      [SqsAttributeNames.MESSAGING_DESTINATION]: queueName,
+      [SqsAttributeNames.MESSAGING_URL]: queueUrl,
+    };
 
     let isIncoming = false;
 
@@ -42,17 +46,28 @@ export class SqsServiceExtension implements ServiceExtension {
     switch (operation) {
       case "receiveMessage":
         isIncoming = true;
-        span.setAttribute(SqsAttributeNames.MESSAGING_OPERATION, "receive");
+        spanKind = SpanKind.CONSUMER;
+        spanName = queueName;
+        spanAttributes[SqsAttributeNames.MESSAGING_OPERATION] = "receive";
+        break;
+
+      case "sendMessage":
+      case "sendMessageBatch":
+        spanKind = SpanKind.PRODUCER;
+        spanName = queueName;
         break;
     }
 
     return {
       isIncoming,
+      spanAttributes,
+      spanKind,
+      spanName,
     };
   }
 
   responseHook = (response: AWS.Response<any, any>, span: Span) => {
-    const messages: AWS.SQS.Message[] = response.data.Messages;
+    const messages: AWS.SQS.Message[] = response?.data?.Messages;
     if (messages) {
       const queueUrl = this.extractQueueUrl((response as any)?.request);
       const queueName = this.extractQueueNameFromUrl(queueUrl);
