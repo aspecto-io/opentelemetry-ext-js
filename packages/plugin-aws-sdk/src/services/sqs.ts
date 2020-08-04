@@ -5,6 +5,7 @@ import {
   propagation,
   Context,
   Link,
+  Logger,
 } from "@opentelemetry/api";
 import { RequestMetadata, ServiceExtension } from "./ServiceExtension";
 import * as AWS from "aws-sdk";
@@ -49,14 +50,16 @@ const contextGetterFunc = (
   messageAttributes: AWS.SQS.MessageBodyAttributeMap,
   key: string
 ) => {
-  return messageAttributes[key]?.StringValue;
+  return messageAttributes?.[key]?.StringValue;
 };
 
 export class SqsServiceExtension implements ServiceExtension {
   tracer: Tracer;
+  logger: Logger;
 
-  constructor(tracer: Tracer) {
+  constructor(tracer: Tracer, logger: Logger) {
     this.tracer = tracer;
+    this.logger = logger;
   }
 
   requestHook(request: AWS.Request<any, any>): RequestMetadata {
@@ -97,13 +100,14 @@ export class SqsServiceExtension implements ServiceExtension {
           spanName = queueName;
 
           const params: Record<string, any> = (request as any).params;
-          const attributes = params.MessageAttributes || {};
-          if (attributes.length < SQS_MAX_MESSAGE_ATTRIBUTES) {
+          const attributes = params.MessageAttributes ?? {};
+          if (Object.keys(attributes).length < SQS_MAX_MESSAGE_ATTRIBUTES) {
             propagation.inject(attributes, contextSetterFunc);
             params.MessageAttributes = attributes;
           } else {
-            // TODO: in this case we are not setting the context propagtion for consumers
-            // how to log the issue?
+            this.logger.warn(
+              "OpenTelemetry aws-sdk plugin cannot set context propagation on SQS message due to maximum amount of MessageAttributes"
+            );
           }
         }
         break;
