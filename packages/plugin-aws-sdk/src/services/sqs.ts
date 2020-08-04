@@ -8,7 +8,10 @@ import {
 } from "@opentelemetry/api";
 import { RequestMetadata, ServiceExtension } from "./ServiceExtension";
 import * as AWS from "aws-sdk";
-import { getExtractedSpanContext } from "@opentelemetry/core";
+import {
+  getExtractedSpanContext,
+  TRACE_PARENT_HEADER,
+} from "@opentelemetry/core";
 
 export enum SqsAttributeNames {
   // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md
@@ -79,7 +82,7 @@ export class SqsServiceExtension implements ServiceExtension {
 
           const params: Record<string, any> = (request as any).params;
           const attributesNames = params.MessageAttributeNames || [];
-          attributesNames.push("traceparent");
+          attributesNames.push(TRACE_PARENT_HEADER);
           params.MessageAttributeNames = attributesNames;
         }
         break;
