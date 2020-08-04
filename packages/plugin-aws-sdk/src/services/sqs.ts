@@ -31,6 +31,9 @@ export const END_SPAN_FUNCTION = Symbol(
   "opentelemetry.plugin.aws-sdk.sqs.end_span"
 );
 
+// https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-quotas.html
+const SQS_MAX_MESSAGE_ATTRIBUTES = 10;
+
 const contextSetterFunc = (
   messageAttributes: AWS.SQS.MessageBodyAttributeMap,
   key: string,
@@ -95,8 +98,13 @@ export class SqsServiceExtension implements ServiceExtension {
 
           const params: Record<string, any> = (request as any).params;
           const attributes = params.MessageAttributes || {};
-          propagation.inject(attributes, contextSetterFunc);
-          params.MessageAttributes = attributes;
+          if (attributes.length < SQS_MAX_MESSAGE_ATTRIBUTES) {
+            propagation.inject(attributes, contextSetterFunc);
+            params.MessageAttributes = attributes;
+          } else {
+            // TODO: in this case we are not setting the context propagtion for consumers
+            // how to log the issue?
+          }
         }
         break;
     }
