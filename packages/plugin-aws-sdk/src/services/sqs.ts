@@ -1,6 +1,24 @@
-import { Tracer, SpanKind, Span } from "@opentelemetry/api";
+import {
+  Tracer,
+  SpanKind,
+  Span,
+  propagation,
+  Context,
+  Link,
+  Logger,
+} from "@opentelemetry/api";
 import { RequestMetadata, ServiceExtension } from "./ServiceExtension";
 import * as AWS from "aws-sdk";
+import {
+  getExtractedSpanContext,
+  TRACE_PARENT_HEADER,
+} from "@opentelemetry/core";
+import {
+  MessageBodyAttributeMap,
+  SendMessageRequest,
+  SendMessageBatchRequest,
+  SendMessageBatchRequestEntry,
+} from "aws-sdk/clients/sqs";
 
 export enum SqsAttributeNames {
   // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md
@@ -20,11 +38,34 @@ export const END_SPAN_FUNCTION = Symbol(
   "opentelemetry.plugin.aws-sdk.sqs.end_span"
 );
 
+// https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-quotas.html
+const SQS_MAX_MESSAGE_ATTRIBUTES = 10;
+
+const contextSetterFunc = (
+  messageAttributes: AWS.SQS.MessageBodyAttributeMap,
+  key: string,
+  value: unknown
+) => {
+  messageAttributes[key] = {
+    DataType: "String",
+    StringValue: value as string,
+  };
+};
+
+const contextGetterFunc = (
+  messageAttributes: AWS.SQS.MessageBodyAttributeMap,
+  key: string
+) => {
+  return messageAttributes?.[key]?.StringValue;
+};
+
 export class SqsServiceExtension implements ServiceExtension {
   tracer: Tracer;
+  logger: Logger;
 
-  constructor(tracer: Tracer) {
+  constructor(tracer: Tracer, logger: Logger) {
     this.tracer = tracer;
+    this.logger = logger;
   }
 
   requestHook(request: AWS.Request<any, any>): RequestMetadata {
@@ -45,16 +86,45 @@ export class SqsServiceExtension implements ServiceExtension {
     const operation = (request as any)?.operation;
     switch (operation) {
       case "receiveMessage":
-        isIncoming = true;
-        spanKind = SpanKind.CONSUMER;
-        spanName = queueName;
-        spanAttributes[SqsAttributeNames.MESSAGING_OPERATION] = "receive";
+        {
+          isIncoming = true;
+          spanKind = SpanKind.CONSUMER;
+          spanName = queueName;
+          spanAttributes[SqsAttributeNames.MESSAGING_OPERATION] = "receive";
+
+          const params: Record<string, any> = (request as any).params;
+          const attributesNames = params.MessageAttributeNames || [];
+          attributesNames.push(TRACE_PARENT_HEADER);
+          params.MessageAttributeNames = attributesNames;
+        }
         break;
 
       case "sendMessage":
+        {
+          spanKind = SpanKind.PRODUCER;
+          spanName = queueName;
+
+          const params: SendMessageRequest = (request as any).params;
+          params.MessageAttributes = this.InjectPropagationContext(
+            params.MessageAttributes
+          );
+        }
+        break;
+
       case "sendMessageBatch":
-        spanKind = SpanKind.PRODUCER;
-        spanName = queueName;
+        {
+          spanKind = SpanKind.PRODUCER;
+          spanName = queueName;
+
+          const params: SendMessageBatchRequest = (request as any).params;
+          params.Entries.forEach(
+            (messageParams: SendMessageBatchRequestEntry) => {
+              messageParams.MessageAttributes = this.InjectPropagationContext(
+                messageParams.MessageAttributes
+              );
+            }
+          );
+        }
         break;
     }
 
@@ -73,9 +143,18 @@ export class SqsServiceExtension implements ServiceExtension {
       const queueName = this.extractQueueNameFromUrl(queueUrl);
 
       messages.forEach((message: AWS.SQS.Message) => {
+        const parentContext: Context = propagation.extract(
+          message.MessageAttributes,
+          contextGetterFunc
+        );
         message[START_SPAN_FUNCTION] = () => {
           return this.tracer.withSpan(span, () =>
-            this.startSingleMessageSpan(queueUrl, queueName, message)
+            this.startSingleMessageSpan(
+              queueUrl,
+              queueName,
+              message,
+              parentContext
+            )
           );
         };
         message[END_SPAN_FUNCTION] = () =>
@@ -105,8 +184,16 @@ export class SqsServiceExtension implements ServiceExtension {
   startSingleMessageSpan(
     queueUrl: string,
     queueName: string,
-    message: AWS.SQS.Message
+    message: AWS.SQS.Message,
+    propagtedContext: Context
   ): Span {
+    const links: Link[] = [];
+    if (propagtedContext) {
+      links.push({
+        context: getExtractedSpanContext(propagtedContext),
+      } as Link);
+    }
+
     const messageSpan = this.tracer.startSpan(queueName, {
       kind: SpanKind.CONSUMER,
       attributes: {
@@ -117,6 +204,7 @@ export class SqsServiceExtension implements ServiceExtension {
         [SqsAttributeNames.MESSAGING_URL]: queueUrl,
         [SqsAttributeNames.MESSAGING_OPERATION]: "process",
       },
+      links,
     });
 
     message[START_SPAN_FUNCTION] = () =>
@@ -146,5 +234,19 @@ export class SqsServiceExtension implements ServiceExtension {
         return res;
       });
     };
+  }
+
+  InjectPropagationContext(
+    attributesMap?: MessageBodyAttributeMap
+  ): MessageBodyAttributeMap {
+    const attributes = attributesMap ?? {};
+    if (Object.keys(attributes).length < SQS_MAX_MESSAGE_ATTRIBUTES) {
+      propagation.inject(attributes, contextSetterFunc);
+    } else {
+      this.logger.warn(
+        "OpenTelemetry aws-sdk plugin cannot set context propagation on SQS message due to maximum amount of MessageAttributes"
+      );
+    }
+    return attributes;
   }
 }
