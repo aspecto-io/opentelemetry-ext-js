@@ -13,6 +13,12 @@ import {
   getExtractedSpanContext,
   TRACE_PARENT_HEADER,
 } from "@opentelemetry/core";
+import {
+  MessageBodyAttributeMap,
+  SendMessageRequest,
+  SendMessageBatchRequest,
+  SendMessageBatchRequestEntry,
+} from "aws-sdk/clients/sqs";
 
 export enum SqsAttributeNames {
   // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md
@@ -94,21 +100,30 @@ export class SqsServiceExtension implements ServiceExtension {
         break;
 
       case "sendMessage":
+        {
+          spanKind = SpanKind.PRODUCER;
+          spanName = queueName;
+
+          const params: SendMessageRequest = (request as any).params;
+          params.MessageAttributes = this.InjectPropagationContext(
+            params.MessageAttributes
+          );
+        }
+        break;
+
       case "sendMessageBatch":
         {
           spanKind = SpanKind.PRODUCER;
           spanName = queueName;
 
-          const params: Record<string, any> = (request as any).params;
-          const attributes = params.MessageAttributes ?? {};
-          if (Object.keys(attributes).length < SQS_MAX_MESSAGE_ATTRIBUTES) {
-            propagation.inject(attributes, contextSetterFunc);
-            params.MessageAttributes = attributes;
-          } else {
-            this.logger.warn(
-              "OpenTelemetry aws-sdk plugin cannot set context propagation on SQS message due to maximum amount of MessageAttributes"
-            );
-          }
+          const params: SendMessageBatchRequest = (request as any).params;
+          params.Entries.forEach(
+            (messageParams: SendMessageBatchRequestEntry) => {
+              messageParams.MessageAttributes = this.InjectPropagationContext(
+                messageParams.MessageAttributes
+              );
+            }
+          );
         }
         break;
     }
@@ -219,5 +234,19 @@ export class SqsServiceExtension implements ServiceExtension {
         return res;
       });
     };
+  }
+
+  InjectPropagationContext(
+    attributesMap?: MessageBodyAttributeMap
+  ): MessageBodyAttributeMap {
+    const attributes = attributesMap ?? {};
+    if (Object.keys(attributes).length < SQS_MAX_MESSAGE_ATTRIBUTES) {
+      propagation.inject(attributes, contextSetterFunc);
+    } else {
+      this.logger.warn(
+        "OpenTelemetry aws-sdk plugin cannot set context propagation on SQS message due to maximum amount of MessageAttributes"
+      );
+    }
+    return attributes;
   }
 }
