@@ -16,7 +16,7 @@ import { AttributeNames } from "./enums";
 import { ServicesExtensions } from "./services";
 import { AwsSdkPluginConfig } from "./types";
 
-const VERSION = "0.0.6";
+const VERSION = "0.0.7";
 
 class AwsPlugin extends BasePlugin<typeof AWS> {
   readonly component: string;
