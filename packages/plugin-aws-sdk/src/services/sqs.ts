@@ -89,7 +89,7 @@ export class SqsServiceExtension implements ServiceExtension {
         {
           isIncoming = true;
           spanKind = SpanKind.CONSUMER;
-          spanName = queueName;
+          spanName = `${queueName} receive`;
           spanAttributes[SqsAttributeNames.MESSAGING_OPERATION] = "receive";
 
           const params: Record<string, any> = (request as any).params;
@@ -102,7 +102,7 @@ export class SqsServiceExtension implements ServiceExtension {
       case "sendMessage":
       case "sendMessageBatch":
         spanKind = SpanKind.PRODUCER;
-        spanName = queueName;
+        spanName = `${queueName} send`;
         break;
     }
 
@@ -200,7 +200,8 @@ export class SqsServiceExtension implements ServiceExtension {
       } as Link);
     }
 
-    const messageSpan = this.tracer.startSpan(queueName, {
+    const spanName = `${queueName} process`;
+    const messageSpan = this.tracer.startSpan(spanName, {
       kind: SpanKind.CONSUMER,
       attributes: {
         [SqsAttributeNames.MESSAGING_SYSTEM]: "aws.sqs",
