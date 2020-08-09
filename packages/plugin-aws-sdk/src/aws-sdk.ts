@@ -163,6 +163,7 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
 
       const callbackWithContext = thisPlugin._tracer.bind(callback, span);
       return thisPlugin._tracer.withSpan(span, () => {
+        thisPlugin.servicesExtensions.requestPostSpanHook(awsRequest);
         return original.call(awsRequest, callbackWithContext);
       });
     };
@@ -198,6 +199,7 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
       const origPromise: Promise<any> = thisPlugin._tracer.withSpan(
         span,
         () => {
+          thisPlugin.servicesExtensions.requestPostSpanHook(awsRequest);
           return original.apply(awsRequest, arguments);
         }
       );

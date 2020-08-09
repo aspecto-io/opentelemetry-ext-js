@@ -100,10 +100,26 @@ export class SqsServiceExtension implements ServiceExtension {
         break;
 
       case "sendMessage":
-        {
-          spanKind = SpanKind.PRODUCER;
-          spanName = queueName;
+      case "sendMessageBatch":
+        spanKind = SpanKind.PRODUCER;
+        spanName = queueName;
+        break;
+    }
 
+    return {
+      isIncoming,
+      spanAttributes,
+      spanKind,
+      spanName,
+    };
+  }
+
+  requestPostSpanHook = (request: AWS.Request<any, any>) => {
+    const operation = (request as any)?.operation;
+    console.log(operation);
+    switch (operation) {
+      case "sendMessage":
+        {
           const params: SendMessageRequest = (request as any).params;
           params.MessageAttributes = this.InjectPropagationContext(
             params.MessageAttributes
@@ -113,9 +129,6 @@ export class SqsServiceExtension implements ServiceExtension {
 
       case "sendMessageBatch":
         {
-          spanKind = SpanKind.PRODUCER;
-          spanName = queueName;
-
           const params: SendMessageBatchRequest = (request as any).params;
           params.Entries.forEach(
             (messageParams: SendMessageBatchRequestEntry) => {
@@ -127,14 +140,7 @@ export class SqsServiceExtension implements ServiceExtension {
         }
         break;
     }
-
-    return {
-      isIncoming,
-      spanAttributes,
-      spanKind,
-      spanName,
-    };
-  }
+  };
 
   responseHook = (response: AWS.Response<any, any>, span: Span) => {
     const messages: AWS.SQS.Message[] = response?.data?.Messages;
