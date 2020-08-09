@@ -20,6 +20,13 @@ export class ServicesExtensions implements ServiceExtension {
     return serviceExtension.requestHook(request);
   }
 
+  requestPostSpanHook(request: AWS.Request<any, any>) {
+    const serviceId = (request as any)?.service?.serviceIdentifier;
+    const serviceExtension = this.services.get(serviceId);
+    if (!serviceExtension?.requestPostSpanHook) return;
+    return serviceExtension.requestPostSpanHook(request);
+  }
+
   responseHook(response: AWS.Response<any, any>, span: Span) {
     const serviceId = (response as any)?.request?.service?.serviceIdentifier;
     const serviceExtension = this.services.get(serviceId);
