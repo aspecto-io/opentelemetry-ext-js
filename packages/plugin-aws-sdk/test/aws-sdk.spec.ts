@@ -12,6 +12,7 @@ import { NodeTracerProvider } from "@opentelemetry/node";
 import { ContextManager } from "@opentelemetry/context-base";
 import { AsyncHooksContextManager } from "@opentelemetry/context-async-hooks";
 import { AttributeNames } from "../src/enums";
+import { mockAwsSend } from "./testing-utils";
 
 describe("plugin-aws-sdk", () => {
   const logger = new NoopLogger();
@@ -33,35 +34,9 @@ describe("plugin-aws-sdk", () => {
   };
 
   const getAwsSpans = (): ReadableSpan[] => {
-    // console.log(' spans :', memoryExporter.getFinishedSpans());
     return memoryExporter
       .getFinishedSpans()
       .filter((s) => s.attributes[AttributeNames.COMPONENT] === "aws-sdk");
-  };
-
-  const mockAwsSend = (sendResult: any) => {
-    AWS.Request.prototype.send = function (cb: (error, response) => void) {
-      (this as AWS.Request<any, any>).on("complete", (response) => {
-        cb(response.error, response);
-      });
-      const response = {
-        ...sendResult,
-        request: this,
-      };
-      setImmediate(() => {
-        this._events.complete.forEach((handler) => handler(response));
-      });
-      return response;
-    };
-
-    AWS.Request.prototype.promise = function () {
-      const response = {
-        ...sendResult,
-        request: this,
-      };
-      this._events.complete.forEach((handler) => handler(response));
-      return Promise.resolve(response);
-    };
   };
 
   beforeAll(() => {
