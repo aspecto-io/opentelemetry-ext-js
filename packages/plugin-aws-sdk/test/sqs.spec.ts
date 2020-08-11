@@ -25,33 +25,6 @@ const responseMockSuccess = {
   error: null,
 };
 
-const expectReceiver2ProcessWithOneChildEach = (spans: ReadableSpan[]) => {
-  const awsReceiveSpan = spans.filter(
-    (s) => s.attributes[SqsAttributeNames.MESSAGING_OPERATION] === "receive"
-  );
-  expect(awsReceiveSpan.length).toBe(1);
-
-  const processSpans = spans.filter(
-    (s) => s.attributes[SqsAttributeNames.MESSAGING_OPERATION] === "process"
-  );
-  expect(processSpans.length).toBe(2);
-  expect(processSpans[0].parentSpanId).toStrictEqual(
-    awsReceiveSpan[0].spanContext.spanId
-  );
-  expect(processSpans[1].parentSpanId).toStrictEqual(
-    awsReceiveSpan[0].spanContext.spanId
-  );
-
-  const processChildSpans = spans.filter((s) => s.kind === SpanKind.INTERNAL);
-  expect(processChildSpans.length).toBe(2);
-  expect(processChildSpans[0].parentSpanId).toStrictEqual(
-    processSpans[0].spanContext.spanId
-  );
-  expect(processChildSpans[1].parentSpanId).toStrictEqual(
-    processSpans[1].spanContext.spanId
-  );
-};
-
 describe("sqs", () => {
   beforeAll(() => {
     AWS.config.credentials = {
@@ -81,60 +54,119 @@ describe("sqs", () => {
     contextManager.disable();
   });
 
-  it("should set parent context in sqs receive callback", async (done) => {
-    const sqs = new AWS.SQS();
-    sqs
-      .receiveMessage({
-        QueueUrl: "queue/url/for/unittests",
-      })
-      .send((err: AWSError, data: AWS.SQS.Types.ReceiveMessageResult) => {
-        expect(err).toBeFalsy();
-        const childSpan = provider
-          .getTracer("default")
-          .startSpan("child span of sqs.receiveMessage in send callback");
-        childSpan.end();
-        const awsReceiveSpan = memoryExporter
-          .getFinishedSpans()
-          .filter((s) => s.kind === SpanKind.CONSUMER);
-        expect(awsReceiveSpan.length).toBe(1);
-        const internalSpan = memoryExporter
-          .getFinishedSpans()
-          .filter((s) => s.kind === SpanKind.INTERNAL);
-        expect(internalSpan.length).toBe(1);
-        expect(internalSpan[0].parentSpanId).toStrictEqual(
-          awsReceiveSpan[0].spanContext.spanId
-        );
-        done();
-      });
-  });
+  describe("receive context", () => {
+    const createReceiveChildSpan = () => {
+      const childSpan = provider
+        .getTracer("default")
+        .startSpan("child span of sqs.receiveMessage");
+      childSpan.end();
+    };
 
-  it("should set parent context in sqs receive after await", async () => {
-    const sqs = new AWS.SQS();
-    const res = await sqs
-      .receiveMessage({
-        QueueUrl: "queue/url/for/unittests",
-      })
-      .promise();
+    const expectReceiverWithChildSpan = (spans: ReadableSpan[]) => {
+      const awsReceiveSpan = spans.filter((s) => s.kind === SpanKind.CONSUMER);
+      expect(awsReceiveSpan.length).toBe(1);
+      const internalSpan = spans.filter((s) => s.kind === SpanKind.INTERNAL);
+      expect(internalSpan.length).toBe(1);
+      expect(internalSpan[0].parentSpanId).toStrictEqual(
+        awsReceiveSpan[0].spanContext.spanId
+      );
+    };
 
-    const childSpan = provider
-      .getTracer("default")
-      .startSpan("child span of sqs.receiveMessage after promise await");
-    childSpan.end();
-    const awsReceiveSpan = memoryExporter
-      .getFinishedSpans()
-      .filter((s) => s.kind === SpanKind.CONSUMER);
-    expect(awsReceiveSpan.length).toBe(1);
-    const internalSpan = memoryExporter
-      .getFinishedSpans()
-      .filter((s) => s.kind === SpanKind.INTERNAL);
-    expect(internalSpan.length).toBe(1);
-    expect(internalSpan[0].parentSpanId).toStrictEqual(
-      awsReceiveSpan[0].spanContext.spanId
-    );
+    it("should set parent context in sqs receive callback", async (done) => {
+      const sqs = new AWS.SQS();
+      sqs
+        .receiveMessage({
+          QueueUrl: "queue/url/for/unittests",
+        })
+        .send((err: AWSError, data: AWS.SQS.Types.ReceiveMessageResult) => {
+          expect(err).toBeFalsy();
+          createReceiveChildSpan();
+          expectReceiverWithChildSpan(memoryExporter.getFinishedSpans());
+          done();
+        });
+    });
+
+    it("should set parent context in sqs receive promise then", async () => {
+      const sqs = new AWS.SQS();
+      const res = await sqs
+        .receiveMessage({
+          QueueUrl: "queue/url/for/unittests",
+        })
+        .promise()
+        .then(() => {
+          createReceiveChildSpan();
+          expectReceiverWithChildSpan(memoryExporter.getFinishedSpans());
+        });
+    });
+
+    it.skip("should set parent context in sqs receive after await", async () => {
+      const sqs = new AWS.SQS();
+      await sqs
+        .receiveMessage({
+          QueueUrl: "queue/url/for/unittests",
+        })
+        .promise();
+
+      createReceiveChildSpan();
+      expectReceiverWithChildSpan(memoryExporter.getFinishedSpans());
+    });
+
+    it.skip("should set parent context in sqs receive from async function", async () => {
+      const asycnReceive = async () => {
+        try {
+          const sqs = new AWS.SQS();
+          return await sqs
+            .receiveMessage({
+              QueueUrl: "queue/url/for/unittests",
+            })
+            .promise();
+        } catch (err) {}
+      };
+
+      const res = await asycnReceive();
+      createReceiveChildSpan();
+      expectReceiverWithChildSpan(memoryExporter.getFinishedSpans());
+    });
   });
 
   describe("process spans", () => {
     let receivedMessages: Message[];
+
+    const createProcessChildSpan = (msgContext: any) => {
+      const processChildSpan = provider
+        .getTracer("default")
+        .startSpan(`child span of sqs processing span of msg ${msgContext}`);
+      processChildSpan.end();
+    };
+
+    const expectReceiver2ProcessWithOneChildEach = (spans: ReadableSpan[]) => {
+      const awsReceiveSpan = spans.filter(
+        (s) => s.attributes[SqsAttributeNames.MESSAGING_OPERATION] === "receive"
+      );
+      expect(awsReceiveSpan.length).toBe(1);
+
+      const processSpans = spans.filter(
+        (s) => s.attributes[SqsAttributeNames.MESSAGING_OPERATION] === "process"
+      );
+      expect(processSpans.length).toBe(2);
+      expect(processSpans[0].parentSpanId).toStrictEqual(
+        awsReceiveSpan[0].spanContext.spanId
+      );
+      expect(processSpans[1].parentSpanId).toStrictEqual(
+        awsReceiveSpan[0].spanContext.spanId
+      );
+
+      const processChildSpans = spans.filter(
+        (s) => s.kind === SpanKind.INTERNAL
+      );
+      expect(processChildSpans.length).toBe(2);
+      expect(processChildSpans[0].parentSpanId).toStrictEqual(
+        processSpans[0].spanContext.spanId
+      );
+      expect(processChildSpans[1].parentSpanId).toStrictEqual(
+        processSpans[1].spanContext.spanId
+      );
+    };
 
     beforeEach(async () => {
       const sqs = new AWS.SQS();
@@ -148,35 +180,23 @@ describe("sqs", () => {
 
     it("should create processing child with forEach", async () => {
       receivedMessages.forEach((msg) => {
-        const processChildSpan = provider
-          .getTracer("default")
-          .startSpan(`child span of sqs processing span of msg ${msg.Body}`);
-        processChildSpan.end();
+        createProcessChildSpan(msg.Body);
       });
-
       expectReceiver2ProcessWithOneChildEach(memoryExporter.getFinishedSpans());
     });
 
     it("should create processing child with map", async () => {
       receivedMessages.map((msg) => {
-        const processChildSpan = provider
-          .getTracer("default")
-          .startSpan(`child span of sqs processing span of msg ${msg.Body}`);
-        processChildSpan.end();
+        createProcessChildSpan(msg.Body);
       });
-
       expectReceiver2ProcessWithOneChildEach(memoryExporter.getFinishedSpans());
     });
 
     it.skip("should create processing child with array index access", async () => {
       for (let i = 0; i < receivedMessages.length; i++) {
         const msg = receivedMessages[i];
-        const processChildSpan = provider
-          .getTracer("default")
-          .startSpan(`child span of sqs processing span of msg ${msg.Body}`);
-        processChildSpan.end();
+        createProcessChildSpan(msg.Body);
       }
-
       expectReceiver2ProcessWithOneChildEach(memoryExporter.getFinishedSpans());
     });
 
@@ -184,12 +204,8 @@ describe("sqs", () => {
       receivedMessages
         .map((msg) => JSON.parse(msg.Body))
         .forEach((msgBody) => {
-          const processChildSpan = provider
-            .getTracer("default")
-            .startSpan(`child span of sqs processing span of msg ${msgBody}`);
-          processChildSpan.end();
+          createProcessChildSpan(msgBody);
         });
-
       expectReceiver2ProcessWithOneChildEach(memoryExporter.getFinishedSpans());
     });
 
@@ -197,23 +213,22 @@ describe("sqs", () => {
       receivedMessages
         .filter((msg) => msg)
         .forEach((msgBody) => {
-          const processChildSpan = provider
-            .getTracer("default")
-            .startSpan(`child span of sqs processing span of msg ${msgBody}`);
-          processChildSpan.end();
+          createProcessChildSpan(msgBody);
         });
-
       expectReceiver2ProcessWithOneChildEach(memoryExporter.getFinishedSpans());
     });
 
     it.skip("should create processing child with for(msg of messages)", () => {
       for (const msg of receivedMessages) {
-        const processChildSpan = provider
-          .getTracer("default")
-          .startSpan(`child span of sqs processing span of msg ${msg.Body}`);
-        processChildSpan.end();
+        createProcessChildSpan(msg.Body);
       }
+      expectReceiver2ProcessWithOneChildEach(memoryExporter.getFinishedSpans());
+    });
 
+    it.skip("should create processing child with array.values() for loop", () => {
+      for (const msg of receivedMessages.values()) {
+        createProcessChildSpan(msg.Body);
+      }
       expectReceiver2ProcessWithOneChildEach(memoryExporter.getFinishedSpans());
     });
   });
