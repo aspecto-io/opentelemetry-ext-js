@@ -25,11 +25,10 @@ describe("plugin-aws-sdk", () => {
   const responseMockSuccess = {
     requestId: "0000000000000",
     error: null,
-    data: null,
   };
 
   const responseMockWithError = {
-    ...responseMockSuccess,
+    requestId: "0000000000000",
     error: "something went wrong",
   };
 
