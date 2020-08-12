@@ -74,6 +74,21 @@ describe("sqs", () => {
 
     it("should set parent context in sqs receive callback", async (done) => {
       const sqs = new AWS.SQS();
+      sqs.receiveMessage(
+        {
+          QueueUrl: "queue/url/for/unittests",
+        },
+        (err: AWSError, data: AWS.SQS.Types.ReceiveMessageResult) => {
+          expect(err).toBeFalsy();
+          createReceiveChildSpan();
+          expectReceiverWithChildSpan(memoryExporter.getFinishedSpans());
+          done();
+        }
+      );
+    });
+
+    it("should set parent context in sqs receive 'send' callback", async (done) => {
+      const sqs = new AWS.SQS();
       sqs
         .receiveMessage({
           QueueUrl: "queue/url/for/unittests",

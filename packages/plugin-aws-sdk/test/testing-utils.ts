@@ -1,10 +1,12 @@
 import AWS from "aws-sdk";
 
 export const mockAwsSend = (sendResult: any, data: any = undefined) => {
-  AWS.Request.prototype.send = function (cb: (error, response) => void) {
-    (this as AWS.Request<any, any>).on("complete", (response) => {
-      cb(response.error, response);
-    });
+  AWS.Request.prototype.send = function (cb?: (error, response) => void) {
+    if (cb) {
+      (this as AWS.Request<any, any>).on("complete", (response) => {
+        cb(response.error, response);
+      });
+    }
     const response = {
       ...sendResult,
       data,
