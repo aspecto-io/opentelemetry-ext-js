@@ -116,7 +116,6 @@ export class SqsServiceExtension implements ServiceExtension {
 
   requestPostSpanHook = (request: AWS.Request<any, any>) => {
     const operation = (request as any)?.operation;
-    console.log(operation);
     switch (operation) {
       case "sendMessage":
         {
