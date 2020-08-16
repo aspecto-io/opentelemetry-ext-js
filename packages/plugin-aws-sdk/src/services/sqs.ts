@@ -225,48 +225,7 @@ export class SqsServiceExtension implements ServiceExtension {
     this.patchArrayFunction(messages, "forEach");
     this.patchArrayFunction(messages, "map");
     this.patchArrayFilter(messages);
-    // this.patchArrayIterators(messages, 'values');
-    // this.patchArrayIterators(messages, Symbol.iterator);
   }
-
-  // the following implementation relays on the fact that
-  // an array element processing is done once the iterator is accessed again.
-  // it fails in case of throw\return\break from the loop body which cause
-  // context manager data structure to be broken
-  //
-  // patchArrayIterators(messages: any[], functionName: any) {
-  //   const self = this;
-
-  //   const contextManager = context["_getContextManager"]?.();
-  //   const enterContext = contextManager?.["_enterContext"]?.bind(contextManager);
-  //   const exitContext = contextManager?.["_exitContext"]?.bind(contextManager);
-  //   if(!enterContext || !exitContext) return;
-
-  //   let activeMessage: any;
-
-  //   const origFunc = messages[functionName];
-  //   messages[functionName] = function (...args: unknown[]) {
-  //     const iterator: IterableIterator<unknown> = origFunc.apply(
-  //       this,
-  //       arguments
-  //     );
-  //     const iteratorNext = iterator.next;
-  //     iterator.next = function (...args: unknown[]) {
-  //       const iteratorNextResult = iteratorNext.apply(this, arguments);
-  //       if(activeMessage) {
-  //         exitContext();
-  //         activeMessage?.[END_SPAN_FUNCTION]?.();
-  //       }
-  //       const messageSpan = iteratorNextResult.value?.[START_SPAN_FUNCTION]?.();
-  //       if(messageSpan) {
-  //         enterContext(setActiveSpan(context.active(), messageSpan));
-  //         activeMessage = iteratorNextResult.value;
-  //       }
-  //       return iteratorNextResult;
-  //     };
-  //     return iterator;
-  //   };
-  // }
 
   patchArrayFilter(messages: any[]) {
     const self = this;
