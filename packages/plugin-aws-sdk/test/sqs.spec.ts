@@ -74,6 +74,21 @@ describe("sqs", () => {
 
     it("should set parent context in sqs receive callback", async (done) => {
       const sqs = new AWS.SQS();
+      sqs.receiveMessage(
+        {
+          QueueUrl: "queue/url/for/unittests",
+        },
+        (err: AWSError, data: AWS.SQS.Types.ReceiveMessageResult) => {
+          expect(err).toBeFalsy();
+          createReceiveChildSpan();
+          expectReceiverWithChildSpan(memoryExporter.getFinishedSpans());
+          done();
+        }
+      );
+    });
+
+    it("should set parent context in sqs receive 'send' callback", async (done) => {
+      const sqs = new AWS.SQS();
       sqs
         .receiveMessage({
           QueueUrl: "queue/url/for/unittests",
@@ -139,7 +154,10 @@ describe("sqs", () => {
       processChildSpan.end();
     };
 
-    const expectReceiver2ProcessWithOneChildEach = (spans: ReadableSpan[]) => {
+    const expectReceiver2ProcessWithNChildrenEach = (
+      spans: ReadableSpan[],
+      numChildPerProcessSpan: number
+    ) => {
       const awsReceiveSpan = spans.filter(
         (s) => s.attributes[SqsAttributeNames.MESSAGING_OPERATION] === "receive"
       );
@@ -159,13 +177,23 @@ describe("sqs", () => {
       const processChildSpans = spans.filter(
         (s) => s.kind === SpanKind.INTERNAL
       );
-      expect(processChildSpans.length).toBe(2);
-      expect(processChildSpans[0].parentSpanId).toStrictEqual(
-        processSpans[0].spanContext.spanId
-      );
-      expect(processChildSpans[1].parentSpanId).toStrictEqual(
-        processSpans[1].spanContext.spanId
-      );
+      expect(processChildSpans.length).toBe(2 * numChildPerProcessSpan);
+      for (let i = 0; i < numChildPerProcessSpan; i++) {
+        expect(processChildSpans[2 * i + 0].parentSpanId).toStrictEqual(
+          processSpans[0].spanContext.spanId
+        );
+        expect(processChildSpans[2 * i + 1].parentSpanId).toStrictEqual(
+          processSpans[1].spanContext.spanId
+        );
+      }
+    };
+
+    const expectReceiver2ProcessWith1ChildEach = (spans: ReadableSpan[]) => {
+      expectReceiver2ProcessWithNChildrenEach(spans, 1);
+    };
+
+    const expectReceiver2ProcessWith2ChildEach = (spans: ReadableSpan[]) => {
+      expectReceiver2ProcessWithNChildrenEach(spans, 2);
     };
 
     beforeEach(async () => {
@@ -182,14 +210,62 @@ describe("sqs", () => {
       receivedMessages.forEach((msg) => {
         createProcessChildSpan(msg.Body);
       });
-      expectReceiver2ProcessWithOneChildEach(memoryExporter.getFinishedSpans());
+      expectReceiver2ProcessWith1ChildEach(memoryExporter.getFinishedSpans());
     });
 
     it("should create processing child with map", async () => {
       receivedMessages.map((msg) => {
         createProcessChildSpan(msg.Body);
       });
-      expectReceiver2ProcessWithOneChildEach(memoryExporter.getFinishedSpans());
+      expectReceiver2ProcessWith1ChildEach(memoryExporter.getFinishedSpans());
+    });
+
+    it("should create one processing child when throws in map", async () => {
+      try {
+        receivedMessages.map((msg) => {
+          createProcessChildSpan(msg.Body);
+          throw Error("error from array.map");
+        });
+      } catch (err) {}
+
+      const processChildSpans = memoryExporter
+        .getFinishedSpans()
+        .filter((s) => s.kind === SpanKind.INTERNAL);
+      expect(processChildSpans.length).toBe(1);
+    });
+
+    it("should create processing child with two forEach", async () => {
+      receivedMessages.forEach((msg) => {
+        createProcessChildSpan(msg.Body);
+      });
+      receivedMessages.forEach((msg) => {
+        createProcessChildSpan(msg.Body);
+      });
+      expectReceiver2ProcessWith2ChildEach(memoryExporter.getFinishedSpans());
+    });
+
+    it("should forward all parameters to forEach callback", async () => {
+      const objectForThis = {};
+      receivedMessages.forEach(function (msg, index, array) {
+        expect(msg).not.toBeUndefined();
+        expect(index).toBeLessThan(2);
+        expect(index).toBeGreaterThanOrEqual(0);
+        expect(array).toBe(receivedMessages);
+        expect(this).toBe(objectForThis);
+      }, objectForThis);
+    });
+
+    it("should create one processing child with forEach that throws", async () => {
+      try {
+        receivedMessages.forEach((msg) => {
+          createProcessChildSpan(msg.Body);
+          throw Error("error from forEach");
+        });
+      } catch (err) {}
+      const processChildSpans = memoryExporter
+        .getFinishedSpans()
+        .filter((s) => s.kind === SpanKind.INTERNAL);
+      expect(processChildSpans.length).toBe(1);
     });
 
     it.skip("should create processing child with array index access", async () => {
@@ -197,39 +273,47 @@ describe("sqs", () => {
         const msg = receivedMessages[i];
         createProcessChildSpan(msg.Body);
       }
-      expectReceiver2ProcessWithOneChildEach(memoryExporter.getFinishedSpans());
+      expectReceiver2ProcessWith1ChildEach(memoryExporter.getFinishedSpans());
     });
 
-    it.skip("should create processing child with map and forEach calls", async () => {
+    it("should create processing child with map and forEach calls", async () => {
       receivedMessages
         .map((msg) => JSON.parse(msg.Body))
         .forEach((msgBody) => {
           createProcessChildSpan(msgBody);
         });
-      expectReceiver2ProcessWithOneChildEach(memoryExporter.getFinishedSpans());
+      expectReceiver2ProcessWith1ChildEach(memoryExporter.getFinishedSpans());
     });
 
-    it.skip("should create processing child with filter and forEach", async () => {
+    it("should create processing child with filter and forEach", async () => {
       receivedMessages
         .filter((msg) => msg)
         .forEach((msgBody) => {
           createProcessChildSpan(msgBody);
         });
-      expectReceiver2ProcessWithOneChildEach(memoryExporter.getFinishedSpans());
+      expectReceiver2ProcessWith1ChildEach(memoryExporter.getFinishedSpans());
     });
 
     it.skip("should create processing child with for(msg of messages)", () => {
       for (const msg of receivedMessages) {
         createProcessChildSpan(msg.Body);
       }
-      expectReceiver2ProcessWithOneChildEach(memoryExporter.getFinishedSpans());
+      expectReceiver2ProcessWith1ChildEach(memoryExporter.getFinishedSpans());
     });
 
     it.skip("should create processing child with array.values() for loop", () => {
       for (const msg of receivedMessages.values()) {
         createProcessChildSpan(msg.Body);
       }
-      expectReceiver2ProcessWithOneChildEach(memoryExporter.getFinishedSpans());
+      expectReceiver2ProcessWith1ChildEach(memoryExporter.getFinishedSpans());
+    });
+
+    it.skip("should create processing child with array.values() for loop and awaits in process", async () => {
+      for (const msg of receivedMessages.values()) {
+        await new Promise((resolve) => setImmediate(resolve));
+        createProcessChildSpan(msg.Body);
+      }
+      expectReceiver2ProcessWith1ChildEach(memoryExporter.getFinishedSpans());
     });
   });
 });

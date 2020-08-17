@@ -217,6 +217,23 @@ describe("plugin-aws-sdk", () => {
         );
         done();
       });
+
+      it("should create span if no callback is supplied", (done) => {
+        const s3 = new AWS.S3();
+        const bucketName = "aws-test-bucket";
+
+        s3.putObject({
+          Bucket: bucketName,
+          Key: "key name from tests",
+          Body: "Hello World!",
+        }).send();
+
+        setImmediate(() => {
+          const awsSpans = getAwsSpans();
+          expect(awsSpans.length).toBe(1);
+          done();
+        });
+      });
     });
 
     describe("send return error", () => {

@@ -12,6 +12,7 @@ import * as AWS from "aws-sdk";
 import {
   getExtractedSpanContext,
   TRACE_PARENT_HEADER,
+  setActiveSpan,
 } from "@opentelemetry/core";
 import {
   MessageBodyAttributeMap,
@@ -148,28 +149,25 @@ export class SqsServiceExtension implements ServiceExtension {
       const queueName = this.extractQueueNameFromUrl(queueUrl);
 
       messages.forEach((message: AWS.SQS.Message) => {
-        const parentContext: Context = propagation.extract(
+        const extractedParentContext: Context = propagation.extract(
           message.MessageAttributes,
           contextGetterFunc
         );
-        message[START_SPAN_FUNCTION] = () => {
-          return this.tracer.withSpan(span, () =>
-            this.startSingleMessageSpan(
-              queueUrl,
-              queueName,
-              message,
-              parentContext
-            )
+        message[START_SPAN_FUNCTION] = () =>
+          this.startMessagingProcessSpan(
+            queueUrl,
+            queueName,
+            message,
+            span,
+            extractedParentContext
           );
-        };
         message[END_SPAN_FUNCTION] = () =>
           console.log(
             "open-telemetry aws-sdk plugin: end span called on sqs message which was not started"
           );
       });
 
-      this.patchArrayFunction(messages, "forEach");
-      this.patchArrayFunction(messages, "map");
+      this.patchArrayForProcessSpans(messages);
     }
   };
 
@@ -186,10 +184,11 @@ export class SqsServiceExtension implements ServiceExtension {
     return pisces[pisces.length - 1];
   };
 
-  startSingleMessageSpan(
+  startMessagingProcessSpan(
     queueUrl: string,
     queueName: string,
     message: AWS.SQS.Message,
+    receiveMessageSpan: Span,
     propagtedContext: Context
   ): Span {
     const links: Link[] = [];
@@ -211,34 +210,57 @@ export class SqsServiceExtension implements ServiceExtension {
         [SqsAttributeNames.MESSAGING_OPERATION]: "process",
       },
       links,
+      parent: receiveMessageSpan,
     });
 
-    message[START_SPAN_FUNCTION] = () =>
-      console.log(
-        "open-telemetry aws-sdk plugin: trying to start sqs processing span twice."
-      );
+    message[START_SPAN_FUNCTION] = () => messageSpan;
     message[END_SPAN_FUNCTION] = () => {
       messageSpan.end();
-      message[END_SPAN_FUNCTION] = () =>
-        console.log(
-          "open-telemetry aws-sdk plugin: trying to end sqs processing span which was already ended."
-        );
+      message[END_SPAN_FUNCTION] = () => {};
     };
     return messageSpan;
   }
 
-  patchArrayFunction(messages: AWS.SQS.Message[], functionName: string) {
+  patchArrayForProcessSpans(messages: any[]) {
+    this.patchArrayFunction(messages, "forEach");
+    this.patchArrayFunction(messages, "map");
+    this.patchArrayFilter(messages);
+  }
+
+  patchArrayFilter(messages: any[]) {
+    const self = this;
+    const origFunc = messages.filter;
+    messages.filter = function (...args) {
+      const newArray = origFunc.apply(this, arguments);
+      self.patchArrayForProcessSpans(newArray);
+      return newArray;
+    };
+  }
+
+  patchArrayFunction(messages: any[], functionName: string) {
     const self = this;
     const origFunc = messages[functionName];
-    messages[functionName] = function (callback) {
-      return origFunc.call(this, function (message: AWS.SQS.Message) {
+    messages[functionName] = function (callback, thisArg) {
+      const wrappedCallback = function (message: AWS.SQS.Message) {
         const messageSpan = message[START_SPAN_FUNCTION]();
-        const res = self.tracer.withSpan(messageSpan, () =>
-          callback.apply(this, arguments)
-        );
-        message[END_SPAN_FUNCTION]();
+        const res = self.tracer.withSpan(messageSpan, () => {
+          try {
+            return callback.apply(this, arguments);
+          } catch (err) {
+            throw err;
+          } finally {
+            message[END_SPAN_FUNCTION]();
+          }
+        });
+        if (res) {
+          res[START_SPAN_FUNCTION] = message[START_SPAN_FUNCTION];
+          res[END_SPAN_FUNCTION] = message[END_SPAN_FUNCTION];
+        }
         return res;
-      });
+      };
+      const funcResult = origFunc.call(this, wrappedCallback, thisArg);
+      if (Array.isArray(funcResult)) self.patchArrayForProcessSpans(funcResult);
+      return funcResult;
     };
   }
 
