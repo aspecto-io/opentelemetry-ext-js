@@ -1,1 +1,2 @@
-console.log('hi');
+export * from './typeorm';
+export * from './types';

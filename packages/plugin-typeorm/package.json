@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-plugin-typeorm",
-    "version": "0.0.4",
+    "version": "0.0.1",
     "description": "open telemetry instrumentation for the `typeorm` module",
     "keywords": [
         "typeorm",
@@ -25,6 +25,7 @@
     },
     "dependencies": {
         "@opentelemetry/core": "^0.11.0",
+        "@opentelemetry/semantic-conventions": "^0.11.0",
         "shimmer": "^1.2.1"
     },
     "devDependencies": {

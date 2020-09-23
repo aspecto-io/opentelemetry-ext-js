@@ -25,3 +25,11 @@ const provider = new NodeTracerProvider({
   },
 });
 ```
+
+### TypeORM Plugin Options
+
+TypeORM plugin has few options available to choose from. You can set the following:
+
+| Options        | Type                                   | Description                                                                                     |
+| -------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `responseHook` | `TypeormResponseCustomAttributesFunction` | Hook called statement response is returned, which allows to add custom attributes to span.      |
