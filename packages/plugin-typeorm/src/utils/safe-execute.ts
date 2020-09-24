@@ -1,10 +1,10 @@
-import { Span, CanonicalCode } from '@opentelemetry/api';
+import { Span, CanonicalCode, Logger } from '@opentelemetry/api';
 
 export function safeExecute<T extends (...args: unknown[]) => ReturnType<T>>(
     spans: Span[],
     execute: T,
     rethrow: boolean,
-    logger: typeof console
+    logger: Logger
 ): ReturnType<T> | void {
     try {
         return execute();
