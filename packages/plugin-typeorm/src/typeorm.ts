@@ -94,10 +94,10 @@ class TypeormPlugin extends BasePlugin<typeof typeorm> {
                     attributes,
                 });
 
-                const response: Promise<any> = thisPlugin._tracer.withSpan(newSpan, () =>
-                    original.apply(this, arguments)
-                );
                 try {
+                    const response: Promise<any> = thisPlugin._tracer.withSpan(newSpan, () =>
+                        original.apply(this, arguments)
+                    );
                     const resolved = await response;
                     if (thisPlugin._config?.responseHook) {
                         safeExecute([], () => thisPlugin._config.responseHook(newSpan, resolved), false);
