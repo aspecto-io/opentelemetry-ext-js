@@ -2,14 +2,13 @@ import { BasePlugin } from '@opentelemetry/core';
 import { Span, CanonicalCode, SpanKind } from '@opentelemetry/api';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
 import { TypeormPluginConfig } from './types';
-import { safeExecute } from './utils/safe-execute';
+import { safeExecute, getParamNames } from './utils';
 import shimmer from 'shimmer';
 import * as typeorm from 'typeorm';
 
 const VERSION = '0.0.1';
 
 class TypeormPlugin extends BasePlugin<typeof typeorm> {
-    private connectionOptions: typeorm.ConnectionOptions;
     protected _config!: TypeormPluginConfig;
 
     constructor(readonly moduleName: string) {
@@ -21,7 +20,7 @@ class TypeormPlugin extends BasePlugin<typeof typeorm> {
         shimmer.wrap(
             this._moduleExports.ConnectionManager.prototype,
             'create',
-            this._getConnectionManagerPatch.bind(this)
+            this._createConnectionManagerPatch.bind(this)
         );
 
         return this._moduleExports;
@@ -30,11 +29,9 @@ class TypeormPlugin extends BasePlugin<typeof typeorm> {
         shimmer.unwrap(this._moduleExports.ConnectionManager.prototype, 'create');
     }
 
-    private _getConnectionManagerPatch(original: (options: typeorm.ConnectionOptions) => typeorm.Connection) {
+    private _createConnectionManagerPatch(original: (options: typeorm.ConnectionOptions) => typeorm.Connection) {
         const thisPlugin = this;
         return function (options: typeorm.ConnectionOptions) {
-            thisPlugin.connectionOptions = options;
-            console.log(options);
             const connection: typeorm.Connection = original.apply(this, arguments);
 
             // Both types using same patch right now, keep different declarations for future improvements
@@ -79,23 +76,27 @@ class TypeormPlugin extends BasePlugin<typeof typeorm> {
         thisPlugin._logger.debug(`TypeormPlugin: patched EntityManager ${opName} prototype`);
         return function (original: Function) {
             return async function (...args: any[]) {
+                const connectionOptions = this?.connection?.options ?? {}
                 const attributes = {
-                    [DatabaseAttribute.DB_SYSTEM]: thisPlugin.connectionOptions.type,
-                    [DatabaseAttribute.DB_USER]: (thisPlugin.connectionOptions as any).username,
+                    [DatabaseAttribute.DB_SYSTEM]: connectionOptions.type,
+                    [DatabaseAttribute.DB_USER]: connectionOptions.username,
                     // [GeneralAttribute.NET_PEER_IP]: '?',
-                    [GeneralAttribute.NET_PEER_NAME]: (thisPlugin.connectionOptions as any).host,
-                    [GeneralAttribute.NET_PEER_PORT]: (thisPlugin.connectionOptions as any).port,
+                    [GeneralAttribute.NET_PEER_NAME]: connectionOptions.host,
+                    [GeneralAttribute.NET_PEER_PORT]: connectionOptions.port,
                     // [GeneralAttribute.NET_TRANSPORT]: '?',
-                    [DatabaseAttribute.DB_NAME]: thisPlugin.connectionOptions.database,
+                    [DatabaseAttribute.DB_NAME]: connectionOptions.database,
                     [DatabaseAttribute.DB_OPERATION]: opName,
-                    [DatabaseAttribute.DB_STATEMENT]: JSON.stringify(args[0]),
+                    [DatabaseAttribute.DB_STATEMENT]: JSON.stringify(buildStatement(original, args)),
                 };
 
                 Object.entries(attributes).forEach(([key, value]) => {
                     if (value === undefined) delete attributes[key];
                 });
 
-                const newSpan: Span = thisPlugin._tracer.startSpan(`TypeORM ${opName}`, { kind: SpanKind.CLIENT, attributes });
+                const newSpan: Span = thisPlugin._tracer.startSpan(`TypeORM ${opName}`, {
+                    kind: SpanKind.CLIENT,
+                    attributes,
+                });
 
                 const response: Promise<any> = thisPlugin._tracer.withSpan(newSpan, () =>
                     original.apply(this, arguments)
@@ -119,5 +120,30 @@ class TypeormPlugin extends BasePlugin<typeof typeorm> {
         };
     }
 }
+
+const buildStatement = (func: Function, args: any[]) => {
+    const paramNames = getParamNames(func);
+    const statement = {};
+    paramNames.forEach((pName, i) => {
+        const value = args[i];
+        if (!value) return;
+
+        try {
+            const stringified = JSON.stringify(value);
+            if (stringified) {
+                statement[pName] = args[i];
+                return;
+            }
+        } catch (err) {}
+        if (value?.name) {
+            statement[pName] = value.name;
+            return;
+        }
+        if (value?.constructor?.name) {
+            statement[pName] = value.constructor.name;
+        }
+    });
+    return statement;
+};
 
 export const plugin = new TypeormPlugin('typeorm');
