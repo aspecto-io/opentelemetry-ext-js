@@ -46,12 +46,12 @@ jobs:
         run: yarn --cwd packages/${{ github.event.inputs.packageName }} build
 
       - name: Publish to NPM
-        run: npm publish
+        run: yarn --cwd packages/${{ github.event.inputs.packageName }} publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Push Changes
-        run: /
+        run: |
           git add .
           git commit --amend --no-edit
           git push
