@@ -9,6 +9,12 @@
     "homepage": "https://github.com/aspecto-io/opentelemetry-ext-js",
     "license": "Apache-2.0",
     "main": "dist/index.js",
+    "files": [
+        "dist/**/*.js",
+        "dist/**/*.d.ts",
+        "LICENSE",
+        "README.md"
+    ],
     "repository": {
         "type": "git",
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js.git"
