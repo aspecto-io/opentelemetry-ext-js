@@ -100,7 +100,7 @@ class TypeormPlugin extends BasePlugin<typeof typeorm> {
                     );
                     const resolved = await response;
                     if (thisPlugin._config?.responseHook) {
-                        safeExecute([], () => thisPlugin._config.responseHook(newSpan, resolved), false);
+                        safeExecute([], () => thisPlugin._config.responseHook(newSpan, resolved), false, thisPlugin._logger);
                     }
                     return resolved;
                 } catch (err) {

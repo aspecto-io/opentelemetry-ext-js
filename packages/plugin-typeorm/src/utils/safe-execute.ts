@@ -3,7 +3,8 @@ import { Span, CanonicalCode } from '@opentelemetry/api';
 export function safeExecute<T extends (...args: unknown[]) => ReturnType<T>>(
     spans: Span[],
     execute: T,
-    rethrow: boolean
+    rethrow: boolean,
+    logger: typeof console
 ): ReturnType<T> | void {
     try {
         return execute();
@@ -18,6 +19,6 @@ export function safeExecute<T extends (...args: unknown[]) => ReturnType<T>>(
             });
             throw error;
         }
-        this._logger?.error('Caught Error ', error);
+        logger?.error('Caught Error ', error);
     }
 }
