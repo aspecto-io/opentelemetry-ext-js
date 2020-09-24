@@ -4,9 +4,8 @@ import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-con
 import { TypeormPluginConfig } from './types';
 import { safeExecute, getParamNames } from './utils';
 import shimmer from 'shimmer';
+import { VERSION } from './version';
 import * as typeorm from 'typeorm';
-
-const VERSION = '0.0.1';
 
 class TypeormPlugin extends BasePlugin<typeof typeorm> {
     protected _config!: TypeormPluginConfig;
