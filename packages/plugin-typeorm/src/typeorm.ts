@@ -87,6 +87,7 @@ class TypeormPlugin extends BasePlugin<typeof typeorm> {
                     [DatabaseAttribute.DB_NAME]: connectionOptions.database,
                     [DatabaseAttribute.DB_OPERATION]: opName,
                     [DatabaseAttribute.DB_STATEMENT]: JSON.stringify(buildStatement(original, args)),
+                    component: 'typeorm'
                 };
 
                 Object.entries(attributes).forEach(([key, value]) => {
