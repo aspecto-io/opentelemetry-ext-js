@@ -102,15 +102,15 @@ class TypeormPlugin extends BasePlugin<typeof typeorm> {
                     if (thisPlugin._config?.responseHook) {
                         safeExecute([], () => thisPlugin._config.responseHook(newSpan, resolved), false);
                     }
-                    newSpan.end();
                     return resolved;
                 } catch (err) {
                     newSpan.setStatus({
                         code: CanonicalCode.UNKNOWN,
                         message: err.message,
                     });
-                    newSpan.end();
                     throw err;
+                } finally {
+                    newSpan.end();
                 }
             };
         };
