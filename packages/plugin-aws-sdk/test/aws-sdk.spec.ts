@@ -80,7 +80,7 @@ describe("plugin-aws-sdk", () => {
             // span 2
             s3.putObject(params, function (err, data) {
               if (err) console.log(err);
-              resolve();
+              resolve({});
             });
           });
         });
@@ -159,7 +159,7 @@ describe("plugin-aws-sdk", () => {
                 if (err) console.log(err);
                 numberOfCalls++;
                 if (numberOfCalls === 2) {
-                  resolveCb();
+                  resolveCb({});
                 }
               });
               // NO span
@@ -167,7 +167,7 @@ describe("plugin-aws-sdk", () => {
             });
 
             await Promise.all([cbPromise, reqPromise]).then(() => {
-              resolve();
+              resolve({});
             });
           });
         });
@@ -202,7 +202,7 @@ describe("plugin-aws-sdk", () => {
             const request = s3.putObject(params);
             // span 2
             await request.promise();
-            resolve();
+            resolve({});
           });
         });
 
@@ -248,7 +248,7 @@ describe("plugin-aws-sdk", () => {
         const keyName = "aws-test-object.txt";
         await new Promise((resolve) => {
           s3.createBucket({ Bucket: bucketName }, async function () {
-            resolve();
+            resolve({});
           });
         });
 

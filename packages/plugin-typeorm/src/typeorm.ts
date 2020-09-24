@@ -51,21 +51,17 @@ class TypeormPlugin extends BasePlugin<typeof typeorm> {
                 'decrement',
             ];
 
-            functionsUsingEntityPersistExecutor.forEach((op) =>
-                shimmer.wrap(
-                    connection.manager,
-                    op as keyof typeorm.EntityManager,
-                    thisPlugin._getEntityManagerFunctionPatch(op).bind(thisPlugin)
-                )
-            );
+            const patch = (operation: string) => {
+                if (connection.manager.hasOwnProperty(operation))
+                    shimmer.wrap(
+                        connection.manager,
+                        operation as keyof typeorm.EntityManager,
+                        thisPlugin._getEntityManagerFunctionPatch(operation).bind(thisPlugin)
+                    );
+            };
 
-            functionsUsingQueryBuilder.forEach((op) =>
-                shimmer.wrap(
-                    connection.manager,
-                    op as keyof typeorm.EntityManager,
-                    thisPlugin._getEntityManagerFunctionPatch(op).bind(thisPlugin)
-                )
-            );
+            functionsUsingEntityPersistExecutor.forEach(patch);
+            functionsUsingQueryBuilder.forEach(patch);
 
             return connection;
         };
@@ -76,7 +72,7 @@ class TypeormPlugin extends BasePlugin<typeof typeorm> {
         thisPlugin._logger.debug(`TypeormPlugin: patched EntityManager ${opName} prototype`);
         return function (original: Function) {
             return async function (...args: any[]) {
-                const connectionOptions = this?.connection?.options ?? {}
+                const connectionOptions = this?.connection?.options ?? {};
                 const attributes = {
                     [DatabaseAttribute.DB_SYSTEM]: connectionOptions.type,
                     [DatabaseAttribute.DB_USER]: connectionOptions.username,
@@ -87,7 +83,7 @@ class TypeormPlugin extends BasePlugin<typeof typeorm> {
                     [DatabaseAttribute.DB_NAME]: connectionOptions.database,
                     [DatabaseAttribute.DB_OPERATION]: opName,
                     [DatabaseAttribute.DB_STATEMENT]: JSON.stringify(buildStatement(original, args)),
-                    component: 'typeorm'
+                    component: 'typeorm',
                 };
 
                 Object.entries(attributes).forEach(([key, value]) => {
@@ -105,7 +101,7 @@ class TypeormPlugin extends BasePlugin<typeof typeorm> {
                 try {
                     const resolved = await response;
                     if (thisPlugin._config?.responseHook) {
-                        safeExecute([], () => this._config.responseHook(newSpan, resolved), false);
+                        safeExecute([], () => thisPlugin._config.responseHook(newSpan, resolved), false);
                     }
                     newSpan.end();
                     return resolved;

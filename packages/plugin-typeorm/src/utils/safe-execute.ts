@@ -18,6 +18,6 @@ export function safeExecute<T extends (...args: unknown[]) => ReturnType<T>>(
             });
             throw error;
         }
-        this._logger.error('Caught Error ', error);
+        this._logger?.error('Caught Error ', error);
     }
 }

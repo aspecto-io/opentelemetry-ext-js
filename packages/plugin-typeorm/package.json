@@ -16,7 +16,7 @@
     "scripts": {
         "build": "tsc",
         "prepare": "yarn run build",
-        "test": "echo 'not yet..'",
+        "test": "jest",
         "watch": "tsc -w",
         "prettier": "prettier --config .prettierrc.yml --write \"src/**/*.{ts,tsx,js,jsx,json}\""
     },
