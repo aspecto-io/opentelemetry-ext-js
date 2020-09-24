@@ -18,14 +18,13 @@ import {
 import { KafkaJsPluginConfig } from './types';
 import { AttributeNames } from './enums';
 import { getHeaderAsString } from './utils';
-
-const pluginVersion = '0.0.4';
+import { VERSION } from './version';
 
 export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
     protected _config!: KafkaJsPluginConfig;
 
     constructor(readonly moduleName: string) {
-        super('opentelemetry-plugin-kafkajs', pluginVersion);
+        super('opentelemetry-plugin-kafkajs', VERSION);
     }
 
     protected patch() {

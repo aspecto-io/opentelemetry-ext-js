@@ -9,10 +9,13 @@ yarn-debug.log*
 yarn-error.log*
 
 # lock files
-yarn.lock
 package-lock.json
-packages/**/yarn.lock
+packages/plugin-kafkajs/yarn.lock
+packages/plugin-aws-sdk/yarn.lock
 packages/**/package-lock.json
 
 # VsCode configs
 .vscode/
+
+# typescript
+*.tsbuildinfo

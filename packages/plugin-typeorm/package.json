@@ -1,18 +1,18 @@
 {
-    "name": "opentelemetry-plugin-kafkajs",
-    "version": "0.0.4",
-    "description": "open telemetry instrumentation for the `kafkajs` kafka client",
+    "name": "opentelemetry-plugin-typeorm",
+    "version": "0.0.1",
+    "description": "open telemetry instrumentation for the `typeorm` module",
     "keywords": [
-        "kafka",
-        "opentelemetry",
-        "kafkajs"
+        "typeorm",
+        "opentelemetry"
     ],
     "homepage": "https://github.com/aspecto-io/opentelemetry-ext-js",
     "license": "Apache-2.0",
-    "main": "dist/src/index.js",
+    "main": "dist/index.js",
     "files": [
-        "dist/src/**/*.js",
-        "dist/src/**/*.d.ts",
+        "dist/**/*.js",
+        "dist/**/*.js.map",
+        "dist/**/*.d.ts",
         "LICENSE",
         "README.md"
     ],
@@ -25,27 +25,29 @@
         "prepare": "yarn run build",
         "test": "jest",
         "watch": "tsc -w",
-        "prettier": "prettier --config .prettierrc --write \"src/**/*.{ts,tsx,js,jsx,json}\""
+        "prettier": "prettier --config .prettierrc.yml --write \"src/**/*.{ts,tsx,js,jsx,json}\""
     },
     "bugs": {
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
     },
+    "dependencies": {
+        "@opentelemetry/core": "^0.11.0",
+        "@opentelemetry/semantic-conventions": "^0.11.0",
+        "shimmer": "^1.2.1"
+    },
     "devDependencies": {
-        "@opentelemetry/node": "^0.8.3",
-        "@opentelemetry/tracing": "^0.8.3",
+        "@opentelemetry/node": "^0.11.0",
+        "@opentelemetry/tracing": "^0.11.0",
         "@types/jest": "^25.2.3",
         "@types/shimmer": "^1.0.1",
         "husky": "^4.2.5",
-        "jest": "^26.0.1",
-        "kafkajs": "^1.12.0",
+        "jest": "^26.4.2",
         "lint-staged": "^10.2.9",
         "prettier": "2.0.5",
+        "reflect-metadata": "^0.1.13",
         "ts-jest": "^26.1.0",
-        "typescript": "^3.9.5"
-    },
-    "dependencies": {
-        "@opentelemetry/core": "^0.8.3",
-        "shimmer": "^1.2.1"
+        "typeorm": "^0.2.26",
+        "typescript": "^4.0.3"
     },
     "jest": {
         "preset": "ts-jest",

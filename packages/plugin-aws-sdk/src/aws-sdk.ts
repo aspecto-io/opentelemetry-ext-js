@@ -15,8 +15,7 @@ import AWS from "aws-sdk";
 import { AttributeNames } from "./enums";
 import { ServicesExtensions } from "./services";
 import { AwsSdkPluginConfig } from "./types";
-
-const VERSION = "0.0.10";
+import { VERSION } from "./version";
 
 class AwsPlugin extends BasePlugin<typeof AWS> {
   readonly component: string;

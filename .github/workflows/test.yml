@@ -1,0 +1,26 @@
+name: Build
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 5
+      matrix:
+        packageName: [plugin-kafkajs, plugin-typeorm, plugin-aws-sdk]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Dependencies
+        run: yarn --cwd packages/${{ matrix.packageName }}
+
+      - name: Test
+        run: yarn --cwd packages/${{ matrix.packageName }} test
+
+      - name: Build
+        run: yarn --cwd packages/${{ matrix.packageName }} build
+
+    
