@@ -153,18 +153,28 @@ export class SqsServiceExtension implements ServiceExtension {
           message.MessageAttributes,
           contextGetterFunc
         );
-        message[START_SPAN_FUNCTION] = () =>
-          this.startMessagingProcessSpan(
-            queueUrl,
-            queueName,
-            message,
-            span,
-            extractedParentContext
-          );
-        message[END_SPAN_FUNCTION] = () =>
-          console.log(
-            "open-telemetry aws-sdk plugin: end span called on sqs message which was not started"
-          );
+
+        Object.defineProperty(message, START_SPAN_FUNCTION, {
+          enumerable: false,
+          writable: true,
+          value: () =>
+            this.startMessagingProcessSpan(
+              queueUrl,
+              queueName,
+              message,
+              span,
+              extractedParentContext
+            ),
+        });
+
+        Object.defineProperty(message, END_SPAN_FUNCTION, {
+          enumerable: false,
+          writable: true,
+          value: () =>
+            console.log(
+              "open-telemetry aws-sdk plugin: end span called on sqs message which was not started"
+            ),
+        });
       });
 
       this.patchArrayForProcessSpans(messages);
@@ -213,11 +223,25 @@ export class SqsServiceExtension implements ServiceExtension {
       parent: receiveMessageSpan,
     });
 
-    message[START_SPAN_FUNCTION] = () => messageSpan;
-    message[END_SPAN_FUNCTION] = () => {
-      messageSpan.end();
-      message[END_SPAN_FUNCTION] = () => {};
-    };
+    Object.defineProperty(message, START_SPAN_FUNCTION, {
+      enumerable: false,
+      writable: true,
+      value: () => messageSpan,
+    });
+
+    Object.defineProperty(message, END_SPAN_FUNCTION, {
+      enumerable: false,
+      writable: true,
+      value: () => {
+        messageSpan.end();
+        Object.defineProperty(message, END_SPAN_FUNCTION, {
+          enumerable: false,
+          writable: true,
+          value: () => {},
+        });
+      },
+    });
+
     return messageSpan;
   }
 
@@ -230,31 +254,46 @@ export class SqsServiceExtension implements ServiceExtension {
   patchArrayFilter(messages: any[]) {
     const self = this;
     const origFunc = messages.filter;
-    messages.filter = function (...args) {
+    const patchedFunc = function (...args) {
       const newArray = origFunc.apply(this, arguments);
       self.patchArrayForProcessSpans(newArray);
       return newArray;
     };
+
+    Object.defineProperty(messages, "filter", {
+      enumerable: false,
+      value: patchedFunc,
+    });
   }
 
   patchArrayFunction(messages: any[], functionName: string) {
     const self = this;
     const origFunc = messages[functionName];
-    messages[functionName] = function (callback, thisArg) {
+    const patchedFunc = function (callback, thisArg) {
       const wrappedCallback = function (message: AWS.SQS.Message) {
-        const messageSpan = message[START_SPAN_FUNCTION]();
+        const messageSpan = message[START_SPAN_FUNCTION]?.();
+        if (!messageSpan) return callback.apply(this, arguments);
+
         const res = self.tracer.withSpan(messageSpan, () => {
           try {
             return callback.apply(this, arguments);
           } catch (err) {
             throw err;
           } finally {
-            message[END_SPAN_FUNCTION]();
+            message[END_SPAN_FUNCTION]?.();
           }
         });
-        if (res) {
-          res[START_SPAN_FUNCTION] = message[START_SPAN_FUNCTION];
-          res[END_SPAN_FUNCTION] = message[END_SPAN_FUNCTION];
+        if (res && typeof res === "object") {
+          Object.defineProperty(
+            res,
+            START_SPAN_FUNCTION,
+            Object.getOwnPropertyDescriptor(message, START_SPAN_FUNCTION)
+          );
+          Object.defineProperty(
+            res,
+            END_SPAN_FUNCTION,
+            Object.getOwnPropertyDescriptor(message, END_SPAN_FUNCTION)
+          );
         }
         return res;
       };
@@ -262,6 +301,11 @@ export class SqsServiceExtension implements ServiceExtension {
       if (Array.isArray(funcResult)) self.patchArrayForProcessSpans(funcResult);
       return funcResult;
     };
+
+    Object.defineProperty(messages, functionName, {
+      enumerable: false,
+      value: patchedFunc,
+    });
   }
 
   InjectPropagationContext(
