@@ -12,7 +12,6 @@ import * as AWS from "aws-sdk";
 import {
   getExtractedSpanContext,
   TRACE_PARENT_HEADER,
-  setActiveSpan,
 } from "@opentelemetry/core";
 import {
   MessageBodyAttributeMap,
