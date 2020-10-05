@@ -220,6 +220,12 @@ describe("sqs", () => {
       expectReceiver2ProcessWith1ChildEach(memoryExporter.getFinishedSpans());
     });
 
+    it("should not fail when mapping to non-object type", async () => {
+      receivedMessages
+        .map((msg) => "map result is string")
+        .map((s) => "some other string");
+    });
+
     it("should create one processing child when throws in map", async () => {
       try {
         receivedMessages.map((msg) => {
