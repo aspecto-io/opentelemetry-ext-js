@@ -1,1 +1,1 @@
-export * from "./aws-sdk";
+export * from './aws-sdk';
