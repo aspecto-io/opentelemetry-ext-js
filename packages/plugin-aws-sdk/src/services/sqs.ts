@@ -19,6 +19,7 @@ import {
   SendMessageBatchRequest,
   SendMessageBatchRequestEntry,
 } from "aws-sdk/clients/sqs";
+import { AwsSdkSqsProcessCustomAttributeFunction } from "../types";
 
 export enum SqsAttributeNames {
   // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md
@@ -60,13 +61,11 @@ const contextGetterFunc = (
 };
 
 export class SqsServiceExtension implements ServiceExtension {
-  tracer: Tracer;
-  logger: Logger;
-
-  constructor(tracer: Tracer, logger: Logger) {
-    this.tracer = tracer;
-    this.logger = logger;
-  }
+  constructor(
+    private tracer: Tracer,
+    private logger: Logger,
+    private sqsProcessHook: AwsSdkSqsProcessCustomAttributeFunction
+  ) {}
 
   requestHook(request: AWS.Request<any, any>): RequestMetadata {
     const queueUrl = this.extractQueueUrl(request);
@@ -240,6 +239,12 @@ export class SqsServiceExtension implements ServiceExtension {
         });
       },
     });
+
+    if (this.sqsProcessHook) {
+      try {
+        this.sqsProcessHook(messageSpan, message);
+      } catch {}
+    }
 
     return messageSpan;
   }
