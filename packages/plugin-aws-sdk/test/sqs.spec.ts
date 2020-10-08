@@ -227,6 +227,10 @@ describe("sqs", () => {
         .map((s) => "some other string");
     });
 
+    it("should not fail when mapping to undefined type", async () => {
+      receivedMessages.map((msg) => undefined).map((s) => "some other string");
+    });
+
     it("should create one processing child when throws in map", async () => {
       try {
         receivedMessages.map((msg) => {

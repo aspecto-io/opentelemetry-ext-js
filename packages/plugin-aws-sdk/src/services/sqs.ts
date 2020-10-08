@@ -275,7 +275,7 @@ export class SqsServiceExtension implements ServiceExtension {
     const origFunc = messages[functionName];
     const patchedFunc = function (callback, thisArg) {
       const wrappedCallback = function (message: AWS.SQS.Message) {
-        const messageSpan = message[START_SPAN_FUNCTION]?.();
+        const messageSpan = message?.[START_SPAN_FUNCTION]?.();
         if (!messageSpan) return callback.apply(this, arguments);
 
         const res = self.tracer.withSpan(messageSpan, () => {
@@ -287,7 +287,7 @@ export class SqsServiceExtension implements ServiceExtension {
             message[END_SPAN_FUNCTION]?.();
           }
         });
-        if (res && typeof res === "object") {
+        if (typeof res === "object") {
           Object.defineProperty(
             res,
             START_SPAN_FUNCTION,
