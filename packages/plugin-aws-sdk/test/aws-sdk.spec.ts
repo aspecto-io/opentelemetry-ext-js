@@ -273,7 +273,7 @@ describe("plugin-aws-sdk", () => {
         enabled: true,
         preRequestHook: (
           span: Span,
-          request: { params: { [name: string]: any } }
+          request: { params: Record<string, any> }
         ) => {
           span.setAttribute("attribute from hook", request.params["Bucket"]);
         },

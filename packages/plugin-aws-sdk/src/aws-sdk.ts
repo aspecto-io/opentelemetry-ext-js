@@ -30,7 +30,8 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
   protected patch() {
     this.servicesExtensions = new ServicesExtensions(
       this._tracer,
-      this._logger
+      this._logger,
+      this._config
     );
 
     this._logger.debug(

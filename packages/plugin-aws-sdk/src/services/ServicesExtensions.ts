@@ -2,12 +2,20 @@ import { Tracer, Span, Logger } from "@opentelemetry/api";
 import { ServiceExtension, RequestMetadata } from "./ServiceExtension";
 import { SqsServiceExtension } from "./sqs";
 import * as AWS from "aws-sdk";
+import { AwsSdkPluginConfig } from "../types";
 
 export class ServicesExtensions implements ServiceExtension {
   services: Map<string, ServiceExtension> = new Map();
 
-  constructor(tracer: Tracer, logger: Logger) {
-    this.services.set("sqs", new SqsServiceExtension(tracer, logger));
+  constructor(
+    tracer: Tracer,
+    logger: Logger,
+    pluginConfig: AwsSdkPluginConfig
+  ) {
+    this.services.set(
+      "sqs",
+      new SqsServiceExtension(tracer, logger, pluginConfig?.sqsProcessHook)
+    );
   }
 
   requestHook(request: AWS.Request<any, any>): RequestMetadata {

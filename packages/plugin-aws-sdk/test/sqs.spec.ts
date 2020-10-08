@@ -3,11 +3,12 @@ import AWS, { AWSError } from "aws-sdk";
 import { NoopLogger } from "@opentelemetry/core";
 import { NodeTracerProvider } from "@opentelemetry/node";
 import { ContextManager } from "@opentelemetry/context-base";
-import { context, SpanKind } from "@opentelemetry/api";
+import { context, SpanKind, CanonicalCode } from "@opentelemetry/api";
 import {
   InMemorySpanExporter,
   SimpleSpanProcessor,
   ReadableSpan,
+  Span,
 } from "@opentelemetry/tracing";
 import { AsyncHooksContextManager } from "@opentelemetry/context-async-hooks";
 import { mockAwsSend } from "./testing-utils";
@@ -41,12 +42,8 @@ describe("sqs", () => {
     context.setGlobalContextManager(contextManager.enable());
 
     mockAwsSend(responseMockSuccess, {
-      Messages: [
-        { Body: JSON.stringify({ data: "msg 1" }) },
-        { Body: JSON.stringify({ data: "msg 2" }) },
-      ],
+      Messages: [{ Body: "msg 1 payload" }, { Body: "msg 2 payload" }],
     } as AWS.SQS.Types.ReceiveMessageResult);
-    plugin.enable(AWS, provider, logger);
   });
 
   afterEach(() => {
@@ -55,6 +52,8 @@ describe("sqs", () => {
   });
 
   describe("receive context", () => {
+    beforeEach(() => plugin.enable(AWS, provider, logger));
+
     const createReceiveChildSpan = () => {
       const childSpan = provider
         .getTracer("default")
@@ -145,6 +144,8 @@ describe("sqs", () => {
   });
 
   describe("process spans", () => {
+    beforeEach(() => plugin.enable(AWS, provider, logger));
+
     let receivedMessages: Message[];
 
     const createProcessChildSpan = (msgContext: any) => {
@@ -284,7 +285,7 @@ describe("sqs", () => {
 
     it("should create processing child with map and forEach calls", async () => {
       receivedMessages
-        .map((msg) => JSON.parse(msg.Body))
+        .map((msg) => ({ payload: msg.Body }))
         .forEach((msgBody) => {
           createProcessChildSpan(msgBody);
         });
@@ -320,6 +321,103 @@ describe("sqs", () => {
         createProcessChildSpan(msg.Body);
       }
       expectReceiver2ProcessWith1ChildEach(memoryExporter.getFinishedSpans());
+    });
+  });
+
+  describe("hooks", () => {
+    it("sqsProcessHook called and add message attribute to span", async (done) => {
+      const pluginConfig = {
+        enabled: true,
+        sqsProcessHook: (span: Span, message: AWS.SQS.Message) => {
+          span.setAttribute("attribute from sqs process hook", message.Body);
+        },
+      };
+
+      plugin.enable(AWS, provider, logger, pluginConfig);
+
+      const sqs = new AWS.SQS();
+      const res = await sqs
+        .receiveMessage({
+          QueueUrl: "queue/url/for/unittests",
+        })
+        .promise();
+      res.Messages.map(
+        (message) => "some mapping to create child process spans"
+      );
+
+      const processSpans = memoryExporter
+        .getFinishedSpans()
+        .filter(
+          (s) =>
+            s.attributes[SqsAttributeNames.MESSAGING_OPERATION] === "process"
+        );
+      expect(processSpans.length).toBe(2);
+      expect(
+        processSpans[0].attributes["attribute from sqs process hook"]
+      ).toBe("msg 1 payload");
+      expect(
+        processSpans[1].attributes["attribute from sqs process hook"]
+      ).toBe("msg 2 payload");
+
+      done();
+    });
+
+    it("sqsProcessHook not set in config", async (done) => {
+      const pluginConfig = {
+        enabled: true,
+      };
+      plugin.enable(AWS, provider, logger, pluginConfig);
+
+      const sqs = new AWS.SQS();
+      const res = await sqs
+        .receiveMessage({
+          QueueUrl: "queue/url/for/unittests",
+        })
+        .promise();
+      res.Messages.map(
+        (message) => "some mapping to create child process spans"
+      );
+      const processSpans = memoryExporter
+        .getFinishedSpans()
+        .filter(
+          (s) =>
+            s.attributes[SqsAttributeNames.MESSAGING_OPERATION] === "process"
+        );
+      expect(processSpans.length).toBe(2);
+      done();
+    });
+
+    it("sqsProcessHook throws does not fail span", async (done) => {
+      const pluginConfig = {
+        enabled: true,
+        sqsProcessHook: (span: Span, message: AWS.SQS.Message) => {
+          throw new Error("error from sqsProcessHook hook");
+        },
+      };
+
+      plugin.enable(AWS, provider, logger, pluginConfig);
+
+      const sqs = new AWS.SQS();
+      const res = await sqs
+        .receiveMessage({
+          QueueUrl: "queue/url/for/unittests",
+        })
+        .promise();
+      res.Messages.map(
+        (message) => "some mapping to create child process spans"
+      );
+
+      const processSpans = memoryExporter
+        .getFinishedSpans()
+        .filter(
+          (s) =>
+            s.attributes[SqsAttributeNames.MESSAGING_OPERATION] === "process"
+        );
+      expect(processSpans.length).toBe(2);
+      expect(processSpans[0].status.code).toStrictEqual(CanonicalCode.OK);
+      expect(processSpans[1].status.code).toStrictEqual(CanonicalCode.OK);
+
+      done();
     });
   });
 });
