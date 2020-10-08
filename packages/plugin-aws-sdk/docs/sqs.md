@@ -18,13 +18,13 @@ This behavior is partially implemented, [See discussion below](#processing-spans
 - Extract trace context from SQS MessageAttributes, and set span's `parent` and `links` correctly according to the spec.
 
 #### Processing Spans
-According to open telemetry specification (and to reasonable expectation for trace structure), user of this library would expect to see one span for the operation of receiving messages batch from SQS, and then, for each message, a span with it's own sub-tree for the processing of this specific message. 
+According to open telemetry specification (and to reasonable expectation for trace structure), user of this library would expect to see one span for the operation of receiving messages batch from SQS, and then, **for each message**, a span with it's own sub-tree for the processing of this specific message. 
 
 For example, if a `receiveMessages` returned 2 messages: 
 * `msg1` resulting in storing something to a DB.
 * `msg2` resulting in calling an external HTTP endpoint.  
 
-This will result in a creating a DB span that would be linked under `msg1` process, and an HTTP span that would be under `msg2` (in opposed to mixing all those operations under the single `receive` span, or start a new trace for each of them).
+This will result in a creating a DB span that would be the child of `msg1` process span, and an HTTP span that would be the child of `msg2` process span (in opposed to mixing all those operations under the single `receive` span, or start a new trace for each of them).
 
 Unfortunately, this is not so easy to implement in JS:
 1. The SDK is calling a single callback for the messages batch, and it's not straight forward to understand when each individual message processing starts and ends (and set the context correctly for cascading spans).
@@ -43,4 +43,16 @@ async function poll() {
 }
 ```
 
-Current implementation partially solves this issue by patching the `map` \ `forEach` functions on the `Messages` array of `receiveMessage` result. This handles issues like the one above, but will not handle situations where the processing is done in other patterns (multiple map\forEach calls, index access to the array, other array operations, etc). This is currently an open issue in the plugin.
+Current implementation partially solves this issue by patching the `map` \ `forEach` \ `Filter` functions on the `Messages` array of `receiveMessage` result. This handles issues like the one above, but will not handle situations where the processing is done in other patterns (multiple map\forEach calls, index access to the array, other array operations, etc). This is currently an open issue in the plugin.
+
+User can add custom attributes to the `process` span, by setting a function to `sqsProcessHook` in plugin config. For example:
+```js
+awsPluginConfig = {
+  enabled: true,
+  path: "opentelemetry-plugin-aws-sdk",
+  sqsProcessHook: (span, message) => {
+    span.setAttribute("sqs.receipt_handle", message.params?.ReceiptHandle);
+  }
+};
+```
+

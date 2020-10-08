@@ -34,6 +34,7 @@ aws-sdk plugin has few options available to choose from. You can set the followi
 | Options        | Type                                   | Description                                                                                     |
 | -------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `preRequestHook` | `AwsSdkRequestCustomAttributeFunction` | Hook called before request send, which allow to add custom attributes to span. |
+| `sqsProcessHook` | `AwsSdkSqsProcessCustomAttributeFunction` | Hook called after starting sqs `process` span (for each sqs received message), which allow to add custom attributes to it. |
 
 
 ## Span Attributes
