@@ -325,7 +325,7 @@ describe("sqs", () => {
   });
 
   describe("hooks", () => {
-    it("sqsProcessHook called and add request attribute to span", async (done) => {
+    it("sqsProcessHook called and add message attribute to span", async (done) => {
       const pluginConfig = {
         enabled: true,
         sqsProcessHook: (span: Span, message: AWS.SQS.Message) => {
