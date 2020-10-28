@@ -1,7 +1,7 @@
-import { Tracer, SpanKind, Span, propagation, Context, Link, Logger } from '@opentelemetry/api';
+import { Tracer, SpanKind, Span, propagation, Context, Link, Logger, getActiveSpan } from '@opentelemetry/api';
 import { RequestMetadata, ServiceExtension } from './ServiceExtension';
 import * as AWS from 'aws-sdk';
-import { getExtractedSpanContext, TRACE_PARENT_HEADER } from '@opentelemetry/core';
+import { TRACE_PARENT_HEADER, TRACE_STATE_HEADER } from '@opentelemetry/core';
 import {
     MessageBodyAttributeMap,
     SendMessageRequest,
@@ -72,6 +72,7 @@ export class SqsServiceExtension implements ServiceExtension {
                     const params: Record<string, any> = (request as any).params;
                     const attributesNames = params.MessageAttributeNames || [];
                     attributesNames.push(TRACE_PARENT_HEADER);
+                    attributesNames.push(TRACE_STATE_HEADER);
                     params.MessageAttributeNames = attributesNames;
                 }
                 break;
@@ -168,9 +169,10 @@ export class SqsServiceExtension implements ServiceExtension {
         propagtedContext: Context
     ): Span {
         const links: Link[] = [];
-        if (propagtedContext) {
+        const spanContext = getActiveSpan(propagtedContext)?.context();
+        if (spanContext) {
             links.push({
-                context: getExtractedSpanContext(propagtedContext),
+                context: spanContext,
             } as Link);
         }
 
