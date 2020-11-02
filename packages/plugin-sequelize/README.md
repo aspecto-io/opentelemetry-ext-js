@@ -28,7 +28,7 @@ const provider = new NodeTracerProvider({
 
 ### Sequelize Plugin Options
 
-TypeORM plugin has few options available to choose from. You can set the following:
+Sequelize plugin has few options available to choose from. You can set the following:
 
 | Options        | Type                                   | Description                                                                                     |
 | -------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
