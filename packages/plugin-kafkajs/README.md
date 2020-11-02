@@ -34,3 +34,7 @@ kafkajs plugin has few options available to choose from. You can set the followi
 | -------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `producerHook` | `KafkaProducerCustomAttributeFunction` | Hook called before producer message is sent, which allow to add custom attributes to span.      |
 | `consumerHook` | `KafkaConsumerCustomAttributeFunction` | Hook called before consumer message is processed, which allow to add custom attributes to span. |
+
+---
+
+This extension (and many others) was developed by [Aspecto](https://www.aspecto.io/) with ❤️

@@ -83,3 +83,7 @@ This plugin is a work in progress. We implemented some of the specific trace sem
 
 ## Potential Side Effects
 The plugin is doing best effort to support the trace specification of open telemetry. For SQS, it involves defining new attributes on the `Messages` array, as well as on the manipulated types generated from this array (to set correct trace context for a single SQS message operation). Those properties are defined as [non-enumerable](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Enumerability_and_ownership_of_properties) properties, so they have minimum side effect on the app. They will, however, show when using the `Object.getOwnPropertyDescriptors` and `Reflect.ownKeys` functions on SQS `Messages` array and for each `Message` in the array.
+
+---
+
+This extension (and many others) was developed by [Aspecto](https://www.aspecto.io/) with ❤️
