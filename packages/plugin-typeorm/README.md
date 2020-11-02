@@ -34,6 +34,7 @@ TypeORM plugin has few options available to choose from. You can set the followi
 | -------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `responseHook` | `TypeormResponseCustomAttributesFunction` | Hook called before response is returned, which allows to add custom attributes to span.      |
 
+
 ---
 
 This extension (and many others) was developed by [Aspecto](https://www.aspecto.io/) with ❤️
