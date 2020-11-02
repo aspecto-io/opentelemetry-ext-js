@@ -13,7 +13,6 @@ class SequelizePlugin extends BasePlugin<typeof sequelize> {
         super(`opentelemetry-plugin-sequelize`, VERSION);
     }
     protected patch(): typeof sequelize {
-        console.log('net', GeneralAttribute.IP_TCP);
         this._logger.debug(`applying patch to ${this.moduleName}@${this.version}`);
         shimmer.wrap(this._moduleExports.Sequelize.prototype, 'query', this._createQueryPatch.bind(this));
 
@@ -26,7 +25,7 @@ class SequelizePlugin extends BasePlugin<typeof sequelize> {
     private _createQueryPatch(original: Function) {
         const thisPlugin = this;
         return function (sql: any, option: any) {
-            if (thisPlugin._config.ignoreOrphanedSpans && !thisPlugin._tracer.getCurrentSpan()) {
+            if (thisPlugin._config?.ignoreOrphanedSpans && !thisPlugin?._tracer?.getCurrentSpan()) {
                 return original.apply(this, arguments);
             }
 
@@ -39,7 +38,7 @@ class SequelizePlugin extends BasePlugin<typeof sequelize> {
                 [DatabaseAttribute.DB_SYSTEM]: sequelizeInstance.getDialect(),
                 [DatabaseAttribute.DB_USER]: config?.username,
                 [GeneralAttribute.NET_PEER_NAME]: config?.host,
-                [GeneralAttribute.NET_PEER_PORT]: config?.port,
+                [GeneralAttribute.NET_PEER_PORT]: config?.port ? String(config?.port) : undefined,
                 [GeneralAttribute.NET_TRANSPORT]: thisPlugin._getNetTransport(config?.protocol),
                 [DatabaseAttribute.DB_NAME]: config?.database,
                 [DatabaseAttribute.DB_OPERATION]: operation,
