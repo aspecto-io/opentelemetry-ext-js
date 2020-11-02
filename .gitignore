@@ -13,6 +13,7 @@ package-lock.json
 packages/plugin-kafkajs/yarn.lock
 packages/plugin-aws-sdk/yarn.lock
 packages/**/package-lock.json
+yarn.lock
 
 # VsCode configs
 .vscode/
