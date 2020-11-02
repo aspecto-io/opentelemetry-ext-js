@@ -51,7 +51,7 @@ class TypeormPlugin extends BasePlugin<typeof typeorm> {
             ];
 
             const patch = (operation: string) => {
-                if (connection.manager.hasOwnProperty(operation))
+                if (connection.manager[operation])
                     shimmer.wrap(
                         connection.manager,
                         operation as keyof typeorm.EntityManager,
