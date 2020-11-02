@@ -10,7 +10,7 @@ jobs:
     strategy:
       max-parallel: 5
       matrix:
-        packageName: [plugin-kafkajs, plugin-typeorm, plugin-aws-sdk]
+        packageName: [plugin-kafkajs, plugin-typeorm, plugin-aws-sdk, plugin-sequelize]
     steps:
       - uses: actions/checkout@v2
 
