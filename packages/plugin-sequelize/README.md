@@ -1,38 +1,39 @@
-# OpenTelemetry TypeORM Instrumentation for Node.js
+# OpenTelemetry Sequelize Instrumentation for Node.js
 
-This module provides automatic instrumentation for [`TypeORM`](https://typeorm.io/).
+This module provides automatic instrumentation for [`Sequelize`](https://sequelize.org/) v5.
 
 ## Installation
 
 ```
-npm install --save opentelemetry-plugin-typeorm
+npm install --save opentelemetry-plugin-sequelize
 ```
 
 ## Usage
 
-To load a specific plugin (**typeorm** in this case), specify it in the Node Tracer's configuration
+To load a specific plugin (**sequelize** in this case), specify it in the Node Tracer's configuration
 
 ```js
 const { NodeTracerProvider } = require("@opentelemetry/node");
 
 const provider = new NodeTracerProvider({
   plugins: {
-    typeorm: {
+    sequelize: {
       enabled: true,
       // You may use a package name or absolute path to the file.
-      path: "opentelemetry-plugin-typeorm",
+      path: "opentelemetry-plugin-sequelize",
     },
   },
 });
 ```
 
-### TypeORM Plugin Options
+### Sequelize Plugin Options
 
 TypeORM plugin has few options available to choose from. You can set the following:
 
 | Options        | Type                                   | Description                                                                                     |
 | -------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `responseHook` | `TypeormResponseCustomAttributesFunction` | Hook called before response is returned, which allows to add custom attributes to span.      |
+| `responseHook` | `SequelizeResponseCustomAttributesFunction` | Hook called before response is returned, which allows to add custom attributes to span.      |
+| `ignoreOrphanedSpans` | `boolean` | Set to true if you only want to trace operation which has parent spans |
 
 ---
 
