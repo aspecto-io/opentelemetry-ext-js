@@ -44,7 +44,7 @@ class SequelizePlugin extends BasePlugin<typeof sequelize> {
                 [DatabaseAttribute.DB_NAME]: config?.database,
                 [DatabaseAttribute.DB_OPERATION]: operation,
                 [DatabaseAttribute.DB_STATEMENT]: statement,
-                component: 'typeorm',
+                component: 'sequelize',
                 // [GeneralAttribute.NET_PEER_IP]: '?', // Part of protocol
             };
 
