@@ -30,6 +30,7 @@ describe('plugin-sequelize', () => {
     afterEach(() => {
         memoryExporter.reset();
         contextManager.disable();
+        plugin.disable();
     });
 
     describe('postgres', () => {
@@ -43,12 +44,7 @@ describe('plugin-sequelize', () => {
             `${DB_SYSTEM}://${DB_USER}@${NET_PEER_NAME}:${NET_PEER_PORT}/${DB_NAME}`,
             { logging: false }
         );
-        const User = instance.define('User', {
-            firstName: {
-                type: sequelize.DataTypes.STRING,
-                allowNull: false,
-            },
-        });
+        const User = instance.define('User', { firstName: { type: sequelize.DataTypes.STRING }});
 
         it('create is instrumented', async () => {
             try {
@@ -74,12 +70,9 @@ describe('plugin-sequelize', () => {
         });
 
         it('findAll is instrumented', async () => {
-            try {
-                await instance.models.User.findAll();
-            } catch {
-                // Error is thrown but we don't care
-            }
+            await instance.models.User.findAll().catch(() => {});
             const spans = getSequelizeSpans();
+            expect(spans.length).toBe(1);
             const attributes = spans[0].attributes;
 
             expect(attributes['component']).toBe('sequelize');
@@ -90,12 +83,9 @@ describe('plugin-sequelize', () => {
         });
 
         it('destroy is instrumented', async () => {
-            try {
-                await instance.models.User.destroy({ where: {}, truncate: true });
-            } catch {
-                // Error is thrown but we don't care
-            }
+            await instance.models.User.destroy({ where: {}, truncate: true }).catch(() => {});;
             const spans = getSequelizeSpans();
+            expect(spans.length).toBe(1);
             const attributes = spans[0].attributes;
 
             expect(attributes['component']).toBe('sequelize');
@@ -104,12 +94,9 @@ describe('plugin-sequelize', () => {
         });
 
         it('count is instrumented', async () => {
-            try {
-                await (User as any).count();
-            } catch {
-                // Error is thrown but we don't care
-            }
+            await (User as any).count().catch(() => {});
             const spans = getSequelizeSpans();
+            expect(spans.length).toBe(1);
             const attributes = spans[0].attributes;
 
             expect(attributes['component']).toBe('sequelize');
@@ -133,20 +120,12 @@ describe('plugin-sequelize', () => {
             dialect: DB_SYSTEM,
         });
 
-        instance.define('User', {
-            firstName: {
-                type: sequelize.DataTypes.STRING,
-                allowNull: false,
-            },
-        });
+        instance.define('User', { firstName: { type: sequelize.DataTypes.STRING }});
 
         it('create is instrumented', async () => {
-            try {
-                await instance.models.User.create({ firstName: 'Nir' });
-            } catch {
-                // Error is thrown but we don't care
-            }
+            await instance.models.User.create({ firstName: 'Nir' }).catch(() => {});;
             const spans = getSequelizeSpans();
+            expect(spans.length).toBe(1);
             expect(spans[0].status.code).toBe(CanonicalCode.UNKNOWN);
             const attributes = spans[0].attributes;
 
@@ -163,12 +142,9 @@ describe('plugin-sequelize', () => {
         });
 
         it('findAll is instrumented', async () => {
-            try {
-                await instance.models.User.findAll();
-            } catch {
-                // Error is thrown but we don't care
-            }
+            await instance.models.User.findAll().catch(() => {});;
             const spans = getSequelizeSpans();
+            expect(spans.length).toBe(1);
             const attributes = spans[0].attributes;
 
             expect(attributes['component']).toBe('sequelize');
@@ -178,4 +154,87 @@ describe('plugin-sequelize', () => {
             );
         });
     });
+
+    describe('responseHook', () => {
+        it('able to collect response', async () => {
+            plugin.disable();
+            const instance = new sequelize.Sequelize(`postgres://john@$localhost:1111/my-name`, { logging: false });
+            instance.define('User', { firstName: { type: sequelize.DataTypes.STRING }});
+
+            const response = { john: 'doe' };
+            sequelize.Sequelize.prototype.query = () => {
+                return new Promise((resolve) => resolve(response));
+            };
+            plugin.enable(sequelize, provider, logger, {
+                enabled: true,
+                // @ts-ignore
+                responseHook: (span: Span, response: any) => {
+                    span.setAttribute('test', JSON.stringify(response));
+                },
+            });
+            await instance.models.User.findAll();
+            const spans = getSequelizeSpans();
+            const attributes = spans[0].attributes;
+
+            expect(attributes['test']).toBe(JSON.stringify(response));
+            expect(attributes['component']).toBe('sequelize');
+        });
+
+        it('response hook which throws does not affect span', async () => {
+            plugin.disable();
+            const instance = new sequelize.Sequelize(`postgres://john@$localhost:1111/my-name`, { logging: false });
+            instance.define('User', { firstName: { type: sequelize.DataTypes.STRING }});
+
+            const response = { john: 'doe' };
+            sequelize.Sequelize.prototype.query = () => {
+                return new Promise((resolve) => resolve(response));
+            };
+            const mockedLogger = (() => {
+                let message: string;
+                let error: Error;
+                return {
+                    error: (_message: string, _err: Error) => {
+                        message = _message;
+                        error = _err;
+                    },
+                    debug: () => {},
+                    getMessage: () => message,
+                    getError: () => error
+                }
+            })();
+
+            plugin.enable(sequelize, provider, mockedLogger as any, {
+                enabled: true,
+                // @ts-ignore
+                responseHook: () => {
+                    throw new Error('Throwing')
+                },
+            });
+            await instance.models.User.findAll();
+            const spans = getSequelizeSpans();
+            expect(spans.length).toBe(1);
+            expect(mockedLogger.getMessage()).toBe('Caught Error while applying responseHook');
+            expect(mockedLogger.getError().message).toBe('Throwing');
+        });
+    });
+
+    describe('ignoreOrphanedSpans', () => {
+        it('skips when ignoreOrphanedSpans option is true', async () => {
+            plugin.disable();
+            const instance = new sequelize.Sequelize(`postgres://john@$localhost:1111/my-name`, { logging: false });
+            instance.define('User', { firstName: { type: sequelize.DataTypes.STRING }});
+            plugin.enable(sequelize, provider, logger, {
+                enabled: true,
+                // @ts-ignore
+                ignoreOrphanedSpans: true
+            });
+
+            try {
+                await instance.models.User.create({ firstName: 'Nir' });
+            } catch { }
+
+            const spans = getSequelizeSpans();
+            expect(spans.length).toBe(0);
+        })
+    })
 });
