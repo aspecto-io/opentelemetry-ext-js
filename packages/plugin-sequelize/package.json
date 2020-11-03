@@ -6,6 +6,11 @@
         "sequelize",
         "opentelemetry"
     ],
+    "author": {
+        "name": "Aspecto",
+        "email": "support@aspecto.io",
+        "url": "https://aspecto.io"
+    },
     "homepage": "https://github.com/aspecto-io/opentelemetry-ext-js",
     "license": "Apache-2.0",
     "main": "dist/src/index.js",
