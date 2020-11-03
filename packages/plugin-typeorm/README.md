@@ -13,7 +13,7 @@ npm install --save opentelemetry-plugin-typeorm
 To load a specific plugin (**typeorm** in this case), specify it in the Node Tracer's configuration
 
 ```js
-const { NodeTracerProvider } = require("opentelemetry-plugin-typeorm");
+const { NodeTracerProvider } = require("@opentelemetry/node");
 
 const provider = new NodeTracerProvider({
   plugins: {
@@ -32,7 +32,8 @@ TypeORM plugin has few options available to choose from. You can set the followi
 
 | Options        | Type                                   | Description                                                                                     |
 | -------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `responseHook` | `TypeormResponseCustomAttributesFunction` | Hook called statement response is returned, which allows to add custom attributes to span.      |
+| `responseHook` | `TypeormResponseCustomAttributesFunction` | Hook called before response is returned, which allows to add custom attributes to span.      |
+
 
 ---
 
