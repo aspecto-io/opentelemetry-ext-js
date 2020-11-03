@@ -38,7 +38,7 @@ class SequelizePlugin extends BasePlugin<typeof sequelize> {
                 [DatabaseAttribute.DB_SYSTEM]: sequelizeInstance.getDialect(),
                 [DatabaseAttribute.DB_USER]: config?.username,
                 [GeneralAttribute.NET_PEER_NAME]: config?.host,
-                [GeneralAttribute.NET_PEER_PORT]: config?.port ? String(config?.port) : undefined,
+                [GeneralAttribute.NET_PEER_PORT]: config?.port ? Number(config?.port) : undefined,
                 [GeneralAttribute.NET_TRANSPORT]: thisPlugin._getNetTransport(config?.protocol),
                 [DatabaseAttribute.DB_NAME]: config?.database,
                 [DatabaseAttribute.DB_OPERATION]: operation,
