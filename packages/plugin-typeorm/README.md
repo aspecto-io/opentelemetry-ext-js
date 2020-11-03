@@ -1,4 +1,5 @@
 # OpenTelemetry TypeORM Instrumentation for Node.js
+[![NPM version](https://img.shields.io/npm/v/opentelemetry-plugin-typeorm.svg)](https://www.npmjs.com/package/opentelemetry-plugin-typeorm)
 
 This module provides automatic instrumentation for [`TypeORM`](https://typeorm.io/).
 

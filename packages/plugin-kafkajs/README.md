@@ -1,4 +1,5 @@
 # OpenTelemetry kafkajs Instrumentation for Node.js
+[![NPM version](https://img.shields.io/npm/v/opentelemetry-plugin-kafkajs.svg)](https://www.npmjs.com/package/opentelemetry-plugin-kafkajs)
 
 This module provides automatic instrumentation for [`kafkajs`](https://kafka.js.org/).
 

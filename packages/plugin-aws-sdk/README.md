@@ -1,5 +1,5 @@
 # OpenTelemetry aws-sdk Instrumentation for Node.js
-![NPM version](https://img.shields.io/npm/v/opentelemetry-plugin-aws-sdk.svg)
+[![NPM version](https://img.shields.io/npm/v/opentelemetry-plugin-aws-sdk.svg)](https://www.npmjs.com/package/opentelemetry-plugin-aws-sdk)
 
 This module provides automatic instrumentation for [`aws-sdk`](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/).
 
