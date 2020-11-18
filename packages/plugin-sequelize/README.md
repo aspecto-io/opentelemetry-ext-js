@@ -1,7 +1,8 @@
 # OpenTelemetry Sequelize Instrumentation for Node.js
 [![NPM version](https://img.shields.io/npm/v/opentelemetry-plugin-sequelize.svg)](https://www.npmjs.com/package/opentelemetry-plugin-sequelize)
 
-This module provides automatic instrumentation for [`Sequelize`](https://sequelize.org/) v5.
+This module provides automatic instrumentation for [`Sequelize`](https://sequelize.org/).  
+> _Tested and worked on versions v4, v5 and v6 of Sequelize._
 
 ## Installation
 
