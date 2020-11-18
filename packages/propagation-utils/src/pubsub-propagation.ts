@@ -65,13 +65,14 @@ const patchArrayForProcessSpans = (messages: any[], tracer: Tracer) => {
     patchArrayFilter(messages, tracer);
 };
 
-const startMessagingProcessSpan = (
+const startMessagingProcessSpan = <T>(
     message: any,
     name: string,
     attributes: Record<string, string>,
     parentSpan: Span,
     propagatedContext: Context,
-    tracer: Tracer
+    tracer: Tracer,
+    processHook?: ProcessHook<T>
 ): Span => {
     const links: Link[] = [];
     const spanContext = getActiveSpan(propagatedContext)?.context();
@@ -82,7 +83,7 @@ const startMessagingProcessSpan = (
     }
 
     const spanName = `${name} process`;
-    const messageSpan = tracer.startSpan(spanName, {
+    const processSpan = tracer.startSpan(spanName, {
         kind: SpanKind.CONSUMER,
         attributes: {
             ...attributes,
@@ -95,14 +96,14 @@ const startMessagingProcessSpan = (
     Object.defineProperty(message, START_SPAN_FUNCTION, {
         enumerable: false,
         writable: true,
-        value: () => messageSpan,
+        value: () => processSpan,
     });
 
     Object.defineProperty(message, END_SPAN_FUNCTION, {
         enumerable: false,
         writable: true,
         value: () => {
-            messageSpan.end();
+            processSpan.end();
             Object.defineProperty(message, END_SPAN_FUNCTION, {
                 enumerable: false,
                 writable: true,
@@ -111,7 +112,13 @@ const startMessagingProcessSpan = (
         },
     });
 
-    return messageSpan;
+    if (processHook) {
+        try {
+            processHook(processSpan, message);
+        } catch {}
+    }
+
+    return processSpan;
 };
 
 interface SpanDetails {
@@ -120,11 +127,14 @@ interface SpanDetails {
     name: string;
 }
 
+type ProcessHook<T> = (processSpan: Span, message: T) => void;
+
 interface PatchForProcessingPayload<T> {
     messages: T[];
     tracer: Tracer;
     parentSpan: Span;
     messageToSpanDetails: (message: T) => SpanDetails;
+    processHook?: ProcessHook<T>;
 }
 
 const patchMessagesArrayToStartProcessSpans = <T>({
@@ -132,6 +142,7 @@ const patchMessagesArrayToStartProcessSpans = <T>({
     tracer,
     parentSpan,
     messageToSpanDetails,
+    processHook,
 }: PatchForProcessingPayload<T>) => {
     messages.forEach((message) => {
         const { attributes, name, parentContext } = messageToSpanDetails(message);
@@ -139,7 +150,8 @@ const patchMessagesArrayToStartProcessSpans = <T>({
         Object.defineProperty(message, START_SPAN_FUNCTION, {
             enumerable: false,
             writable: true,
-            value: () => startMessagingProcessSpan(message, name, attributes, parentSpan, parentContext, tracer),
+            value: () =>
+                startMessagingProcessSpan<T>(message, name, attributes, parentSpan, parentContext, tracer, processHook),
         });
     });
 };
