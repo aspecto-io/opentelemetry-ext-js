@@ -1,4 +1,5 @@
-import { Tracer, SpanKind, Span, propagation, Context, Link, Logger, getActiveSpan } from '@opentelemetry/api';
+import { Tracer, SpanKind, Span, propagation, Logger } from '@opentelemetry/api';
+import { pubsubPropagation } from 'opentelemetry-propagation-utils';
 import { RequestMetadata, ServiceExtension } from './ServiceExtension';
 import * as AWS from 'aws-sdk';
 import { TRACE_PARENT_HEADER, TRACE_STATE_HEADER } from '@opentelemetry/core';
@@ -121,30 +122,27 @@ export class SqsServiceExtension implements ServiceExtension {
             const queueUrl = this.extractQueueUrl((response as any)?.request);
             const queueName = this.extractQueueNameFromUrl(queueUrl);
 
-            messages.forEach((message: AWS.SQS.Message) => {
-                const extractedParentContext: Context = propagation.extract(
-                    message.MessageAttributes,
-                    contextGetterFunc
-                );
-
-                Object.defineProperty(message, START_SPAN_FUNCTION, {
-                    enumerable: false,
-                    writable: true,
-                    value: () =>
-                        this.startMessagingProcessSpan(queueUrl, queueName, message, span, extractedParentContext),
-                });
-
-                Object.defineProperty(message, END_SPAN_FUNCTION, {
-                    enumerable: false,
-                    writable: true,
-                    value: () =>
-                        console.log(
-                            'open-telemetry aws-sdk plugin: end span called on sqs message which was not started'
-                        ),
-                });
+            pubsubPropagation.patchMessagesArrayToStartProcessSpans<AWS.SQS.Message>({
+                messages,
+                parentSpan: span,
+                tracer: this.tracer,
+                messageToSpanDetails: (message: AWS.SQS.Message) => ({
+                    name: queueName,
+                    parentContext: propagation.extract(message.MessageAttributes, contextGetterFunc),
+                    attributes: {
+                        [SqsAttributeNames.MESSAGING_SYSTEM]: 'aws.sqs',
+                        [SqsAttributeNames.MESSAGING_DESTINATION]: queueName,
+                        [SqsAttributeNames.MESSAGING_DESTINATIONKIND]: 'queue',
+                        [SqsAttributeNames.MESSAGING_MESSAGE_ID]: message.MessageId,
+                        [SqsAttributeNames.MESSAGING_URL]: queueUrl,
+                        [SqsAttributeNames.MESSAGING_OPERATION]: 'process',
+                    },
+                }),
+                processHook: (span: Span, message: AWS.SQS.Message) =>
+                    this.sqsProcessHook ? this.sqsProcessHook(span, message) : {},
             });
 
-            this.patchArrayForProcessSpans(messages);
+            pubsubPropagation.patchArrayForProcessSpans(messages, this.tracer);
         }
     };
 
@@ -155,132 +153,11 @@ export class SqsServiceExtension implements ServiceExtension {
     extractQueueNameFromUrl = (queueUrl: string): string => {
         if (!queueUrl) return undefined;
 
-        const pisces = queueUrl.split('/');
-        if (pisces.length === 0) return undefined;
+        const segments = queueUrl.split('/');
+        if (segments.length === 0) return undefined;
 
-        return pisces[pisces.length - 1];
+        return segments[segments.length - 1];
     };
-
-    startMessagingProcessSpan(
-        queueUrl: string,
-        queueName: string,
-        message: AWS.SQS.Message,
-        receiveMessageSpan: Span,
-        propagtedContext: Context
-    ): Span {
-        const links: Link[] = [];
-        const spanContext = getActiveSpan(propagtedContext)?.context();
-        if (spanContext) {
-            links.push({
-                context: spanContext,
-            } as Link);
-        }
-
-        const spanName = `${queueName} process`;
-        const messageSpan = this.tracer.startSpan(spanName, {
-            kind: SpanKind.CONSUMER,
-            attributes: {
-                [SqsAttributeNames.MESSAGING_SYSTEM]: 'aws.sqs',
-                [SqsAttributeNames.MESSAGING_DESTINATION]: queueName,
-                [SqsAttributeNames.MESSAGING_DESTINATIONKIND]: 'queue',
-                [SqsAttributeNames.MESSAGING_MESSAGE_ID]: message.MessageId,
-                [SqsAttributeNames.MESSAGING_URL]: queueUrl,
-                [SqsAttributeNames.MESSAGING_OPERATION]: 'process',
-            },
-            links,
-            parent: receiveMessageSpan,
-        });
-
-        Object.defineProperty(message, START_SPAN_FUNCTION, {
-            enumerable: false,
-            writable: true,
-            value: () => messageSpan,
-        });
-
-        Object.defineProperty(message, END_SPAN_FUNCTION, {
-            enumerable: false,
-            writable: true,
-            value: () => {
-                messageSpan.end();
-                Object.defineProperty(message, END_SPAN_FUNCTION, {
-                    enumerable: false,
-                    writable: true,
-                    value: () => {},
-                });
-            },
-        });
-
-        if (this.sqsProcessHook) {
-            try {
-                this.sqsProcessHook(messageSpan, message);
-            } catch {}
-        }
-
-        return messageSpan;
-    }
-
-    patchArrayForProcessSpans(messages: any[]) {
-        this.patchArrayFunction(messages, 'forEach');
-        this.patchArrayFunction(messages, 'map');
-        this.patchArrayFilter(messages);
-    }
-
-    patchArrayFilter(messages: any[]) {
-        const self = this;
-        const origFunc = messages.filter;
-        const patchedFunc = function (...args) {
-            const newArray = origFunc.apply(this, arguments);
-            self.patchArrayForProcessSpans(newArray);
-            return newArray;
-        };
-
-        Object.defineProperty(messages, 'filter', {
-            enumerable: false,
-            value: patchedFunc,
-        });
-    }
-
-    patchArrayFunction(messages: any[], functionName: string) {
-        const self = this;
-        const origFunc = messages[functionName];
-        const patchedFunc = function (callback, thisArg) {
-            const wrappedCallback = function (message: AWS.SQS.Message) {
-                const messageSpan = message?.[START_SPAN_FUNCTION]?.();
-                if (!messageSpan) return callback.apply(this, arguments);
-
-                const res = self.tracer.withSpan(messageSpan, () => {
-                    try {
-                        return callback.apply(this, arguments);
-                    } catch (err) {
-                        throw err;
-                    } finally {
-                        message[END_SPAN_FUNCTION]?.();
-                    }
-                });
-                if (typeof res === 'object') {
-                    Object.defineProperty(
-                        res,
-                        START_SPAN_FUNCTION,
-                        Object.getOwnPropertyDescriptor(message, START_SPAN_FUNCTION)
-                    );
-                    Object.defineProperty(
-                        res,
-                        END_SPAN_FUNCTION,
-                        Object.getOwnPropertyDescriptor(message, END_SPAN_FUNCTION)
-                    );
-                }
-                return res;
-            };
-            const funcResult = origFunc.call(this, wrappedCallback, thisArg);
-            if (Array.isArray(funcResult)) self.patchArrayForProcessSpans(funcResult);
-            return funcResult;
-        };
-
-        Object.defineProperty(messages, functionName, {
-            enumerable: false,
-            value: patchedFunc,
-        });
-    }
 
     InjectPropagationContext(attributesMap?: MessageBodyAttributeMap): MessageBodyAttributeMap {
         const attributes = attributesMap ?? {};

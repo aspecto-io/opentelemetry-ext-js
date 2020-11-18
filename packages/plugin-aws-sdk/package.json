@@ -46,13 +46,14 @@
     "dependencies": {
         "@opentelemetry/api": "^0.12.0",
         "@opentelemetry/core": "^0.12.0",
+        "opentelemetry-propagation-utils": "^0.0.2",
         "shimmer": "^1.2.1"
     },
     "jest": {
         "preset": "ts-jest",
         "globals": {
             "ts-jest": {
-                "tsConfig": "./tsconfig.json"
+                "tsconfig": "./tsconfig.json"
             }
         },
         "testMatch": [
