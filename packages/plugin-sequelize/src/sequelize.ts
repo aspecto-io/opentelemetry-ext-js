@@ -1,5 +1,5 @@
 import { BasePlugin } from '@opentelemetry/core';
-import { Span, CanonicalCode, SpanKind } from '@opentelemetry/api';
+import { Span, SpanKind, StatusCode } from '@opentelemetry/api';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
 import * as sequelize from 'sequelize';
 import shimmer from 'shimmer';
@@ -70,7 +70,7 @@ class SequelizePlugin extends BasePlugin<typeof sequelize> {
                 })
                 .catch((err: Error) => {
                     newSpan.setStatus({
-                        code: CanonicalCode.UNKNOWN,
+                        code: StatusCode.ERROR,
                         message: err.message,
                     });
                     throw err;

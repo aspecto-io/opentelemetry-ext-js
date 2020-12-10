@@ -9,7 +9,7 @@
     callback    |       1           |       2   
  */
 import { BasePlugin } from '@opentelemetry/core';
-import { Span, CanonicalCode, Attributes, SpanKind } from '@opentelemetry/api';
+import { Span, StatusCode, Attributes, SpanKind } from '@opentelemetry/api';
 import * as shimmer from 'shimmer';
 import AWS from 'aws-sdk';
 import { AttributeNames } from './enums';
@@ -191,7 +191,7 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
         } catch (error) {
             if (rethrow) {
                 span.setStatus({
-                    code: CanonicalCode.UNKNOWN,
+                    code: StatusCode.ERROR,
                 });
                 span.end();
                 throw error;

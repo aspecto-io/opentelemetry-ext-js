@@ -1,5 +1,15 @@
-import { BasePlugin, getExtractedSpanContext } from '@opentelemetry/core';
-import { SpanKind, Span, CanonicalCode, Context, propagation, Link, SpanContext } from '@opentelemetry/api';
+import { BasePlugin } from '@opentelemetry/core';
+import {
+    SpanKind,
+    Span,
+    StatusCode,
+    Context,
+    propagation,
+    Link,
+    defaultTextMapGetter,
+    getActiveSpan,
+} from '@opentelemetry/api';
+import { ROOT_CONTEXT } from '@opentelemetry/context-base';
 import * as shimmer from 'shimmer';
 import * as kafkaJs from 'kafkajs';
 import {
@@ -17,7 +27,6 @@ import {
 } from 'kafkajs';
 import { KafkaJsPluginConfig } from './types';
 import { AttributeNames } from './enums';
-import { getHeaderAsString } from './utils';
 import { VERSION } from './version';
 
 export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
@@ -79,8 +88,8 @@ export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
         return function (payload: EachMessagePayload): Promise<void> {
             const propagatedContext: Context = propagation.extract(
                 payload.message.headers,
-                getHeaderAsString,
-                Context.ROOT_CONTEXT
+                defaultTextMapGetter,
+                ROOT_CONTEXT
             );
             const span = thisPlugin._startConsumerSpan(payload.topic, payload.message, propagatedContext);
 
@@ -95,15 +104,15 @@ export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
         const thisPlugin = this;
         return function (payload: EachBatchPayload): Promise<void> {
             // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#topic-with-multiple-consumers
-            const receivingSpan = thisPlugin._startConsumerSpan(payload.batch.topic, undefined, Context.ROOT_CONTEXT);
+            const receivingSpan = thisPlugin._startConsumerSpan(payload.batch.topic, undefined, ROOT_CONTEXT);
             return thisPlugin._tracer.withSpan(receivingSpan, () => {
                 const spans = payload.batch.messages.map((message: KafkaMessage) => {
                     const propagatedContext: Context = propagation.extract(
                         message.headers,
-                        getHeaderAsString,
-                        Context.ROOT_CONTEXT
+                        defaultTextMapGetter,
+                        ROOT_CONTEXT
                     );
-                    const spanContext: SpanContext = getExtractedSpanContext(propagatedContext);
+                    const spanContext = getActiveSpan(propagatedContext)?.context();
                     let origSpanLink: Link;
                     if (spanContext) {
                         origSpanLink = {
@@ -152,7 +161,7 @@ export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
 
                 spans.forEach((span) =>
                     span.setStatus({
-                        code: CanonicalCode.UNKNOWN,
+                        code: StatusCode.ERROR,
                         message: errorMessage,
                     })
                 );
@@ -219,7 +228,7 @@ export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
             if (rethrow) {
                 spans.forEach((span) => {
                     span.setStatus({
-                        code: CanonicalCode.INTERNAL,
+                        code: StatusCode.ERROR,
                         message: error?.message,
                     });
                     span.end();

@@ -69,7 +69,7 @@ const startMessagingProcessSpan = <T>(
     message: any,
     name: string,
     attributes: Record<string, string>,
-    parentSpan: Span,
+    parentContext: Context,
     propagatedContext: Context,
     tracer: Tracer,
     processHook?: ProcessHook<T>
@@ -83,15 +83,18 @@ const startMessagingProcessSpan = <T>(
     }
 
     const spanName = `${name} process`;
-    const processSpan = tracer.startSpan(spanName, {
-        kind: SpanKind.CONSUMER,
-        attributes: {
-            ...attributes,
-            ['messaging.operation']: 'process',
+    const processSpan = tracer.startSpan(
+        spanName,
+        {
+            kind: SpanKind.CONSUMER,
+            attributes: {
+                ...attributes,
+                ['messaging.operation']: 'process',
+            },
+            links,
         },
-        links,
-        parent: parentSpan,
-    });
+        parentContext
+    );
 
     Object.defineProperty(message, START_SPAN_FUNCTION, {
         enumerable: false,
@@ -132,7 +135,7 @@ type ProcessHook<T> = (processSpan: Span, message: T) => void;
 interface PatchForProcessingPayload<T> {
     messages: T[];
     tracer: Tracer;
-    parentSpan: Span;
+    parentContext: Context;
     messageToSpanDetails: (message: T) => SpanDetails;
     processHook?: ProcessHook<T>;
 }
@@ -140,18 +143,26 @@ interface PatchForProcessingPayload<T> {
 const patchMessagesArrayToStartProcessSpans = <T>({
     messages,
     tracer,
-    parentSpan,
+    parentContext,
     messageToSpanDetails,
     processHook,
 }: PatchForProcessingPayload<T>) => {
     messages.forEach((message) => {
-        const { attributes, name, parentContext } = messageToSpanDetails(message);
+        const { attributes, name, parentContext: propagatedContext } = messageToSpanDetails(message);
 
         Object.defineProperty(message, START_SPAN_FUNCTION, {
             enumerable: false,
             writable: true,
             value: () =>
-                startMessagingProcessSpan<T>(message, name, attributes, parentSpan, parentContext, tracer, processHook),
+                startMessagingProcessSpan<T>(
+                    message,
+                    name,
+                    attributes,
+                    parentContext,
+                    propagatedContext,
+                    tracer,
+                    processHook
+                ),
         });
     });
 };
