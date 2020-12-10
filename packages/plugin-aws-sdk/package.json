@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-plugin-aws-sdk",
-    "version": "0.0.13",
+    "version": "0.1.0-alpha.0",
     "description": "open telemetry instrumentation for the `aws-sdk` package",
     "keywords": [
         "aws",
@@ -47,7 +47,7 @@
     "dependencies": {
         "@opentelemetry/api": "^0.13.0",
         "@opentelemetry/core": "^0.13.0",
-        "opentelemetry-propagation-utils": "^0.0.2",
+        "opentelemetry-propagation-utils": "0.1.0-alpha.0",
         "shimmer": "^1.2.1"
     },
     "jest": {
