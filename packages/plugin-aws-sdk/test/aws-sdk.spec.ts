@@ -6,7 +6,7 @@ import {
   ReadableSpan,
   Span,
 } from "@opentelemetry/tracing";
-import { context, CanonicalCode } from "@opentelemetry/api";
+import { context, StatusCode } from "@opentelemetry/api";
 import { NoopLogger } from "@opentelemetry/core";
 import { NodeTracerProvider } from "@opentelemetry/node";
 import { ContextManager } from "@opentelemetry/context-base";
@@ -310,7 +310,7 @@ describe("plugin-aws-sdk", () => {
       s3.createBucket({ Bucket: bucketName }, async function (err, data) {
         const awsSpans = getAwsSpans();
         expect(awsSpans.length).toBe(1);
-        expect(awsSpans[0].status.code).toStrictEqual(CanonicalCode.OK);
+        expect(awsSpans[0].status.code).toStrictEqual(StatusCode.UNSET);
         done();
       });
     });

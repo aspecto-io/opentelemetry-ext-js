@@ -1,5 +1,5 @@
 import { BasePlugin } from '@opentelemetry/core';
-import { Span, CanonicalCode, SpanKind } from '@opentelemetry/api';
+import { Span, SpanKind, StatusCode } from '@opentelemetry/api';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
 import { TypeormPluginConfig } from './types';
 import { safeExecute, getParamNames } from './utils';
@@ -105,7 +105,7 @@ class TypeormPlugin extends BasePlugin<typeof typeorm> {
                     return resolved;
                 } catch (err) {
                     newSpan.setStatus({
-                        code: CanonicalCode.UNKNOWN,
+                        code: StatusCode.ERROR,
                         message: err.message,
                     });
                     throw err;

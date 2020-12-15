@@ -1,23 +1,21 @@
 import {
   Context,
-  HttpTextPropagator,
   TraceFlags,
-  SetterFunction,
-  GetterFunction,
-} from "@opentelemetry/api";
-import {
+  TextMapPropagator,
+  TextMapSetter,
+  TextMapGetter,
   getParentSpanContext,
   setExtractedSpanContext,
-} from "@opentelemetry/core";
+} from "@opentelemetry/api";
 
-export class DummyPropagation implements HttpTextPropagator {
+export class DummyPropagation implements TextMapPropagator {
   static TRACE_CONTEXT_KEY = "x-dummy-trace-id";
   static SPAN_CONTEXT_KEY = "x-dummy-span-id";
 
-  extract(context: Context, carrier: unknown, getter: GetterFunction) {
+  extract(context: Context, carrier: unknown, getter: TextMapGetter) {
     const extractedSpanContext = {
-      traceId: getter(carrier, DummyPropagation.TRACE_CONTEXT_KEY) as string,
-      spanId: getter(carrier, DummyPropagation.SPAN_CONTEXT_KEY) as string,
+      traceId: getter.get(carrier, DummyPropagation.TRACE_CONTEXT_KEY) as string,
+      spanId: getter.get(carrier, DummyPropagation.SPAN_CONTEXT_KEY) as string,
       traceFlags: TraceFlags.SAMPLED,
     };
 
@@ -27,11 +25,16 @@ export class DummyPropagation implements HttpTextPropagator {
     return setExtractedSpanContext(context, extractedSpanContext);
   }
 
-  inject(context: Context, carrier: unknown, setter: SetterFunction): void {
+  inject(context: Context, carrier: unknown, setter: TextMapSetter): void {
     const spanContext = getParentSpanContext(context);
     if (!spanContext) return;
 
-    setter(carrier, DummyPropagation.TRACE_CONTEXT_KEY, spanContext.traceId);
-    setter(carrier, DummyPropagation.SPAN_CONTEXT_KEY, spanContext.spanId);
+    setter.set(carrier, DummyPropagation.TRACE_CONTEXT_KEY, spanContext.traceId);
+    setter.set(carrier, DummyPropagation.SPAN_CONTEXT_KEY, spanContext.spanId);
   }
+
+  fields(): string[] {
+    return [DummyPropagation.TRACE_CONTEXT_KEY, DummyPropagation.SPAN_CONTEXT_KEY];
+  }
+
 }

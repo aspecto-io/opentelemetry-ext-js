@@ -1,4 +1,4 @@
-import { Tracer, SpanKind, Span, propagation, Logger } from '@opentelemetry/api';
+import { Tracer, SpanKind, Span, propagation, Logger, TextMapGetter, TextMapSetter, setActiveSpan, context } from '@opentelemetry/api';
 import { pubsubPropagation } from 'opentelemetry-propagation-utils';
 import { RequestMetadata, ServiceExtension } from './ServiceExtension';
 import * as AWS from 'aws-sdk';
@@ -27,17 +27,26 @@ export const END_SPAN_FUNCTION = Symbol('opentelemetry.plugin.aws-sdk.sqs.end_sp
 
 // https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-quotas.html
 const SQS_MAX_MESSAGE_ATTRIBUTES = 10;
+class SqsContextSetter implements TextMapSetter<AWS.SQS.MessageBodyAttributeMap> {
+    set(carrier: AWS.SQS.MessageBodyAttributeMap, key: string, value: string) {
+        carrier[key] = {
+            DataType: 'String',
+            StringValue: value as string,
+        };
+    }
+}
+const sqsContextSetter = new SqsContextSetter();
 
-const contextSetterFunc = (messageAttributes: AWS.SQS.MessageBodyAttributeMap, key: string, value: unknown) => {
-    messageAttributes[key] = {
-        DataType: 'String',
-        StringValue: value as string,
-    };
-};
+class SqsContextGetter implements TextMapGetter<AWS.SQS.MessageBodyAttributeMap> {
+    keys(carrier: AWS.SQS.MessageBodyAttributeMap): string[] {
+        return Object.keys(carrier);
+    }
 
-const contextGetterFunc = (messageAttributes: AWS.SQS.MessageBodyAttributeMap, key: string) => {
-    return messageAttributes?.[key]?.StringValue;
-};
+    get(carrier: AWS.SQS.MessageBodyAttributeMap, key: string): string | string[] {
+        return carrier?.[key]?.StringValue;
+    }
+}
+const sqsContextGetter = new SqsContextGetter();
 
 export class SqsServiceExtension implements ServiceExtension {
     constructor(
@@ -124,11 +133,11 @@ export class SqsServiceExtension implements ServiceExtension {
 
             pubsubPropagation.patchMessagesArrayToStartProcessSpans<AWS.SQS.Message>({
                 messages,
-                parentSpan: span,
+                parentContext: setActiveSpan(context.active(), span),
                 tracer: this.tracer,
                 messageToSpanDetails: (message: AWS.SQS.Message) => ({
                     name: queueName,
-                    parentContext: propagation.extract(message.MessageAttributes, contextGetterFunc),
+                    parentContext: propagation.extract(message.MessageAttributes, sqsContextGetter),
                     attributes: {
                         [SqsAttributeNames.MESSAGING_SYSTEM]: 'aws.sqs',
                         [SqsAttributeNames.MESSAGING_DESTINATION]: queueName,
@@ -162,7 +171,7 @@ export class SqsServiceExtension implements ServiceExtension {
     InjectPropagationContext(attributesMap?: MessageBodyAttributeMap): MessageBodyAttributeMap {
         const attributes = attributesMap ?? {};
         if (Object.keys(attributes).length < SQS_MAX_MESSAGE_ATTRIBUTES) {
-            propagation.inject(attributes, contextSetterFunc);
+            propagation.inject(attributes, sqsContextSetter);
         } else {
             this.logger.warn(
                 'OpenTelemetry aws-sdk plugin cannot set context propagation on SQS message due to maximum amount of MessageAttributes'

@@ -3,7 +3,7 @@ import AWS, { AWSError } from "aws-sdk";
 import { NoopLogger } from "@opentelemetry/core";
 import { NodeTracerProvider } from "@opentelemetry/node";
 import { ContextManager } from "@opentelemetry/context-base";
-import { context, SpanKind, CanonicalCode } from "@opentelemetry/api";
+import { context, SpanKind, StatusCode } from "@opentelemetry/api";
 import {
   InMemorySpanExporter,
   SimpleSpanProcessor,
@@ -418,8 +418,8 @@ describe("sqs", () => {
             s.attributes[SqsAttributeNames.MESSAGING_OPERATION] === "process"
         );
       expect(processSpans.length).toBe(2);
-      expect(processSpans[0].status.code).toStrictEqual(CanonicalCode.OK);
-      expect(processSpans[1].status.code).toStrictEqual(CanonicalCode.OK);
+      expect(processSpans[0].status.code).toStrictEqual(StatusCode.UNSET);
+      expect(processSpans[1].status.code).toStrictEqual(StatusCode.UNSET);
 
       done();
     });

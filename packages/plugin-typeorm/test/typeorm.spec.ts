@@ -2,7 +2,7 @@ import { plugin } from '../src';
 import { NoopLogger } from '@opentelemetry/core';
 import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan, Span } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';
-import { context, CanonicalCode } from '@opentelemetry/api';
+import { context, StatusCode } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { ContextManager } from '@opentelemetry/context-base';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
@@ -84,7 +84,7 @@ describe('plugin-typeorm', () => {
             const typeOrmSpans = getTypeormSpans();
 
             expect(typeOrmSpans.length).toBe(1);
-            expect(typeOrmSpans[0].status.code).toBe(CanonicalCode.OK);
+            expect(typeOrmSpans[0].status.code).toBe(StatusCode.UNSET);
             const attributes = typeOrmSpans[0].attributes;
 
             expect(attributes['component']).toBe('typeorm');
@@ -105,7 +105,7 @@ describe('plugin-typeorm', () => {
 
             const typeOrmSpans = getTypeormSpans();
             expect(typeOrmSpans.length).toBe(1);
-            expect(typeOrmSpans[0].status.code).toBe(CanonicalCode.UNKNOWN);
+            expect(typeOrmSpans[0].status.code).toBe(StatusCode.ERROR);
             expect(typeOrmSpans[0].status.message).toBe('some error');
         });
 

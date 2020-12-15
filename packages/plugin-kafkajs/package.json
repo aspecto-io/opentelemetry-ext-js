@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-plugin-kafkajs",
-    "version": "0.0.4",
+    "version": "0.1.0-alpha.0",
     "description": "open telemetry instrumentation for the `kafkajs` kafka client",
     "keywords": [
         "kafka",
@@ -31,8 +31,8 @@
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
     },
     "devDependencies": {
-        "@opentelemetry/node": "^0.8.3",
-        "@opentelemetry/tracing": "^0.8.3",
+        "@opentelemetry/node": "^0.13.0",
+        "@opentelemetry/tracing": "^0.13.0",
         "@types/jest": "^25.2.3",
         "@types/shimmer": "^1.0.1",
         "husky": "^4.2.5",
@@ -44,7 +44,8 @@
         "typescript": "^3.9.5"
     },
     "dependencies": {
-        "@opentelemetry/core": "^0.8.3",
+        "@opentelemetry/api": "^0.13.0",
+        "@opentelemetry/core": "^0.13.0",
         "shimmer": "^1.2.1"
     },
     "jest": {

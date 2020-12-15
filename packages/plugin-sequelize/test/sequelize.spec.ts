@@ -2,7 +2,7 @@ import { plugin } from '../src';
 import { NoopLogger } from '@opentelemetry/core';
 import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan, Span } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';
-import { context, CanonicalCode } from '@opentelemetry/api';
+import { context, StatusCode } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { ContextManager } from '@opentelemetry/context-base';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
@@ -54,7 +54,7 @@ describe('plugin-sequelize', () => {
             }
             const spans = getSequelizeSpans();
             expect(spans.length).toBe(1);
-            expect(spans[0].status.code).toBe(CanonicalCode.UNKNOWN);
+            expect(spans[0].status.code).toBe(StatusCode.ERROR);
             const attributes = spans[0].attributes;
 
             expect(attributes['component']).toBe('sequelize');
@@ -154,7 +154,7 @@ describe('plugin-sequelize', () => {
             await instance.models.User.create({ firstName: 'Nir' }).catch(() => {});
             const spans = getSequelizeSpans();
             expect(spans.length).toBe(1);
-            expect(spans[0].status.code).toBe(CanonicalCode.UNKNOWN);
+            expect(spans[0].status.code).toBe(StatusCode.ERROR);
             const attributes = spans[0].attributes;
 
             expect(attributes['component']).toBe('sequelize');

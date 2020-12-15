@@ -1,4 +1,4 @@
-import { Span, CanonicalCode, Logger } from '@opentelemetry/api';
+import { Span, StatusCode, Logger } from '@opentelemetry/api';
 
 export function safeExecute<T extends (...args: unknown[]) => ReturnType<T>>(
     spans: Span[],
@@ -12,7 +12,7 @@ export function safeExecute<T extends (...args: unknown[]) => ReturnType<T>>(
         if (rethrow) {
             spans.forEach((span) => {
                 span.setStatus({
-                    code: CanonicalCode.INTERNAL,
+                    code: StatusCode.ERROR,
                     message: error?.message,
                 });
                 span.end();
