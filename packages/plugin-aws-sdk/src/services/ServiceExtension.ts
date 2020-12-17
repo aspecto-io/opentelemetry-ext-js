@@ -1,9 +1,7 @@
 import { Span, Attributes, SpanKind } from '@opentelemetry/api';
 
-/*
-isIncoming - if true, then the operation callback / promise should be bind with the operation's span 
-*/
 export interface RequestMetadata {
+    // isIncoming - if true, then the operation callback / promise should be bind with the operation's span
     isIncoming: boolean;
     spanAttributes?: Attributes;
     spanKind?: SpanKind;
@@ -17,5 +15,5 @@ export interface ServiceExtension {
     // called before request is sent, and after span is started
     requestPostSpanHook?: (request: AWS.Request<any, any>) => void;
 
-    responseHook: (response: AWS.Response<any, any>, span: Span) => void;
+    responseHook?: (response: AWS.Response<any, any>, span: Span) => void;
 }

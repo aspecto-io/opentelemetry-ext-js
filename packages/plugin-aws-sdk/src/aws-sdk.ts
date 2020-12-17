@@ -84,9 +84,15 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
         return newSpan;
     }
 
-    private _callPreRequestHooks(span: Span, request: AWS.Request<any, any>) {
+    private _callUserPreRequestHook(span: Span, request: AWS.Request<any, any>) {
         if (this._config?.preRequestHook) {
             this._safeExecute(span, () => this._config.preRequestHook(span, request), false);
+        }
+    }
+
+    private _callUserResponseHook(span: Span, response: AWS.Response<any, any>) {
+        if (this._config?.responseHook) {
+            this._safeExecute(span, () => this._config.responseHook(span, response), false);
         }
     }
 
@@ -102,6 +108,7 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
                 span.setAttribute(AttributeNames.AWS_ERROR, response.error);
             }
 
+            this._callUserResponseHook(span, response);
             this.servicesExtensions.responseHook(response, span);
 
             span.setAttributes({
@@ -130,7 +137,7 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
                 requestMetadata.spanKind,
                 requestMetadata.spanName
             );
-            thisPlugin._callPreRequestHooks(span, awsRequest);
+            thisPlugin._callUserPreRequestHook(span, awsRequest);
             thisPlugin._registerCompletedEvent(span, awsRequest);
 
             const callbackWithContext = thisPlugin._tracer.bind(callback, span);
@@ -160,7 +167,7 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
                 requestMetadata.spanKind,
                 requestMetadata.spanName
             );
-            thisPlugin._callPreRequestHooks(span, awsRequest);
+            thisPlugin._callUserPreRequestHook(span, awsRequest);
             thisPlugin._registerCompletedEvent(span, awsRequest);
 
             const origPromise: Promise<any> = thisPlugin._tracer.withSpan(span, () => {
