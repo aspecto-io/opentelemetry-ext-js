@@ -3,12 +3,14 @@ import { ServiceExtension, RequestMetadata } from './ServiceExtension';
 import { SqsServiceExtension } from './sqs';
 import * as AWS from 'aws-sdk';
 import { AwsSdkPluginConfig } from '../types';
+import { DynamodbServiceExtension } from './dynamodb';
 
 export class ServicesExtensions implements ServiceExtension {
     services: Map<string, ServiceExtension> = new Map();
 
     constructor(tracer: Tracer, logger: Logger, pluginConfig: AwsSdkPluginConfig) {
         this.services.set('sqs', new SqsServiceExtension(tracer, logger, pluginConfig?.sqsProcessHook));
+        this.services.set('dynamodb', new DynamodbServiceExtension());
     }
 
     requestHook(request: AWS.Request<any, any>): RequestMetadata {
@@ -31,7 +33,6 @@ export class ServicesExtensions implements ServiceExtension {
     responseHook(response: AWS.Response<any, any>, span: Span) {
         const serviceId = (response as any)?.request?.service?.serviceIdentifier;
         const serviceExtension = this.services.get(serviceId);
-        if (!serviceExtension) return;
-        serviceExtension.responseHook(response, span);
+        serviceExtension?.responseHook?.(response, span);
     }
 }
