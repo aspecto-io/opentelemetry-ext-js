@@ -36,7 +36,7 @@ class SequelizePlugin extends BasePlugin<typeof sequelize> {
                 statement = statement.trim();
                 if (!operation) operation = statement.split(' ')[0];
             }
-            
+
             const sequelizeInstance: sequelize.Sequelize = this;
             const config = sequelizeInstance?.config;
 

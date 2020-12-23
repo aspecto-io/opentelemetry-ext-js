@@ -1,4 +1,14 @@
-import { Tracer, SpanKind, Span, propagation, Logger, TextMapGetter, TextMapSetter, setActiveSpan, context } from '@opentelemetry/api';
+import {
+    Tracer,
+    SpanKind,
+    Span,
+    propagation,
+    Logger,
+    TextMapGetter,
+    TextMapSetter,
+    setActiveSpan,
+    context,
+} from '@opentelemetry/api';
 import { pubsubPropagation } from 'opentelemetry-propagation-utils';
 import { RequestMetadata, ServiceExtension } from './ServiceExtension';
 import * as AWS from 'aws-sdk';

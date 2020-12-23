@@ -2,7 +2,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const packageName = process.argv[2]
+const packageName = process.argv[2];
 const packageRoot = `${process.cwd()}/packages/${packageName}`;
 const packageJsonUrl = path.resolve(`${packageRoot}/package.json`);
 const pjson = require(packageJsonUrl);
