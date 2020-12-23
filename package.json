@@ -5,7 +5,7 @@
         "test": "lerna run test",
         "build": "lerna run build",
         "postinstall": "lerna bootstrap",
-        "prettier": "prettier --config prettierrc.yml --write \"packages/**/*.{ts,tsx,js,jsx,json}\""
+        "prettier": "prettier --config .prettierrc.yml --write \"packages/**/*.{ts,tsx,js,jsx,json}\""
     },
     "devDependencies": {
         "husky": "^4.3.6",
