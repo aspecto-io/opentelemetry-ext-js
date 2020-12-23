@@ -29,8 +29,14 @@ class SequelizePlugin extends BasePlugin<typeof sequelize> {
                 return original.apply(this, arguments);
             }
 
-            const statement = sql?.query ? sql.query : sql;
-            const operation = option.type ?? (typeof statement === 'string' ? statement.split(' ')[0] : undefined);
+            let statement = sql?.query ? sql.query : sql;
+            let operation = option.type;
+
+            if (typeof statement === 'string') {
+                statement = statement.trim();
+                if (!operation) operation = statement.split(' ')[0];
+            }
+            
             const sequelizeInstance: sequelize.Sequelize = this;
             const config = sequelizeInstance?.config;
 
