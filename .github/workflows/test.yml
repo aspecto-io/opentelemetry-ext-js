@@ -13,10 +13,10 @@ jobs:
       - name: Install Dependencies
         run: yarn
 
-      - name: Test
-        run: yarn test
-
       - name: Build
         run: yarn build
+
+      - name: Test
+        run: yarn test
 
     
