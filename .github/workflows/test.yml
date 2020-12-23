@@ -7,20 +7,16 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 5
-      matrix:
-        packageName: [plugin-kafkajs, plugin-typeorm, plugin-aws-sdk, plugin-sequelize]
     steps:
       - uses: actions/checkout@v2
 
       - name: Install Dependencies
-        run: yarn --cwd packages/${{ matrix.packageName }}
+        run: yarn
 
       - name: Test
-        run: yarn --cwd packages/${{ matrix.packageName }} test
+        run: yarn test
 
       - name: Build
-        run: yarn --cwd packages/${{ matrix.packageName }} build
+        run: yarn build
 
     
