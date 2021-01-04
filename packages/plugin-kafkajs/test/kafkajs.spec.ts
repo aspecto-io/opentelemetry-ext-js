@@ -5,6 +5,7 @@ import { NodeTracerProvider } from '@opentelemetry/node';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { ContextManager } from '@opentelemetry/context-base';
 import { context, propagation, SpanKind, StatusCode, Span } from '@opentelemetry/api';
+import { MessagingAttribute } from '@opentelemetry/semantic-conventions';
 import * as kafkajs from 'kafkajs';
 import {
     Kafka,
@@ -19,7 +20,6 @@ import {
     EachMessagePayload,
     KafkaMessage,
 } from 'kafkajs';
-import { AttributeNames } from '../src/enums';
 import { DummyPropagation } from './DummyPropagation';
 
 describe('plugin-kafkajs', () => {
@@ -128,9 +128,9 @@ describe('plugin-kafkajs', () => {
                 expect(span.kind).toStrictEqual(SpanKind.PRODUCER);
                 expect(span.name).toStrictEqual('topic-name-1');
                 expect(span.status.code).toStrictEqual(StatusCode.UNSET);
-                expect(span.attributes[AttributeNames.MESSAGING_SYSTEM]).toStrictEqual('kafka');
-                expect(span.attributes[AttributeNames.MESSAGING_DESTINATIONKIND]).toStrictEqual('topic');
-                expect(span.attributes[AttributeNames.MESSAGING_DESTINATION]).toStrictEqual('topic-name-1');
+                expect(span.attributes[MessagingAttribute.MESSAGING_SYSTEM]).toStrictEqual('kafka');
+                expect(span.attributes[MessagingAttribute.MESSAGING_DESTINATION_KIND]).toStrictEqual('topic');
+                expect(span.attributes[MessagingAttribute.MESSAGING_DESTINATION]).toStrictEqual('topic-name-1');
 
                 expect(messagesSent.length).toBe(1);
                 expectKafkaHeadersToMatchSpanContext(messagesSent[0], span);
@@ -406,9 +406,10 @@ describe('plugin-kafkajs', () => {
                 expect(span.parentSpanId).toBeUndefined();
                 expect(span.kind).toStrictEqual(SpanKind.CONSUMER);
                 expect(span.status.code).toStrictEqual(StatusCode.UNSET);
-                expect(span.attributes[AttributeNames.MESSAGING_SYSTEM]).toStrictEqual('kafka');
-                expect(span.attributes[AttributeNames.MESSAGING_DESTINATIONKIND]).toStrictEqual('topic');
-                expect(span.attributes[AttributeNames.MESSAGING_DESTINATION]).toStrictEqual('topic-name-1');
+                expect(span.attributes[MessagingAttribute.MESSAGING_SYSTEM]).toStrictEqual('kafka');
+                expect(span.attributes[MessagingAttribute.MESSAGING_DESTINATION_KIND]).toStrictEqual('topic');
+                expect(span.attributes[MessagingAttribute.MESSAGING_DESTINATION]).toStrictEqual('topic-name-1');
+                expect(span.attributes[MessagingAttribute.MESSAGING_OPERATION]).toStrictEqual('process');
             });
         });
 
@@ -569,14 +570,21 @@ describe('plugin-kafkajs', () => {
                 spans.forEach((span) => {
                     expect(span.name).toStrictEqual('topic-name-1');
                     expect(span.status.code).toStrictEqual(StatusCode.UNSET);
-                    expect(span.attributes[AttributeNames.MESSAGING_SYSTEM]).toStrictEqual('kafka');
-                    expect(span.attributes[AttributeNames.MESSAGING_DESTINATIONKIND]).toStrictEqual('topic');
-                    expect(span.attributes[AttributeNames.MESSAGING_DESTINATION]).toStrictEqual('topic-name-1');
+                    expect(span.attributes[MessagingAttribute.MESSAGING_SYSTEM]).toStrictEqual('kafka');
+                    expect(span.attributes[MessagingAttribute.MESSAGING_DESTINATION_KIND]).toStrictEqual('topic');
+                    expect(span.attributes[MessagingAttribute.MESSAGING_DESTINATION]).toStrictEqual('topic-name-1');
                 });
+
                 const [recvSpan, msg1Span, msg2Span] = spans;
+
                 expect(recvSpan.parentSpanId).toBeUndefined();
+                expect(recvSpan.attributes[MessagingAttribute.MESSAGING_OPERATION]).toStrictEqual('receive');
+
                 expect(msg1Span.parentSpanId).toStrictEqual(recvSpan.spanContext.spanId);
+                expect(msg1Span.attributes[MessagingAttribute.MESSAGING_OPERATION]).toStrictEqual('process');
+
                 expect(msg2Span.parentSpanId).toStrictEqual(recvSpan.spanContext.spanId);
+                expect(msg2Span.attributes[MessagingAttribute.MESSAGING_OPERATION]).toStrictEqual('process');
             });
         });
     });
