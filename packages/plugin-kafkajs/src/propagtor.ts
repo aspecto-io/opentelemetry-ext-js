@@ -7,17 +7,11 @@ adding toString() to make sure string is returned
 */
 export const bufferTextMapGetter: TextMapGetter = {
     get(carrier, key) {
-      if (carrier == null) {
-        return undefined;
-      }
-      return carrier[key]?.toString();
+      return carrier?.[key]?.toString();
     },
   
     keys(carrier) {
-      if (carrier == null) {
-        return [];
-      }
-      return Object.keys(carrier);
+      return carrier ? Object.keys(carrier) : [];
     },
   };
   
