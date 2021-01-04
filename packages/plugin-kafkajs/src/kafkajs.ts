@@ -1,7 +1,7 @@
 import { BasePlugin } from '@opentelemetry/core';
 import { SpanKind, Span, StatusCode, Context, propagation, Link, getActiveSpan } from '@opentelemetry/api';
 import { ROOT_CONTEXT } from '@opentelemetry/context-base';
-import { MessagingAttribute } from '@opentelemetry/semantic-conventions';
+import { MessagingAttribute, MessagingOperationName } from '@opentelemetry/semantic-conventions';
 import * as shimmer from 'shimmer';
 import * as kafkaJs from 'kafkajs';
 import {
@@ -19,12 +19,6 @@ import {
 import { KafkaJsPluginConfig } from './types';
 import { VERSION } from './version';
 import { bufferTextMapGetter } from './propagtor';
-
-enum MessagingOperationType {
-    OPEARTION_TYPE_SEND = 'send',
-    OPEARTION_TYPE_RECEIVE = 'receive',
-    OPEARTION_TYPE_PROCESS = 'process',
-}
 
 export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
     protected _config!: KafkaJsPluginConfig;
@@ -91,7 +85,7 @@ export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
             const span = thisPlugin._startConsumerSpan(
                 payload.topic,
                 payload.message,
-                MessagingOperationType.OPEARTION_TYPE_PROCESS,
+                MessagingOperationName.PROCESS,
                 propagatedContext
             );
 
@@ -109,7 +103,7 @@ export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
             const receivingSpan = thisPlugin._startConsumerSpan(
                 payload.batch.topic,
                 undefined,
-                MessagingOperationType.OPEARTION_TYPE_RECEIVE,
+                MessagingOperationName.RECEIVE,
                 ROOT_CONTEXT
             );
             return thisPlugin._tracer.withSpan(receivingSpan, () => {
@@ -129,7 +123,7 @@ export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
                     return thisPlugin._startConsumerSpan(
                         payload.batch.topic,
                         message,
-                        MessagingOperationType.OPEARTION_TYPE_PROCESS,
+                        MessagingOperationName.PROCESS,
                         undefined,
                         origSpanLink
                     );
@@ -189,7 +183,7 @@ export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
     private _startConsumerSpan(
         topic: string,
         message: KafkaMessage,
-        operation: MessagingOperationType,
+        operation: string,
         context: Context,
         link?: Link
     ) {
