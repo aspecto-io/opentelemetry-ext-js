@@ -1,15 +1,7 @@
 import { BasePlugin } from '@opentelemetry/core';
-import {
-    SpanKind,
-    Span,
-    StatusCode,
-    Context,
-    propagation,
-    Link,
-    defaultTextMapGetter,
-    getActiveSpan,
-} from '@opentelemetry/api';
+import { SpanKind, Span, StatusCode, Context, propagation, Link, getActiveSpan } from '@opentelemetry/api';
 import { ROOT_CONTEXT } from '@opentelemetry/context-base';
+import { MessagingAttribute, MessagingOperationName } from '@opentelemetry/semantic-conventions';
 import * as shimmer from 'shimmer';
 import * as kafkaJs from 'kafkajs';
 import {
@@ -22,12 +14,11 @@ import {
     EachMessagePayload,
     KafkaMessage,
     EachBatchPayload,
-    IHeaders,
     Consumer,
 } from 'kafkajs';
 import { KafkaJsPluginConfig } from './types';
-import { AttributeNames } from './enums';
 import { VERSION } from './version';
+import { bufferTextMapGetter } from './propagtor';
 
 export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
     protected _config!: KafkaJsPluginConfig;
@@ -88,10 +79,15 @@ export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
         return function (payload: EachMessagePayload): Promise<void> {
             const propagatedContext: Context = propagation.extract(
                 payload.message.headers,
-                defaultTextMapGetter,
+                bufferTextMapGetter,
                 ROOT_CONTEXT
             );
-            const span = thisPlugin._startConsumerSpan(payload.topic, payload.message, propagatedContext);
+            const span = thisPlugin._startConsumerSpan(
+                payload.topic,
+                payload.message,
+                MessagingOperationName.PROCESS,
+                propagatedContext
+            );
 
             const eachMessagePromise = thisPlugin._tracer.withSpan(span, () => {
                 return original.apply(this, arguments);
@@ -104,12 +100,17 @@ export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
         const thisPlugin = this;
         return function (payload: EachBatchPayload): Promise<void> {
             // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#topic-with-multiple-consumers
-            const receivingSpan = thisPlugin._startConsumerSpan(payload.batch.topic, undefined, ROOT_CONTEXT);
+            const receivingSpan = thisPlugin._startConsumerSpan(
+                payload.batch.topic,
+                undefined,
+                MessagingOperationName.RECEIVE,
+                ROOT_CONTEXT
+            );
             return thisPlugin._tracer.withSpan(receivingSpan, () => {
                 const spans = payload.batch.messages.map((message: KafkaMessage) => {
                     const propagatedContext: Context = propagation.extract(
                         message.headers,
-                        defaultTextMapGetter,
+                        bufferTextMapGetter,
                         ROOT_CONTEXT
                     );
                     const spanContext = getActiveSpan(propagatedContext)?.context();
@@ -119,7 +120,13 @@ export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
                             context: spanContext,
                         };
                     }
-                    return thisPlugin._startConsumerSpan(payload.batch.topic, message, undefined, origSpanLink);
+                    return thisPlugin._startConsumerSpan(
+                        payload.batch.topic,
+                        message,
+                        MessagingOperationName.PROCESS,
+                        undefined,
+                        origSpanLink
+                    );
                 });
                 const batchMessagePromise: Promise<void> = original.apply(this, arguments);
                 spans.unshift(receivingSpan);
@@ -173,15 +180,22 @@ export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
             });
     }
 
-    private _startConsumerSpan(topic: string, message: KafkaMessage, context: Context, link?: Link) {
+    private _startConsumerSpan(
+        topic: string,
+        message: KafkaMessage,
+        operation: string,
+        context: Context,
+        link?: Link
+    ) {
         const span = this._tracer.startSpan(
             topic,
             {
                 kind: SpanKind.CONSUMER,
                 attributes: {
-                    [AttributeNames.MESSAGING_SYSTEM]: 'kafka',
-                    [AttributeNames.MESSAGING_DESTINATION]: topic,
-                    [AttributeNames.MESSAGING_DESTINATIONKIND]: 'topic',
+                    [MessagingAttribute.MESSAGING_SYSTEM]: 'kafka',
+                    [MessagingAttribute.MESSAGING_DESTINATION]: topic,
+                    [MessagingAttribute.MESSAGING_DESTINATION_KIND]: 'topic',
+                    [MessagingAttribute.MESSAGING_OPERATION]: operation,
                 },
                 links: link ? [link] : [],
             },
@@ -199,9 +213,9 @@ export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
         const span = this._tracer.startSpan(topic, {
             kind: SpanKind.PRODUCER,
             attributes: {
-                [AttributeNames.MESSAGING_SYSTEM]: 'kafka',
-                [AttributeNames.MESSAGING_DESTINATION]: topic,
-                [AttributeNames.MESSAGING_DESTINATIONKIND]: 'topic',
+                [MessagingAttribute.MESSAGING_SYSTEM]: 'kafka',
+                [MessagingAttribute.MESSAGING_DESTINATION]: topic,
+                [MessagingAttribute.MESSAGING_DESTINATION_KIND]: 'topic',
             },
         });
 
