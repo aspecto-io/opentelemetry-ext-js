@@ -8,6 +8,7 @@ import {
     TextMapSetter,
     setActiveSpan,
     context,
+    ROOT_CONTEXT,
 } from '@opentelemetry/api';
 import { pubsubPropagation } from 'opentelemetry-propagation-utils';
 import { RequestMetadata, ServiceExtension } from './ServiceExtension';
@@ -147,7 +148,7 @@ export class SqsServiceExtension implements ServiceExtension {
                 tracer: this.tracer,
                 messageToSpanDetails: (message: AWS.SQS.Message) => ({
                     name: queueName,
-                    parentContext: propagation.extract(message.MessageAttributes, sqsContextGetter),
+                    parentContext: propagation.extract(ROOT_CONTEXT, message.MessageAttributes, sqsContextGetter),
                     attributes: {
                         [SqsAttributeNames.MESSAGING_SYSTEM]: 'aws.sqs',
                         [SqsAttributeNames.MESSAGING_DESTINATION]: queueName,
@@ -181,7 +182,7 @@ export class SqsServiceExtension implements ServiceExtension {
     InjectPropagationContext(attributesMap?: MessageBodyAttributeMap): MessageBodyAttributeMap {
         const attributes = attributesMap ?? {};
         if (Object.keys(attributes).length < SQS_MAX_MESSAGE_ATTRIBUTES) {
-            propagation.inject(attributes, sqsContextSetter);
+            propagation.inject(context.active(), attributes, sqsContextSetter);
         } else {
             this.logger.warn(
                 'OpenTelemetry aws-sdk plugin cannot set context propagation on SQS message due to maximum amount of MessageAttributes'
