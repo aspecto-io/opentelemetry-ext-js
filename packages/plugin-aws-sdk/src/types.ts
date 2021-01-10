@@ -1,4 +1,5 @@
-import { PluginConfig, Span } from '@opentelemetry/api';
+import { Span } from '@opentelemetry/api';
+import { PluginConfig } from '@opentelemetry/core';
 import AWS from 'aws-sdk';
 
 export interface AwsSdkRequestCustomAttributeFunction {

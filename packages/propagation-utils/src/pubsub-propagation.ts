@@ -1,4 +1,4 @@
-import { Tracer, SpanKind, Span, Context, Link, getActiveSpan } from '@opentelemetry/api';
+import { Tracer, SpanKind, Span, Context, Link, getParentSpanContext } from '@opentelemetry/api';
 
 const START_SPAN_FUNCTION = Symbol('opentelemetry.pubsub-propagation.start_span');
 const END_SPAN_FUNCTION = Symbol('opentelemetry.pubsub-propagation.end_span');
@@ -75,7 +75,7 @@ const startMessagingProcessSpan = <T>(
     processHook?: ProcessHook<T>
 ): Span => {
     const links: Link[] = [];
-    const spanContext = getActiveSpan(propagatedContext)?.context();
+    const spanContext = getParentSpanContext(propagatedContext);
     if (spanContext) {
         links.push({
             context: spanContext,

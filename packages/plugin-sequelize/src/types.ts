@@ -1,4 +1,5 @@
-import { PluginConfig, Span } from '@opentelemetry/api';
+import { Span } from '@opentelemetry/api';
+import { PluginConfig } from '@opentelemetry/core';
 
 export type SequelizeResponseCustomAttributesFunction = (span: Span, response: any) => void;
 
