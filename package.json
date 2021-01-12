@@ -5,7 +5,10 @@
         "test": "lerna run test",
         "build": "lerna run build",
         "postinstall": "lerna bootstrap",
-        "prettier": "prettier --config .prettierrc.yml --write \"**/*.{ts,tsx,js,jsx,json}\""
+        "prettier": "prettier --config .prettierrc.yml --write \"**/*.{ts,tsx,js,jsx,json}\"",
+        "version:update": "lerna run version:update",
+        "version": "git add packages/**/version.ts",
+        "publish:ci": "lerna publish --yes --allow-branch master --create-release github --conventionalCommits"
     },
     "devDependencies": {
         "husky": "^4.3.6",

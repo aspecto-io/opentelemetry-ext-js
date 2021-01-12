@@ -24,7 +24,9 @@
         "build": "tsc",
         "prepare": "yarn run build",
         "test": "jest",
-        "watch": "tsc -w"
+        "watch": "tsc -w",
+        "version:update": "node ../../scripts/version-update.js",
+        "version": "yarn run version:update"
     },
     "bugs": {
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
