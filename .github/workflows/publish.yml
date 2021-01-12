@@ -3,9 +3,6 @@ name: Publish
 on: 
   workflow_dispatch:
     inputs:
-      packageName:
-        description: Which package to publish
-        required: true
       semanticVersion:
         description: 'Semantic Version [major | minor | patch ]'
         required: true
