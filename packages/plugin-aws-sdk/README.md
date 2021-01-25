@@ -34,7 +34,10 @@ aws-sdk plugin has few options available to choose from. You can set the followi
 | Options        | Type                                   | Description                                                                                     |
 | -------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `preRequestHook` | `AwsSdkRequestCustomAttributeFunction` | Hook called before request send, which allow to add custom attributes to span. |
+| `responseHook` | `AwsSdkResponseCustomAttributeFunction` | Hook for adding custom attributes when response is received from aws. |
 | `sqsProcessHook` | `AwsSdkSqsProcessCustomAttributeFunction` | Hook called after starting sqs `process` span (for each sqs received message), which allow to add custom attributes to it. |
+| `suppressUnderlyingInstrumentation` | boolean | Most aws operation use http request under the hood. If http instrumentation is enabled, each aws operation will also create an http/s child describing the communication with amazon servers. Setting the suppressUnderlyingInstrumentation` config value to `true` will cause the plugin to suppress instrumentation of underlying operations, effectively causing those http spans to be non-recordable. |
+
 
 
 ## Span Attributes

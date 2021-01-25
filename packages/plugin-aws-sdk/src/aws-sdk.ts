@@ -9,7 +9,7 @@
     callback    |       1           |       2   
  */
 import { BasePlugin } from '@opentelemetry/core';
-import { Span, StatusCode, Attributes, SpanKind } from '@opentelemetry/api';
+import { Span, StatusCode, Attributes, SpanKind, context, suppressInstrumentation } from '@opentelemetry/api';
 import * as shimmer from 'shimmer';
 import AWS from 'aws-sdk';
 import { AttributeNames } from './enums';
@@ -143,7 +143,7 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
             const callbackWithContext = thisPlugin._tracer.bind(callback, span);
             return thisPlugin._tracer.withSpan(span, () => {
                 thisPlugin.servicesExtensions.requestPostSpanHook(awsRequest);
-                return original.call(awsRequest, callbackWithContext);
+                return thisPlugin._callOriginalFunction(() => original.call(awsRequest, callbackWithContext));
             });
         };
     }
@@ -172,7 +172,7 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
 
             const origPromise: Promise<any> = thisPlugin._tracer.withSpan(span, () => {
                 thisPlugin.servicesExtensions.requestPostSpanHook(awsRequest);
-                return original.apply(awsRequest, arguments);
+                return thisPlugin._callOriginalFunction(() => original.call(awsRequest, arguments));
             });
 
             return requestMetadata.isIncoming ? thisPlugin._bindPromise(origPromise, span) : origPromise;
@@ -204,6 +204,14 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
                 throw error;
             }
             this._logger.error('caught error ', error);
+        }
+    }
+
+    private _callOriginalFunction<T>(originalFunctionCall: (...args: any[]) => T): T {
+        if(this._config?.suppressUnderlyingInstrumentation) {
+            return context.with(suppressInstrumentation(context.active()), originalFunctionCall);
+        } else {
+            return originalFunctionCall();
         }
     }
 }
