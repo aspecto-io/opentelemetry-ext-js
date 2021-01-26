@@ -287,11 +287,11 @@ describe('plugin-aws-sdk', () => {
             });
         });
 
-        it('suppressUnderlyingInstrumentation set to true with send()', (done) => {
+        it('suppressInternalInstrumentation set to true with send()', (done) => {
             mockAwsSend(responseMockSuccess, 'data returned from operation', true);
             const pluginConfig = {
                 enabled: true,
-                suppressUnderlyingInstrumentation: true,
+                suppressInternalInstrumentation: true,
             };
 
             plugin.enable(AWS, provider, logger, pluginConfig);
@@ -305,11 +305,11 @@ describe('plugin-aws-sdk', () => {
             });
         });
 
-        it('suppressUnderlyingInstrumentation set to true with promise()', async () => {
+        it('suppressInternalInstrumentation set to true with promise()', async () => {
             mockAwsSend(responseMockSuccess, 'data returned from operation', true);
             const pluginConfig = {
                 enabled: true,
-                suppressUnderlyingInstrumentation: true,
+                suppressInternalInstrumentation: true,
             };
 
             plugin.enable(AWS, provider, logger, pluginConfig);

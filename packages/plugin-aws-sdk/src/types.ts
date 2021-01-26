@@ -28,9 +28,9 @@ export interface AwsSdkPluginConfig extends PluginConfig {
      * Most aws operation use http request under the hood.
      * if http instrumentation is enabled, each aws operation will also create
      * an http/s child describing the communication with amazon servers.
-     * Setting the `suppressUnderlyingInstrumentation` config value to `true` will
+     * Setting the `suppressInternalInstrumentation` config value to `true` will
      * cause the plugin to suppress instrumentation of underlying operations,
      * effectively causing those http spans to be non-recordable.
      */
-    suppressUnderlyingInstrumentation?: boolean;
+    suppressInternalInstrumentation?: boolean;
 }

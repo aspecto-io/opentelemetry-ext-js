@@ -121,6 +121,7 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
     private _getRequestSendPatch(original: (callback?: (err: any, data: any) => void) => void) {
         const thisPlugin = this;
         return function (callback?: (err: any, data: any) => void) {
+            console.log('here1');
             const awsRequest: AWS.Request<any, any> = this;
             /* 
         if the span was already started, we don't want to start a new one 
@@ -208,7 +209,8 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
     }
 
     private _callOriginalFunction<T>(originalFunctionCall: (...args: any[]) => T): T {
-        if(this._config?.suppressUnderlyingInstrumentation) {
+        console.log(this._config?.suppressInternalInstrumentation);
+        if(this._config?.suppressInternalInstrumentation) {
             return context.with(suppressInstrumentation(context.active()), originalFunctionCall);
         } else {
             return originalFunctionCall();
