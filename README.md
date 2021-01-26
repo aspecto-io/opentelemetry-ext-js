@@ -21,8 +21,8 @@ js extensions for the [open-telemetry](https://opentelemetry.io/) project, from 
 - [opentelemetry-plugin-sequelize](./packages/plugin-sequelize) - auto instrumentation for [`Sequelize`](https://sequelize.org/) 
 [![NPM version](https://img.shields.io/npm/v/opentelemetry-plugin-sequelize.svg)](https://www.npmjs.com/package/opentelemetry-plugin-sequelize)
 
-## Compatibility with OTEL SDK
+## Compatibility with opentelemetry versions
 **Tested and verified against otel v0.14.0**
-- Support for otel v0.15.0, which had few breaking change not compatible with current implementation will be added soon
+- Support for otel v0.15.0, which had breaking changes not compatible with current implementation will be added soon
 - Versions 0.1.x of the plugins are compatible with otel version v0.14.0
 - Versions 0.0.x of the plugins are compatible with otel version v0.12.0
