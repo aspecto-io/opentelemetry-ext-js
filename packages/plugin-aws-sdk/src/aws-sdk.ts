@@ -208,12 +208,11 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
         }
     }
 
-    private _callOriginalFunction<T>(originalFunctionCall: (...args: any[]) => T): T {
-        console.log(this._config?.suppressInternalInstrumentation);
+    private _callOriginalFunction<T>(originalFunction: (...args: any[]) => T): T {
         if(this._config?.suppressInternalInstrumentation) {
-            return context.with(suppressInstrumentation(context.active()), originalFunctionCall);
+            return context.with(suppressInstrumentation(context.active()), originalFunction);
         } else {
-            return originalFunctionCall();
+            return originalFunction();
         }
     }
 }
