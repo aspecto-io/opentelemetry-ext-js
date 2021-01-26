@@ -14,7 +14,7 @@ npm install --save opentelemetry-plugin-kafkajs
 To load a specific plugin (**kafkajs** in this case), specify it in the Node Tracer's configuration
 
 ```js
-const { NodeTracerProvider } = require("opentelemetry-plugin-kafkajs");
+const { NodeTracerProvider } = require("@opentelemetry/node");
 
 const provider = new NodeTracerProvider({
   plugins: {
