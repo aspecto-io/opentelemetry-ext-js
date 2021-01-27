@@ -1,8 +1,7 @@
 import { plugin } from '../src';
-import { NoopLogger } from '@opentelemetry/core';
 import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan, Span } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';
-import { context, StatusCode } from '@opentelemetry/api';
+import { context, StatusCode, NoopLogger } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { ContextManager } from '@opentelemetry/context-base';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';

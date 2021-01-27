@@ -1,15 +1,5 @@
 import { BasePlugin } from '@opentelemetry/core';
-import {
-    SpanKind,
-    Span,
-    StatusCode,
-    Context,
-    propagation,
-    Link,
-    getActiveSpan,
-    setActiveSpan,
-    context,
-} from '@opentelemetry/api';
+import { SpanKind, Span, StatusCode, Context, propagation, Link, getSpan, setSpan, context } from '@opentelemetry/api';
 import { ROOT_CONTEXT } from '@opentelemetry/context-base';
 import { MessagingAttribute, MessagingOperationName } from '@opentelemetry/semantic-conventions';
 import * as shimmer from 'shimmer';
@@ -99,7 +89,7 @@ export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
                 propagatedContext
             );
 
-            const eachMessagePromise = thisPlugin._tracer.withSpan(span, () => {
+            const eachMessagePromise = context.with(setSpan(context.active(), span), () => {
                 return original.apply(this, arguments);
             });
             return thisPlugin._endSpansOnPromise([span], eachMessagePromise);
@@ -116,14 +106,14 @@ export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
                 MessagingOperationName.RECEIVE,
                 ROOT_CONTEXT
             );
-            return thisPlugin._tracer.withSpan(receivingSpan, () => {
+            return context.with(setSpan(context.active(), receivingSpan), () => {
                 const spans = payload.batch.messages.map((message: KafkaMessage) => {
                     const propagatedContext: Context = propagation.extract(
                         ROOT_CONTEXT,
                         message.headers,
                         bufferTextMapGetter
                     );
-                    const spanContext = getActiveSpan(propagatedContext)?.context();
+                    const spanContext = getSpan(propagatedContext)?.context();
                     let origSpanLink: Link;
                     if (spanContext) {
                         origSpanLink = {
@@ -224,7 +214,7 @@ export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
         });
 
         message.headers = message.headers ?? {};
-        propagation.inject(setActiveSpan(context.active(), span), message.headers);
+        propagation.inject(setSpan(context.active(), span), message.headers);
 
         if (this._config?.producerHook) {
             this._safeExecute([], () => this._config.producerHook!(span, topic, message), false);

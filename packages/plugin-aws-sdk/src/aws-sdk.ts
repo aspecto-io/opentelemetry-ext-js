@@ -9,7 +9,7 @@
     callback    |       1           |       2   
  */
 import { BasePlugin } from '@opentelemetry/core';
-import { Span, StatusCode, Attributes, SpanKind } from '@opentelemetry/api';
+import { Span, StatusCode, Attributes, SpanKind, context, setSpan } from '@opentelemetry/api';
 import * as shimmer from 'shimmer';
 import AWS from 'aws-sdk';
 import { AttributeNames } from './enums';
@@ -48,8 +48,8 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
 
         const origThen = target.then;
         target.then = function (onFulfilled, onRejected) {
-            const newOnFulfilled = thisPlugin._tracer.bind(onFulfilled, span);
-            const newOnRejected = thisPlugin._tracer.bind(onRejected, span);
+            const newOnFulfilled = context.bind(onFulfilled, setSpan(context.active(), span));
+            const newOnRejected = context.bind(onRejected, setSpan(context.active(), span));
             return origThen.call(this, newOnFulfilled, newOnRejected);
         };
 
@@ -140,8 +140,8 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
             thisPlugin._callUserPreRequestHook(span, awsRequest);
             thisPlugin._registerCompletedEvent(span, awsRequest);
 
-            const callbackWithContext = thisPlugin._tracer.bind(callback, span);
-            return thisPlugin._tracer.withSpan(span, () => {
+            const callbackWithContext = context.bind(callback, setSpan(context.active(), span));
+            return context.with(setSpan(context.active(), span), () => {
                 thisPlugin.servicesExtensions.requestPostSpanHook(awsRequest);
                 return original.call(awsRequest, callbackWithContext);
             });
@@ -170,7 +170,7 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
             thisPlugin._callUserPreRequestHook(span, awsRequest);
             thisPlugin._registerCompletedEvent(span, awsRequest);
 
-            const origPromise: Promise<any> = thisPlugin._tracer.withSpan(span, () => {
+            const origPromise: Promise<any> = context.with(setSpan(context.active(), span), () => {
                 thisPlugin.servicesExtensions.requestPostSpanHook(awsRequest);
                 return original.apply(awsRequest, arguments);
             });

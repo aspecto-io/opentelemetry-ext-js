@@ -1,10 +1,9 @@
 import { plugin } from '../src';
-import { NoopLogger } from '@opentelemetry/core';
 import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { ContextManager } from '@opentelemetry/context-base';
-import { context, propagation, SpanKind, StatusCode, Span } from '@opentelemetry/api';
+import { context, propagation, SpanKind, StatusCode, Span, NoopLogger } from '@opentelemetry/api';
 import { MessagingAttribute } from '@opentelemetry/semantic-conventions';
 import * as kafkajs from 'kafkajs';
 import {

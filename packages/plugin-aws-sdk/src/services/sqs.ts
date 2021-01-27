@@ -6,14 +6,13 @@ import {
     Logger,
     TextMapGetter,
     TextMapSetter,
-    setActiveSpan,
+    setSpan,
     context,
     ROOT_CONTEXT,
 } from '@opentelemetry/api';
 import { pubsubPropagation } from 'opentelemetry-propagation-utils';
 import { RequestMetadata, ServiceExtension } from './ServiceExtension';
 import * as AWS from 'aws-sdk';
-import { TRACE_PARENT_HEADER, TRACE_STATE_HEADER } from '@opentelemetry/core';
 import {
     MessageBodyAttributeMap,
     SendMessageRequest,
@@ -91,10 +90,7 @@ export class SqsServiceExtension implements ServiceExtension {
                     spanAttributes[SqsAttributeNames.MESSAGING_OPERATION] = 'receive';
 
                     const params: Record<string, any> = (request as any).params;
-                    const attributesNames = params.MessageAttributeNames || [];
-                    attributesNames.push(TRACE_PARENT_HEADER);
-                    attributesNames.push(TRACE_STATE_HEADER);
-                    params.MessageAttributeNames = attributesNames;
+                    params.MessageAttributeNames = (params.MessageAttributeNames ?? []).concat(propagation.fields());
                 }
                 break;
 
@@ -144,7 +140,7 @@ export class SqsServiceExtension implements ServiceExtension {
 
             pubsubPropagation.patchMessagesArrayToStartProcessSpans<AWS.SQS.Message>({
                 messages,
-                parentContext: setActiveSpan(context.active(), span),
+                parentContext: setSpan(context.active(), span),
                 tracer: this.tracer,
                 messageToSpanDetails: (message: AWS.SQS.Message) => ({
                     name: queueName,

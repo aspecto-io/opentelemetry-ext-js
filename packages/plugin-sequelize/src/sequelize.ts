@@ -1,5 +1,5 @@
 import { BasePlugin } from '@opentelemetry/core';
-import { Span, SpanKind, StatusCode } from '@opentelemetry/api';
+import { context, setSpan, Span, SpanKind, StatusCode, getSpan } from '@opentelemetry/api';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
 import * as sequelize from 'sequelize';
 import shimmer from 'shimmer';
@@ -25,7 +25,7 @@ class SequelizePlugin extends BasePlugin<typeof sequelize> {
     private _createQueryPatch(original: Function) {
         const thisPlugin = this;
         return function (sql: any, option: any) {
-            if (thisPlugin._config?.ignoreOrphanedSpans && !thisPlugin?._tracer?.getCurrentSpan()) {
+            if (thisPlugin._config?.ignoreOrphanedSpans && !getSpan(context.active())) {
                 return original.apply(this, arguments);
             }
 
@@ -62,8 +62,8 @@ class SequelizePlugin extends BasePlugin<typeof sequelize> {
                 attributes,
             });
 
-            return thisPlugin._tracer
-                .withSpan(newSpan, () => original.apply(this, arguments))
+            return context
+                .with(setSpan(context.active(), newSpan), () => original.apply(this, arguments))
                 .then((response: any) => {
                     if (thisPlugin._config?.responseHook) {
                         try {

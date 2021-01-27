@@ -1,9 +1,8 @@
 import { plugin } from '../src';
 import AWS, { AWSError } from 'aws-sdk';
-import { NoopLogger } from '@opentelemetry/core';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { ContextManager } from '@opentelemetry/context-base';
-import { context } from '@opentelemetry/api';
+import { context, NoopLogger } from '@opentelemetry/api';
 import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/tracing';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { mockAwsSend } from './testing-utils';
