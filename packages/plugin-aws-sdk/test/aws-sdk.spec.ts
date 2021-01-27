@@ -219,11 +219,8 @@ describe('plugin-aws-sdk', () => {
     });
 
     describe('plugin config', () => {
-        beforeAll(() => {
-            mockAwsSend(responseMockSuccess, 'data returned from operation');
-        });
-
         it('preRequestHook called and add request attribute to span', (done) => {
+            mockAwsSend(responseMockSuccess, 'data returned from operation');
             const pluginConfig = {
                 enabled: true,
                 preRequestHook: (span: Span, request: { params: Record<string, any> }) => {
@@ -245,6 +242,7 @@ describe('plugin-aws-sdk', () => {
         });
 
         it('preRequestHook throws does not fail span', (done) => {
+            mockAwsSend(responseMockSuccess, 'data returned from operation');
             const pluginConfig = {
                 enabled: true,
                 preRequestHook: (span: Span, request: any) => {
@@ -266,6 +264,7 @@ describe('plugin-aws-sdk', () => {
         });
 
         it('responseHook called and add response attribute to span', (done) => {
+            mockAwsSend(responseMockSuccess, 'data returned from operation');
             const pluginConfig = {
                 enabled: true,
                 responseHook: (span: Span, response: { params: AWS.Response<any, any> }) => {
@@ -287,5 +286,40 @@ describe('plugin-aws-sdk', () => {
                 done();
             });
         });
+
+        it('suppressInternalInstrumentation set to true with send()', (done) => {
+            mockAwsSend(responseMockSuccess, 'data returned from operation', true);
+            const pluginConfig = {
+                enabled: true,
+                suppressInternalInstrumentation: true,
+            };
+
+            plugin.enable(AWS, provider, logger, pluginConfig);
+
+            const s3 = new AWS.S3();
+
+            s3.createBucket({ Bucket: 'aws-test-bucket' }, function (err, data) {
+                const awsSpans = getAwsSpans();
+                expect(awsSpans.length).toBe(1);
+                done();
+            });
+        });
+
+        it('suppressInternalInstrumentation set to true with promise()', async () => {
+            mockAwsSend(responseMockSuccess, 'data returned from operation', true);
+            const pluginConfig = {
+                enabled: true,
+                suppressInternalInstrumentation: true,
+            };
+
+            plugin.enable(AWS, provider, logger, pluginConfig);
+
+            const s3 = new AWS.S3();
+
+            await s3.createBucket({ Bucket: 'aws-test-bucket' }).promise();
+            const awsSpans = getAwsSpans();
+            expect(awsSpans.length).toBe(1);
+        })
+
     });
 });
