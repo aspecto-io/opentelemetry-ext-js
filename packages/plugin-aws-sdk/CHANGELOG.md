@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.2.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-plugin-aws-sdk@0.1.2...opentelemetry-plugin-aws-sdk@0.2.0) (2021-01-28)
+
+
+### Features
+
+* **aws-sdk:** add suppressInternalInstrumentation config option ([#53](https://github.com/aspecto-io/opentelemetry-ext-js/issues/53)) ([527e266](https://github.com/aspecto-io/opentelemetry-ext-js/commit/527e2664cc3fc3d0e307a69f23529a2ae4ac9d5f))
+
+
+
+
+
 ## 0.1.2 (2021-01-12)
 
 

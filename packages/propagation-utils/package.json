@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-propagation-utils",
-    "version": "0.1.2",
+    "version": "0.2.0",
     "description": "open telemetry propagation utils",
     "keywords": [
         "propagation",
