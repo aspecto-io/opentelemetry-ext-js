@@ -1,8 +1,7 @@
 import { plugin } from '../src';
 import AWS from 'aws-sdk';
 import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan, Span } from '@opentelemetry/tracing';
-import { context, StatusCode } from '@opentelemetry/api';
-import { NoopLogger } from '@opentelemetry/core';
+import { context, StatusCode, NoopLogger } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { ContextManager } from '@opentelemetry/context-base';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
@@ -319,7 +318,6 @@ describe('plugin-aws-sdk', () => {
             await s3.createBucket({ Bucket: 'aws-test-bucket' }).promise();
             const awsSpans = getAwsSpans();
             expect(awsSpans.length).toBe(1);
-        })
-
+        });
     });
 });

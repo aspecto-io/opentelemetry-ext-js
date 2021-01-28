@@ -4,8 +4,8 @@ import {
     TextMapPropagator,
     TextMapSetter,
     TextMapGetter,
-    getParentSpanContext,
-    setExtractedSpanContext,
+    getSpanContext,
+    setSpanContext,
 } from '@opentelemetry/api';
 
 export class DummyPropagation implements TextMapPropagator {
@@ -21,11 +21,11 @@ export class DummyPropagation implements TextMapPropagator {
 
         if (!extractedSpanContext.traceId || !extractedSpanContext.spanId) return context;
 
-        return setExtractedSpanContext(context, extractedSpanContext);
+        return setSpanContext(context, extractedSpanContext);
     }
 
     inject(context: Context, carrier: unknown, setter: TextMapSetter): void {
-        const spanContext = getParentSpanContext(context);
+        const spanContext = getSpanContext(context);
         if (!spanContext) return;
 
         setter.set(carrier, DummyPropagation.TRACE_CONTEXT_KEY, spanContext.traceId);

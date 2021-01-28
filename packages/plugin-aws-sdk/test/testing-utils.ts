@@ -1,7 +1,11 @@
 import { isInstrumentationSuppressed, context } from '@opentelemetry/api';
 import AWS from 'aws-sdk';
 
-export const mockAwsSend = (sendResult: any, data: any = undefined, expectedInstrumentationSuppressed: boolean = false) => {
+export const mockAwsSend = (
+    sendResult: any,
+    data: any = undefined,
+    expectedInstrumentationSuppressed: boolean = false
+) => {
     AWS.Request.prototype.send = function (cb?: (error, response) => void) {
         expect(isInstrumentationSuppressed(context.active())).toStrictEqual(expectedInstrumentationSuppressed);
         if (cb) {

@@ -24,7 +24,7 @@ export interface AwsSdkPluginConfig extends PluginConfig {
     /** hook for adding custom attribute when an sqs process span is started */
     sqsProcessHook?: AwsSdkSqsProcessCustomAttributeFunction;
 
-    /** 
+    /**
      * Most aws operation use http request under the hood.
      * if http instrumentation is enabled, each aws operation will also create
      * an http/s child describing the communication with amazon servers.

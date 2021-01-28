@@ -1,5 +1,5 @@
 import { BasePlugin } from '@opentelemetry/core';
-import { Span, SpanKind, StatusCode } from '@opentelemetry/api';
+import { Span, SpanKind, StatusCode, setSpan, context } from '@opentelemetry/api';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
 import { TypeormPluginConfig } from './types';
 import { safeExecute, getParamNames } from './utils';
@@ -95,7 +95,7 @@ class TypeormPlugin extends BasePlugin<typeof typeorm> {
                 });
 
                 try {
-                    const response: Promise<any> = thisPlugin._tracer.withSpan(newSpan, () =>
+                    const response: Promise<any> = context.with(setSpan(context.active(), newSpan), () =>
                         original.apply(this, arguments)
                     );
                     const resolved = await response;
