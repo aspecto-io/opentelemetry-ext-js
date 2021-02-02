@@ -105,12 +105,7 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
     private _registerCompletedEvent(span: Span, request: AWS.Request<any, any>, completedEventContext: Context) {
         const thisPlugin = this;
         request.on('complete', (response) => {
-            // The better alternative is to path the entire events of the event emitter,
-            // which means that request.on('complete', fn) will be called with right context,
-            // but also all other events.
-            // this can be achieved by calling context.bind(request, context).
-            // unfortunately, request is not of type EventEmitter and this option fails.
-            // TODO: understand why request is not of type EventEmitter
+            // read issue https://github.com/aspecto-io/opentelemetry-ext-js/issues/60
             context.with(completedEventContext, () => {
                 if (!request[thisPlugin.REQUEST_SPAN_KEY]) {
                     return;
