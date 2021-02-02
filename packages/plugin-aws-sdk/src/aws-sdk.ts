@@ -9,7 +9,16 @@
     callback    |       1           |       2   
  */
 import { BasePlugin } from '@opentelemetry/core';
-import { Span, StatusCode, Attributes, SpanKind, context, setSpan, suppressInstrumentation } from '@opentelemetry/api';
+import {
+    Span,
+    StatusCode,
+    Attributes,
+    SpanKind,
+    context,
+    setSpan,
+    suppressInstrumentation,
+    Context,
+} from '@opentelemetry/api';
 import * as shimmer from 'shimmer';
 import AWS from 'aws-sdk';
 import { AttributeNames } from './enums';
@@ -96,25 +105,33 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
         }
     }
 
-    private _registerCompletedEvent(span: Span, request: AWS.Request<any, any>) {
+    private _registerCompletedEvent(span: Span, request: AWS.Request<any, any>, completedEventContext: Context) {
         const thisPlugin = this;
         request.on('complete', (response) => {
-            if (!request[thisPlugin.REQUEST_SPAN_KEY]) {
-                return;
-            }
-            request[thisPlugin.REQUEST_SPAN_KEY] = undefined;
+            // The better alternative is to path the entire events of the event emitter,
+            // which means that request.on('complete', fn) will be called with right context,
+            // but also all other events.
+            // this can be achieved by calling context.bind(request, context).
+            // unfortunately, request is not of type EventEmitter and this option fails.
+            // TODO: understand why request is not of type EventEmitter
+            context.with(completedEventContext, () => {
+                if (!request[thisPlugin.REQUEST_SPAN_KEY]) {
+                    return;
+                }
+                request[thisPlugin.REQUEST_SPAN_KEY] = undefined;
 
-            if (response.error) {
-                span.setAttribute(AttributeNames.AWS_ERROR, response.error);
-            }
+                if (response.error) {
+                    span.setAttribute(AttributeNames.AWS_ERROR, response.error);
+                }
 
-            this._callUserResponseHook(span, response);
-            this.servicesExtensions.responseHook(response, span);
+                this._callUserResponseHook(span, response);
+                this.servicesExtensions.responseHook(response, span);
 
-            span.setAttributes({
-                [AttributeNames.AWS_REQUEST_ID]: response.requestId,
+                span.setAttributes({
+                    [AttributeNames.AWS_REQUEST_ID]: response.requestId,
+                });
+                span.end();
             });
-            span.end();
         });
     }
 
@@ -137,10 +154,12 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
                 requestMetadata.spanKind,
                 requestMetadata.spanName
             );
-            thisPlugin._callUserPreRequestHook(span, awsRequest);
-            thisPlugin._registerCompletedEvent(span, awsRequest);
+            const activeContextWithSpan = setSpan(context.active(), span);
+            const callbackWithContext = context.bind(callback, activeContextWithSpan);
 
-            const callbackWithContext = context.bind(callback, setSpan(context.active(), span));
+            thisPlugin._callUserPreRequestHook(span, awsRequest);
+            thisPlugin._registerCompletedEvent(span, awsRequest, activeContextWithSpan);
+
             return context.with(setSpan(context.active(), span), () => {
                 thisPlugin.servicesExtensions.requestPostSpanHook(awsRequest);
                 return thisPlugin._callOriginalFunction(() => original.call(awsRequest, callbackWithContext));
@@ -167,10 +186,12 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
                 requestMetadata.spanKind,
                 requestMetadata.spanName
             );
-            thisPlugin._callUserPreRequestHook(span, awsRequest);
-            thisPlugin._registerCompletedEvent(span, awsRequest);
 
-            const origPromise: Promise<any> = context.with(setSpan(context.active(), span), () => {
+            const activeContextWithSpan = setSpan(context.active(), span);
+            thisPlugin._callUserPreRequestHook(span, awsRequest);
+            thisPlugin._registerCompletedEvent(span, awsRequest, activeContextWithSpan);
+
+            const origPromise: Promise<any> = context.with(activeContextWithSpan, () => {
                 thisPlugin.servicesExtensions.requestPostSpanHook(awsRequest);
                 return thisPlugin._callOriginalFunction(() => original.call(awsRequest, arguments));
             });

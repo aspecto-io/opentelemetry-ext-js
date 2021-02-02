@@ -158,7 +158,7 @@ export class SqsServiceExtension implements ServiceExtension {
                     this.sqsProcessHook ? this.sqsProcessHook(span, message) : {},
             });
 
-            pubsubPropagation.patchArrayForProcessSpans(messages, this.tracer);
+            pubsubPropagation.patchArrayForProcessSpans(messages, this.tracer, context.active());
         }
     };
 
