@@ -52,16 +52,13 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
         shimmer.unwrap(this._moduleExports?.Request.prototype, 'promise');
     }
 
-    private _bindPromise(target: Promise<any>, span: Span) {
-        const thisPlugin = this;
-
+    private _bindPromise(target: Promise<any>, contextForCallbacks: Context) {
         const origThen = target.then;
         target.then = function (onFulfilled, onRejected) {
-            const newOnFulfilled = context.bind(onFulfilled, setSpan(context.active(), span));
-            const newOnRejected = context.bind(onRejected, setSpan(context.active(), span));
+            const newOnFulfilled = context.bind(onFulfilled, contextForCallbacks);
+            const newOnRejected = context.bind(onRejected, contextForCallbacks);
             return origThen.call(this, newOnFulfilled, newOnRejected);
         };
-
         return target;
     }
 
@@ -160,7 +157,7 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
             thisPlugin._callUserPreRequestHook(span, awsRequest);
             thisPlugin._registerCompletedEvent(span, awsRequest, activeContextWithSpan);
 
-            return context.with(setSpan(context.active(), span), () => {
+            return context.with(activeContextWithSpan, () => {
                 thisPlugin.servicesExtensions.requestPostSpanHook(awsRequest);
                 return thisPlugin._callOriginalFunction(() => original.call(awsRequest, callbackWithContext));
             });
@@ -196,7 +193,9 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
                 return thisPlugin._callOriginalFunction(() => original.call(awsRequest, arguments));
             });
 
-            return requestMetadata.isIncoming ? thisPlugin._bindPromise(origPromise, span) : origPromise;
+            return requestMetadata.isIncoming
+                ? thisPlugin._bindPromise(origPromise, activeContextWithSpan)
+                : origPromise;
         };
     }
 
