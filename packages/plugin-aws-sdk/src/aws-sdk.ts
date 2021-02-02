@@ -9,7 +9,16 @@
     callback    |       1           |       2   
  */
 import { BasePlugin } from '@opentelemetry/core';
-import { Span, StatusCode, Attributes, SpanKind, context, setSpan, suppressInstrumentation } from '@opentelemetry/api';
+import {
+    Span,
+    StatusCode,
+    Attributes,
+    SpanKind,
+    context,
+    setSpan,
+    suppressInstrumentation,
+    Context,
+} from '@opentelemetry/api';
 import * as shimmer from 'shimmer';
 import AWS from 'aws-sdk';
 import { AttributeNames } from './enums';
@@ -43,16 +52,13 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
         shimmer.unwrap(this._moduleExports?.Request.prototype, 'promise');
     }
 
-    private _bindPromise(target: Promise<any>, span: Span) {
-        const thisPlugin = this;
-
+    private _bindPromise(target: Promise<any>, contextForCallbacks: Context) {
         const origThen = target.then;
         target.then = function (onFulfilled, onRejected) {
-            const newOnFulfilled = context.bind(onFulfilled, setSpan(context.active(), span));
-            const newOnRejected = context.bind(onRejected, setSpan(context.active(), span));
+            const newOnFulfilled = context.bind(onFulfilled, contextForCallbacks);
+            const newOnRejected = context.bind(onRejected, contextForCallbacks);
             return origThen.call(this, newOnFulfilled, newOnRejected);
         };
-
         return target;
     }
 
@@ -96,25 +102,28 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
         }
     }
 
-    private _registerCompletedEvent(span: Span, request: AWS.Request<any, any>) {
+    private _registerCompletedEvent(span: Span, request: AWS.Request<any, any>, completedEventContext: Context) {
         const thisPlugin = this;
         request.on('complete', (response) => {
-            if (!request[thisPlugin.REQUEST_SPAN_KEY]) {
-                return;
-            }
-            request[thisPlugin.REQUEST_SPAN_KEY] = undefined;
+            // read issue https://github.com/aspecto-io/opentelemetry-ext-js/issues/60
+            context.with(completedEventContext, () => {
+                if (!request[thisPlugin.REQUEST_SPAN_KEY]) {
+                    return;
+                }
+                request[thisPlugin.REQUEST_SPAN_KEY] = undefined;
 
-            if (response.error) {
-                span.setAttribute(AttributeNames.AWS_ERROR, response.error);
-            }
+                if (response.error) {
+                    span.setAttribute(AttributeNames.AWS_ERROR, response.error);
+                }
 
-            this._callUserResponseHook(span, response);
-            this.servicesExtensions.responseHook(response, span);
+                this._callUserResponseHook(span, response);
+                this.servicesExtensions.responseHook(response, span);
 
-            span.setAttributes({
-                [AttributeNames.AWS_REQUEST_ID]: response.requestId,
+                span.setAttributes({
+                    [AttributeNames.AWS_REQUEST_ID]: response.requestId,
+                });
+                span.end();
             });
-            span.end();
         });
     }
 
@@ -137,11 +146,13 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
                 requestMetadata.spanKind,
                 requestMetadata.spanName
             );
-            thisPlugin._callUserPreRequestHook(span, awsRequest);
-            thisPlugin._registerCompletedEvent(span, awsRequest);
+            const activeContextWithSpan = setSpan(context.active(), span);
+            const callbackWithContext = context.bind(callback, activeContextWithSpan);
 
-            const callbackWithContext = context.bind(callback, setSpan(context.active(), span));
-            return context.with(setSpan(context.active(), span), () => {
+            thisPlugin._callUserPreRequestHook(span, awsRequest);
+            thisPlugin._registerCompletedEvent(span, awsRequest, activeContextWithSpan);
+
+            return context.with(activeContextWithSpan, () => {
                 thisPlugin.servicesExtensions.requestPostSpanHook(awsRequest);
                 return thisPlugin._callOriginalFunction(() => original.call(awsRequest, callbackWithContext));
             });
@@ -167,15 +178,19 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
                 requestMetadata.spanKind,
                 requestMetadata.spanName
             );
-            thisPlugin._callUserPreRequestHook(span, awsRequest);
-            thisPlugin._registerCompletedEvent(span, awsRequest);
 
-            const origPromise: Promise<any> = context.with(setSpan(context.active(), span), () => {
+            const activeContextWithSpan = setSpan(context.active(), span);
+            thisPlugin._callUserPreRequestHook(span, awsRequest);
+            thisPlugin._registerCompletedEvent(span, awsRequest, activeContextWithSpan);
+
+            const origPromise: Promise<any> = context.with(activeContextWithSpan, () => {
                 thisPlugin.servicesExtensions.requestPostSpanHook(awsRequest);
                 return thisPlugin._callOriginalFunction(() => original.call(awsRequest, arguments));
             });
 
-            return requestMetadata.isIncoming ? thisPlugin._bindPromise(origPromise, span) : origPromise;
+            return requestMetadata.isIncoming
+                ? thisPlugin._bindPromise(origPromise, activeContextWithSpan)
+                : origPromise;
         };
     }
 

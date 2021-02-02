@@ -3,11 +3,11 @@ import { Tracer, SpanKind, Span, Context, Link, getSpanContext, context, setSpan
 const START_SPAN_FUNCTION = Symbol('opentelemetry.pubsub-propagation.start_span');
 const END_SPAN_FUNCTION = Symbol('opentelemetry.pubsub-propagation.end_span');
 
-const patchArrayFilter = (messages: any[], tracer: Tracer) => {
+const patchArrayFilter = (messages: any[], tracer: Tracer, loopContext: Context) => {
     const origFunc = messages.filter;
     const patchedFunc = function (..._args) {
         const newArray = origFunc.apply(this, arguments);
-        patchArrayForProcessSpans(newArray, tracer);
+        patchArrayForProcessSpans(newArray, tracer, loopContext);
         return newArray;
     };
 
@@ -17,14 +17,14 @@ const patchArrayFilter = (messages: any[], tracer: Tracer) => {
     });
 };
 
-const patchArrayFunction = (messages: any[], functionName: string, tracer: Tracer) => {
+const patchArrayFunction = (messages: any[], functionName: string, tracer: Tracer, loopContext: Context) => {
     const origFunc = messages[functionName];
     const patchedFunc = function (callback: any, thisArg: any) {
         const wrappedCallback = function (message: any) {
             const messageSpan = message?.[START_SPAN_FUNCTION]?.();
             if (!messageSpan) return callback.apply(this, arguments);
 
-            const res = context.with(setSpan(context.active(), messageSpan), () => {
+            const res = context.with(setSpan(loopContext, messageSpan), () => {
                 try {
                     return callback.apply(this, arguments);
                 } catch (err) {
@@ -49,7 +49,7 @@ const patchArrayFunction = (messages: any[], functionName: string, tracer: Trace
             return res;
         };
         const funcResult = origFunc.call(this, wrappedCallback, thisArg);
-        if (Array.isArray(funcResult)) patchArrayForProcessSpans(funcResult, tracer);
+        if (Array.isArray(funcResult)) patchArrayForProcessSpans(funcResult, tracer, loopContext);
         return funcResult;
     };
 
@@ -59,10 +59,10 @@ const patchArrayFunction = (messages: any[], functionName: string, tracer: Trace
     });
 };
 
-const patchArrayForProcessSpans = (messages: any[], tracer: Tracer) => {
-    patchArrayFunction(messages, 'forEach', tracer);
-    patchArrayFunction(messages, 'map', tracer);
-    patchArrayFilter(messages, tracer);
+const patchArrayForProcessSpans = (messages: any[], tracer: Tracer, loopContext: Context = context.active()) => {
+    patchArrayFunction(messages, 'forEach', tracer, loopContext);
+    patchArrayFunction(messages, 'map', tracer, loopContext);
+    patchArrayFilter(messages, tracer, loopContext);
 };
 
 const startMessagingProcessSpan = <T>(

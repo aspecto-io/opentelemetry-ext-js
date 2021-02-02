@@ -170,14 +170,19 @@ describe('sqs', () => {
             expectReceiver2ProcessWithNChildrenEach(spans, 2);
         };
 
+        const contextKeyFromTest = Symbol('context key from test');
+        const contextValueFromTest = 'context value from test';
+
         beforeEach(async () => {
             const sqs = new AWS.SQS();
-            const res = await sqs
-                .receiveMessage({
-                    QueueUrl: 'queue/url/for/unittests',
-                })
-                .promise();
-            receivedMessages = res.Messages;
+            await context.with(context.active().setValue(contextKeyFromTest, contextValueFromTest), async () => {
+                const res = await sqs
+                    .receiveMessage({
+                        QueueUrl: 'queue/url/for/unittests',
+                    })
+                    .promise();
+                receivedMessages = res.Messages;
+            });
         });
 
         it('should create processing child with forEach', async () => {
@@ -292,6 +297,12 @@ describe('sqs', () => {
                 createProcessChildSpan(msg.Body);
             }
             expectReceiver2ProcessWith1ChildEach(memoryExporter.getFinishedSpans());
+        });
+
+        it('should propagate the context of the receive call in process spans loop', async () => {
+            receivedMessages.forEach(() => {
+                expect(context.active().getValue(contextKeyFromTest)).toStrictEqual(contextValueFromTest);
+            });
         });
     });
 
