@@ -72,66 +72,86 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
     }
 
     private _getConsumerPatch(original: (...args: unknown[]) => Producer) {
-        const thisPlugin = this;
+        const thisInstrumentation = this;
         return function (...args: unknown[]): Consumer {
             const newConsumer: Consumer = original.apply(this, arguments);
 
             if (isWrapped(newConsumer.run)) {
-                thisPlugin._unwrap(newConsumer, 'run');
+                thisInstrumentation._unwrap(newConsumer, 'run');
             }
-            thisPlugin._wrap(newConsumer, 'run', thisPlugin._getConsumerRunPatch.bind(thisPlugin));
+            thisInstrumentation._wrap(
+                newConsumer,
+                'run',
+                thisInstrumentation._getConsumerRunPatch.bind(thisInstrumentation)
+            );
 
             return newConsumer;
         };
     }
 
     private _getProducerPatch(original: (...args: unknown[]) => Producer) {
-        const thisPlugin = this;
+        const thisInstrumentation = this;
         return function (...args: unknown[]): Producer {
             const newProducer: Producer = original.apply(this, arguments);
 
             if (isWrapped(newProducer.sendBatch)) {
-                thisPlugin._unwrap(newProducer, 'sendBatch');
+                thisInstrumentation._unwrap(newProducer, 'sendBatch');
             }
-            thisPlugin._wrap(newProducer, 'sendBatch', thisPlugin._getProducerSendBatchPatch.bind(thisPlugin));
+            thisInstrumentation._wrap(
+                newProducer,
+                'sendBatch',
+                thisInstrumentation._getProducerSendBatchPatch.bind(thisInstrumentation)
+            );
 
             if (isWrapped(newProducer.send)) {
-                thisPlugin._unwrap(newProducer, 'send');
+                thisInstrumentation._unwrap(newProducer, 'send');
             }
-            thisPlugin._wrap(newProducer, 'send', thisPlugin._getProducerSendPatch.bind(thisPlugin));
+            thisInstrumentation._wrap(
+                newProducer,
+                'send',
+                thisInstrumentation._getProducerSendPatch.bind(thisInstrumentation)
+            );
 
             return newProducer;
         };
     }
 
     private _getConsumerRunPatch(original: (...args: unknown[]) => Producer) {
-        const thisPlugin = this;
+        const thisInstrumentation = this;
         return function (config?: ConsumerRunConfig): Promise<void> {
             if (config?.eachMessage) {
                 if (isWrapped(config.eachMessage)) {
-                    thisPlugin._unwrap(config, 'eachMessage');
+                    thisInstrumentation._unwrap(config, 'eachMessage');
                 }
-                thisPlugin._wrap(config, 'eachMessage', thisPlugin._getConsumerEachMessagePatch.bind(thisPlugin));
+                thisInstrumentation._wrap(
+                    config,
+                    'eachMessage',
+                    thisInstrumentation._getConsumerEachMessagePatch.bind(thisInstrumentation)
+                );
             }
             if (config?.eachBatch) {
                 if (isWrapped(config.eachBatch)) {
-                    thisPlugin._unwrap(config, 'eachBatch');
+                    thisInstrumentation._unwrap(config, 'eachBatch');
                 }
-                thisPlugin._wrap(config, 'eachBatch', thisPlugin._getConsumerEachBatchPatch.bind(thisPlugin));
+                thisInstrumentation._wrap(
+                    config,
+                    'eachBatch',
+                    thisInstrumentation._getConsumerEachBatchPatch.bind(thisInstrumentation)
+                );
             }
             return original.call(this, config);
         };
     }
 
     private _getConsumerEachMessagePatch(original: (...args: unknown[]) => Promise<void>) {
-        const thisPlugin = this;
+        const thisInstrumentation = this;
         return function (payload: EachMessagePayload): Promise<void> {
             const propagatedContext: Context = propagation.extract(
                 ROOT_CONTEXT,
                 payload.message.headers,
                 bufferTextMapGetter
             );
-            const span = thisPlugin._startConsumerSpan(
+            const span = thisInstrumentation._startConsumerSpan(
                 payload.topic,
                 payload.message,
                 MessagingOperationName.PROCESS,
@@ -141,15 +161,15 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
             const eachMessagePromise = context.with(setSpan(context.active(), span), () => {
                 return original.apply(this, arguments);
             });
-            return thisPlugin._endSpansOnPromise([span], eachMessagePromise);
+            return thisInstrumentation._endSpansOnPromise([span], eachMessagePromise);
         };
     }
 
     private _getConsumerEachBatchPatch(original: (...args: unknown[]) => Promise<void>) {
-        const thisPlugin = this;
+        const thisInstrumentation = this;
         return function (payload: EachBatchPayload): Promise<void> {
             // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#topic-with-multiple-consumers
-            const receivingSpan = thisPlugin._startConsumerSpan(
+            const receivingSpan = thisInstrumentation._startConsumerSpan(
                 payload.batch.topic,
                 undefined,
                 MessagingOperationName.RECEIVE,
@@ -169,7 +189,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
                             context: spanContext,
                         };
                     }
-                    return thisPlugin._startConsumerSpan(
+                    return thisInstrumentation._startConsumerSpan(
                         payload.batch.topic,
                         message,
                         MessagingOperationName.PROCESS,
@@ -179,32 +199,34 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
                 });
                 const batchMessagePromise: Promise<void> = original.apply(this, arguments);
                 spans.unshift(receivingSpan);
-                return thisPlugin._endSpansOnPromise(spans, batchMessagePromise);
+                return thisInstrumentation._endSpansOnPromise(spans, batchMessagePromise);
             });
         };
     }
 
     private _getProducerSendBatchPatch(original: (batch: ProducerBatch) => Promise<RecordMetadata[]>) {
-        const thisPlugin = this;
+        const thisInstrumentation = this;
         return function (batch: ProducerBatch): Promise<RecordMetadata[]> {
             const spans: Span[] = batch.topicMessages.flatMap((topicMessage) =>
-                topicMessage.messages.map((message) => thisPlugin._startProducerSpan(topicMessage.topic, message))
+                topicMessage.messages.map((message) =>
+                    thisInstrumentation._startProducerSpan(topicMessage.topic, message)
+                )
             );
 
             const origSendResult: Promise<RecordMetadata[]> = original.apply(this, arguments);
-            return thisPlugin._endSpansOnPromise(spans, origSendResult);
+            return thisInstrumentation._endSpansOnPromise(spans, origSendResult);
         };
     }
 
     private _getProducerSendPatch(original: (record: ProducerRecord) => Promise<RecordMetadata[]>) {
-        const thisPlugin = this;
+        const thisInstrumentation = this;
         return function (record: ProducerRecord): Promise<RecordMetadata[]> {
             const spans: Span[] = record.messages.map((message) => {
-                return thisPlugin._startProducerSpan(record.topic, message);
+                return thisInstrumentation._startProducerSpan(record.topic, message);
             });
 
             const origSendResult: Promise<RecordMetadata[]> = original.apply(this, arguments);
-            return thisPlugin._endSpansOnPromise(spans, origSendResult);
+            return thisInstrumentation._endSpansOnPromise(spans, origSendResult);
         };
     }
 

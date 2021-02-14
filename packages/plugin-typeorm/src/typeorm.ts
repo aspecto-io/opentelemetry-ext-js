@@ -55,7 +55,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
     }
 
     private _createConnectionManagerPatch(original: (options: typeorm.ConnectionOptions) => typeorm.Connection) {
-        const thisPlugin = this;
+        const thisInstrumentation = this;
         return function (options: typeorm.ConnectionOptions) {
             const connection: typeorm.Connection = original.apply(this, arguments);
 
@@ -78,10 +78,10 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
 
             const patch = (operation: string) => {
                 if (connection.manager[operation])
-                    thisPlugin._wrap(
+                    thisInstrumentation._wrap(
                         connection.manager,
                         operation as keyof typeorm.EntityManager,
-                        thisPlugin._getEntityManagerFunctionPatch(operation).bind(thisPlugin)
+                        thisInstrumentation._getEntityManagerFunctionPatch(operation).bind(thisInstrumentation)
                     );
             };
 
@@ -93,8 +93,8 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
     }
 
     private _getEntityManagerFunctionPatch(opName: string) {
-        const thisPlugin = this;
-        thisPlugin._logger.debug(`TypeormPlugin: patched EntityManager ${opName} prototype`);
+        const thisInstrumentation = this;
+        thisInstrumentation._logger.debug(`TypeormPlugin: patched EntityManager ${opName} prototype`);
         return function (original: Function) {
             return async function (...args: any[]) {
                 const connectionOptions = this?.connection?.options ?? {};
@@ -115,7 +115,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                     if (value === undefined) delete attributes[key];
                 });
 
-                const newSpan: Span = thisPlugin.tracer.startSpan(`TypeORM ${opName}`, {
+                const newSpan: Span = thisInstrumentation.tracer.startSpan(`TypeORM ${opName}`, {
                     kind: SpanKind.CLIENT,
                     attributes,
                 });
@@ -125,9 +125,9 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                         original.apply(this, arguments)
                     );
                     const resolved = await response;
-                    if (thisPlugin._config?.responseHook) {
+                    if (thisInstrumentation._config?.responseHook) {
                         safeExecuteInTheMiddle(
-                            () => thisPlugin._config.responseHook(newSpan, resolved),
+                            () => thisInstrumentation._config.responseHook(newSpan, resolved),
                             () => {},
                             true
                         );

@@ -56,9 +56,9 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
     }
 
     private _createQueryPatch(original: Function) {
-        const thisPlugin = this;
+        const thisInstrumentation = this;
         return function (sql: any, option: any) {
-            if (thisPlugin._config?.ignoreOrphanedSpans && !getSpan(context.active())) {
+            if (thisInstrumentation._config?.ignoreOrphanedSpans && !getSpan(context.active())) {
                 return original.apply(this, arguments);
             }
 
@@ -78,7 +78,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
                 [DatabaseAttribute.DB_USER]: config?.username,
                 [GeneralAttribute.NET_PEER_NAME]: config?.host,
                 [GeneralAttribute.NET_PEER_PORT]: config?.port ? Number(config?.port) : undefined,
-                [GeneralAttribute.NET_TRANSPORT]: thisPlugin._getNetTransport(config?.protocol),
+                [GeneralAttribute.NET_TRANSPORT]: thisInstrumentation._getNetTransport(config?.protocol),
                 [DatabaseAttribute.DB_NAME]: config?.database,
                 [DatabaseAttribute.DB_OPERATION]: operation,
                 [DatabaseAttribute.DB_STATEMENT]: statement,
@@ -90,7 +90,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
                 if (value === undefined) delete attributes[key];
             });
 
-            const newSpan: Span = thisPlugin.tracer.startSpan(`Sequelize ${operation}`, {
+            const newSpan: Span = thisInstrumentation.tracer.startSpan(`Sequelize ${operation}`, {
                 kind: SpanKind.CLIENT,
                 attributes,
             });
@@ -98,11 +98,11 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
             return context
                 .with(setSpan(context.active(), newSpan), () => original.apply(this, arguments))
                 .then((response: any) => {
-                    if (thisPlugin._config?.responseHook) {
+                    if (thisInstrumentation._config?.responseHook) {
                         safeExecuteInTheMiddle(
-                            () => thisPlugin._config.responseHook(newSpan, response),
+                            () => thisInstrumentation._config.responseHook(newSpan, response),
                             (e: Error) => {
-                                if (e) thisPlugin._logger.error('Caught Error while applying responseHook', e);
+                                if (e) thisInstrumentation._logger.error('Caught Error while applying responseHook', e);
                             },
                             true
                         );
