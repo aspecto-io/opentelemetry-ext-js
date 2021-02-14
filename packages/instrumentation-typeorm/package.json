@@ -23,7 +23,7 @@
     "scripts": {
         "build": "tsc",
         "prepare": "yarn run build",
-        "test": "mocha --require ts-node/register",
+        "test": "mocha",
         "watch": "tsc -w",
         "version:update": "node ../../scripts/version-update.js",
         "version": "yarn run version:update"
@@ -32,6 +32,7 @@
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
     },
     "dependencies": {
+        "@opentelemetry/api": "^0.15.0",
         "@opentelemetry/instrumentation": "^0.15.0",
         "@opentelemetry/semantic-conventions": "^0.15.0"
     },
