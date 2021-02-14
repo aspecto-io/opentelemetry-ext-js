@@ -78,7 +78,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
 
             const patch = (operation: string) => {
                 if (connection.manager[operation])
-                    this._wrap(
+                    thisPlugin._wrap(
                         connection.manager,
                         operation as keyof typeorm.EntityManager,
                         thisPlugin._getEntityManagerFunctionPatch(operation).bind(thisPlugin)

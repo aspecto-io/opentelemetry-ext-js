@@ -1,10 +1,14 @@
-import { plugin } from '../src';
 import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan, Span } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { context, StatusCode, NoopLogger } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { ContextManager } from '@opentelemetry/context-base';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
+import { TypeormInstrumentation } from '../src';
+import expect from 'expect';
+const logger = new NoopLogger();
+const instrumentation = new TypeormInstrumentation({ logger });
+
 import * as typeorm from 'typeorm';
 
 const setMocks = () => {
@@ -35,11 +39,11 @@ const setMocks = () => {
 };
 
 describe('plugin-typeorm', () => {
-    const logger = new NoopLogger();
     const provider = new NodeTracerProvider();
     const memoryExporter = new InMemorySpanExporter();
     const spanProcessor = new SimpleSpanProcessor(memoryExporter);
     provider.addSpanProcessor(spanProcessor);
+    instrumentation.setTracerProvider(provider);
     let contextManager: ContextManager;
 
     const getTypeormSpans = (): ReadableSpan[] => {
@@ -50,12 +54,13 @@ describe('plugin-typeorm', () => {
         contextManager = new AsyncHooksContextManager();
         context.setGlobalContextManager(contextManager.enable());
         setMocks();
-        plugin.enable(typeorm, provider, logger);
+        instrumentation.enable();
     });
 
     afterEach(() => {
         memoryExporter.reset();
         contextManager.disable();
+        instrumentation.disable();
     });
 
     describe('single connection', () => {
@@ -110,13 +115,13 @@ describe('plugin-typeorm', () => {
 
         it('responseHook works', async () => {
             setMocks();
-            plugin.enable(typeorm, provider, logger, {
-                enabled: true,
-                // @ts-ignore
+            instrumentation.disable();
+            instrumentation.setConfig({
                 responseHook: (span: Span, response: any) => {
                     span.setAttribute('test', JSON.stringify(response));
                 },
             });
+            instrumentation.enable();
 
             const connection = await typeorm.createConnection(options);
             const statement = { test: 123 };
