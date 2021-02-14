@@ -1,4 +1,4 @@
-import { TextMapGetter } from "@opentelemetry/api";
+import { TextMapGetter } from '@opentelemetry/api';
 
 /*
 same as open telemetry's `defaultTextMapGetter`, 
@@ -7,11 +7,10 @@ adding toString() to make sure string is returned
 */
 export const bufferTextMapGetter: TextMapGetter = {
     get(carrier, key) {
-      return carrier?.[key]?.toString();
+        return carrier?.[key]?.toString();
     },
-  
+
     keys(carrier) {
-      return carrier ? Object.keys(carrier) : [];
+        return carrier ? Object.keys(carrier) : [];
     },
-  };
-  
+};
