@@ -5,11 +5,11 @@ SQS is amazon's managed message queue. Thus, it should follow the [Open Telemetr
 The following methods are automatically enhanced:
 
 ### sendMessage / sendMessageBatch
-- [Messaging Attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#messaging-attributes) are added by this plugin according to the spec.
+- [Messaging Attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#messaging-attributes) are added by this instrumentation according to the spec.
 - Open Telemetry trace context is injected as SQS MessageAttributes, so the service receiving the message can link cascading spans to the trace which created the message. 
 
 ### receiveMessage
-- [Messaging Attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#messaging-attributes) are added by this plugin according to the spec.
+- [Messaging Attributes](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#messaging-attributes) are added by this instrumentation according to the spec.
 - Additional "processing spans" are created for each message received by the application.   
 If an application invoked `receiveMessage`, and received a 10 messages batch, a single `messaging.operation` = `receive` span will be created for the `receiveMessage` operation, and 10 `messaging.operation` = `process` spans will be created, one for each message.  
 Those processing spans are created by the library. This behavior is partially implemented, [See discussion below](#processing-spans).
@@ -43,13 +43,11 @@ async function poll() {
 }
 ```
 
-Current implementation partially solves this issue by patching the `map` \ `forEach` \ `Filter` functions on the `Messages` array of `receiveMessage` result. This handles issues like the one above, but will not handle situations where the processing is done in other patterns (multiple map\forEach calls, index access to the array, other array operations, etc). This is currently an open issue in the plugin.
+Current implementation partially solves this issue by patching the `map` \ `forEach` \ `Filter` functions on the `Messages` array of `receiveMessage` result. This handles issues like the one above, but will not handle situations where the processing is done in other patterns (multiple map\forEach calls, index access to the array, other array operations, etc). This is currently an open issue in the instrumentation.
 
-User can add custom attributes to the `process` span, by setting a function to `sqsProcessHook` in plugin config. For example:
+User can add custom attributes to the `process` span, by setting a function to `sqsProcessHook` in instrumentation config. For example:
 ```js
-awsPluginConfig = {
-  enabled: true,
-  path: "opentelemetry-plugin-aws-sdk",
+awsInstrumentationConfig = {
   sqsProcessHook: (span, message) => {
     span.setAttribute("sqs.receipt_handle", message.params?.ReceiptHandle);
   }

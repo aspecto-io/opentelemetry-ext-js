@@ -52,7 +52,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
     }
 
     protected patch(moduleExports: typeof kafkaJs) {
-        this._logger.debug('kafkajs: patch kafkajs plugin');
+        this._logger.debug('kafkajs instrumentation: applying patch');
 
         this.unpatch(moduleExports);
         this._wrap(moduleExports?.Kafka?.prototype, 'producer', this._getProducerPatch.bind(this));
@@ -62,7 +62,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
     }
 
     protected unpatch(moduleExports: typeof kafkaJs) {
-        this._logger.debug('kafkajs: unpatch kafkajs plugin');
+        this._logger.debug('kafkajs instrumentation: un-patching');
         if (isWrapped(moduleExports?.Kafka?.prototype.producer)) {
             this._unwrap(moduleExports.Kafka.prototype, 'producer');
         }

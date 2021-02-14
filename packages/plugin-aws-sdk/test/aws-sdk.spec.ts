@@ -12,7 +12,7 @@ import expect from 'expect';
 const instrumentation = new AwsInstrumentation();
 import AWS from 'aws-sdk';
 
-describe('plugin-aws-sdk', () => {
+describe('instrumentation-aws-sdk', () => {
     const provider = new NodeTracerProvider();
     const memoryExporter = new InMemorySpanExporter();
     const spanProcessor = new SimpleSpanProcessor(memoryExporter);
@@ -217,7 +217,7 @@ describe('plugin-aws-sdk', () => {
         });
     });
 
-    describe('plugin config', () => {
+    describe('instrumentation config', () => {
         it('preRequestHook called and add request attribute to span', (done) => {
             mockAwsSend(responseMockSuccess, 'data returned from operation');
             const config = {

@@ -94,7 +94,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
 
     private _getEntityManagerFunctionPatch(opName: string) {
         const thisInstrumentation = this;
-        thisInstrumentation._logger.debug(`TypeormPlugin: patched EntityManager ${opName} prototype`);
+        thisInstrumentation._logger.debug(`typeorm instrumentation: patched EntityManager ${opName} prototype`);
         return function (original: Function) {
             return async function (...args: any[]) {
                 const connectionOptions = this?.connection?.options ?? {};

@@ -31,9 +31,9 @@ export enum SqsAttributeNames {
     MESSAGING_URL = 'messaging.url',
 }
 
-export const START_SPAN_FUNCTION = Symbol('opentelemetry.plugin.aws-sdk.sqs.start_span');
+export const START_SPAN_FUNCTION = Symbol('opentelemetry.instrumentation.aws-sdk.sqs.start_span');
 
-export const END_SPAN_FUNCTION = Symbol('opentelemetry.plugin.aws-sdk.sqs.end_span');
+export const END_SPAN_FUNCTION = Symbol('opentelemetry.instrumentation.aws-sdk.sqs.end_span');
 
 // https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-quotas.html
 const SQS_MAX_MESSAGE_ATTRIBUTES = 10;
@@ -181,7 +181,7 @@ export class SqsServiceExtension implements ServiceExtension {
             propagation.inject(context.active(), attributes, sqsContextSetter);
         } else {
             this.logger.warn(
-                'OpenTelemetry aws-sdk plugin cannot set context propagation on SQS message due to maximum amount of MessageAttributes'
+                'OpenTelemetry aws-sdk instrumentation cannot set context propagation on SQS message due to maximum amount of MessageAttributes'
             );
         }
         return attributes;

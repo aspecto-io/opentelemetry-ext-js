@@ -28,7 +28,7 @@ type Config = InstrumentationConfig & AwsSdkInstrumentationConfig;
 export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
     static readonly component = 'aws-sdk';
     protected _config!: Config;
-    private REQUEST_SPAN_KEY = Symbol('opentelemetry.plugin.aws-sdk.span');
+    private REQUEST_SPAN_KEY = Symbol('opentelemetry.instrumentation.aws-sdk.span');
     private servicesExtensions: ServicesExtensions;
 
     constructor(config: Config = {}) {
