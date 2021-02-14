@@ -1,19 +1,22 @@
-import { plugin } from '../src';
+import { SequelizeInstrumentation } from '../src';
 import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan, Span } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { context, StatusCode, NoopLogger } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { ContextManager } from '@opentelemetry/context-base';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
+import expect from 'expect';
+
+const logger = new NoopLogger();
+const instrumentation = new SequelizeInstrumentation({ logger });
 import * as sequelize from 'sequelize';
 
 describe('plugin-sequelize', () => {
-    const logger = new NoopLogger();
-    const provider = new NodeTracerProvider();
+    const provider = new NodeTracerProvider({ logger });
     const memoryExporter = new InMemorySpanExporter();
     const spanProcessor = new SimpleSpanProcessor(memoryExporter);
-
     provider.addSpanProcessor(spanProcessor);
+    instrumentation.setTracerProvider(provider);
     let contextManager: ContextManager;
 
     const getSequelizeSpans = (): ReadableSpan[] => {
@@ -23,13 +26,13 @@ describe('plugin-sequelize', () => {
     beforeEach(() => {
         contextManager = new AsyncHooksContextManager();
         context.setGlobalContextManager(contextManager.enable());
-        plugin.enable(sequelize, provider, logger);
+        instrumentation.enable();
     });
 
     afterEach(() => {
         memoryExporter.reset();
         contextManager.disable();
-        plugin.disable();
+        instrumentation.disable();
     });
 
     describe('postgres', () => {
@@ -184,7 +187,7 @@ describe('plugin-sequelize', () => {
 
     describe('responseHook', () => {
         it('able to collect response', async () => {
-            plugin.disable();
+            instrumentation.disable();
             const instance = new sequelize.Sequelize(`postgres://john@$localhost:1111/my-name`, { logging: false });
             instance.define('User', { firstName: { type: sequelize.DataTypes.STRING } });
 
@@ -192,13 +195,13 @@ describe('plugin-sequelize', () => {
             sequelize.Sequelize.prototype.query = () => {
                 return new Promise((resolve) => resolve(response));
             };
-            plugin.enable(sequelize, provider, logger, {
-                enabled: true,
-                // @ts-ignore
+            instrumentation.setConfig({
                 responseHook: (span: Span, response: any) => {
                     span.setAttribute('test', JSON.stringify(response));
                 },
             });
+            instrumentation.enable();
+
             await instance.models.User.findAll();
             const spans = getSequelizeSpans();
             const attributes = spans[0].attributes;
@@ -208,7 +211,7 @@ describe('plugin-sequelize', () => {
         });
 
         it('response hook which throws does not affect span', async () => {
-            plugin.disable();
+            instrumentation.disable();
             const instance = new sequelize.Sequelize(`postgres://john@$localhost:1111/my-name`, { logging: false });
             instance.define('User', { firstName: { type: sequelize.DataTypes.STRING } });
 
@@ -230,13 +233,13 @@ describe('plugin-sequelize', () => {
                 };
             })();
 
-            plugin.enable(sequelize, provider, mockedLogger as any, {
-                enabled: true,
-                // @ts-ignore
+            instrumentation.setConfig({
+                logger: mockedLogger as any,
                 responseHook: () => {
                     throw new Error('Throwing');
                 },
             });
+            instrumentation.enable();
             await instance.models.User.findAll();
             const spans = getSequelizeSpans();
             expect(spans.length).toBe(1);
@@ -247,14 +250,13 @@ describe('plugin-sequelize', () => {
 
     describe('ignoreOrphanedSpans', () => {
         it('skips when ignoreOrphanedSpans option is true', async () => {
-            plugin.disable();
+            instrumentation.disable();
             const instance = new sequelize.Sequelize(`postgres://john@$localhost:1111/my-name`, { logging: false });
             instance.define('User', { firstName: { type: sequelize.DataTypes.STRING } });
-            plugin.enable(sequelize, provider, logger, {
-                enabled: true,
-                // @ts-ignore
+            instrumentation.setConfig({
                 ignoreOrphanedSpans: true,
             });
+            instrumentation.enable();
 
             try {
                 await instance.models.User.create({ firstName: 'Nir' });

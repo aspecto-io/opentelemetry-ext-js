@@ -1,4 +1,4 @@
-import { Span, SpanKind, StatusCode, setSpan, context } from '@opentelemetry/api';
+import { Span, SpanKind, StatusCode, setSpan, context, Logger } from '@opentelemetry/api';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
 import { TypeormPluginConfig } from './types';
 import { getParamNames } from './utils';
@@ -27,7 +27,11 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
         this._config = Object.assign({}, config);
     }
 
-    protected init(): void | InstrumentationModuleDefinition<any> | InstrumentationModuleDefinition<any>[] {
+    get logger() {
+        return this._config.logger ?? this._logger ?? ({} as Logger);
+    }
+
+    protected init(): InstrumentationModuleDefinition<typeof typeorm> {
         const module = new InstrumentationNodeModuleDefinition<typeof typeorm>(
             TypeormInstrumentation.component,
             ['*'],
@@ -41,17 +45,16 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
         if (moduleExports === undefined || moduleExports === null) {
             return moduleExports;
         }
-        this._logger.debug(`applying patch to typeorm`);
-        if (isWrapped(moduleExports.ConnectionManager.prototype.create)) {
-            this._unwrap(moduleExports.ConnectionManager.prototype, 'create');
-        }
+        this.logger.debug(`applying patch to typeorm`);
+        this.unpatch(moduleExports);
         this._wrap(moduleExports.ConnectionManager.prototype, 'create', this._createConnectionManagerPatch.bind(this));
 
         return moduleExports;
     }
 
     protected unpatch(moduleExports: typeof typeorm): void {
-        this._unwrap(moduleExports.ConnectionManager.prototype, 'create');
+        if (isWrapped(moduleExports.ConnectionManager.prototype.create))
+            this._unwrap(moduleExports.ConnectionManager.prototype, 'create');
     }
 
     private _createConnectionManagerPatch(original: (options: typeorm.ConnectionOptions) => typeorm.Connection) {
@@ -94,7 +97,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
 
     private _getEntityManagerFunctionPatch(opName: string) {
         const thisPlugin = this;
-        thisPlugin._logger.debug(`TypeormPlugin: patched EntityManager ${opName} prototype`);
+        thisPlugin.logger.debug(`TypeormPlugin: patched EntityManager ${opName} prototype`);
         return function (original: Function) {
             return async function (...args: any[]) {
                 const connectionOptions = this?.connection?.options ?? {};

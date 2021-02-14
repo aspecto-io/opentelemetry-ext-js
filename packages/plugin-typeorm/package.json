@@ -39,7 +39,6 @@
         "@opentelemetry/node": "^0.15.0",
         "@opentelemetry/tracing": "^0.15.0",
         "@types/mocha": "^8.2.0",
-        "@types/shimmer": "^1.0.1",
         "expect": "^26.6.2",
         "mocha": "^8.3.0",
         "reflect-metadata": "^0.1.13",

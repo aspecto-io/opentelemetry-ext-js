@@ -1,25 +1,61 @@
-import { BasePlugin } from '@opentelemetry/core';
-import { context, setSpan, Span, SpanKind, StatusCode, getSpan } from '@opentelemetry/api';
+import { context, setSpan, Span, SpanKind, StatusCode, getSpan, Logger } from '@opentelemetry/api';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
 import * as sequelize from 'sequelize';
-import shimmer from 'shimmer';
 import { SequelizePluginConfig } from './types';
 import { VERSION } from './version';
+import {
+    InstrumentationBase,
+    InstrumentationConfig,
+    InstrumentationModuleDefinition,
+    InstrumentationNodeModuleDefinition,
+    isWrapped,
+    safeExecuteInTheMiddle,
+} from '@opentelemetry/instrumentation';
 
-class SequelizePlugin extends BasePlugin<typeof sequelize> {
-    protected _config!: SequelizePluginConfig;
+type Config = InstrumentationConfig & SequelizePluginConfig;
 
-    constructor(readonly moduleName: string) {
-        super(`opentelemetry-plugin-sequelize`, VERSION);
+export class SequelizeInstrumentation extends InstrumentationBase<typeof sequelize> {
+    static readonly component = 'sequelize';
+    protected _config!: Config;
+
+    constructor(config: Config = {}) {
+        super('opentelemetry-instrumentation-sequelize', VERSION, Object.assign({}, config));
     }
-    protected patch(): typeof sequelize {
-        this._logger.debug(`applying patch to ${this.moduleName}@${this.version}`);
-        shimmer.wrap(this._moduleExports.Sequelize.prototype, 'query', this._createQueryPatch.bind(this));
 
-        return this._moduleExports;
+    setConfig(config: Config = {}) {
+        this._config = Object.assign({}, config);
     }
-    protected unpatch(): void {
-        shimmer.unwrap(this._moduleExports.Sequelize.prototype, 'query');
+
+    get logger() {
+        return this._config.logger ?? this._logger ?? ({} as Logger);
+    }
+
+    protected init(): InstrumentationModuleDefinition<typeof sequelize> {
+        const module = new InstrumentationNodeModuleDefinition<typeof sequelize>(
+            SequelizeInstrumentation.component,
+            ['*'],
+            this.patch.bind(this),
+            this.unpatch.bind(this)
+        );
+        return module;
+    }
+
+    protected patch(moduleExports: typeof sequelize): typeof sequelize {
+        if (moduleExports === undefined || moduleExports === null) {
+            return moduleExports;
+        }
+
+        this.logger.debug(`applying patch to sequelize`);
+        this.unpatch(moduleExports);
+        this._wrap(moduleExports.Sequelize.prototype, 'query', this._createQueryPatch.bind(this));
+
+        return moduleExports;
+    }
+
+    protected unpatch(moduleExports: typeof sequelize): void {
+        if (isWrapped(moduleExports.Sequelize.prototype.query)) {
+            this._unwrap(moduleExports.Sequelize.prototype, 'query');
+        }
     }
 
     private _createQueryPatch(original: Function) {
@@ -57,7 +93,7 @@ class SequelizePlugin extends BasePlugin<typeof sequelize> {
                 if (value === undefined) delete attributes[key];
             });
 
-            const newSpan: Span = thisPlugin._tracer.startSpan(`Sequelize ${operation}`, {
+            const newSpan: Span = thisPlugin.tracer.startSpan(`Sequelize ${operation}`, {
                 kind: SpanKind.CLIENT,
                 attributes,
             });
@@ -66,11 +102,13 @@ class SequelizePlugin extends BasePlugin<typeof sequelize> {
                 .with(setSpan(context.active(), newSpan), () => original.apply(this, arguments))
                 .then((response: any) => {
                     if (thisPlugin._config?.responseHook) {
-                        try {
-                            thisPlugin._config.responseHook(newSpan, response);
-                        } catch (err) {
-                            thisPlugin._logger?.error('Caught Error while applying responseHook', err);
-                        }
+                        safeExecuteInTheMiddle(
+                            () => thisPlugin._config.responseHook(newSpan, response),
+                            (e: Error) => {
+                                if (e) thisPlugin.logger.error('Caught Error while applying responseHook', e);
+                            },
+                            true
+                        );
                     }
                     return response;
                 })
@@ -96,5 +134,3 @@ class SequelizePlugin extends BasePlugin<typeof sequelize> {
         }
     }
 }
-
-export const plugin = new SequelizePlugin('sequelize');
