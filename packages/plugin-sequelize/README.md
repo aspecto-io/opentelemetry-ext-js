@@ -1,5 +1,5 @@
 # OpenTelemetry Sequelize Instrumentation for Node.js
-[![NPM version](https://img.shields.io/npm/v/opentelemetry-plugin-sequelize.svg)](https://www.npmjs.com/package/opentelemetry-plugin-sequelize)
+[![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-sequelize.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-sequelize)
 
 This module provides automatic instrumentation for [`Sequelize`](https://sequelize.org/).  
 > _Tested and worked on versions v4, v5 and v6 of Sequelize._
@@ -7,30 +7,37 @@ This module provides automatic instrumentation for [`Sequelize`](https://sequeli
 ## Installation
 
 ```
-npm install --save opentelemetry-plugin-sequelize
+npm install --save opentelemetry-instrumentation-sequelize
 ```
 
 ## Usage
-
-To load a specific plugin (**sequelize** in this case), specify it in the Node Tracer's configuration
+For further automatic instrumentation instruction see the [@opentelemetry/instrumentation](https://github.com/open-telemetry/opentelemetry-js/tree/main/packages/opentelemetry-instrumentation) package.
 
 ```js
-const { NodeTracerProvider } = require("@opentelemetry/node");
+const { NodeTracerProvider } = require('@opentelemetry/node');
+const { registerInstrumentations } = require('@opentelemetry/instrumentation');
+const { SequelizeInstrumentation } = require('opentelemetry-instrumentation-sequelize');
 
-const provider = new NodeTracerProvider({
+const traceProvider = new NodeTracerProvider({
+  // be sure to disable old plugin
   plugins: {
-    sequelize: {
-      enabled: true,
-      // You may use a package name or absolute path to the file.
-      path: "opentelemetry-plugin-sequelize",
-    },
-  },
+    dns: { enabled: false, path: 'opentelemetry-plugin-sequelize' }
+  }
+});
+
+registerInstrumentations({
+  traceProvider,
+  instrumentations: [
+    new SequelizeInstrumentation({
+      // see under for available configuration
+    })
+  ]
 });
 ```
 
-### Sequelize Plugin Options
+### Sequelize Instrumentation Options
 
-Sequelize plugin has few options available to choose from. You can set the following:
+Sequelize instrumentation has few options available to choose from. You can set the following:
 
 | Options        | Type                                   | Description                                                                                     |
 | -------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
