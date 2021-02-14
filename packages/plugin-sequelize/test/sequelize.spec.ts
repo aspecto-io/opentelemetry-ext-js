@@ -11,7 +11,7 @@ const logger = new NoopLogger();
 const instrumentation = new SequelizeInstrumentation({ logger });
 import * as sequelize from 'sequelize';
 
-describe('plugin-sequelize', () => {
+describe('instrumentation-sequelize', () => {
     const provider = new NodeTracerProvider({ logger });
     const memoryExporter = new InMemorySpanExporter();
     const spanProcessor = new SimpleSpanProcessor(memoryExporter);

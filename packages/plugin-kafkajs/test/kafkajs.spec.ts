@@ -1,10 +1,15 @@
-import { plugin } from '../src';
+import { KafkaJsInstrumentation } from '../src';
 import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { ContextManager } from '@opentelemetry/context-base';
 import { context, propagation, SpanKind, StatusCode, Span, NoopLogger } from '@opentelemetry/api';
 import { MessagingAttribute } from '@opentelemetry/semantic-conventions';
+import expect from 'expect';
+
+const logger = new NoopLogger();
+const instrumentation = new KafkaJsInstrumentation({ logger });
+
 import * as kafkajs from 'kafkajs';
 import {
     Kafka,
@@ -21,13 +26,13 @@ import {
 } from 'kafkajs';
 import { DummyPropagation } from './DummyPropagation';
 
-describe('plugin-kafkajs', () => {
-    const logger = new NoopLogger();
-    const provider = new NodeTracerProvider();
+describe('instrumentation-kafkajs', () => {
+    const provider = new NodeTracerProvider({ logger });
     const memoryExporter = new InMemorySpanExporter();
     const spanProcessor = new SimpleSpanProcessor(memoryExporter);
     propagation.setGlobalPropagator(new DummyPropagation());
     provider.addSpanProcessor(spanProcessor);
+    instrumentation.setTracerProvider(provider);
     let contextManager: ContextManager;
 
     const kafka = new Kafka({
@@ -104,7 +109,8 @@ describe('plugin-kafkajs', () => {
                         ];
                     }
                 );
-                plugin.enable(kafkajs, provider, logger);
+                instrumentation.disable();
+                instrumentation.enable();
                 producer = kafka.producer();
             });
 
@@ -203,7 +209,8 @@ describe('plugin-kafkajs', () => {
                         return Promise.reject(new Error('error thrown from kafka client send'));
                     }
                 );
-                plugin.enable(kafkajs, provider, logger);
+                instrumentation.disable();
+                instrumentation.enable();
                 producer = kafka.producer();
             });
 
@@ -295,7 +302,9 @@ describe('plugin-kafkajs', () => {
                         span.setAttribute('attribute-from-hook', message.value as string);
                     },
                 };
-                plugin.enable(kafkajs, provider, logger, config);
+                instrumentation.disable();
+                instrumentation.setConfig(config);
+                instrumentation.enable();
                 producer = kafka.producer();
             });
 
@@ -326,7 +335,9 @@ describe('plugin-kafkajs', () => {
                         throw new Error('error thrown from producer hook');
                     },
                 };
-                plugin.enable(kafkajs, provider, logger, config);
+                instrumentation.disable();
+                instrumentation.setConfig(config);
+                instrumentation.enable();
                 producer = kafka.producer();
             });
 
@@ -385,7 +396,8 @@ describe('plugin-kafkajs', () => {
 
         describe('successful eachMessage', () => {
             beforeEach(async () => {
-                plugin.enable(kafkajs, provider, logger);
+                instrumentation.disable();
+                instrumentation.enable();
                 consumer = kafka.consumer({
                     groupId: 'testing-group-id',
                 });
@@ -414,13 +426,15 @@ describe('plugin-kafkajs', () => {
 
         describe('successful consumer hook', () => {
             beforeEach(async () => {
-                const pluginConfig = {
+                const config = {
                     enabled: true,
                     consumerHook: (span: Span, topic: string, message: Message) => {
                         span.setAttribute('attribute key from hook', message.value.toString());
                     },
                 };
-                plugin.enable(kafkajs, provider, logger, pluginConfig);
+                instrumentation.disable();
+                instrumentation.setConfig(config);
+                instrumentation.enable();
                 consumer = kafka.consumer({
                     groupId: 'testing-group-id',
                 });
@@ -442,13 +456,15 @@ describe('plugin-kafkajs', () => {
 
         describe('throwing consumer hook', () => {
             beforeEach(async () => {
-                const pluginConfig = {
+                const config = {
                     enabled: true,
                     consumerHook: (span: Span, topic: string, message: Message) => {
                         throw new Error('error thrown from consumer hook');
                     },
                 };
-                plugin.enable(kafkajs, provider, logger, pluginConfig);
+                instrumentation.disable();
+                instrumentation.setConfig(config);
+                instrumentation.enable();
                 consumer = kafka.consumer({
                     groupId: 'testing-group-id',
                 });
@@ -469,7 +485,8 @@ describe('plugin-kafkajs', () => {
 
         describe('eachMessage throws', () => {
             beforeEach(async () => {
-                plugin.enable(kafkajs, provider, logger);
+                instrumentation.disable();
+                instrumentation.enable();
                 consumer = kafka.consumer({
                     groupId: 'testing-group-id',
                 });
@@ -551,7 +568,8 @@ describe('plugin-kafkajs', () => {
 
         describe('successful eachBatch', () => {
             beforeEach(async () => {
-                plugin.enable(kafkajs, provider, logger);
+                instrumentation.disable();
+                instrumentation.enable();
                 consumer = kafka.consumer({
                     groupId: 'testing-group-id',
                 });
@@ -592,7 +610,8 @@ describe('plugin-kafkajs', () => {
         beforeEach(() => {
             patchProducerSend(async (): Promise<RecordMetadata[]> => []);
             storeRunConfig();
-            plugin.enable(kafkajs, provider, logger);
+            instrumentation.disable();
+            instrumentation.enable();
             producer = kafka.producer();
             consumer = kafka.consumer({ groupId: 'testing-group-id' });
         });

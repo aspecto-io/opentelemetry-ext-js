@@ -38,7 +38,7 @@ const setMocks = () => {
     }) as any;
 };
 
-describe('plugin-typeorm', () => {
+describe('instrumentation-typeorm', () => {
     const provider = new NodeTracerProvider();
     const memoryExporter = new InMemorySpanExporter();
     const spanProcessor = new SimpleSpanProcessor(memoryExporter);

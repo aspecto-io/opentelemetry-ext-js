@@ -1,6 +1,6 @@
 {
-    "name": "opentelemetry-plugin-kafkajs",
-    "version": "0.2.0",
+    "name": "opentelemetry-instrumentation-kafkajs",
+    "version": "0.0.1",
     "description": "open telemetry instrumentation for the `kafkajs` kafka client",
     "keywords": [
         "kafka",
@@ -23,7 +23,7 @@
     "scripts": {
         "build": "tsc",
         "prepare": "yarn run build",
-        "test": "jest",
+        "test": "mocha",
         "watch": "tsc -w",
         "version:update": "node ../../scripts/version-update.js",
         "version": "yarn run version:update"
@@ -31,32 +31,26 @@
     "bugs": {
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
     },
+    "dependencies": {
+        "@opentelemetry/api": "^0.15.0",
+        "@opentelemetry/instrumentation": "^0.15.0",
+        "@opentelemetry/semantic-conventions": "^0.15.0"
+    },
     "devDependencies": {
         "@opentelemetry/node": "^0.15.0",
         "@opentelemetry/tracing": "^0.15.0",
-        "@types/jest": "^25.2.3",
-        "@types/shimmer": "^1.0.1",
-        "jest": "^26.0.1",
+        "@types/mocha": "^8.2.0",
+        "expect": "^26.6.2",
         "kafkajs": "^1.12.0",
-        "ts-jest": "^26.1.0",
+        "mocha": "^8.3.0",
+        "ts-node": "^9.1.1",
         "typescript": "^3.9.5"
     },
-    "dependencies": {
-        "@opentelemetry/api": "^0.15.0",
-        "@opentelemetry/core": "^0.15.0",
-        "@opentelemetry/semantic-conventions": "^0.15.0",
-        "shimmer": "^1.2.1"
-    },
-    "jest": {
-        "preset": "ts-jest",
-        "globals": {
-            "ts-jest": {
-                "tsConfig": "./tsconfig.json"
-            }
-        },
-        "testMatch": [
-            "**/test/**/*.spec.+(ts|tsx)"
+    "mocha": {
+        "extension": [
+            "ts"
         ],
-        "testEnvironment": "node"
+        "spec": "test/**/*.spec.ts",
+        "require": "ts-node/register"
     }
 }

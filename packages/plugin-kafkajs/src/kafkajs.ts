@@ -1,8 +1,6 @@
-import { BasePlugin } from '@opentelemetry/core';
 import { SpanKind, Span, StatusCode, Context, propagation, Link, getSpan, setSpan, context } from '@opentelemetry/api';
 import { ROOT_CONTEXT } from '@opentelemetry/context-base';
 import { MessagingAttribute, MessagingOperationName } from '@opentelemetry/semantic-conventions';
-import * as shimmer from 'shimmer';
 import * as kafkaJs from 'kafkajs';
 import {
     Producer,
@@ -19,34 +17,73 @@ import {
 import { KafkaJsPluginConfig } from './types';
 import { VERSION } from './version';
 import { bufferTextMapGetter } from './propagtor';
+import {
+    InstrumentationBase,
+    InstrumentationConfig,
+    InstrumentationModuleDefinition,
+    InstrumentationNodeModuleDefinition,
+    safeExecuteInTheMiddle,
+    isWrapped,
+} from '@opentelemetry/instrumentation';
 
-export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
-    protected _config!: KafkaJsPluginConfig;
+type Config = InstrumentationConfig & KafkaJsPluginConfig;
 
-    constructor(readonly moduleName: string) {
-        super('opentelemetry-plugin-kafkajs', VERSION);
+export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> {
+    static readonly component = 'kafkajs';
+    protected _config!: Config;
+
+    constructor(config: Config = {}) {
+        super('opentelemetry-instrumentation-kafkajs', VERSION, Object.assign({}, config));
     }
 
-    protected patch() {
-        this._logger.debug('kafkajs: patch kafkajs plugin');
-
-        shimmer.wrap(this._moduleExports?.Kafka?.prototype, 'producer', this._getProducerPatch.bind(this));
-        shimmer.wrap(this._moduleExports?.Kafka?.prototype, 'consumer', this._getConsumerPatch.bind(this));
-
-        return this._moduleExports;
+    setConfig(config: Config = {}) {
+        this._config = Object.assign({}, config);
     }
 
-    protected unpatch() {
-        this._logger.debug('kafkajs: unpatch kafkajs plugin');
-        shimmer.unwrap(this._moduleExports?.Kafka?.prototype, 'producer');
-        shimmer.unwrap(this._moduleExports?.Kafka?.prototype, 'consumer');
+    get logger() {
+        return this._config.logger ?? this._logger;
+    }
+
+    protected init(): InstrumentationModuleDefinition<typeof kafkaJs> {
+        const module = new InstrumentationNodeModuleDefinition<typeof kafkaJs>(
+            KafkaJsInstrumentation.component,
+            ['*'],
+            this.patch.bind(this),
+            this.unpatch.bind(this)
+        );
+        return module;
+    }
+
+    protected patch(moduleExports: typeof kafkaJs) {
+        this.logger.debug('kafkajs: patch kafkajs plugin');
+
+        this.unpatch(moduleExports);
+        this._wrap(moduleExports?.Kafka?.prototype, 'producer', this._getProducerPatch.bind(this));
+        this._wrap(moduleExports?.Kafka?.prototype, 'consumer', this._getConsumerPatch.bind(this));
+
+        return moduleExports;
+    }
+
+    protected unpatch(moduleExports: typeof kafkaJs) {
+        this.logger.debug('kafkajs: unpatch kafkajs plugin');
+        if (isWrapped(moduleExports?.Kafka?.prototype.producer)) {
+            this._unwrap(moduleExports.Kafka.prototype, 'producer');
+        }
+        if (isWrapped(moduleExports?.Kafka?.prototype.consumer)) {
+            this._unwrap(moduleExports.Kafka.prototype, 'consumer');
+        }
     }
 
     private _getConsumerPatch(original: (...args: unknown[]) => Producer) {
         const thisPlugin = this;
         return function (...args: unknown[]): Consumer {
             const newConsumer: Consumer = original.apply(this, arguments);
-            shimmer.wrap(newConsumer, 'run', thisPlugin._getConsumerRunPatch.bind(thisPlugin));
+
+            if (isWrapped(newConsumer.run)) {
+                thisPlugin._unwrap(newConsumer, 'run');
+            }
+            thisPlugin._wrap(newConsumer, 'run', thisPlugin._getConsumerRunPatch.bind(thisPlugin));
+
             return newConsumer;
         };
     }
@@ -55,8 +92,17 @@ export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
         const thisPlugin = this;
         return function (...args: unknown[]): Producer {
             const newProducer: Producer = original.apply(this, arguments);
-            shimmer.wrap(newProducer, 'sendBatch', thisPlugin._getProducerSendBatchPatch.bind(thisPlugin));
-            shimmer.wrap(newProducer, 'send', thisPlugin._getProducerSendPatch.bind(thisPlugin));
+
+            if (isWrapped(newProducer.sendBatch)) {
+                thisPlugin._unwrap(newProducer, 'sendBatch');
+            }
+            thisPlugin._wrap(newProducer, 'sendBatch', thisPlugin._getProducerSendBatchPatch.bind(thisPlugin));
+
+            if (isWrapped(newProducer.send)) {
+                thisPlugin._unwrap(newProducer, 'send');
+            }
+            thisPlugin._wrap(newProducer, 'send', thisPlugin._getProducerSendPatch.bind(thisPlugin));
+
             return newProducer;
         };
     }
@@ -65,10 +111,16 @@ export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
         const thisPlugin = this;
         return function (config?: ConsumerRunConfig): Promise<void> {
             if (config?.eachMessage) {
-                shimmer.wrap(config, 'eachMessage', thisPlugin._getConsumerEachMessagePatch.bind(thisPlugin));
+                if (isWrapped(config.eachMessage)) {
+                    thisPlugin._unwrap(config, 'eachMessage');
+                }
+                thisPlugin._wrap(config, 'eachMessage', thisPlugin._getConsumerEachMessagePatch.bind(thisPlugin));
             }
             if (config?.eachBatch) {
-                shimmer.wrap(config, 'eachBatch', thisPlugin._getConsumerEachBatchPatch.bind(thisPlugin));
+                if (isWrapped(config.eachBatch)) {
+                    thisPlugin._unwrap(config, 'eachBatch');
+                }
+                thisPlugin._wrap(config, 'eachBatch', thisPlugin._getConsumerEachBatchPatch.bind(thisPlugin));
             }
             return original.call(this, config);
         };
@@ -181,7 +233,7 @@ export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
     }
 
     private _startConsumerSpan(topic: string, message: KafkaMessage, operation: string, context: Context, link?: Link) {
-        const span = this._tracer.startSpan(
+        const span = this.tracer.startSpan(
             topic,
             {
                 kind: SpanKind.CONSUMER,
@@ -197,14 +249,20 @@ export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
         );
 
         if (this._config?.consumerHook && message) {
-            this._safeExecute([], () => this._config.consumerHook!(span, topic, message), false);
+            safeExecuteInTheMiddle(
+                () => this._config.consumerHook!(span, topic, message),
+                (e) => {
+                    if (e) this.logger.error(`kafkajs instrumentation: consumerHook error`, e);
+                },
+                true
+            );
         }
 
         return span;
     }
 
     private _startProducerSpan(topic: string, message: Message) {
-        const span = this._tracer.startSpan(topic, {
+        const span = this.tracer.startSpan(topic, {
             kind: SpanKind.PRODUCER,
             attributes: {
                 [MessagingAttribute.MESSAGING_SYSTEM]: 'kafka',
@@ -217,33 +275,15 @@ export class KafkaJsPlugin extends BasePlugin<typeof kafkaJs> {
         propagation.inject(setSpan(context.active(), span), message.headers);
 
         if (this._config?.producerHook) {
-            this._safeExecute([], () => this._config.producerHook!(span, topic, message), false);
+            safeExecuteInTheMiddle(
+                () => this._config.producerHook!(span, topic, message),
+                (e) => {
+                    if (e) this.logger.error(`kafkajs instrumentation: producerHook error`, e);
+                },
+                true
+            );
         }
 
         return span;
     }
-
-    private _safeExecute<T extends (...args: unknown[]) => ReturnType<T>>(
-        spans: Span[],
-        execute: T,
-        rethrow: boolean
-    ): ReturnType<T> | void {
-        try {
-            return execute();
-        } catch (error) {
-            if (rethrow) {
-                spans.forEach((span) => {
-                    span.setStatus({
-                        code: StatusCode.ERROR,
-                        message: error?.message,
-                    });
-                    span.end();
-                });
-                throw error;
-            }
-            this._logger.error('caught error ', error);
-        }
-    }
 }
-
-export const plugin = new KafkaJsPlugin('kafkajs');
