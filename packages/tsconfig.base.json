@@ -10,7 +10,7 @@
         "sourceMap": true,
         "composite": true,
         "inlineSources": true,
-        "types": ["node", "jest"],
+        "types": ["node"],
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true
     }

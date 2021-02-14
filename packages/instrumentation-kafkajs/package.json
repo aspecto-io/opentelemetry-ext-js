@@ -1,0 +1,56 @@
+{
+    "name": "opentelemetry-instrumentation-kafkajs",
+    "version": "0.0.0",
+    "description": "open telemetry instrumentation for the `kafkajs` kafka client",
+    "keywords": [
+        "kafka",
+        "opentelemetry",
+        "kafkajs"
+    ],
+    "homepage": "https://github.com/aspecto-io/opentelemetry-ext-js",
+    "license": "Apache-2.0",
+    "main": "dist/src/index.js",
+    "files": [
+        "dist/src/**/*.js",
+        "dist/src/**/*.d.ts",
+        "LICENSE",
+        "README.md"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/aspecto-io/opentelemetry-ext-js.git"
+    },
+    "scripts": {
+        "build": "tsc",
+        "prepare": "yarn run build",
+        "test": "mocha",
+        "watch": "tsc -w",
+        "version:update": "node ../../scripts/version-update.js",
+        "version": "yarn run version:update"
+    },
+    "bugs": {
+        "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
+    },
+    "dependencies": {
+        "@opentelemetry/api": "^0.15.0",
+        "@opentelemetry/instrumentation": "^0.15.0",
+        "@opentelemetry/semantic-conventions": "^0.15.0"
+    },
+    "devDependencies": {
+        "@opentelemetry/node": "^0.15.0",
+        "@opentelemetry/tracing": "^0.15.0",
+        "@types/mocha": "^8.2.0",
+        "expect": "^26.6.2",
+        "kafkajs": "^1.12.0",
+        "mocha": "^8.3.0",
+        "ts-node": "^9.1.1",
+        "typescript": "^3.9.5"
+    },
+    "mocha": {
+        "extension": [
+            "ts"
+        ],
+        "spec": "test/**/*.spec.ts",
+        "require": "ts-node/register"
+    }
+}
