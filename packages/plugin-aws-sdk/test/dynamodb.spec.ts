@@ -1,17 +1,21 @@
-import { plugin } from '../src';
-import AWS, { AWSError } from 'aws-sdk';
+import 'mocha';
+import { AwsInstrumentation } from '../src';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { ContextManager } from '@opentelemetry/context-base';
-import { context, NoopLogger } from '@opentelemetry/api';
+import { context } from '@opentelemetry/api';
 import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/tracing';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { mockAwsSend } from './testing-utils';
 import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
+import expect from 'expect';
 
-const logger = new NoopLogger();
+const instrumentation = new AwsInstrumentation();
+import AWS, { AWSError } from 'aws-sdk';
+
 const provider = new NodeTracerProvider();
 const memoryExporter = new InMemorySpanExporter();
 provider.addSpanProcessor(new SimpleSpanProcessor(memoryExporter));
+instrumentation.setTracerProvider(provider);
 let contextManager: ContextManager;
 
 const responseMockSuccess = {
@@ -20,7 +24,7 @@ const responseMockSuccess = {
 };
 
 describe('dynamodb', () => {
-    beforeAll(() => {
+    before(() => {
         AWS.config.credentials = {
             accessKeyId: 'test key id',
             expired: false,
@@ -47,9 +51,12 @@ describe('dynamodb', () => {
     });
 
     describe('receive context', () => {
-        beforeEach(() => plugin.enable(AWS, provider, logger));
+        beforeEach(() => {
+            instrumentation.disable();
+            instrumentation.enable();
+        });
 
-        it('should add db attributes to dynamodb request', async (done) => {
+        it('should add db attributes to dynamodb request', (done) => {
             const dynamodb = new AWS.DynamoDB.DocumentClient();
             const params = {
                 TableName: 'test-table',

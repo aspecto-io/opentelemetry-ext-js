@@ -1,5 +1,5 @@
 import { Span } from '@opentelemetry/api';
-import { PluginConfig } from '@opentelemetry/core';
+import { InstrumentationConfig } from '@opentelemetry/instrumentation';
 import AWS from 'aws-sdk';
 
 export interface AwsSdkRequestCustomAttributeFunction {
@@ -14,7 +14,7 @@ export interface AwsSdkSqsProcessCustomAttributeFunction {
     (span: Span, message: AWS.SQS.Message): void;
 }
 
-export interface AwsSdkPluginConfig extends PluginConfig {
+export interface AwsSdkInstrumentationConfig extends InstrumentationConfig {
     /** hook for adding custom attributes before request is sent to aws */
     preRequestHook?: AwsSdkRequestCustomAttributeFunction;
 

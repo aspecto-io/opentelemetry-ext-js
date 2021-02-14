@@ -8,48 +8,66 @@
     no callback |       0           |       1    
     callback    |       1           |       2   
  */
-import { BasePlugin } from '@opentelemetry/core';
-import {
-    Span,
-    StatusCode,
-    Attributes,
-    SpanKind,
-    context,
-    setSpan,
-    suppressInstrumentation,
-    Context,
-} from '@opentelemetry/api';
-import * as shimmer from 'shimmer';
+import { Span, Attributes, SpanKind, context, setSpan, suppressInstrumentation, Context } from '@opentelemetry/api';
 import AWS from 'aws-sdk';
 import { AttributeNames } from './enums';
 import { ServicesExtensions } from './services';
-import { AwsSdkPluginConfig } from './types';
+import { AwsSdkInstrumentationConfig } from './types';
 import { VERSION } from './version';
+import {
+    InstrumentationBase,
+    InstrumentationConfig,
+    InstrumentationModuleDefinition,
+    InstrumentationNodeModuleDefinition,
+    isWrapped,
+    safeExecuteInTheMiddle,
+} from '@opentelemetry/instrumentation';
 
-class AwsPlugin extends BasePlugin<typeof AWS> {
-    readonly component: string;
-    protected _config: AwsSdkPluginConfig;
+type Config = InstrumentationConfig & AwsSdkInstrumentationConfig;
+
+export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
+    static readonly component = 'aws-sdk';
+    protected _config!: Config;
     private REQUEST_SPAN_KEY = Symbol('opentelemetry.plugin.aws-sdk.span');
     private servicesExtensions: ServicesExtensions;
 
-    constructor(readonly moduleName: string) {
-        super(`opentelemetry-plugin-aws-sdk`, VERSION);
+    constructor(config: Config = {}) {
+        super('opentelemetry-instrumentation-aws-sdk', VERSION, Object.assign({}, config));
     }
 
-    protected patch() {
-        this.servicesExtensions = new ServicesExtensions(this._tracer, this._logger, this._config);
-
-        this._logger.debug('applying patch to %s@%s', this.moduleName, this.version);
-
-        shimmer.wrap(this._moduleExports?.Request.prototype, 'send', this._getRequestSendPatch.bind(this));
-        shimmer.wrap(this._moduleExports?.Request.prototype, 'promise', this._getRequestPromisePatch.bind(this));
-
-        return this._moduleExports;
+    setConfig(config: Config = {}) {
+        this._config = Object.assign({}, config);
+        if (config.logger) this._logger = config.logger;
     }
 
-    protected unpatch() {
-        shimmer.unwrap(this._moduleExports?.Request.prototype, 'send');
-        shimmer.unwrap(this._moduleExports?.Request.prototype, 'promise');
+    protected init(): InstrumentationModuleDefinition<typeof AWS> {
+        const module = new InstrumentationNodeModuleDefinition<typeof AWS>(
+            AwsInstrumentation.component,
+            ['*'],
+            this.patch.bind(this),
+            this.unpatch.bind(this)
+        );
+        return module;
+    }
+
+    protected patch(moduleExports: typeof AWS) {
+        this.servicesExtensions = new ServicesExtensions(this.tracer, this._logger, this._config);
+
+        this._logger.debug(`applying patch to ${AwsInstrumentation.component}`);
+        this.unpatch(moduleExports);
+        this._wrap(moduleExports?.Request.prototype, 'send', this._getRequestSendPatch.bind(this));
+        this._wrap(moduleExports?.Request.prototype, 'promise', this._getRequestPromisePatch.bind(this));
+
+        return moduleExports;
+    }
+
+    protected unpatch(moduleExports: typeof AWS) {
+        if (isWrapped(moduleExports?.Request.prototype.send)) {
+            this._unwrap(moduleExports.Request.prototype, 'send');
+        }
+        if (isWrapped(moduleExports?.Request.prototype.promise)) {
+            this._unwrap(moduleExports.Request.prototype, 'promise');
+        }
     }
 
     private _bindPromise(target: Promise<any>, contextForCallbacks: Context) {
@@ -72,10 +90,10 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
         const service = (request as any).service;
         const name = spanName ?? this._getSpanName(request);
 
-        const newSpan = this._tracer.startSpan(name, {
+        const newSpan = this.tracer.startSpan(name, {
             kind: spanKind,
             attributes: {
-                [AttributeNames.COMPONENT]: this.moduleName,
+                [AttributeNames.COMPONENT]: AwsInstrumentation.component,
                 [AttributeNames.AWS_OPERATION]: operation,
                 [AttributeNames.AWS_SIGNATURE_VERSION]: service?.config?.signatureVersion,
                 [AttributeNames.AWS_REGION]: service?.config?.region,
@@ -92,13 +110,26 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
 
     private _callUserPreRequestHook(span: Span, request: AWS.Request<any, any>) {
         if (this._config?.preRequestHook) {
-            this._safeExecute(span, () => this._config.preRequestHook(span, request), false);
+            safeExecuteInTheMiddle(
+                () => this._config.preRequestHook(span, request),
+                (e) => {
+                    if (e)
+                        this._logger.error(`${AwsInstrumentation.component} instrumentation: preRequestHook error`, e);
+                },
+                true
+            );
         }
     }
 
     private _callUserResponseHook(span: Span, response: AWS.Response<any, any>) {
         if (this._config?.responseHook) {
-            this._safeExecute(span, () => this._config.responseHook(span, response), false);
+            safeExecuteInTheMiddle(
+                () => this._config.responseHook(span, response),
+                (e) => {
+                    if (e) this._logger.error(`${AwsInstrumentation.component} instrumentation: responseHook error`, e);
+                },
+                true
+            );
         }
     }
 
@@ -163,10 +194,7 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
         const thisPlugin = this;
         return function (): Promise<any> {
             const awsRequest: AWS.Request<any, any> = this;
-            /* 
-        if the span was already started, we don't want to start a new one 
-        when Request.promise() is called
-      */
+            // if the span was already started, we don't want to start a new one when Request.promise() is called
             if (this._asm.currentState === 'complete' || awsRequest[thisPlugin.REQUEST_SPAN_KEY]) {
                 return original.apply(this, arguments);
             }
@@ -198,30 +226,6 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
         return `aws.${request.service?.serviceIdentifier ?? 'request'}.${request.operation}`;
     };
 
-    private _safeExecute<T extends (...args: unknown[]) => ReturnType<T>, K extends boolean>(
-        span: Span,
-        execute: T,
-        rethrow: K
-    ): K extends true ? ReturnType<T> : ReturnType<T> | void;
-    private _safeExecute<T extends (...args: unknown[]) => ReturnType<T>>(
-        span: Span,
-        execute: T,
-        rethrow: boolean
-    ): ReturnType<T> | void {
-        try {
-            return execute();
-        } catch (error) {
-            if (rethrow) {
-                span.setStatus({
-                    code: StatusCode.ERROR,
-                });
-                span.end();
-                throw error;
-            }
-            this._logger.error('caught error ', error);
-        }
-    }
-
     private _callOriginalFunction<T>(originalFunction: (...args: any[]) => T): T {
         if (this._config?.suppressInternalInstrumentation) {
             return context.with(suppressInstrumentation(context.active()), originalFunction);
@@ -230,5 +234,3 @@ class AwsPlugin extends BasePlugin<typeof AWS> {
         }
     }
 }
-
-export const plugin = new AwsPlugin('aws-sdk');

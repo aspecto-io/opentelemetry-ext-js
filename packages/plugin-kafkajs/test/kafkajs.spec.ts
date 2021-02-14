@@ -1,3 +1,4 @@
+import 'mocha';
 import { KafkaJsInstrumentation } from '../src';
 import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';

@@ -1,4 +1,5 @@
 import { isInstrumentationSuppressed, context } from '@opentelemetry/api';
+import expect from 'expect';
 import AWS from 'aws-sdk';
 
 export const mockAwsSend = (

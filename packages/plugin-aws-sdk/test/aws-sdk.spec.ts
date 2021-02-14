@@ -1,19 +1,23 @@
-import { plugin } from '../src';
-import AWS from 'aws-sdk';
+import 'mocha';
+import { AwsInstrumentation } from '../src';
 import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan, Span } from '@opentelemetry/tracing';
-import { context, StatusCode, NoopLogger } from '@opentelemetry/api';
+import { context, StatusCode } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { ContextManager } from '@opentelemetry/context-base';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { AttributeNames } from '../src/enums';
 import { mockAwsSend } from './testing-utils';
+import expect from 'expect';
+
+const instrumentation = new AwsInstrumentation();
+import AWS from 'aws-sdk';
 
 describe('plugin-aws-sdk', () => {
-    const logger = new NoopLogger();
     const provider = new NodeTracerProvider();
     const memoryExporter = new InMemorySpanExporter();
     const spanProcessor = new SimpleSpanProcessor(memoryExporter);
     provider.addSpanProcessor(spanProcessor);
+    instrumentation.setTracerProvider(provider);
     let contextManager: ContextManager;
 
     const responseMockSuccess = {
@@ -30,7 +34,7 @@ describe('plugin-aws-sdk', () => {
         return memoryExporter.getFinishedSpans().filter((s) => s.attributes[AttributeNames.COMPONENT] === 'aws-sdk');
     };
 
-    beforeAll(() => {
+    before(() => {
         AWS.config.credentials = {
             accessKeyId: 'test key id',
             expired: false,
@@ -52,12 +56,13 @@ describe('plugin-aws-sdk', () => {
 
     describe('functional', () => {
         describe('successful send', () => {
-            beforeAll(() => {
+            before(() => {
                 mockAwsSend(responseMockSuccess);
-                plugin.enable(AWS, provider, logger);
+                instrumentation.disable();
+                instrumentation.enable();
             });
 
-            it('adds proper number of spans with correct attributes', async (done) => {
+            it('adds proper number of spans with correct attributes', async () => {
                 const s3 = new AWS.S3();
                 const bucketName = 'aws-test-bucket';
                 const keyName = 'aws-test-object.txt';
@@ -98,11 +103,9 @@ describe('plugin-aws-sdk', () => {
                 expect(spanPutObject.attributes[AttributeNames.AWS_SERVICE_NAME]).toBe('Amazon S3');
                 expect(spanPutObject.attributes[AttributeNames.AWS_REQUEST_ID]).toBe(responseMockSuccess.requestId);
                 expect(spanPutObject.name).toBe('aws.s3.putObject');
-
-                done();
             });
 
-            it('adds proper number of spans with correct attributes if both, promise and callback were used', async (done) => {
+            it('adds proper number of spans with correct attributes if both, promise and callback were used', async () => {
                 const s3 = new AWS.S3();
                 const bucketName = 'aws-test-bucket';
                 const keyName = 'aws-test-object.txt';
@@ -141,10 +144,9 @@ describe('plugin-aws-sdk', () => {
                 const [spanCreateBucket, spanPutObjectCb] = awsSpans;
                 expect(spanCreateBucket.attributes[AttributeNames.AWS_OPERATION]).toBe('createBucket');
                 expect(spanPutObjectCb.attributes[AttributeNames.AWS_OPERATION]).toBe('putObject');
-                done();
             });
 
-            it('adds proper number of spans with correct attributes if only promise was used', async (done) => {
+            it('adds proper number of spans with correct attributes if only promise was used', async () => {
                 const s3 = new AWS.S3();
                 const bucketName = 'aws-test-bucket';
                 const keyName = 'aws-test-object.txt';
@@ -171,7 +173,6 @@ describe('plugin-aws-sdk', () => {
                 const [spanCreateBucket, spanPutObjectCb] = awsSpans;
                 expect(spanCreateBucket.attributes[AttributeNames.AWS_OPERATION]).toBe('createBucket');
                 expect(spanPutObjectCb.attributes[AttributeNames.AWS_OPERATION]).toBe('putObject');
-                done();
             });
 
             it('should create span if no callback is supplied', (done) => {
@@ -193,15 +194,15 @@ describe('plugin-aws-sdk', () => {
         });
 
         describe('send return error', () => {
-            beforeAll(() => {
+            before(() => {
                 mockAwsSend(responseMockWithError);
-                plugin.enable(AWS, provider, logger);
+                instrumentation.disable();
+                instrumentation.enable();
             });
 
-            it('adds error attribute properly', async (done) => {
+            it('adds error attribute properly', async () => {
                 const s3 = new AWS.S3();
                 const bucketName = 'aws-test-bucket';
-                const keyName = 'aws-test-object.txt';
                 await new Promise((resolve) => {
                     s3.createBucket({ Bucket: bucketName }, async function () {
                         resolve({});
@@ -212,7 +213,6 @@ describe('plugin-aws-sdk', () => {
                 expect(awsSpans.length).toBe(1);
                 const [spanCreateBucket] = awsSpans;
                 expect(spanCreateBucket.attributes[AttributeNames.AWS_ERROR]).toBe(responseMockWithError.error);
-                done();
             });
         });
     });
@@ -220,14 +220,15 @@ describe('plugin-aws-sdk', () => {
     describe('plugin config', () => {
         it('preRequestHook called and add request attribute to span', (done) => {
             mockAwsSend(responseMockSuccess, 'data returned from operation');
-            const pluginConfig = {
-                enabled: true,
-                preRequestHook: (span: Span, request: { params: Record<string, any> }) => {
+            const config = {
+                preRequestHook: (span: Span, request: any) => {
                     span.setAttribute('attribute from hook', request.params['Bucket']);
                 },
             };
 
-            plugin.enable(AWS, provider, logger, pluginConfig);
+            instrumentation.disable();
+            instrumentation.setConfig(config);
+            instrumentation.enable();
 
             const s3 = new AWS.S3();
             const bucketName = 'aws-test-bucket';
@@ -242,14 +243,15 @@ describe('plugin-aws-sdk', () => {
 
         it('preRequestHook throws does not fail span', (done) => {
             mockAwsSend(responseMockSuccess, 'data returned from operation');
-            const pluginConfig = {
-                enabled: true,
+            const config = {
                 preRequestHook: (span: Span, request: any) => {
                     throw new Error('error from request hook');
                 },
             };
 
-            plugin.enable(AWS, provider, logger, pluginConfig);
+            instrumentation.disable();
+            instrumentation.setConfig(config);
+            instrumentation.enable();
 
             const s3 = new AWS.S3();
             const bucketName = 'aws-test-bucket';
@@ -264,14 +266,16 @@ describe('plugin-aws-sdk', () => {
 
         it('responseHook called and add response attribute to span', (done) => {
             mockAwsSend(responseMockSuccess, 'data returned from operation');
-            const pluginConfig = {
+            const config = {
                 enabled: true,
-                responseHook: (span: Span, response: { params: AWS.Response<any, any> }) => {
+                responseHook: (span: Span, response: any) => {
                     span.setAttribute('attribute from response hook', response['data']);
                 },
             };
 
-            plugin.enable(AWS, provider, logger, pluginConfig);
+            instrumentation.disable();
+            instrumentation.setConfig(config);
+            instrumentation.enable();
 
             const s3 = new AWS.S3();
             const bucketName = 'aws-test-bucket';
@@ -288,12 +292,13 @@ describe('plugin-aws-sdk', () => {
 
         it('suppressInternalInstrumentation set to true with send()', (done) => {
             mockAwsSend(responseMockSuccess, 'data returned from operation', true);
-            const pluginConfig = {
-                enabled: true,
+            const config = {
                 suppressInternalInstrumentation: true,
             };
 
-            plugin.enable(AWS, provider, logger, pluginConfig);
+            instrumentation.disable();
+            instrumentation.setConfig(config);
+            instrumentation.enable();
 
             const s3 = new AWS.S3();
 
@@ -306,12 +311,14 @@ describe('plugin-aws-sdk', () => {
 
         it('suppressInternalInstrumentation set to true with promise()', async () => {
             mockAwsSend(responseMockSuccess, 'data returned from operation', true);
-            const pluginConfig = {
+            const config = {
                 enabled: true,
                 suppressInternalInstrumentation: true,
             };
 
-            plugin.enable(AWS, provider, logger, pluginConfig);
+            instrumentation.disable();
+            instrumentation.setConfig(config);
+            instrumentation.enable();
 
             const s3 = new AWS.S3();
 

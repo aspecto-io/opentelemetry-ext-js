@@ -1,6 +1,6 @@
 {
-    "name": "opentelemetry-plugin-aws-sdk",
-    "version": "0.2.1",
+    "name": "opentelemetry-instrumentation-aws-sdk",
+    "version": "0.0.1",
     "description": "open telemetry instrumentation for the `aws-sdk` package",
     "keywords": [
         "aws",
@@ -23,7 +23,7 @@
     "scripts": {
         "build": "tsc",
         "prepare": "yarn run build",
-        "test": "jest",
+        "test": "mocha",
         "watch": "tsc -w",
         "version:update": "node ../../scripts/version-update.js",
         "version": "yarn run version:update"
@@ -31,34 +31,28 @@
     "bugs": {
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
     },
+    "dependencies": {
+        "@opentelemetry/api": "^0.15.0",
+        "@opentelemetry/instrumentation": "^0.15.0",
+        "@opentelemetry/semantic-conventions": "^0.15.0",
+        "opentelemetry-propagation-utils": "^0.2.1"
+    },
     "devDependencies": {
         "@opentelemetry/api": "^0.15.0",
         "@opentelemetry/node": "^0.15.0",
         "@opentelemetry/tracing": "^0.15.0",
-        "@types/jest": "^26.0.15",
-        "@types/shimmer": "^1.0.1",
+        "@types/mocha": "^8.2.0",
         "aws-sdk": "^2.780.0",
-        "jest": "^26.6.1",
-        "ts-jest": "^26.4.3",
+        "expect": "^26.6.2",
+        "mocha": "^8.3.0",
+        "ts-node": "^9.1.1",
         "typescript": "^4.0.5"
     },
-    "dependencies": {
-        "@opentelemetry/api": "^0.15.0",
-        "@opentelemetry/core": "^0.15.0",
-        "@opentelemetry/semantic-conventions": "^0.15.0",
-        "opentelemetry-propagation-utils": "^0.2.1",
-        "shimmer": "^1.2.1"
-    },
-    "jest": {
-        "preset": "ts-jest",
-        "globals": {
-            "ts-jest": {
-                "tsconfig": "./tsconfig.json"
-            }
-        },
-        "testMatch": [
-            "**/test/**/*.spec.+(ts|tsx)"
+    "mocha": {
+        "extension": [
+            "ts"
         ],
-        "testEnvironment": "node"
+        "spec": "test/**/*.spec.ts",
+        "require": "ts-node/register"
     }
 }

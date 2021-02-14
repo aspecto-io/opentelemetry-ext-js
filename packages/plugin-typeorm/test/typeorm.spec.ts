@@ -1,3 +1,4 @@
+import 'mocha';
 import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan, Span } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { context, StatusCode, NoopLogger } from '@opentelemetry/api';
