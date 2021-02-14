@@ -102,7 +102,11 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
                         safeExecuteInTheMiddle(
                             () => thisInstrumentation._config.responseHook(newSpan, response),
                             (e: Error) => {
-                                if (e) thisInstrumentation._logger.error('Caught Error while applying responseHook', e);
+                                if (e)
+                                    thisInstrumentation._logger.error(
+                                        'sequelize instrumentation: responseHook error',
+                                        e
+                                    );
                             },
                             true
                         );

@@ -128,7 +128,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                     if (thisInstrumentation._config?.responseHook) {
                         safeExecuteInTheMiddle(
                             () => thisInstrumentation._config.responseHook(newSpan, resolved),
-                            (e) => {
+                            (e: Error) => {
                                 if (e)
                                     thisInstrumentation._logger.error('typeorm instrumentation: responseHook error', e);
                             },

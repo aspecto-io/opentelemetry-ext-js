@@ -112,7 +112,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
         if (this._config?.preRequestHook) {
             safeExecuteInTheMiddle(
                 () => this._config.preRequestHook(span, request),
-                (e) => {
+                (e: Error) => {
                     if (e)
                         this._logger.error(`${AwsInstrumentation.component} instrumentation: preRequestHook error`, e);
                 },
@@ -125,7 +125,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
         if (this._config?.responseHook) {
             safeExecuteInTheMiddle(
                 () => this._config.responseHook(span, response),
-                (e) => {
+                (e: Error) => {
                     if (e) this._logger.error(`${AwsInstrumentation.component} instrumentation: responseHook error`, e);
                 },
                 true

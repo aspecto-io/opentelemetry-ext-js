@@ -270,7 +270,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
         if (this._config?.consumerHook && message) {
             safeExecuteInTheMiddle(
                 () => this._config.consumerHook!(span, topic, message),
-                (e) => {
+                (e: Error) => {
                     if (e) this._logger.error(`kafkajs instrumentation: consumerHook error`, e);
                 },
                 true
@@ -296,7 +296,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
         if (this._config?.producerHook) {
             safeExecuteInTheMiddle(
                 () => this._config.producerHook!(span, topic, message),
-                (e) => {
+                (e: Error) => {
                     if (e) this._logger.error(`kafkajs instrumentation: producerHook error`, e);
                 },
                 true
