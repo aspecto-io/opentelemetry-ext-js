@@ -244,7 +244,7 @@ describe('instrumentation-sequelize', () => {
             await instance.models.User.findAll();
             const spans = getSequelizeSpans();
             expect(spans.length).toBe(1);
-            expect(mockedLogger.getMessage()).toBe('Caught Error while applying responseHook');
+            expect(mockedLogger.getMessage()).toBe('sequelize instrumentation: responseHook error');
             expect(mockedLogger.getError().message).toBe('Throwing');
         });
     });
