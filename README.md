@@ -15,15 +15,16 @@
 js extensions for the [open-telemetry](https://opentelemetry.io/) project, from [Aspecto](https://www.aspecto.io/) with :heart:
 
 **Compatible with [otel v0.15.0](https://github.com/open-telemetry/opentelemetry-js/releases/tag/v0.15.0)**
-## Plugins
-- [opentelemetry-plugin-kafkajs](./packages/plugin-kafkajs) - auto instrumentation for [`kafkajs`](https://kafka.js.org) [![NPM version](https://img.shields.io/npm/v/opentelemetry-plugin-kafkajs.svg)](https://www.npmjs.com/package/opentelemetry-plugin-kafkajs)
-- [opentelemetry-plugin-aws-sdk](./packages/plugin-aws-sdk) - auto instrumentation for [`aws-sdk`](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/) [![NPM version](https://img.shields.io/npm/v/opentelemetry-plugin-aws-sdk.svg)](https://www.npmjs.com/package/opentelemetry-plugin-aws-sdk)
-- [opentelemetry-plugin-typeorm](./packages/plugin-typeorm) - auto instrumentation for [`TypeORM`](https://typeorm.io/) [![NPM version](https://img.shields.io/npm/v/opentelemetry-plugin-typeorm.svg)](https://www.npmjs.com/package/opentelemetry-plugin-typeorm)
-- [opentelemetry-plugin-sequelize](./packages/plugin-sequelize) - auto instrumentation for [`Sequelize`](https://sequelize.org/) 
-[![NPM version](https://img.shields.io/npm/v/opentelemetry-plugin-sequelize.svg)](https://www.npmjs.com/package/opentelemetry-plugin-sequelize)
+## Instrumentations
+- [opentelemetry-instrumentation-kafkajs](./packages/instrumentation-kafkajs) - auto instrumentation for [`kafkajs`](https://kafka.js.org) [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-kafkajs.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-kafkajs)
+- [opentelemetry-instrumentation-aws-sdk](./packages/instrumentation-aws-sdk) - auto instrumentation for [`aws-sdk`](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/) [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-aws-sdk.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-aws-sdk)
+- [opentelemetry-instrumentation-typeorm](./packages/instrumentation-typeorm) - auto instrumentation for [`TypeORM`](https://typeorm.io/) [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-typeorm.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-typeorm)
+- [opentelemetry-instrumentation-sequelize](./packages/instrumentation-sequelize) - auto instrumentation for [`Sequelize`](https://sequelize.org/) 
+[![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-sequelize.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-sequelize)
 
 ## Compatibility with opentelemetry versions
+### Instrumentations in this repo are using opentelemetry [Instrumentation API](https://github.com/open-telemetry/opentelemetry-js/tree/main/packages/opentelemetry-instrumentation).
+For documentation using with the old [plugin](https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-core/src/trace/Plugin.ts) api, please go [here](https://github.com/aspecto-io/opentelemetry-ext-js/tree/4393fff108c477d05ecd02dd7d9552ea1d482853).
+
 **Tested and verified against otel v0.15.0**
-- Versions 0.2.x of the plugins are compatible with otel version v0.15.0
-- Versions 0.1.x of the plugins are compatible with otel version v0.14.0
-- Versions 0.0.x of the plugins are compatible with otel version v0.12.0
+- Versions 0.0.x of the instrumentations are compatible with otel version v0.15.0
