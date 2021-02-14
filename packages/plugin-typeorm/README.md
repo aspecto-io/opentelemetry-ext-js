@@ -20,7 +20,7 @@ const { TypeormInstrumentation } = require('opentelemetry-instrumentation-typeor
 const traceProvider = new NodeTracerProvider({
   // be sure to disable old plugin
   plugins: {
-    dns: { enabled: false, path: 'opentelemetry-plugin-typeorm' }
+    typeorm: { enabled: false, path: 'opentelemetry-plugin-typeorm' }
   }
 });
 

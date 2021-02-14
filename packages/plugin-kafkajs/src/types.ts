@@ -1,5 +1,5 @@
 import { Span } from '@opentelemetry/api';
-import { PluginConfig } from '@opentelemetry/core';
+import { InstrumentationConfig } from '@opentelemetry/instrumentation';
 import { Message } from 'kafkajs';
 
 export interface KafkaProducerCustomAttributeFunction {
@@ -10,7 +10,7 @@ export interface KafkaConsumerCustomAttributeFunction {
     (span: Span, topic: string, message: Message): void;
 }
 
-export interface KafkaJsPluginConfig extends PluginConfig {
+export interface KafkaJsInstrumentationConfig extends InstrumentationConfig {
     /** hook for adding custom attributes before producer message is sent */
     producerHook?: KafkaProducerCustomAttributeFunction;
 

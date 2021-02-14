@@ -14,7 +14,7 @@ import {
     EachBatchPayload,
     Consumer,
 } from 'kafkajs';
-import { KafkaJsPluginConfig } from './types';
+import { KafkaJsInstrumentationConfig } from './types';
 import { VERSION } from './version';
 import { bufferTextMapGetter } from './propagtor';
 import {
@@ -26,7 +26,7 @@ import {
     isWrapped,
 } from '@opentelemetry/instrumentation';
 
-type Config = InstrumentationConfig & KafkaJsPluginConfig;
+type Config = InstrumentationConfig & KafkaJsInstrumentationConfig;
 
 export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> {
     static readonly component = 'kafkajs';

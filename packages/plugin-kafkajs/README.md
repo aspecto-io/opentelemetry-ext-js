@@ -1,35 +1,43 @@
 # OpenTelemetry kafkajs Instrumentation for Node.js
-[![NPM version](https://img.shields.io/npm/v/opentelemetry-plugin-kafkajs.svg)](https://www.npmjs.com/package/opentelemetry-plugin-kafkajs)
+[![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-kafkajs.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-kafkajs)
 
 This module provides automatic instrumentation for [`kafkajs`](https://kafka.js.org/).
 
 ## Installation
 
 ```
-npm install --save opentelemetry-plugin-kafkajs
+npm install --save opentelemetry-instrumentation-kafkajs
 ```
 
 ## Usage
 
-To load a specific plugin (**kafkajs** in this case), specify it in the Node Tracer's configuration
+For further automatic instrumentation instruction see the [@opentelemetry/instrumentation](https://github.com/open-telemetry/opentelemetry-js/tree/main/packages/opentelemetry-instrumentation) package.
 
 ```js
-const { NodeTracerProvider } = require("@opentelemetry/node");
+const { NodeTracerProvider } = require('@opentelemetry/node');
+const { registerInstrumentations } = require('@opentelemetry/instrumentation');
+const { KafkaJsInstrumentation } = require('opentelemetry-instrumentation-kafkajs');
 
-const provider = new NodeTracerProvider({
+const traceProvider = new NodeTracerProvider({
+  // be sure to disable old plugin
   plugins: {
-    kafkajs: {
-      enabled: true,
-      // You may use a package name or absolute path to the file.
-      path: "opentelemetry-plugin-kafkajs",
-    },
-  },
+    kafkajs: { enabled: false, path: 'opentelemetry-plugin-kafkajs' }
+  }
+});
+
+registerInstrumentations({
+  traceProvider,
+  instrumentations: [
+    new KafkaJsInstrumentation({
+      // see under for available configuration
+    })
+  ]
 });
 ```
 
-### kafkajs Plugin Options
+### kafkajs Instrumentation Options
 
-kafkajs plugin has few options available to choose from. You can set the following:
+kafkajs instrumentation has few options available to choose from. You can set the following:
 
 | Options        | Type                                   | Description                                                                                     |
 | -------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |

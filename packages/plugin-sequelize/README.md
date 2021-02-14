@@ -21,7 +21,7 @@ const { SequelizeInstrumentation } = require('opentelemetry-instrumentation-sequ
 const traceProvider = new NodeTracerProvider({
   // be sure to disable old plugin
   plugins: {
-    dns: { enabled: false, path: 'opentelemetry-plugin-sequelize' }
+    sequelize: { enabled: false, path: 'opentelemetry-plugin-sequelize' }
   }
 });
 

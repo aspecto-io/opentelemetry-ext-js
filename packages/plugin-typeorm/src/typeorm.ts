@@ -1,6 +1,6 @@
 import { Span, SpanKind, StatusCode, setSpan, context, Logger } from '@opentelemetry/api';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
-import { TypeormPluginConfig } from './types';
+import { TypeormInstrumentationConfig } from './types';
 import { getParamNames } from './utils';
 import { VERSION } from './version';
 import type * as typeorm from 'typeorm';
@@ -13,7 +13,7 @@ import {
     safeExecuteInTheMiddle,
 } from '@opentelemetry/instrumentation';
 
-type Config = InstrumentationConfig & TypeormPluginConfig;
+type Config = InstrumentationConfig & TypeormInstrumentationConfig;
 
 export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> {
     static readonly component = 'typeorm';

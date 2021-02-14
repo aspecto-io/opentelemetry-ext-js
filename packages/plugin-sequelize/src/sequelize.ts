@@ -1,7 +1,7 @@
 import { context, setSpan, Span, SpanKind, StatusCode, getSpan, Logger } from '@opentelemetry/api';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
 import * as sequelize from 'sequelize';
-import { SequelizePluginConfig } from './types';
+import { SequelizeInstrumentationConfig } from './types';
 import { VERSION } from './version';
 import {
     InstrumentationBase,
@@ -12,7 +12,7 @@ import {
     safeExecuteInTheMiddle,
 } from '@opentelemetry/instrumentation';
 
-type Config = InstrumentationConfig & SequelizePluginConfig;
+type Config = InstrumentationConfig & SequelizeInstrumentationConfig;
 
 export class SequelizeInstrumentation extends InstrumentationBase<typeof sequelize> {
     static readonly component = 'sequelize';
