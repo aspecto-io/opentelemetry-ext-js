@@ -1,9 +1,9 @@
 import { Span } from '@opentelemetry/api';
-import { PluginConfig } from '@opentelemetry/core';
+import { InstrumentationConfig } from '@opentelemetry/instrumentation';
 
 export type TypeormResponseCustomAttributesFunction = (span: Span, response: any) => void;
 
-export interface TypeormPluginConfig extends PluginConfig {
+export interface TypeormPluginConfig extends InstrumentationConfig {
     /** hook for adding custom attributes using the response payload */
     responseHook?: TypeormResponseCustomAttributesFunction;
 }

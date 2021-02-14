@@ -1,5 +1,5 @@
 {
-    "name": "opentelemetry-plugin-typeorm",
+    "name": "opentelemetry-instrumentation-typeorm",
     "version": "0.2.0",
     "description": "open telemetry instrumentation for the `typeorm` module",
     "keywords": [
@@ -32,9 +32,8 @@
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
     },
     "dependencies": {
-        "@opentelemetry/core": "^0.15.0",
-        "@opentelemetry/semantic-conventions": "^0.15.0",
-        "shimmer": "^1.2.1"
+        "@opentelemetry/instrumentation": "^0.15.0",
+        "@opentelemetry/semantic-conventions": "^0.15.0"
     },
     "devDependencies": {
         "@opentelemetry/node": "^0.15.0",
@@ -51,7 +50,7 @@
         "preset": "ts-jest",
         "globals": {
             "ts-jest": {
-                "tsConfig": "./tsconfig.json"
+                "tsconfig": "./tsconfig.json"
             }
         },
         "testMatch": [

@@ -1,31 +1,57 @@
-import { BasePlugin } from '@opentelemetry/core';
 import { Span, SpanKind, StatusCode, setSpan, context } from '@opentelemetry/api';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
 import { TypeormPluginConfig } from './types';
-import { safeExecute, getParamNames } from './utils';
-import shimmer from 'shimmer';
+import { getParamNames } from './utils';
 import { VERSION } from './version';
-import * as typeorm from 'typeorm';
+import type * as typeorm from 'typeorm';
+import {
+    InstrumentationBase,
+    InstrumentationConfig,
+    InstrumentationModuleDefinition,
+    InstrumentationNodeModuleDefinition,
+    isWrapped,
+    safeExecuteInTheMiddle,
+} from '@opentelemetry/instrumentation';
 
-class TypeormPlugin extends BasePlugin<typeof typeorm> {
-    protected _config!: TypeormPluginConfig;
+type Config = InstrumentationConfig & TypeormPluginConfig;
 
-    constructor(readonly moduleName: string) {
-        super(`opentelemetry-plugin-typeorm`, VERSION);
+export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> {
+    static readonly component = 'typeorm';
+    protected _config!: Config;
+
+    constructor(config: Config = {}) {
+        super('opentelemetry-instrumentation-typeorm', VERSION, Object.assign({}, config));
     }
 
-    protected patch(): typeof typeorm {
-        this._logger.debug(`applying patch to ${this.moduleName}@${this.version}`);
-        shimmer.wrap(
-            this._moduleExports.ConnectionManager.prototype,
-            'create',
-            this._createConnectionManagerPatch.bind(this)
+    setConfig(config: Config = {}) {
+        this._config = Object.assign({}, config);
+    }
+
+    protected init(): void | InstrumentationModuleDefinition<any> | InstrumentationModuleDefinition<any>[] {
+        const module = new InstrumentationNodeModuleDefinition<typeof typeorm>(
+            TypeormInstrumentation.component,
+            ['*'],
+            this.patch.bind(this),
+            this.unpatch.bind(this)
         );
-
-        return this._moduleExports;
+        return module;
     }
-    protected unpatch(): void {
-        shimmer.unwrap(this._moduleExports.ConnectionManager.prototype, 'create');
+
+    protected patch(moduleExports: typeof typeorm): typeof typeorm {
+        if (moduleExports === undefined || moduleExports === null) {
+            return moduleExports;
+        }
+        this._logger.debug(`applying patch to typeorm`);
+        if (isWrapped(moduleExports.ConnectionManager.prototype.create)) {
+            this._unwrap(moduleExports.ConnectionManager.prototype, 'create');
+        }
+        this._wrap(moduleExports.ConnectionManager.prototype, 'create', this._createConnectionManagerPatch.bind(this));
+
+        return moduleExports;
+    }
+
+    protected unpatch(moduleExports: typeof typeorm): void {
+        this._unwrap(moduleExports.ConnectionManager.prototype, 'create');
     }
 
     private _createConnectionManagerPatch(original: (options: typeorm.ConnectionOptions) => typeorm.Connection) {
@@ -52,7 +78,7 @@ class TypeormPlugin extends BasePlugin<typeof typeorm> {
 
             const patch = (operation: string) => {
                 if (connection.manager[operation])
-                    shimmer.wrap(
+                    this._wrap(
                         connection.manager,
                         operation as keyof typeorm.EntityManager,
                         thisPlugin._getEntityManagerFunctionPatch(operation).bind(thisPlugin)
@@ -89,7 +115,7 @@ class TypeormPlugin extends BasePlugin<typeof typeorm> {
                     if (value === undefined) delete attributes[key];
                 });
 
-                const newSpan: Span = thisPlugin._tracer.startSpan(`TypeORM ${opName}`, {
+                const newSpan: Span = thisPlugin.tracer.startSpan(`TypeORM ${opName}`, {
                     kind: SpanKind.CLIENT,
                     attributes,
                 });
@@ -100,11 +126,10 @@ class TypeormPlugin extends BasePlugin<typeof typeorm> {
                     );
                     const resolved = await response;
                     if (thisPlugin._config?.responseHook) {
-                        safeExecute(
-                            [],
+                        safeExecuteInTheMiddle(
                             () => thisPlugin._config.responseHook(newSpan, resolved),
-                            false,
-                            thisPlugin._logger
+                            () => {},
+                            true
                         );
                     }
                     return resolved;
@@ -146,5 +171,3 @@ const buildStatement = (func: Function, args: any[]) => {
     });
     return statement;
 };
-
-export const plugin = new TypeormPlugin('typeorm');
