@@ -38,10 +38,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
 
     setConfig(config: Config = {}) {
         this._config = Object.assign({}, config);
-    }
-
-    get logger() {
-        return this._config.logger ?? this._logger;
+        if (config.logger) this._logger = config.logger;
     }
 
     protected init(): InstrumentationModuleDefinition<typeof kafkaJs> {
@@ -55,7 +52,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
     }
 
     protected patch(moduleExports: typeof kafkaJs) {
-        this.logger.debug('kafkajs: patch kafkajs plugin');
+        this._logger.debug('kafkajs: patch kafkajs plugin');
 
         this.unpatch(moduleExports);
         this._wrap(moduleExports?.Kafka?.prototype, 'producer', this._getProducerPatch.bind(this));
@@ -65,7 +62,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
     }
 
     protected unpatch(moduleExports: typeof kafkaJs) {
-        this.logger.debug('kafkajs: unpatch kafkajs plugin');
+        this._logger.debug('kafkajs: unpatch kafkajs plugin');
         if (isWrapped(moduleExports?.Kafka?.prototype.producer)) {
             this._unwrap(moduleExports.Kafka.prototype, 'producer');
         }
@@ -252,7 +249,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
             safeExecuteInTheMiddle(
                 () => this._config.consumerHook!(span, topic, message),
                 (e) => {
-                    if (e) this.logger.error(`kafkajs instrumentation: consumerHook error`, e);
+                    if (e) this._logger.error(`kafkajs instrumentation: consumerHook error`, e);
                 },
                 true
             );
@@ -278,7 +275,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
             safeExecuteInTheMiddle(
                 () => this._config.producerHook!(span, topic, message),
                 (e) => {
-                    if (e) this.logger.error(`kafkajs instrumentation: producerHook error`, e);
+                    if (e) this._logger.error(`kafkajs instrumentation: producerHook error`, e);
                 },
                 true
             );

@@ -1,4 +1,4 @@
-import { Span, SpanKind, StatusCode, setSpan, context, Logger } from '@opentelemetry/api';
+import { Span, SpanKind, StatusCode, setSpan, context } from '@opentelemetry/api';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
 import { TypeormInstrumentationConfig } from './types';
 import { getParamNames } from './utils';
@@ -25,10 +25,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
 
     setConfig(config: Config = {}) {
         this._config = Object.assign({}, config);
-    }
-
-    get logger() {
-        return this._config.logger ?? this._logger ?? ({} as Logger);
+        if (config.logger) this._logger = config.logger;
     }
 
     protected init(): InstrumentationModuleDefinition<typeof typeorm> {
@@ -45,7 +42,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
         if (moduleExports === undefined || moduleExports === null) {
             return moduleExports;
         }
-        this.logger.debug(`applying patch to typeorm`);
+        this._logger.debug(`applying patch to typeorm`);
         this.unpatch(moduleExports);
         this._wrap(moduleExports.ConnectionManager.prototype, 'create', this._createConnectionManagerPatch.bind(this));
 
@@ -97,7 +94,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
 
     private _getEntityManagerFunctionPatch(opName: string) {
         const thisPlugin = this;
-        thisPlugin.logger.debug(`TypeormPlugin: patched EntityManager ${opName} prototype`);
+        thisPlugin._logger.debug(`TypeormPlugin: patched EntityManager ${opName} prototype`);
         return function (original: Function) {
             return async function (...args: any[]) {
                 const connectionOptions = this?.connection?.options ?? {};

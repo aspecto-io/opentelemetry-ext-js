@@ -1,4 +1,4 @@
-import { context, setSpan, Span, SpanKind, StatusCode, getSpan, Logger } from '@opentelemetry/api';
+import { context, setSpan, Span, SpanKind, StatusCode, getSpan } from '@opentelemetry/api';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
 import * as sequelize from 'sequelize';
 import { SequelizeInstrumentationConfig } from './types';
@@ -24,10 +24,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
 
     setConfig(config: Config = {}) {
         this._config = Object.assign({}, config);
-    }
-
-    get logger() {
-        return this._config.logger ?? this._logger ?? ({} as Logger);
+        if (config.logger) this._logger = config.logger;
     }
 
     protected init(): InstrumentationModuleDefinition<typeof sequelize> {
@@ -45,7 +42,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
             return moduleExports;
         }
 
-        this.logger.debug(`applying patch to sequelize`);
+        this._logger.debug(`applying patch to sequelize`);
         this.unpatch(moduleExports);
         this._wrap(moduleExports.Sequelize.prototype, 'query', this._createQueryPatch.bind(this));
 
@@ -105,7 +102,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
                         safeExecuteInTheMiddle(
                             () => thisPlugin._config.responseHook(newSpan, response),
                             (e: Error) => {
-                                if (e) thisPlugin.logger.error('Caught Error while applying responseHook', e);
+                                if (e) thisPlugin._logger.error('Caught Error while applying responseHook', e);
                             },
                             true
                         );
