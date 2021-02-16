@@ -55,7 +55,7 @@ export function handlePromiseResponse(
                     () => responseHook(span, response),
                     (e) => {
                         if (e) {
-                            this._logger.error('mongoose instrumentation: responseHook error', e);
+                            logger.error('mongoose instrumentation: responseHook error', e);
                         }
                     },
                     true

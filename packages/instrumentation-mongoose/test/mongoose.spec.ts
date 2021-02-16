@@ -462,6 +462,18 @@ describe('mongoose instrumentation', () => {
                 done();
             });
         });
+        
+        it('error in response hook does not fail anything', async () => {
+            instrumentation.disable();
+            instrumentation.setConfig({
+                responseHook: () => { throw new Error('some error') }
+            });
+            instrumentation.enable();
+            await User.deleteOne({ email: 'john.doe@example.com' });
+            const spans = getSpans();
+            expect(spans.length).toBe(1);
+            assertSpan(spans[0]);
+        });
     });
 });
 
