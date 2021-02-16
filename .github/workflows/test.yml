@@ -16,6 +16,9 @@ jobs:
       - name: Build
         run: yarn build
 
+      - name: Start MongoDB for unit tests
+        run: docker run -d -p 27017:27017 -v ~/data:/data/db mongo
+
       - name: Test
         run: yarn test
 

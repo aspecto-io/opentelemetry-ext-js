@@ -17,6 +17,7 @@ import mongoose from 'mongoose';
 import User, { IUser, loadUsers } from './user';
 import { assertSpan } from './asserts';
 
+// Please run mongodb in the background: docker run -d -p 27017:27017 -v ~/data:/data/db mongo
 describe('mongoose instrumentation', () => {
     const provider = new NodeTracerProvider();
     const memoryExporter = new InMemorySpanExporter();
