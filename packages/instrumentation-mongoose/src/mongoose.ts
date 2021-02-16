@@ -161,7 +161,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
                                         () => self?._config?.responseHook(span, response),
                                         (e) => {
                                             if (e) {
-                                                this._logger.error('mongoose instrumentation: responseHook error', e);
+                                                self._logger.error('mongoose instrumentation: responseHook error', e);
                                             }
                                         },
                                         true
@@ -227,7 +227,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
                                         () => self?._config?.responseHook(span, response),
                                         (e) => {
                                             if (e) {
-                                                this._logger.error('mongoose instrumentation: responseHook error', e);
+                                                self._logger.error('mongoose instrumentation: responseHook error', e);
                                             }
                                         },
                                         true
