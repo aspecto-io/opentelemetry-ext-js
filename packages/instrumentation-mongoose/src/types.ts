@@ -19,7 +19,7 @@ export interface MongooseInstrumentationConfig extends InstrumentationConfig {
      * If mongodb instrumentation is enabled, a mongoose operation will also create
      * a mongodb operation describing the communication with mongoDB servers.
      * Setting the `suppressInternalInstrumentation` config value to `true` will
-     * cause the plugin to suppress instrumentation of underlying operations,
+     * cause the instrumentation to suppress instrumentation of underlying operations,
      * effectively causing mongodb spans to be non-recordable.
      */
     suppressInternalInstrumentation?: boolean;
