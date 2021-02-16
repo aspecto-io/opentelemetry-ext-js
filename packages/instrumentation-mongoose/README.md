@@ -1,7 +1,8 @@
 # OpenTelemetry Mongoose Instrumentation for Node.js
 [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-mongoose.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-mongoose)
 
-This module provides automatic instrumentation for [`mongoose`](https://mongoosejs.com/).  
+This package is heavily based on [@wdalmut/opentelemetry-plugin-mongoose](https://github.com/wdalmut/opentelemetry-plugin-mongoose).  
+This module provides automatic instrumentation for [`mongoose`](https://mongoosejs.com/) and follows otel [DB Semantic Conventions](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md).  
 
 ## Installation
 
@@ -61,7 +62,7 @@ interface SerializerPayload {
 
 type DbStatementSerializer = (operation: string, payload: SerializerPayload) => string;
 ```
-Please make sure `dbStatementSerializer` is error proof, as errors are not handled when execution this function.
+Please make sure `dbStatementSerializer` is error proof, as errors are not handled while executing this function.
 
 ---
 
