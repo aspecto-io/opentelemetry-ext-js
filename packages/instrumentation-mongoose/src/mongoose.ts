@@ -94,20 +94,20 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
     }
 
     private patchAggregateExec() {
-        const thisInstrumentation = this;
-        thisInstrumentation._logger.debug('mongoose instrumentation: patched mongoose Aggregate exec prototype');
+        const self = this;
+        self._logger.debug('mongoose instrumentation: patched mongoose Aggregate exec prototype');
         return (originalExec: Function) => {
             return function exec(this: any) {
                 const parentSpan = this[_STORED_PARENT_SPAN];
                 const attributes = {
-                    [DatabaseAttribute.DB_STATEMENT]: thisInstrumentation._config.dbStatementSerializer('aggregate', {
+                    [DatabaseAttribute.DB_STATEMENT]: self._config.dbStatementSerializer('aggregate', {
                         options: this.options,
                         aggregatePipeline: this._pipeline,
                     }),
                 };
 
                 const span = startSpan({
-                    tracer: thisInstrumentation.tracer,
+                    tracer: self.tracer,
                     modelName: this._model?.modelName,
                     operation: 'aggregate',
                     attributes,
@@ -115,29 +115,34 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
                     parentSpan,
                 });
 
-                const aggregateResponse = thisInstrumentation._callOriginalFunction(() =>
+                const aggregateResponse = self._callOriginalFunction(() =>
                     originalExec.apply(this, arguments)
                 );
-                return handlePromiseResponse(aggregateResponse, span, thisInstrumentation?._config?.responseHook);
+                return handlePromiseResponse(
+                    aggregateResponse,
+                    span,
+                    self._logger,
+                    self?._config?.responseHook
+                );
             };
         };
     }
 
     private patchQueryExec() {
-        const thisInstrumentation = this;
-        thisInstrumentation._logger.debug('mongoose instrumentation: patched mongoose Query exec prototype');
+        const self = this;
+        self._logger.debug('mongoose instrumentation: patched mongoose Query exec prototype');
         return (originalExec: Function) => {
             return function exec(this: any, callback?: Function) {
                 const parentSpan = this[_STORED_PARENT_SPAN];
                 const attributes = {
-                    [DatabaseAttribute.DB_STATEMENT]: thisInstrumentation._config.dbStatementSerializer(this.op, {
+                    [DatabaseAttribute.DB_STATEMENT]: self._config.dbStatementSerializer(this.op, {
                         condition: this._conditions,
                         updates: this._update,
                         options: this.options,
                     }),
                 };
                 const span = startSpan({
-                    tracer: thisInstrumentation.tracer,
+                    tracer: self.tracer,
                     modelName: this.model.modelName,
                     operation: this.op,
                     attributes,
@@ -146,14 +151,14 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
                 });
 
                 if (callback instanceof Function) {
-                    return thisInstrumentation._callOriginalFunction(() =>
+                    return self._callOriginalFunction(() =>
                         originalExec.apply(this, [
                             (err: Error, response: any) => {
                                 if (err) {
                                     setErrorStatus(span, err);
                                 } else {
                                     safeExecuteInTheMiddle(
-                                        () => thisInstrumentation?._config?.responseHook(span, response),
+                                        () => self?._config?.responseHook(span, response),
                                         (e) => {
                                             if (e) {
                                                 this._logger.error('mongoose instrumentation: responseHook error', e);
@@ -168,18 +173,23 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
                         ])
                     );
                 } else {
-                    const response = thisInstrumentation._callOriginalFunction(() =>
+                    const response = self._callOriginalFunction(() =>
                         originalExec.apply(this, arguments)
                     );
-                    return handlePromiseResponse(response, span, thisInstrumentation?._config?.responseHook);
+                    return handlePromiseResponse(
+                        response,
+                        span,
+                        self._logger,
+                        self?._config?.responseHook
+                    );
                 }
             };
         };
     }
 
     private patchOnModelMethods(op: string) {
-        const thisInstrumentation = this;
-        thisInstrumentation._logger.debug(`mongoose instrumentation: patched mongoose Model ${op} prototype`);
+        const self = this;
+        self._logger.debug(`mongoose instrumentation: patched mongoose Model ${op} prototype`);
         return (originalOnModelFunction: Function) => {
             return function method(this: any, options?: any, callback?: Function) {
                 const serializePayload: SerializerPayload = { document: this };
@@ -187,13 +197,13 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
                     serializePayload.options = options;
                 }
                 const attributes = {
-                    [DatabaseAttribute.DB_STATEMENT]: thisInstrumentation._config.dbStatementSerializer(
+                    [DatabaseAttribute.DB_STATEMENT]: self._config.dbStatementSerializer(
                         op,
                         serializePayload
                     ),
                 };
                 const span = startSpan({
-                    tracer: thisInstrumentation.tracer,
+                    tracer: self.tracer,
                     modelName: this.constructor.modelName,
                     operation: op,
                     attributes,
@@ -206,7 +216,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
                 }
 
                 if (callback instanceof Function) {
-                    return thisInstrumentation._callOriginalFunction(() =>
+                    return self._callOriginalFunction(() =>
                         originalOnModelFunction.apply(this, [
                             options,
                             (err: Error, response: any) => {
@@ -214,7 +224,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
                                     setErrorStatus(span, err);
                                 } else {
                                     safeExecuteInTheMiddle(
-                                        () => thisInstrumentation?._config?.responseHook(span, response),
+                                        () => self?._config?.responseHook(span, response),
                                         (e) => {
                                             if (e) {
                                                 this._logger.error('mongoose instrumentation: responseHook error', e);
@@ -229,10 +239,15 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
                         ])
                     );
                 } else {
-                    const response = thisInstrumentation._callOriginalFunction(() =>
+                    const response = self._callOriginalFunction(() =>
                         originalOnModelFunction.apply(this, arguments)
                     );
-                    return handlePromiseResponse(response, span, thisInstrumentation?._config?.responseHook);
+                    return handlePromiseResponse(
+                        response,
+                        span,
+                        self._logger,
+                        self?._config?.responseHook
+                    );
                 }
             };
         };
@@ -243,12 +258,12 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
     // on the Aggregate object to capture the context on, so we patch
     // the aggregate of Model, and set the context on the Aggregate object
     private patchModelAggregate() {
-        const thisInstrumentation = this;
-        thisInstrumentation._logger.debug(`mongoose instrumentation: patched mongoose model aggregate`);
+        const self = this;
+        self._logger.debug(`mongoose instrumentation: patched mongoose model aggregate`);
         return (original: Function) => {
             return function captureSpanContext(this: any) {
                 const currentSpan = getSpan(context.active());
-                const aggregate = thisInstrumentation._callOriginalFunction(() => original.apply(this, arguments));
+                const aggregate = self._callOriginalFunction(() => original.apply(this, arguments));
                 if (aggregate) aggregate[_STORED_PARENT_SPAN] = currentSpan;
                 return aggregate;
             };
@@ -256,12 +271,12 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
     }
 
     private patchAndCaptureSpanContext(funcName: string) {
-        const thisInstrumentation = this;
-        thisInstrumentation._logger.debug(`mongoose instrumentation: patched mongoose query ${funcName} prototype`);
+        const self = this;
+        self._logger.debug(`mongoose instrumentation: patched mongoose query ${funcName} prototype`);
         return (original: Function) => {
             return function captureSpanContext(this: any) {
                 this[_STORED_PARENT_SPAN] = getSpan(context.active());
-                return thisInstrumentation._callOriginalFunction(() => original.apply(this, arguments));
+                return self._callOriginalFunction(() => original.apply(this, arguments));
             };
         };
     }

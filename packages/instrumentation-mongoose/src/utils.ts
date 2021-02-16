@@ -1,4 +1,4 @@
-import { Tracer, Attributes, context, setSpan } from '@opentelemetry/api';
+import { Tracer, Attributes, context, setSpan, Logger } from '@opentelemetry/api';
 import { StatusCode, Span, SpanKind } from '@opentelemetry/api';
 import { MongoError } from 'mongodb';
 import { MongooseResponseCustomAttributesFunction } from './types';
@@ -40,6 +40,7 @@ export function startSpan({
 export function handlePromiseResponse(
     execResponse: any,
     span: Span,
+    logger: Logger,
     responseHook?: MongooseResponseCustomAttributesFunction
 ): any {
     if (!(execResponse instanceof Promise)) {
@@ -52,7 +53,11 @@ export function handlePromiseResponse(
             if (responseHook) {
                 safeExecuteInTheMiddle(
                     () => responseHook(span, response),
-                    () => {},
+                    (e) => {
+                        if (e) {
+                            this._logger.error('mongoose instrumentation: responseHook error', e);
+                        }
+                    },
                     true
                 );
             }
