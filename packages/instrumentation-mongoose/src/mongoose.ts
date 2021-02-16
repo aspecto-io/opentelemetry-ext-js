@@ -34,7 +34,7 @@ type Config = InstrumentationConfig & MongooseInstrumentationConfig;
 
 // when mongoose functions are called, we store the original call context
 // and then set it as the parent for the spans created by Query/Aggregate exec()
-// calls. this bypass the unlinked spans issue on thenables await operations (issue #29)
+// calls. this bypass the unlinked spans issue on thenables await operations.
 export const _STORED_PARENT_SPAN: unique symbol = Symbol('stored-parent-span');
 
 export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose> {
@@ -154,7 +154,11 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
                                 } else {
                                     safeExecuteInTheMiddle(
                                         () => thisInstrumentation?._config?.responseHook(span, response),
-                                        () => {},
+                                        (e) => {
+                                            if (e) {
+                                                this._logger.error('mongoose instrumentation: responseHook error', e);
+                                            }
+                                        },
                                         true
                                     );
                                 }
