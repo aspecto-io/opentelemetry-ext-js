@@ -15,7 +15,7 @@ const instrumentation = new MongooseInstrumentation({
 
 import mongoose from 'mongoose';
 import User, { IUser, loadUsers } from './user';
-import { assertSpan } from './asserts';
+import { assertSpan, getStatement } from './asserts';
 
 // Please run mongodb in the background: docker run -d -p 27017:27017 -v ~/data:/data/db mongo
 describe('mongoose instrumentation', () => {
@@ -68,10 +68,8 @@ describe('mongoose instrumentation', () => {
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('save');
-        const statement = JSON.parse(spans[0].attributes[DatabaseAttribute.DB_STATEMENT] as string);
-        expect(statement.document).toEqual(
-            expect.objectContaining(document)
-        );
+        const statement = getStatement(spans[0]);
+        expect(statement.document).toEqual(expect.objectContaining(document));
     });
 
     it('instrumenting save operation with callback', (done) => {
@@ -88,10 +86,8 @@ describe('mongoose instrumentation', () => {
             expect(spans.length).toBe(1);
             assertSpan(spans[0]);
             expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('save');
-            const statement = JSON.parse(spans[0].attributes[DatabaseAttribute.DB_STATEMENT] as string);
-            expect(statement.document).toEqual(
-                expect.objectContaining(document)
-            );
+            const statement = getStatement(spans[0]);
+            expect(statement.document).toEqual(expect.objectContaining(document));
             done();
         });
     });
@@ -103,7 +99,7 @@ describe('mongoose instrumentation', () => {
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('find');
-        const statement = JSON.parse(spans[0].attributes[DatabaseAttribute.DB_STATEMENT] as string);
+        const statement = getStatement(spans[0]);
         expect(statement.condition).toEqual({ id: '_test' });
     });
 
@@ -127,9 +123,9 @@ describe('mongoose instrumentation', () => {
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('find');
-        expect(spans[0].attributes[DatabaseAttribute.DB_STATEMENT]).toBe(
-            '{"condition":{"id":"_test"},"options":{"skip":1,"limit":2,"sort":{"email":1}}}'
-        );
+        const statement = getStatement(spans[0]);
+        expect(statement.condition).toEqual({ id: '_test' });
+        expect(statement.options).toEqual({ skip: 1, limit: 2, sort: { email: 1 } });
     });
 
     it('instrumenting remove operation [deprecated]', async () => {
@@ -149,7 +145,7 @@ describe('mongoose instrumentation', () => {
                 expect(spans.length).toBe(2);
                 assertSpan(spans[1]);
                 expect(spans[1].attributes[DatabaseAttribute.DB_OPERATION]).toBe('remove');
-                expect(spans[1].attributes[DatabaseAttribute.DB_STATEMENT]).toContain('"options":{"overwrite":true}');
+                expect(getStatement(spans[1]).options).toEqual({ overwrite: true });
                 done();
             })
         );
@@ -173,7 +169,7 @@ describe('mongoose instrumentation', () => {
         assertSpan(spans[1]);
         expect(spans[1].attributes[DatabaseAttribute.DB_OPERATION]).toBe('updateOne');
 
-        const statement = JSON.parse(spans[1].attributes[DatabaseAttribute.DB_STATEMENT] as string);
+        const statement = getStatement(spans[1]);
         expect(statement.options).toEqual({ skip: 0 });
         expect(statement.updates).toEqual({ $inc: { age: 1 } });
         expect(statement.condition._id).toBeDefined();
@@ -187,7 +183,7 @@ describe('mongoose instrumentation', () => {
         assertSpan(spans[0]);
         expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('updateOne');
 
-        const statement = JSON.parse(spans[0].attributes[DatabaseAttribute.DB_STATEMENT] as string);
+        const statement = getStatement(spans[0]);
         expect(statement.options).toEqual({ skip: 0 });
         expect(statement.updates).toEqual({ $inc: { age: 1 } });
         expect(statement.condition).toEqual({ email: 'john.doe@example.com' });
@@ -200,7 +196,7 @@ describe('mongoose instrumentation', () => {
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('count');
-        const statement = JSON.parse(spans[0].attributes[DatabaseAttribute.DB_STATEMENT] as string);
+        const statement = getStatement(spans[0]);
         expect(statement.options).toEqual({});
         expect(statement.condition).toEqual({});
     });
@@ -212,7 +208,7 @@ describe('mongoose instrumentation', () => {
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('countDocuments');
-        const statement = JSON.parse(spans[0].attributes[DatabaseAttribute.DB_STATEMENT] as string);
+        const statement = getStatement(spans[0]);
         expect(statement.options).toEqual({});
         expect(statement.condition).toEqual({ email: 'john.doe@example.com' });
     });
@@ -224,7 +220,7 @@ describe('mongoose instrumentation', () => {
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('estimatedDocumentCount');
-        const statement = JSON.parse(spans[0].attributes[DatabaseAttribute.DB_STATEMENT] as string);
+        const statement = getStatement(spans[0]);
         expect(statement.options).toEqual({});
         expect(statement.condition).toEqual({});
     });
@@ -236,7 +232,7 @@ describe('mongoose instrumentation', () => {
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('deleteMany');
-        const statement = JSON.parse(spans[0].attributes[DatabaseAttribute.DB_STATEMENT] as string);
+        const statement = getStatement(spans[0]);
         expect(statement.options).toEqual({});
         expect(statement.condition).toEqual({});
     });
@@ -248,7 +244,7 @@ describe('mongoose instrumentation', () => {
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('findOne');
-        const statement = JSON.parse(spans[0].attributes[DatabaseAttribute.DB_STATEMENT] as string);
+        const statement = getStatement(spans[0]);
         expect(statement.options).toEqual({});
         expect(statement.condition).toEqual({ email: 'john.doe@example.com' });
     });
@@ -260,7 +256,7 @@ describe('mongoose instrumentation', () => {
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('update');
-        const statement = JSON.parse(spans[0].attributes[DatabaseAttribute.DB_STATEMENT] as string);
+        const statement = getStatement(spans[0]);
         expect(statement.options).toEqual({});
         expect(statement.condition).toEqual({ email: 'john.doe@example.com' });
         expect(statement.updates).toEqual({ email: 'john.doe2@example.com' });
@@ -273,7 +269,7 @@ describe('mongoose instrumentation', () => {
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('updateOne');
-        const statement = JSON.parse(spans[0].attributes[DatabaseAttribute.DB_STATEMENT] as string);
+        const statement = getStatement(spans[0]);
         expect(statement.options).toEqual({});
         expect(statement.condition).toEqual({ email: 'john.doe@example.com' });
         expect(statement.updates).toEqual({ age: 55 });
@@ -286,7 +282,7 @@ describe('mongoose instrumentation', () => {
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('updateMany');
-        const statement = JSON.parse(spans[0].attributes[DatabaseAttribute.DB_STATEMENT] as string);
+        const statement = getStatement(spans[0]);
         expect(statement.options).toEqual({});
         expect(statement.condition).toEqual({ age: 18 });
         expect(statement.updates).toEqual({ isDeleted: true });
@@ -299,7 +295,7 @@ describe('mongoose instrumentation', () => {
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('findOneAndDelete');
-        const statement = JSON.parse(spans[0].attributes[DatabaseAttribute.DB_STATEMENT] as string);
+        const statement = getStatement(spans[0]);
         expect(statement.options).toEqual({});
         expect(statement.condition).toEqual({ email: 'john.doe@example.com' });
     });
@@ -313,7 +309,7 @@ describe('mongoose instrumentation', () => {
         assertSpan(spans[1]);
         expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('findOne');
         expect(spans[1].attributes[DatabaseAttribute.DB_OPERATION]).toBe('findOneAndUpdate');
-        const statement = JSON.parse(spans[1].attributes[DatabaseAttribute.DB_STATEMENT] as string);
+        const statement = getStatement(spans[1]);
         expect(statement.options).toEqual({});
         expect(statement.condition).toEqual({ email: 'john.doe@example.com' });
         expect(statement.updates).toEqual({ isUpdated: true });
@@ -326,7 +322,7 @@ describe('mongoose instrumentation', () => {
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('findOneAndRemove');
-        const statement = JSON.parse(spans[0].attributes[DatabaseAttribute.DB_STATEMENT] as string);
+        const statement = getStatement(spans[0]);
         expect(statement.options).toEqual({});
         expect(statement.condition).toEqual({ email: 'john.doe@example.com' });
     });
@@ -339,7 +335,7 @@ describe('mongoose instrumentation', () => {
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('save');
-        const statement = JSON.parse(spans[0].attributes[DatabaseAttribute.DB_STATEMENT] as string);
+        const statement = getStatement(spans[0]);
         expect(statement.options).toEqual({});
         expect(statement.document).toEqual(expect.objectContaining(document));
     });
@@ -354,7 +350,7 @@ describe('mongoose instrumentation', () => {
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('aggregate');
-        const statement = JSON.parse(spans[0].attributes[DatabaseAttribute.DB_STATEMENT] as string);
+        const statement = getStatement(spans[0]);
         expect(statement.aggregatePipeline).toEqual([
             { $match: { firstName: 'John' } },
             { $group: { _id: 'John', total: { $sum: '$amount' } } },
@@ -369,7 +365,7 @@ describe('mongoose instrumentation', () => {
                 expect(spans.length).toBe(1);
                 assertSpan(spans[0]);
                 expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('aggregate');
-                const statement = JSON.parse(spans[0].attributes[DatabaseAttribute.DB_STATEMENT] as string);
+                const statement = getStatement(spans[0]);
                 expect(statement.aggregatePipeline).toEqual([
                     { $match: { firstName: 'John' } },
                     { $group: { _id: 'John', total: { $sum: '$amount' } } },
@@ -385,7 +381,7 @@ describe('mongoose instrumentation', () => {
         const spans = getSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
-        const statement = JSON.parse(spans[0].attributes[DatabaseAttribute.DB_STATEMENT] as string);
+        const statement = getStatement(spans[0]);
         expect(statement.condition).toEqual({ id: '_test' });
         expect(statement.options).toEqual({ skip: 1, limit: 2, sort: { email: 1 } });
     });
@@ -403,10 +399,11 @@ describe('mongoose instrumentation', () => {
     });
 
     describe('responseHook', () => {
+        const RESPONSE = 'db.response';
         before(() => {
             instrumentation.disable();
             instrumentation.setConfig({
-                responseHook: (span, response) => span.setAttribute('db.response', JSON.stringify(response)),
+                responseHook: (span, response) => span.setAttribute(RESPONSE, JSON.stringify(response)),
             });
             instrumentation.enable();
         });
@@ -416,15 +413,15 @@ describe('mongoose instrumentation', () => {
             const spans = getSpans();
             expect(spans.length).toBe(1);
             assertSpan(spans[0]);
-            expect(JSON.parse(spans[0].attributes['db.response'] as string)).toEqual({ n: 1, ok: 1, deletedCount: 1 });
+            expect(JSON.parse(spans[0].attributes[RESPONSE] as string)).toEqual({ n: 1, ok: 1, deletedCount: 1 });
         });
 
         it('responseHook works with callback in exec patch', (done) => {
-            User.deleteOne({ email: 'john.doe@example.com' }, {}, () => {
+            User.deleteOne({ email: 'john.doe@example.com' }, { lean: 1 }, () => {
                 const spans = getSpans();
                 expect(spans.length).toBe(1);
                 assertSpan(spans[0]);
-                expect(JSON.parse(spans[0].attributes['db.response'] as string)).toEqual({
+                expect(JSON.parse(spans[0].attributes[RESPONSE] as string)).toEqual({
                     n: 1,
                     ok: 1,
                     deletedCount: 1,
@@ -444,7 +441,7 @@ describe('mongoose instrumentation', () => {
             const spans = getSpans();
             expect(spans.length).toBe(1);
             assertSpan(spans[0]);
-            expect(spans[0].attributes['db.response']).toEqual(JSON.stringify(createdUser));
+            expect(spans[0].attributes[RESPONSE]).toEqual(JSON.stringify(createdUser));
         });
 
         it('responseHook works with callback in model methods patch', (done) => {
@@ -458,23 +455,49 @@ describe('mongoose instrumentation', () => {
                 const spans = getSpans();
                 expect(spans.length).toBe(1);
                 assertSpan(spans[0]);
-                expect(spans[0].attributes['db.response']).toEqual(JSON.stringify(createdUser));
+                expect(spans[0].attributes[RESPONSE]).toEqual(JSON.stringify(createdUser));
                 done();
             });
         });
-        
+
+        it('responseHook works with async/await in aggregate patch', async () => {
+            await User.aggregate([
+                { $match: { firstName: 'John' } },
+                { $group: { _id: 'John', total: { $sum: '$amount' } } },
+            ]);
+
+            const spans = getSpans();
+            expect(spans.length).toBe(1);
+            assertSpan(spans[0]);
+            expect(JSON.parse(spans[0].attributes[RESPONSE] as string)).toEqual([{ _id: 'John', total: 0 }]);
+        });
+
+        it('responseHook works with callback in aggregate patch', (done) => {
+            User.aggregate([
+                { $match: { firstName: 'John' } },
+                { $group: { _id: 'John', total: { $sum: '$amount' } } },
+            ], () => {
+                const spans = getSpans();
+                expect(spans.length).toBe(1);
+                assertSpan(spans[0]);
+                expect(JSON.parse(spans[0].attributes[RESPONSE] as string)).toEqual([{ _id: 'John', total: 0 }]);
+                done();
+            });
+        });
+
         it('error in response hook does not fail anything', async () => {
             instrumentation.disable();
             instrumentation.setConfig({
-                responseHook: () => { throw new Error('some error') }
+                responseHook: () => {
+                    throw new Error('some error');
+                },
             });
             instrumentation.enable();
             await User.deleteOne({ email: 'john.doe@example.com' });
             const spans = getSpans();
             expect(spans.length).toBe(1);
             assertSpan(spans[0]);
+            expect(spans[0].attributes[RESPONSE]).toBe(undefined);
         });
     });
 });
-
-// console.log(spans[0].attributes);
