@@ -1,4 +1,4 @@
-import { Tracer, Span, Logger } from '@opentelemetry/api';
+import { Tracer, Span } from '@opentelemetry/api';
 import { ServiceExtension, RequestMetadata } from './ServiceExtension';
 import { SqsServiceExtension } from './sqs';
 import * as AWS from 'aws-sdk';
@@ -8,8 +8,8 @@ import { DynamodbServiceExtension } from './dynamodb';
 export class ServicesExtensions implements ServiceExtension {
     services: Map<string, ServiceExtension> = new Map();
 
-    constructor(tracer: Tracer, logger: Logger, instrumentationConfig: AwsSdkInstrumentationConfig) {
-        this.services.set('sqs', new SqsServiceExtension(tracer, logger, instrumentationConfig?.sqsProcessHook));
+    constructor(tracer: Tracer, instrumentationConfig: AwsSdkInstrumentationConfig) {
+        this.services.set('sqs', new SqsServiceExtension(tracer, instrumentationConfig?.sqsProcessHook));
         this.services.set('dynamodb', new DynamodbServiceExtension());
     }
 

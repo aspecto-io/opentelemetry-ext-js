@@ -8,7 +8,7 @@
     no callback |       0           |       1    
     callback    |       1           |       2   
  */
-import { Span, Attributes, SpanKind, context, setSpan, suppressInstrumentation, Context } from '@opentelemetry/api';
+import { Span, SpanAttributes, SpanKind, context, setSpan, suppressInstrumentation, Context, diag } from '@opentelemetry/api';
 import AWS from 'aws-sdk';
 import { AttributeNames } from './enums';
 import { ServicesExtensions } from './services';
@@ -37,7 +37,6 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
 
     setConfig(config: Config = {}) {
         this._config = Object.assign({}, config);
-        if (config.logger) this._logger = config.logger;
     }
 
     protected init(): InstrumentationModuleDefinition<typeof AWS> {
@@ -51,9 +50,9 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
     }
 
     protected patch(moduleExports: typeof AWS) {
-        this.servicesExtensions = new ServicesExtensions(this.tracer, this._logger, this._config);
+        this.servicesExtensions = new ServicesExtensions(this.tracer, this._config);
 
-        this._logger.debug(`applying patch to ${AwsInstrumentation.component}`);
+        diag.debug(`applying patch to ${AwsInstrumentation.component}`);
         this.unpatch(moduleExports);
         this._wrap(moduleExports?.Request.prototype, 'send', this._getRequestSendPatch.bind(this));
         this._wrap(moduleExports?.Request.prototype, 'promise', this._getRequestPromisePatch.bind(this));
@@ -82,7 +81,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
 
     private _startAwsSpan(
         request: AWS.Request<any, any>,
-        additionalAttributes?: Attributes,
+        additionalSpanAttributes?: SpanAttributes,
         spanKind?: SpanKind,
         spanName?: string
     ): Span {
@@ -100,7 +99,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
                 [AttributeNames.AWS_SERVICE_API]: service?.api?.className,
                 [AttributeNames.AWS_SERVICE_IDENTIFIER]: service?.serviceIdentifier,
                 [AttributeNames.AWS_SERVICE_NAME]: service?.api?.abbreviation,
-                ...additionalAttributes,
+                ...additionalSpanAttributes,
             },
         });
 
@@ -114,7 +113,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
                 () => this._config.preRequestHook(span, request),
                 (e: Error) => {
                     if (e)
-                        this._logger.error(`${AwsInstrumentation.component} instrumentation: preRequestHook error`, e);
+                        diag.error(`${AwsInstrumentation.component} instrumentation: preRequestHook error`, e);
                 },
                 true
             );
@@ -126,7 +125,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
             safeExecuteInTheMiddle(
                 () => this._config.responseHook(span, response),
                 (e: Error) => {
-                    if (e) this._logger.error(`${AwsInstrumentation.component} instrumentation: responseHook error`, e);
+                    if (e) diag.error(`${AwsInstrumentation.component} instrumentation: responseHook error`, e);
                 },
                 true
             );
@@ -150,9 +149,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
                 this._callUserResponseHook(span, response);
                 this.servicesExtensions.responseHook(response, span);
 
-                span.setAttributes({
-                    [AttributeNames.AWS_REQUEST_ID]: response.requestId,
-                });
+                span.setAttribute(AttributeNames.AWS_REQUEST_ID, response.requestId);
                 span.end();
             });
         });

@@ -1,4 +1,4 @@
-import { Logger, SpanKind } from '@opentelemetry/api';
+import { SpanKind } from '@opentelemetry/api';
 import { RequestMetadata, ServiceExtension } from './ServiceExtension';
 import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
 

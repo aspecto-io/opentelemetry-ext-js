@@ -1,7 +1,7 @@
 import 'mocha';
 import { AwsInstrumentation } from '../src';
 import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan, Span } from '@opentelemetry/tracing';
-import { context, StatusCode } from '@opentelemetry/api';
+import { context, SpanStatusCode } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { ContextManager } from '@opentelemetry/context-base';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
@@ -259,7 +259,7 @@ describe('instrumentation-aws-sdk', () => {
             s3.createBucket({ Bucket: bucketName }, async function (err, data) {
                 const awsSpans = getAwsSpans();
                 expect(awsSpans.length).toBe(1);
-                expect(awsSpans[0].status.code).toStrictEqual(StatusCode.UNSET);
+                expect(awsSpans[0].status.code).toStrictEqual(SpanStatusCode.UNSET);
                 done();
             });
         });

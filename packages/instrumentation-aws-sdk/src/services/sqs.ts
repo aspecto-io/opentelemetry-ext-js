@@ -3,7 +3,7 @@ import {
     SpanKind,
     Span,
     propagation,
-    Logger,
+    diag,
     TextMapGetter,
     TextMapSetter,
     setSpan,
@@ -61,7 +61,6 @@ const sqsContextGetter = new SqsContextGetter();
 export class SqsServiceExtension implements ServiceExtension {
     constructor(
         private tracer: Tracer,
-        private logger: Logger,
         private sqsProcessHook: AwsSdkSqsProcessCustomAttributeFunction
     ) {}
 
@@ -180,7 +179,7 @@ export class SqsServiceExtension implements ServiceExtension {
         if (Object.keys(attributes).length < SQS_MAX_MESSAGE_ATTRIBUTES) {
             propagation.inject(context.active(), attributes, sqsContextSetter);
         } else {
-            this.logger.warn(
+            diag.warn(
                 'OpenTelemetry aws-sdk instrumentation cannot set context propagation on SQS message due to maximum amount of MessageAttributes'
             );
         }

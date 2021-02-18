@@ -1,9 +1,9 @@
-import { Span, Attributes, SpanKind } from '@opentelemetry/api';
+import { Span, SpanAttributes, SpanKind } from '@opentelemetry/api';
 
 export interface RequestMetadata {
     // isIncoming - if true, then the operation callback / promise should be bind with the operation's span
     isIncoming: boolean;
-    spanAttributes?: Attributes;
+    spanAttributes?: SpanAttributes;
     spanKind?: SpanKind;
     spanName?: string;
 }
