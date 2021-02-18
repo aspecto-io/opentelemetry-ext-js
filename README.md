@@ -16,13 +16,13 @@ js extensions for the [open-telemetry](https://opentelemetry.io/) project, from 
 
 **Compatible with [otel v0.16.0](https://github.com/open-telemetry/opentelemetry-js/releases/tag/v0.16.0)**
 ## Instrumentations
-- [opentelemetry-instrumentation-kafkajs](./packages/instrumentation-kafkajs) - auto instrumentation for [`kafkajs`](https://kafka.js.org) [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-kafkajs.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-kafkajs)
-- [opentelemetry-instrumentation-aws-sdk](./packages/instrumentation-aws-sdk) - auto instrumentation for [`aws-sdk`](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/) [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-aws-sdk.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-aws-sdk)
-- [opentelemetry-instrumentation-typeorm](./packages/instrumentation-typeorm) - auto instrumentation for [`TypeORM`](https://typeorm.io/) [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-typeorm.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-typeorm)
-- [opentelemetry-instrumentation-sequelize](./packages/instrumentation-sequelize) - auto instrumentation for [`Sequelize`](https://sequelize.org/) 
-[![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-sequelize.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-sequelize)
-- [opentelemetry-instrumentation-mongoose](./packages/instrumentation-mongoose) - auto instrumentation for [`mongoose`](https://mongoosejs.com/) 
-[![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-mongoose.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-mongoose)
+| Instrumentation Package | Instrumented Lib | NPM |
+| --- | --- | --- |
+| [opentelemetry-instrumentation-kafkajs](./packages/instrumentation-kafkajs) | [`kafkajs`](https://kafka.js.org) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-kafkajs.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-kafkajs) |
+| [opentelemetry-instrumentation-aws-sdk](./packages/instrumentation-aws-sdk) | [`aws-sdk`](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-aws-sdk.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-aws-sdk)
+| [opentelemetry-instrumentation-typeorm](./packages/instrumentation-typeorm) | [`TypeORM`](https://typeorm.io/) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-typeorm.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-typeorm) |
+| [opentelemetry-instrumentation-sequelize](./packages/instrumentation-sequelize) | [`Sequelize`](https://sequelize.org/) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-sequelize.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-sequelize) |
+| [opentelemetry-instrumentation-mongoose](./packages/instrumentation-mongoose) | [`mongoose`](https://mongoosejs.com/) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-mongoose.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-mongoose) |
 
 ## Compatibility with opentelemetry versions
 ### Instrumentations in this repo are using opentelemetry [Instrumentation API](https://github.com/open-telemetry/opentelemetry-js/tree/main/packages/opentelemetry-instrumentation).
