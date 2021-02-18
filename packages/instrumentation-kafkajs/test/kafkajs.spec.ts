@@ -4,12 +4,11 @@ import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan } from '@opente
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { ContextManager } from '@opentelemetry/context-base';
-import { context, propagation, SpanKind, StatusCode, Span, NoopLogger } from '@opentelemetry/api';
+import { context, propagation, SpanKind, SpanStatusCode, Span } from '@opentelemetry/api';
 import { MessagingAttribute } from '@opentelemetry/semantic-conventions';
 import expect from 'expect';
 
-const logger = new NoopLogger();
-const instrumentation = new KafkaJsInstrumentation({ logger });
+const instrumentation = new KafkaJsInstrumentation();
 
 import * as kafkajs from 'kafkajs';
 import {
@@ -28,7 +27,7 @@ import {
 import { DummyPropagation } from './DummyPropagation';
 
 describe('instrumentation-kafkajs', () => {
-    const provider = new NodeTracerProvider({ logger });
+    const provider = new NodeTracerProvider();
     const memoryExporter = new InMemorySpanExporter();
     const spanProcessor = new SimpleSpanProcessor(memoryExporter);
     propagation.setGlobalPropagator(new DummyPropagation());
@@ -133,7 +132,7 @@ describe('instrumentation-kafkajs', () => {
                 const span = spans[0];
                 expect(span.kind).toStrictEqual(SpanKind.PRODUCER);
                 expect(span.name).toStrictEqual('topic-name-1');
-                expect(span.status.code).toStrictEqual(StatusCode.UNSET);
+                expect(span.status.code).toStrictEqual(SpanStatusCode.UNSET);
                 expect(span.attributes[MessagingAttribute.MESSAGING_SYSTEM]).toStrictEqual('kafka');
                 expect(span.attributes[MessagingAttribute.MESSAGING_DESTINATION_KIND]).toStrictEqual('topic');
                 expect(span.attributes[MessagingAttribute.MESSAGING_DESTINATION]).toStrictEqual('topic-name-1');
@@ -230,7 +229,7 @@ describe('instrumentation-kafkajs', () => {
                 const spans = memoryExporter.getFinishedSpans();
                 expect(spans.length).toBe(1);
                 const span = spans[0];
-                expect(span.status.code).toStrictEqual(StatusCode.ERROR);
+                expect(span.status.code).toStrictEqual(SpanStatusCode.ERROR);
                 expect(span.status.message).toStrictEqual('error thrown from kafka client send');
             });
 
@@ -252,7 +251,7 @@ describe('instrumentation-kafkajs', () => {
                 const spans = memoryExporter.getFinishedSpans();
                 expect(spans.length).toBe(2);
                 spans.forEach((span) => {
-                    expect(span.status.code).toStrictEqual(StatusCode.ERROR);
+                    expect(span.status.code).toStrictEqual(SpanStatusCode.ERROR);
                     expect(span.status.message).toStrictEqual('error thrown from kafka client send');
                 });
             });
@@ -287,7 +286,7 @@ describe('instrumentation-kafkajs', () => {
                 const spans = memoryExporter.getFinishedSpans();
                 expect(spans.length).toBe(3);
                 spans.forEach((span) => {
-                    expect(span.status.code).toStrictEqual(StatusCode.ERROR);
+                    expect(span.status.code).toStrictEqual(SpanStatusCode.ERROR);
                     expect(span.status.message).toStrictEqual('error thrown from kafka client send');
                 });
             });
@@ -355,7 +354,7 @@ describe('instrumentation-kafkajs', () => {
                 const spans = memoryExporter.getFinishedSpans();
                 expect(spans.length).toBe(1);
                 const span = spans[0];
-                expect(span.status.code).toStrictEqual(StatusCode.UNSET);
+                expect(span.status.code).toStrictEqual(SpanStatusCode.UNSET);
             });
         });
     });
@@ -417,7 +416,7 @@ describe('instrumentation-kafkajs', () => {
                 expect(span.name).toStrictEqual('topic-name-1');
                 expect(span.parentSpanId).toBeUndefined();
                 expect(span.kind).toStrictEqual(SpanKind.CONSUMER);
-                expect(span.status.code).toStrictEqual(StatusCode.UNSET);
+                expect(span.status.code).toStrictEqual(SpanStatusCode.UNSET);
                 expect(span.attributes[MessagingAttribute.MESSAGING_SYSTEM]).toStrictEqual('kafka');
                 expect(span.attributes[MessagingAttribute.MESSAGING_DESTINATION_KIND]).toStrictEqual('topic');
                 expect(span.attributes[MessagingAttribute.MESSAGING_DESTINATION]).toStrictEqual('topic-name-1');
@@ -513,7 +512,7 @@ describe('instrumentation-kafkajs', () => {
                 const spans = memoryExporter.getFinishedSpans();
                 expect(spans.length).toBe(1);
                 const span = spans[0];
-                expect(span.status.code).toStrictEqual(StatusCode.ERROR);
+                expect(span.status.code).toStrictEqual(SpanStatusCode.ERROR);
                 expect(span.status.message).toStrictEqual('error thrown from eachMessage callback');
             });
 
@@ -539,7 +538,7 @@ describe('instrumentation-kafkajs', () => {
                 const spans = memoryExporter.getFinishedSpans();
                 expect(spans.length).toBe(1);
                 const span = spans[0];
-                expect(span.status.code).toStrictEqual(StatusCode.ERROR);
+                expect(span.status.code).toStrictEqual(SpanStatusCode.ERROR);
                 expect(span.status.message).toBeUndefined();
             });
 
@@ -562,7 +561,7 @@ describe('instrumentation-kafkajs', () => {
                 const spans = memoryExporter.getFinishedSpans();
                 expect(spans.length).toBe(1);
                 const span = spans[0];
-                expect(span.status.code).toStrictEqual(StatusCode.ERROR);
+                expect(span.status.code).toStrictEqual(SpanStatusCode.ERROR);
                 expect(span.status.message).toBeUndefined();
             });
         });
@@ -587,7 +586,7 @@ describe('instrumentation-kafkajs', () => {
                 expect(spans.length).toBe(3);
                 spans.forEach((span) => {
                     expect(span.name).toStrictEqual('topic-name-1');
-                    expect(span.status.code).toStrictEqual(StatusCode.UNSET);
+                    expect(span.status.code).toStrictEqual(SpanStatusCode.UNSET);
                     expect(span.attributes[MessagingAttribute.MESSAGING_SYSTEM]).toStrictEqual('kafka');
                     expect(span.attributes[MessagingAttribute.MESSAGING_DESTINATION_KIND]).toStrictEqual('topic');
                     expect(span.attributes[MessagingAttribute.MESSAGING_DESTINATION]).toStrictEqual('topic-name-1');
