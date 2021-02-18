@@ -399,10 +399,11 @@ describe('mongoose instrumentation', () => {
     });
 
     describe('responseHook', () => {
+        const RESPONSE = 'db.response';
         before(() => {
             instrumentation.disable();
             instrumentation.setConfig({
-                responseHook: (span, response) => span.setAttribute('db.response', JSON.stringify(response)),
+                responseHook: (span, response) => span.setAttribute(RESPONSE, JSON.stringify(response)),
             });
             instrumentation.enable();
         });
@@ -412,7 +413,7 @@ describe('mongoose instrumentation', () => {
             const spans = getSpans();
             expect(spans.length).toBe(1);
             assertSpan(spans[0]);
-            expect(JSON.parse(spans[0].attributes['db.response'] as string)).toEqual({ n: 1, ok: 1, deletedCount: 1 });
+            expect(JSON.parse(spans[0].attributes[RESPONSE] as string)).toEqual({ n: 1, ok: 1, deletedCount: 1 });
         });
 
         it('responseHook works with callback in exec patch', (done) => {
@@ -420,7 +421,7 @@ describe('mongoose instrumentation', () => {
                 const spans = getSpans();
                 expect(spans.length).toBe(1);
                 assertSpan(spans[0]);
-                expect(JSON.parse(spans[0].attributes['db.response'] as string)).toEqual({
+                expect(JSON.parse(spans[0].attributes[RESPONSE] as string)).toEqual({
                     n: 1,
                     ok: 1,
                     deletedCount: 1,
@@ -440,7 +441,7 @@ describe('mongoose instrumentation', () => {
             const spans = getSpans();
             expect(spans.length).toBe(1);
             assertSpan(spans[0]);
-            expect(spans[0].attributes['db.response']).toEqual(JSON.stringify(createdUser));
+            expect(spans[0].attributes[RESPONSE]).toEqual(JSON.stringify(createdUser));
         });
 
         it('responseHook works with callback in model methods patch', (done) => {
@@ -454,7 +455,7 @@ describe('mongoose instrumentation', () => {
                 const spans = getSpans();
                 expect(spans.length).toBe(1);
                 assertSpan(spans[0]);
-                expect(spans[0].attributes['db.response']).toEqual(JSON.stringify(createdUser));
+                expect(spans[0].attributes[RESPONSE]).toEqual(JSON.stringify(createdUser));
                 done();
             });
         });
@@ -468,7 +469,7 @@ describe('mongoose instrumentation', () => {
             const spans = getSpans();
             expect(spans.length).toBe(1);
             assertSpan(spans[0]);
-            expect(JSON.parse(spans[0].attributes['db.response'] as string)).toEqual([{ _id: 'John', total: 0 }]);
+            expect(JSON.parse(spans[0].attributes[RESPONSE] as string)).toEqual([{ _id: 'John', total: 0 }]);
         });
 
         it('responseHook works with callback in aggregate patch', (done) => {
@@ -479,7 +480,7 @@ describe('mongoose instrumentation', () => {
                 const spans = getSpans();
                 expect(spans.length).toBe(1);
                 assertSpan(spans[0]);
-                expect(JSON.parse(spans[0].attributes['db.response'] as string)).toEqual([{ _id: 'John', total: 0 }]);
+                expect(JSON.parse(spans[0].attributes[RESPONSE] as string)).toEqual([{ _id: 'John', total: 0 }]);
                 done();
             });
         });
@@ -496,6 +497,7 @@ describe('mongoose instrumentation', () => {
             const spans = getSpans();
             expect(spans.length).toBe(1);
             assertSpan(spans[0]);
+            expect(spans[0].attributes[RESPONSE]).toBe(undefined);
         });
     });
 });
