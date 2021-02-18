@@ -1,4 +1,4 @@
-import { getSpan, context, suppressInstrumentation, Span } from '@opentelemetry/api';
+import { getSpan, context, suppressInstrumentation, Span, diag } from '@opentelemetry/api';
 import type mongoose from 'mongoose';
 import { MongooseInstrumentationConfig, SerializerPayload } from './types';
 import { startSpan, handleCallbackResponse, handlePromiseResponse } from './utils';
@@ -50,7 +50,6 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
     setConfig(config: Config = {}) {
         this._config = Object.assign({}, config);
         if (!config.dbStatementSerializer) this._config.dbStatementSerializer = () => undefined;
-        if (config.logger) this._logger = config.logger;
     }
 
     protected init(): InstrumentationModuleDefinition<typeof mongoose> {
@@ -64,7 +63,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
     }
 
     protected patch(moduleExports: typeof mongoose) {
-        this._logger.debug('mongoose instrumentation: patching');
+        diag.debug('mongoose instrumentation: patching');
 
         this._wrap(moduleExports.Model.prototype, 'save', this.patchOnModelMethods('save'));
         this._wrap(moduleExports.Model.prototype, 'remove', this.patchOnModelMethods('remove'));
@@ -80,7 +79,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
     }
 
     protected unpatch(moduleExports: typeof mongoose): void {
-        this._logger.debug('mongoose instrumentation: unpatch mongoose');
+        diag.debug('mongoose instrumentation: unpatch mongoose');
         this._unwrap(moduleExports.Model.prototype, 'save');
         this._unwrap(moduleExports.Model.prototype, 'remove');
         this._unwrap(moduleExports.Query.prototype, 'exec');
@@ -94,7 +93,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
 
     private patchAggregateExec() {
         const self = this;
-        self._logger.debug('mongoose instrumentation: patched mongoose Aggregate exec prototype');
+        diag.debug('mongoose instrumentation: patched mongoose Aggregate exec prototype');
         return (originalAggregate: Function) => {
             return function exec(this: any, callback?: Function) {
                 const parentSpan = this[_STORED_PARENT_SPAN];
@@ -121,7 +120,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
 
     private patchQueryExec() {
         const self = this;
-        self._logger.debug('mongoose instrumentation: patched mongoose Query exec prototype');
+        diag.debug('mongoose instrumentation: patched mongoose Query exec prototype');
         return (originalExec: Function) => {
             return function exec(this: any, callback?: Function) {
                 const parentSpan = this[_STORED_PARENT_SPAN];
@@ -148,7 +147,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
 
     private patchOnModelMethods(op: string) {
         const self = this;
-        self._logger.debug(`mongoose instrumentation: patched mongoose Model ${op} prototype`);
+        diag.debug(`mongoose instrumentation: patched mongoose Model ${op} prototype`);
         return (originalOnModelFunction: Function) => {
             return function method(this: any, options?: any, callback?: Function) {
                 const serializePayload: SerializerPayload = { document: this };
@@ -182,7 +181,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
     // the aggregate of Model, and set the context on the Aggregate object
     private patchModelAggregate() {
         const self = this;
-        self._logger.debug(`mongoose instrumentation: patched mongoose model aggregate`);
+        diag.debug(`mongoose instrumentation: patched mongoose model aggregate`);
         return (original: Function) => {
             return function captureSpanContext(this: any) {
                 const currentSpan = getSpan(context.active());
@@ -195,7 +194,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
 
     private patchAndCaptureSpanContext(funcName: string) {
         const self = this;
-        self._logger.debug(`mongoose instrumentation: patched mongoose query ${funcName} prototype`);
+        diag.debug(`mongoose instrumentation: patched mongoose query ${funcName} prototype`);
         return (original: Function) => {
             return function captureSpanContext(this: any) {
                 this[_STORED_PARENT_SPAN] = getSpan(context.active());
@@ -213,13 +212,12 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
                     exec,
                     originalThis,
                     span,
-                    self._logger,
                     self._config.responseHook
                 )
             );
         } else {
             const response = self._callOriginalFunction(() => exec.apply(originalThis, args));
-            return handlePromiseResponse(response, span, self._logger, self._config.responseHook);
+            return handlePromiseResponse(response, span, self._config.responseHook);
         }
     }
 

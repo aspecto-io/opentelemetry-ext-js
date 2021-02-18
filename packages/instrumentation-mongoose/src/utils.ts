@@ -1,5 +1,4 @@
-import { Tracer, Attributes, context, setSpan, Logger } from '@opentelemetry/api';
-import { StatusCode, Span, SpanKind } from '@opentelemetry/api';
+import { Tracer, SpanAttributes, SpanStatusCode, context, setSpan, diag, Span, SpanKind } from '@opentelemetry/api';
 import { MongoError } from 'mongodb';
 import type { Collection } from 'mongoose';
 import { MongooseResponseCustomAttributesFunction } from './types';
@@ -13,11 +12,11 @@ interface StartSpanPayload {
     collection: Collection;
     modelName: string;
     operation: string;
-    attributes: Attributes;
+    attributes: SpanAttributes;
     parentSpan?: Span;
 }
 
-function getAttributesFromCollection(collection: Collection): Attributes {
+function getAttributesFromCollection(collection: Collection): SpanAttributes {
     return {
         [DatabaseAttribute.DB_MONGODB_COLLECTION]: collection.name,
         [DatabaseAttribute.DB_NAME]: collection.conn.name,
@@ -57,7 +56,7 @@ function setErrorStatus(span: Span, error: MongoError | Error) {
     span.recordException(error);
 
     span.setStatus({
-        code: StatusCode.ERROR,
+        code: SpanStatusCode.ERROR,
         message: `${error.message} ${error instanceof MongoError ? `\nMongo Error Code: ${error.code}` : ''}`,
     });
 }
@@ -65,7 +64,6 @@ function setErrorStatus(span: Span, error: MongoError | Error) {
 function applyResponseHook(
     span: Span,
     response: any,
-    logger: Logger,
     responseHook?: MongooseResponseCustomAttributesFunction
 ) {
     if (responseHook) {
@@ -73,7 +71,7 @@ function applyResponseHook(
             () => responseHook(span, response),
             (e) => {
                 if (e) {
-                    logger.error('mongoose instrumentation: responseHook error', e);
+                    diag.error('mongoose instrumentation: responseHook error', e);
                 }
             },
             true
@@ -84,18 +82,17 @@ function applyResponseHook(
 export function handlePromiseResponse(
     execResponse: any,
     span: Span,
-    logger: Logger,
     responseHook?: MongooseResponseCustomAttributesFunction
 ): any {
     if (!(execResponse instanceof Promise)) {
         span.end();
-        applyResponseHook(span, execResponse, logger, responseHook);
+        applyResponseHook(span, execResponse, responseHook);
         return execResponse;
     }
 
     return execResponse
         .then((response) => {
-            applyResponseHook(span, response, logger, responseHook);
+            applyResponseHook(span, response, responseHook);
             return response;
         })
         .catch((err) => {
@@ -110,12 +107,11 @@ export function handleCallbackResponse(
     exec: Function,
     originalThis: any,
     span: Span,
-    logger: Logger,
     responseHook?: MongooseResponseCustomAttributesFunction
 ) {
     return exec.apply(originalThis, [
         (err: Error, response: any) => {
-            err ? setErrorStatus(span, err) : applyResponseHook(span, response, logger, responseHook);
+            err ? setErrorStatus(span, err) : applyResponseHook(span, response, responseHook);
             span.end();
             return callback!(err, response);
         },
