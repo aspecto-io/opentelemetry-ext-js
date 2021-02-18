@@ -1,6 +1,7 @@
 import { Tracer, Attributes, context, setSpan, Logger } from '@opentelemetry/api';
 import { StatusCode, Span, SpanKind } from '@opentelemetry/api';
 import { MongoError } from 'mongodb';
+import type { Collection } from 'mongoose';
 import { MongooseResponseCustomAttributesFunction } from './types';
 import { safeExecuteInTheMiddle } from '@opentelemetry/instrumentation';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
@@ -9,14 +10,14 @@ import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-con
 
 interface StartSpanPayload {
     tracer: Tracer;
-    collection: any;
+    collection: Collection;
     modelName: string;
     operation: string;
     attributes: Attributes;
     parentSpan?: Span;
 }
 
-function getAttributesFromCollection(collection: any): Attributes {
+function getAttributesFromCollection(collection: Collection): Attributes {
     return {
         [DatabaseAttribute.DB_MONGODB_COLLECTION]: collection.name,
         [DatabaseAttribute.DB_NAME]: collection.conn.name,
