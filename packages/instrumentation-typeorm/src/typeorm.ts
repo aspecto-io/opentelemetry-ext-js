@@ -1,4 +1,4 @@
-import { Span, SpanKind, StatusCode, setSpan, context } from '@opentelemetry/api';
+import { Span, SpanKind, SpanStatusCode, setSpan, context, diag } from '@opentelemetry/api';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
 import { TypeormInstrumentationConfig } from './types';
 import { getParamNames } from './utils';
@@ -25,7 +25,6 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
 
     setConfig(config: Config = {}) {
         this._config = Object.assign({}, config);
-        if (config.logger) this._logger = config.logger;
     }
 
     protected init(): InstrumentationModuleDefinition<typeof typeorm> {
@@ -38,11 +37,11 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
         return module;
     }
 
-    protected patch(moduleExports: typeof typeorm): typeof typeorm {
+    protected patch(moduleExports: typeof typeorm) {
         if (moduleExports === undefined || moduleExports === null) {
             return moduleExports;
         }
-        this._logger.debug(`applying patch to typeorm`);
+        diag.debug(`applying patch to typeorm`);
         this.unpatch(moduleExports);
         this._wrap(moduleExports.ConnectionManager.prototype, 'create', this._createConnectionManagerPatch.bind(this));
 
@@ -55,7 +54,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
     }
 
     private _createConnectionManagerPatch(original: (options: typeorm.ConnectionOptions) => typeorm.Connection) {
-        const thisInstrumentation = this;
+        const self = this;
         return function (options: typeorm.ConnectionOptions) {
             const connection: typeorm.Connection = original.apply(this, arguments);
 
@@ -78,10 +77,10 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
 
             const patch = (operation: string) => {
                 if (connection.manager[operation])
-                    thisInstrumentation._wrap(
+                    self._wrap(
                         connection.manager,
                         operation as keyof typeorm.EntityManager,
-                        thisInstrumentation._getEntityManagerFunctionPatch(operation).bind(thisInstrumentation)
+                        self._getEntityManagerFunctionPatch(operation).bind(self)
                     );
             };
 
@@ -93,8 +92,8 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
     }
 
     private _getEntityManagerFunctionPatch(opName: string) {
-        const thisInstrumentation = this;
-        thisInstrumentation._logger.debug(`typeorm instrumentation: patched EntityManager ${opName} prototype`);
+        const self = this;
+        diag.debug(`typeorm instrumentation: patched EntityManager ${opName} prototype`);
         return function (original: Function) {
             return async function (...args: any[]) {
                 const connectionOptions = this?.connection?.options ?? {};
@@ -115,7 +114,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                     if (value === undefined) delete attributes[key];
                 });
 
-                const newSpan: Span = thisInstrumentation.tracer.startSpan(`TypeORM ${opName}`, {
+                const newSpan: Span = self.tracer.startSpan(`TypeORM ${opName}`, {
                     kind: SpanKind.CLIENT,
                     attributes,
                 });
@@ -125,12 +124,12 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                         original.apply(this, arguments)
                     );
                     const resolved = await response;
-                    if (thisInstrumentation._config?.responseHook) {
+                    if (self._config?.responseHook) {
                         safeExecuteInTheMiddle(
-                            () => thisInstrumentation._config.responseHook(newSpan, resolved),
+                            () => self._config.responseHook(newSpan, resolved),
                             (e: Error) => {
                                 if (e)
-                                    thisInstrumentation._logger.error('typeorm instrumentation: responseHook error', e);
+                                    diag.error('typeorm instrumentation: responseHook error', e);
                             },
                             true
                         );
@@ -138,7 +137,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                     return resolved;
                 } catch (err) {
                     newSpan.setStatus({
-                        code: StatusCode.ERROR,
+                        code: SpanStatusCode.ERROR,
                         message: err.message,
                     });
                     throw err;
