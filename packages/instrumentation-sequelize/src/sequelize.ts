@@ -1,4 +1,4 @@
-import { context, setSpan, Span, SpanKind, StatusCode, getSpan } from '@opentelemetry/api';
+import { context, setSpan, Span, SpanKind, SpanStatusCode, getSpan, diag } from '@opentelemetry/api';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
 import * as sequelize from 'sequelize';
 import { SequelizeInstrumentationConfig } from './types';
@@ -24,7 +24,6 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
 
     setConfig(config: Config = {}) {
         this._config = Object.assign({}, config);
-        if (config.logger) this._logger = config.logger;
     }
 
     protected init(): InstrumentationModuleDefinition<typeof sequelize> {
@@ -42,7 +41,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
             return moduleExports;
         }
 
-        this._logger.debug(`applying patch to sequelize`);
+        diag.debug(`applying patch to sequelize`);
         this.unpatch(moduleExports);
         this._wrap(moduleExports.Sequelize.prototype, 'query', this._createQueryPatch.bind(this));
 
@@ -103,7 +102,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
                             () => thisInstrumentation._config.responseHook(newSpan, response),
                             (e: Error) => {
                                 if (e)
-                                    thisInstrumentation._logger.error(
+                                    diag.error(
                                         'sequelize instrumentation: responseHook error',
                                         e
                                     );
@@ -115,7 +114,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
                 })
                 .catch((err: Error) => {
                     newSpan.setStatus({
-                        code: StatusCode.ERROR,
+                        code: SpanStatusCode.ERROR,
                         message: err.message,
                     });
                     throw err;
