@@ -1,6 +1,5 @@
 import { Tracer, Attributes, context, setSpan, Logger } from '@opentelemetry/api';
 import { StatusCode, Span, SpanKind } from '@opentelemetry/api';
-import { MongoError } from 'mongodb';
 import { MongooseResponseCustomAttributesFunction } from './types';
 import { safeExecuteInTheMiddle } from '@opentelemetry/instrumentation';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
@@ -70,12 +69,12 @@ export function handlePromiseResponse(
         .finally(() => span.end());
 }
 
-export function setErrorStatus(span: Span, error: MongoError | Error) {
+export function setErrorStatus(span: Span, error: any | Error) {
     span.recordException(error);
 
     span.setStatus({
         code: StatusCode.ERROR,
-        message: `${error.message} ${error instanceof MongoError ? `\nMongo Error Code: ${error.code}` : ''}`,
+        message: `${error.message} ${error?.code ? `\nMongo Error Code: ${error.code}` : ''}`,
     });
 }
 
