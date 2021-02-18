@@ -1,13 +1,12 @@
 import { getSpan, context, suppressInstrumentation } from '@opentelemetry/api';
 import type mongoose from 'mongoose';
 import { MongooseInstrumentationConfig, SerializerPayload } from './types';
-import { startSpan, setErrorStatus, handlePromiseResponse } from './utils';
+import { startSpan, handleResponse } from './utils';
 import {
     InstrumentationBase,
     InstrumentationConfig,
     InstrumentationModuleDefinition,
     InstrumentationNodeModuleDefinition,
-    safeExecuteInTheMiddle,
 } from '@opentelemetry/instrumentation';
 import { VERSION } from './version';
 import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
@@ -97,7 +96,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
         const self = this;
         self._logger.debug('mongoose instrumentation: patched mongoose Aggregate exec prototype');
         return (originalExec: Function) => {
-            return function exec(this: any) {
+            return function exec(this: any, callback?: Function) {
                 const parentSpan = this[_STORED_PARENT_SPAN];
                 const attributes = {
                     [DatabaseAttribute.DB_STATEMENT]: self._config.dbStatementSerializer('aggregate', {
@@ -115,15 +114,16 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
                     parentSpan,
                 });
 
-                const aggregateResponse = self._callOriginalFunction(() =>
-                    originalExec.apply(this, arguments)
-                );
-                return handlePromiseResponse(
-                    aggregateResponse,
+                return handleResponse({
                     span,
-                    self._logger,
-                    self?._config?.responseHook
-                );
+                    callExec: self._callOriginalFunction.bind(self),
+                    args: arguments,
+                    exec: originalExec,
+                    logger: self._logger,
+                    originalThis: this,
+                    callback: callback,
+                    responseHook: self._config?.responseHook
+                });
             };
         };
     }
@@ -150,39 +150,16 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
                     collection: this.mongooseCollection,
                 });
 
-                if (callback instanceof Function) {
-                    return self._callOriginalFunction(() =>
-                        originalExec.apply(this, [
-                            (err: Error, response: any) => {
-                                if (err) {
-                                    setErrorStatus(span, err);
-                                } else {
-                                    safeExecuteInTheMiddle(
-                                        () => self?._config?.responseHook(span, response),
-                                        (e) => {
-                                            if (e) {
-                                                self._logger.error('mongoose instrumentation: responseHook error', e);
-                                            }
-                                        },
-                                        true
-                                    );
-                                }
-                                span.end();
-                                return callback!(err, response);
-                            },
-                        ])
-                    );
-                } else {
-                    const response = self._callOriginalFunction(() =>
-                        originalExec.apply(this, arguments)
-                    );
-                    return handlePromiseResponse(
-                        response,
-                        span,
-                        self._logger,
-                        self?._config?.responseHook
-                    );
-                }
+                return handleResponse({
+                    span,
+                    callExec: self._callOriginalFunction.bind(self),
+                    args: arguments,
+                    exec: originalExec,
+                    logger: self._logger,
+                    originalThis: this,
+                    callback: callback,
+                    responseHook: self._config?.responseHook
+                });
             };
         };
     }
@@ -215,40 +192,16 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
                     options = undefined;
                 }
 
-                if (callback instanceof Function) {
-                    return self._callOriginalFunction(() =>
-                        originalOnModelFunction.apply(this, [
-                            options,
-                            (err: Error, response: any) => {
-                                if (err) {
-                                    setErrorStatus(span, err);
-                                } else {
-                                    safeExecuteInTheMiddle(
-                                        () => self?._config?.responseHook(span, response),
-                                        (e) => {
-                                            if (e) {
-                                                self._logger.error('mongoose instrumentation: responseHook error', e);
-                                            }
-                                        },
-                                        true
-                                    );
-                                }
-                                span.end();
-                                return callback!(err, response);
-                            },
-                        ])
-                    );
-                } else {
-                    const response = self._callOriginalFunction(() =>
-                        originalOnModelFunction.apply(this, arguments)
-                    );
-                    return handlePromiseResponse(
-                        response,
-                        span,
-                        self._logger,
-                        self?._config?.responseHook
-                    );
-                }
+                return handleResponse({
+                    span,
+                    callExec: self._callOriginalFunction.bind(self),
+                    args: arguments,
+                    exec: originalOnModelFunction,
+                    logger: self._logger,
+                    originalThis: this,
+                    callback: callback,
+                    responseHook: self._config?.responseHook
+                });
             };
         };
     }
