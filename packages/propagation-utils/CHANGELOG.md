@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.4.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-propagation-utils@0.3.0...opentelemetry-propagation-utils@0.4.0) (2021-02-18)
+
+
+* feat!: Upgrade to otel 17 (#66) ([40e671f](https://github.com/aspecto-io/opentelemetry-ext-js/commit/40e671fb2bb6fd9b33026b650ef9ae48c1e3f57a)), closes [#66](https://github.com/aspecto-io/opentelemetry-ext-js/issues/66)
+
+
+### BREAKING CHANGES
+
+* All plugins require opentelemetry version ^0.17.0 to work
+
+
+
+
+
 # [0.3.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-propagation-utils@0.2.1...opentelemetry-propagation-utils@0.3.0) (2021-02-18)
 
 

@@ -3,6 +3,20 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.2.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-aws-sdk@0.1.0...opentelemetry-instrumentation-aws-sdk@0.2.0) (2021-02-18)
+
+
+* feat!: Upgrade to otel 17 (#66) ([40e671f](https://github.com/aspecto-io/opentelemetry-ext-js/commit/40e671fb2bb6fd9b33026b650ef9ae48c1e3f57a)), closes [#66](https://github.com/aspecto-io/opentelemetry-ext-js/issues/66)
+
+
+### BREAKING CHANGES
+
+* All plugins require opentelemetry version ^0.17.0 to work
+
+
+
+
+
 # [0.1.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-aws-sdk@0.0.2...opentelemetry-instrumentation-aws-sdk@0.1.0) (2021-02-18)
 
 
