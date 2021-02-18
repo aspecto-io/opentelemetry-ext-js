@@ -1,7 +1,7 @@
-import { getSpan, context, suppressInstrumentation } from '@opentelemetry/api';
+import { getSpan, context, suppressInstrumentation, Span } from '@opentelemetry/api';
 import type mongoose from 'mongoose';
 import { MongooseInstrumentationConfig, SerializerPayload } from './types';
-import { startSpan, handleResponse } from './utils';
+import { startSpan, handleCallbackResponse, handlePromiseResponse } from './utils';
 import {
     InstrumentationBase,
     InstrumentationConfig,
@@ -95,7 +95,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
     private patchAggregateExec() {
         const self = this;
         self._logger.debug('mongoose instrumentation: patched mongoose Aggregate exec prototype');
-        return (originalExec: Function) => {
+        return (originalAggregate: Function) => {
             return function exec(this: any, callback?: Function) {
                 const parentSpan = this[_STORED_PARENT_SPAN];
                 const attributes = {
@@ -114,16 +114,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
                     parentSpan,
                 });
 
-                return handleResponse({
-                    span,
-                    callExec: self._callOriginalFunction.bind(self),
-                    args: arguments,
-                    exec: originalExec,
-                    logger: self._logger,
-                    originalThis: this,
-                    callback: callback,
-                    responseHook: self._config?.responseHook
-                });
+                return self._handleResponse(span, originalAggregate, this, arguments, callback);
             };
         };
     }
@@ -150,16 +141,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
                     collection: this.mongooseCollection,
                 });
 
-                return handleResponse({
-                    span,
-                    callExec: self._callOriginalFunction.bind(self),
-                    args: arguments,
-                    exec: originalExec,
-                    logger: self._logger,
-                    originalThis: this,
-                    callback: callback,
-                    responseHook: self._config?.responseHook
-                });
+                return self._handleResponse(span, originalExec, this, arguments, callback);
             };
         };
     }
@@ -174,10 +156,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
                     serializePayload.options = options;
                 }
                 const attributes = {
-                    [DatabaseAttribute.DB_STATEMENT]: self._config.dbStatementSerializer(
-                        op,
-                        serializePayload
-                    ),
+                    [DatabaseAttribute.DB_STATEMENT]: self._config.dbStatementSerializer(op, serializePayload),
                 };
                 const span = startSpan({
                     tracer: self.tracer,
@@ -192,16 +171,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
                     options = undefined;
                 }
 
-                return handleResponse({
-                    span,
-                    callExec: self._callOriginalFunction.bind(self),
-                    args: arguments,
-                    exec: originalOnModelFunction,
-                    logger: self._logger,
-                    originalThis: this,
-                    callback: callback,
-                    responseHook: self._config?.responseHook
-                });
+                return self._handleResponse(span, originalOnModelFunction, this, arguments, callback);
             };
         };
     }
@@ -232,6 +202,25 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
                 return self._callOriginalFunction(() => original.apply(this, arguments));
             };
         };
+    }
+
+    private _handleResponse(span: Span, exec: Function, originalThis: any, args: IArguments, callback?: Function) {
+        const self = this;
+        if (callback instanceof Function) {
+            return self._callOriginalFunction(() =>
+                handleCallbackResponse(
+                    callback,
+                    exec,
+                    originalThis,
+                    span,
+                    self._logger,
+                    self._config.responseHook
+                )
+            );
+        } else {
+            const response = self._callOriginalFunction(() => exec.apply(originalThis, args));
+            return handlePromiseResponse(response, span, self._logger, self._config.responseHook);
+        }
     }
 
     private _callOriginalFunction<T>(originalFunction: (...args: any[]) => T): T {

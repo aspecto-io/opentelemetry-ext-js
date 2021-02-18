@@ -81,7 +81,7 @@ function applyResponseHook(
     }
 }
 
-function handlePromiseResponse(
+export function handlePromiseResponse(
     execResponse: any,
     span: Span,
     logger: Logger,
@@ -105,7 +105,7 @@ function handlePromiseResponse(
         .finally(() => span.end());
 }
 
-function handleCallbackResponse(
+export function handleCallbackResponse(
     callback: Function,
     exec: Function,
     originalThis: any,
@@ -120,33 +120,4 @@ function handleCallbackResponse(
             return callback!(err, response);
         },
     ]);
-}
-
-interface HandleResponsePayload {
-    span: Span;
-    exec: Function;
-    callExec: Function;
-    logger: Logger;
-    originalThis: any;
-    args: IArguments;
-    callback?: Function;
-    responseHook?: MongooseResponseCustomAttributesFunction;
-}
-
-export function handleResponse({
-    span,
-    exec,
-    callExec,
-    logger,
-    originalThis,
-    args,
-    callback,
-    responseHook,
-}: HandleResponsePayload) {
-    if (callback instanceof Function) {
-        return callExec(() => handleCallbackResponse(callback, exec, originalThis, span, logger, responseHook));
-    } else {
-        const response = callExec(() => exec.apply(originalThis, args));
-        return handlePromiseResponse(response, span, logger, responseHook);
-    }
 }
