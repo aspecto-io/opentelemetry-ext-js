@@ -1,4 +1,4 @@
-import { context, setSpan, Span, SpanKind, StatusCode, getSpan } from '@opentelemetry/api';
+import { context, setSpan, Span, SpanKind, SpanStatusCode, getSpan, diag } from '@opentelemetry/api';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
 import * as sequelize from 'sequelize';
 import { SequelizeInstrumentationConfig } from './types';
@@ -24,7 +24,6 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
 
     setConfig(config: Config = {}) {
         this._config = Object.assign({}, config);
-        if (config.logger) this._logger = config.logger;
     }
 
     protected init(): InstrumentationModuleDefinition<typeof sequelize> {
@@ -42,7 +41,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
             return moduleExports;
         }
 
-        this._logger.debug(`applying patch to sequelize`);
+        diag.debug(`applying patch to sequelize`);
         this.unpatch(moduleExports);
         this._wrap(moduleExports.Sequelize.prototype, 'query', this._createQueryPatch.bind(this));
 
@@ -56,9 +55,9 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
     }
 
     private _createQueryPatch(original: Function) {
-        const thisInstrumentation = this;
+        const self = this;
         return function (sql: any, option: any) {
-            if (thisInstrumentation._config?.ignoreOrphanedSpans && !getSpan(context.active())) {
+            if (self._config?.ignoreOrphanedSpans && !getSpan(context.active())) {
                 return original.apply(this, arguments);
             }
 
@@ -78,7 +77,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
                 [DatabaseAttribute.DB_USER]: config?.username,
                 [GeneralAttribute.NET_PEER_NAME]: config?.host,
                 [GeneralAttribute.NET_PEER_PORT]: config?.port ? Number(config?.port) : undefined,
-                [GeneralAttribute.NET_TRANSPORT]: thisInstrumentation._getNetTransport(config?.protocol),
+                [GeneralAttribute.NET_TRANSPORT]: self._getNetTransport(config?.protocol),
                 [DatabaseAttribute.DB_NAME]: config?.database,
                 [DatabaseAttribute.DB_OPERATION]: operation,
                 [DatabaseAttribute.DB_STATEMENT]: statement,
@@ -90,7 +89,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
                 if (value === undefined) delete attributes[key];
             });
 
-            const newSpan: Span = thisInstrumentation.tracer.startSpan(`Sequelize ${operation}`, {
+            const newSpan: Span = self.tracer.startSpan(`Sequelize ${operation}`, {
                 kind: SpanKind.CLIENT,
                 attributes,
             });
@@ -98,12 +97,12 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
             return context
                 .with(setSpan(context.active(), newSpan), () => original.apply(this, arguments))
                 .then((response: any) => {
-                    if (thisInstrumentation._config?.responseHook) {
+                    if (self._config?.responseHook) {
                         safeExecuteInTheMiddle(
-                            () => thisInstrumentation._config.responseHook(newSpan, response),
+                            () => self._config.responseHook(newSpan, response),
                             (e: Error) => {
                                 if (e)
-                                    thisInstrumentation._logger.error(
+                                    diag.error(
                                         'sequelize instrumentation: responseHook error',
                                         e
                                     );
@@ -115,7 +114,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
                 })
                 .catch((err: Error) => {
                     newSpan.setStatus({
-                        code: StatusCode.ERROR,
+                        code: SpanStatusCode.ERROR,
                         message: err.message,
                     });
                     throw err;

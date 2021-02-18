@@ -1,4 +1,4 @@
-import { SpanKind, Span, StatusCode, Context, propagation, Link, getSpan, setSpan, context } from '@opentelemetry/api';
+import { SpanKind, Span, SpanStatusCode, Context, propagation, Link, getSpan, setSpan, context, diag } from '@opentelemetry/api';
 import { ROOT_CONTEXT } from '@opentelemetry/context-base';
 import { MessagingAttribute, MessagingOperationName } from '@opentelemetry/semantic-conventions';
 import * as kafkaJs from 'kafkajs';
@@ -38,7 +38,6 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
 
     setConfig(config: Config = {}) {
         this._config = Object.assign({}, config);
-        if (config.logger) this._logger = config.logger;
     }
 
     protected init(): InstrumentationModuleDefinition<typeof kafkaJs> {
@@ -52,7 +51,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
     }
 
     protected patch(moduleExports: typeof kafkaJs) {
-        this._logger.debug('kafkajs instrumentation: applying patch');
+        diag.debug('kafkajs instrumentation: applying patch');
 
         this.unpatch(moduleExports);
         this._wrap(moduleExports?.Kafka?.prototype, 'producer', this._getProducerPatch.bind(this));
@@ -62,7 +61,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
     }
 
     protected unpatch(moduleExports: typeof kafkaJs) {
-        this._logger.debug('kafkajs instrumentation: un-patching');
+        diag.debug('kafkajs instrumentation: un-patching');
         if (isWrapped(moduleExports?.Kafka?.prototype.producer)) {
             this._unwrap(moduleExports.Kafka.prototype, 'producer');
         }
@@ -72,17 +71,17 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
     }
 
     private _getConsumerPatch(original: (...args: unknown[]) => Producer) {
-        const thisInstrumentation = this;
+        const self = this;
         return function (...args: unknown[]): Consumer {
             const newConsumer: Consumer = original.apply(this, arguments);
 
             if (isWrapped(newConsumer.run)) {
-                thisInstrumentation._unwrap(newConsumer, 'run');
+                self._unwrap(newConsumer, 'run');
             }
-            thisInstrumentation._wrap(
+            self._wrap(
                 newConsumer,
                 'run',
-                thisInstrumentation._getConsumerRunPatch.bind(thisInstrumentation)
+                self._getConsumerRunPatch.bind(self)
             );
 
             return newConsumer;
@@ -90,26 +89,26 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
     }
 
     private _getProducerPatch(original: (...args: unknown[]) => Producer) {
-        const thisInstrumentation = this;
+        const self = this;
         return function (...args: unknown[]): Producer {
             const newProducer: Producer = original.apply(this, arguments);
 
             if (isWrapped(newProducer.sendBatch)) {
-                thisInstrumentation._unwrap(newProducer, 'sendBatch');
+                self._unwrap(newProducer, 'sendBatch');
             }
-            thisInstrumentation._wrap(
+            self._wrap(
                 newProducer,
                 'sendBatch',
-                thisInstrumentation._getProducerSendBatchPatch.bind(thisInstrumentation)
+                self._getProducerSendBatchPatch.bind(self)
             );
 
             if (isWrapped(newProducer.send)) {
-                thisInstrumentation._unwrap(newProducer, 'send');
+                self._unwrap(newProducer, 'send');
             }
-            thisInstrumentation._wrap(
+            self._wrap(
                 newProducer,
                 'send',
-                thisInstrumentation._getProducerSendPatch.bind(thisInstrumentation)
+                self._getProducerSendPatch.bind(self)
             );
 
             return newProducer;
@@ -117,26 +116,26 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
     }
 
     private _getConsumerRunPatch(original: (...args: unknown[]) => Producer) {
-        const thisInstrumentation = this;
+        const self = this;
         return function (config?: ConsumerRunConfig): Promise<void> {
             if (config?.eachMessage) {
                 if (isWrapped(config.eachMessage)) {
-                    thisInstrumentation._unwrap(config, 'eachMessage');
+                    self._unwrap(config, 'eachMessage');
                 }
-                thisInstrumentation._wrap(
+                self._wrap(
                     config,
                     'eachMessage',
-                    thisInstrumentation._getConsumerEachMessagePatch.bind(thisInstrumentation)
+                    self._getConsumerEachMessagePatch.bind(self)
                 );
             }
             if (config?.eachBatch) {
                 if (isWrapped(config.eachBatch)) {
-                    thisInstrumentation._unwrap(config, 'eachBatch');
+                    self._unwrap(config, 'eachBatch');
                 }
-                thisInstrumentation._wrap(
+                self._wrap(
                     config,
                     'eachBatch',
-                    thisInstrumentation._getConsumerEachBatchPatch.bind(thisInstrumentation)
+                    self._getConsumerEachBatchPatch.bind(self)
                 );
             }
             return original.call(this, config);
@@ -144,14 +143,14 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
     }
 
     private _getConsumerEachMessagePatch(original: (...args: unknown[]) => Promise<void>) {
-        const thisInstrumentation = this;
+        const self = this;
         return function (payload: EachMessagePayload): Promise<void> {
             const propagatedContext: Context = propagation.extract(
                 ROOT_CONTEXT,
                 payload.message.headers,
                 bufferTextMapGetter
             );
-            const span = thisInstrumentation._startConsumerSpan(
+            const span = self._startConsumerSpan(
                 payload.topic,
                 payload.message,
                 MessagingOperationName.PROCESS,
@@ -161,15 +160,15 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
             const eachMessagePromise = context.with(setSpan(context.active(), span), () => {
                 return original.apply(this, arguments);
             });
-            return thisInstrumentation._endSpansOnPromise([span], eachMessagePromise);
+            return self._endSpansOnPromise([span], eachMessagePromise);
         };
     }
 
     private _getConsumerEachBatchPatch(original: (...args: unknown[]) => Promise<void>) {
-        const thisInstrumentation = this;
+        const self = this;
         return function (payload: EachBatchPayload): Promise<void> {
             // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md#topic-with-multiple-consumers
-            const receivingSpan = thisInstrumentation._startConsumerSpan(
+            const receivingSpan = self._startConsumerSpan(
                 payload.batch.topic,
                 undefined,
                 MessagingOperationName.RECEIVE,
@@ -189,7 +188,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
                             context: spanContext,
                         };
                     }
-                    return thisInstrumentation._startConsumerSpan(
+                    return self._startConsumerSpan(
                         payload.batch.topic,
                         message,
                         MessagingOperationName.PROCESS,
@@ -199,34 +198,34 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
                 });
                 const batchMessagePromise: Promise<void> = original.apply(this, arguments);
                 spans.unshift(receivingSpan);
-                return thisInstrumentation._endSpansOnPromise(spans, batchMessagePromise);
+                return self._endSpansOnPromise(spans, batchMessagePromise);
             });
         };
     }
 
     private _getProducerSendBatchPatch(original: (batch: ProducerBatch) => Promise<RecordMetadata[]>) {
-        const thisInstrumentation = this;
+        const self = this;
         return function (batch: ProducerBatch): Promise<RecordMetadata[]> {
             const spans: Span[] = batch.topicMessages.flatMap((topicMessage) =>
                 topicMessage.messages.map((message) =>
-                    thisInstrumentation._startProducerSpan(topicMessage.topic, message)
+                    self._startProducerSpan(topicMessage.topic, message)
                 )
             );
 
             const origSendResult: Promise<RecordMetadata[]> = original.apply(this, arguments);
-            return thisInstrumentation._endSpansOnPromise(spans, origSendResult);
+            return self._endSpansOnPromise(spans, origSendResult);
         };
     }
 
     private _getProducerSendPatch(original: (record: ProducerRecord) => Promise<RecordMetadata[]>) {
-        const thisInstrumentation = this;
+        const self = this;
         return function (record: ProducerRecord): Promise<RecordMetadata[]> {
             const spans: Span[] = record.messages.map((message) => {
-                return thisInstrumentation._startProducerSpan(record.topic, message);
+                return self._startProducerSpan(record.topic, message);
             });
 
             const origSendResult: Promise<RecordMetadata[]> = original.apply(this, arguments);
-            return thisInstrumentation._endSpansOnPromise(spans, origSendResult);
+            return self._endSpansOnPromise(spans, origSendResult);
         };
     }
 
@@ -239,7 +238,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
 
                 spans.forEach((span) =>
                     span.setStatus({
-                        code: StatusCode.ERROR,
+                        code: SpanStatusCode.ERROR,
                         message: errorMessage,
                     })
                 );
@@ -271,7 +270,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
             safeExecuteInTheMiddle(
                 () => this._config.consumerHook!(span, topic, message),
                 (e: Error) => {
-                    if (e) this._logger.error(`kafkajs instrumentation: consumerHook error`, e);
+                    if (e) diag.error(`kafkajs instrumentation: consumerHook error`, e);
                 },
                 true
             );
@@ -297,7 +296,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
             safeExecuteInTheMiddle(
                 () => this._config.producerHook!(span, topic, message),
                 (e: Error) => {
-                    if (e) this._logger.error(`kafkajs instrumentation: producerHook error`, e);
+                    if (e) diag.error(`kafkajs instrumentation: producerHook error`, e);
                 },
                 true
             );

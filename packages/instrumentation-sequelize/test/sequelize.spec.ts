@@ -2,18 +2,17 @@ import 'mocha';
 import { SequelizeInstrumentation } from '../src';
 import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan, Span } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';
-import { context, StatusCode, NoopLogger } from '@opentelemetry/api';
+import { context, diag, SpanStatusCode } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { ContextManager } from '@opentelemetry/context-base';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
 import expect from 'expect';
 
-const logger = new NoopLogger();
-const instrumentation = new SequelizeInstrumentation({ logger });
+const instrumentation = new SequelizeInstrumentation();
 import * as sequelize from 'sequelize';
 
 describe('instrumentation-sequelize', () => {
-    const provider = new NodeTracerProvider({ logger });
+    const provider = new NodeTracerProvider();
     const memoryExporter = new InMemorySpanExporter();
     const spanProcessor = new SimpleSpanProcessor(memoryExporter);
     provider.addSpanProcessor(spanProcessor);
@@ -57,7 +56,7 @@ describe('instrumentation-sequelize', () => {
             }
             const spans = getSequelizeSpans();
             expect(spans.length).toBe(1);
-            expect(spans[0].status.code).toBe(StatusCode.ERROR);
+            expect(spans[0].status.code).toBe(SpanStatusCode.ERROR);
             const attributes = spans[0].attributes;
 
             expect(attributes['component']).toBe('sequelize');
@@ -157,7 +156,7 @@ describe('instrumentation-sequelize', () => {
             await instance.models.User.create({ firstName: 'Nir' }).catch(() => {});
             const spans = getSequelizeSpans();
             expect(spans.length).toBe(1);
-            expect(spans[0].status.code).toBe(StatusCode.ERROR);
+            expect(spans[0].status.code).toBe(SpanStatusCode.ERROR);
             const attributes = spans[0].attributes;
 
             expect(attributes['component']).toBe('sequelize');
@@ -235,17 +234,18 @@ describe('instrumentation-sequelize', () => {
             })();
 
             instrumentation.setConfig({
-                logger: mockedLogger as any,
                 responseHook: () => {
                     throw new Error('Throwing');
                 },
             });
             instrumentation.enable();
+            diag.setLogger(mockedLogger as any);
             await instance.models.User.findAll();
             const spans = getSequelizeSpans();
             expect(spans.length).toBe(1);
             expect(mockedLogger.getMessage()).toBe('sequelize instrumentation: responseHook error');
             expect(mockedLogger.getError().message).toBe('Throwing');
+            diag.setLogger();
         });
     });
 

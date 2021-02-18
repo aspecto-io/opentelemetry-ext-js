@@ -1,14 +1,13 @@
 import 'mocha';
 import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan, Span } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';
-import { context, StatusCode, NoopLogger } from '@opentelemetry/api';
+import { context, SpanStatusCode } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { ContextManager } from '@opentelemetry/context-base';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
 import { TypeormInstrumentation } from '../src';
 import expect from 'expect';
-const logger = new NoopLogger();
-const instrumentation = new TypeormInstrumentation({ logger });
+const instrumentation = new TypeormInstrumentation();
 
 import * as typeorm from 'typeorm';
 
@@ -89,7 +88,7 @@ describe('instrumentation-typeorm', () => {
             const typeOrmSpans = getTypeormSpans();
 
             expect(typeOrmSpans.length).toBe(1);
-            expect(typeOrmSpans[0].status.code).toBe(StatusCode.UNSET);
+            expect(typeOrmSpans[0].status.code).toBe(SpanStatusCode.UNSET);
             const attributes = typeOrmSpans[0].attributes;
 
             expect(attributes['component']).toBe('typeorm');
@@ -110,7 +109,7 @@ describe('instrumentation-typeorm', () => {
 
             const typeOrmSpans = getTypeormSpans();
             expect(typeOrmSpans.length).toBe(1);
-            expect(typeOrmSpans[0].status.code).toBe(StatusCode.ERROR);
+            expect(typeOrmSpans[0].status.code).toBe(SpanStatusCode.ERROR);
             expect(typeOrmSpans[0].status.message).toBe('some error');
         });
 

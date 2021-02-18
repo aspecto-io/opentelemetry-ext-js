@@ -8,7 +8,7 @@
     no callback |       0           |       1    
     callback    |       1           |       2   
  */
-import { Span, Attributes, SpanKind, context, setSpan, suppressInstrumentation, Context } from '@opentelemetry/api';
+import { Span, SpanAttributes, SpanKind, context, setSpan, suppressInstrumentation, Context, diag } from '@opentelemetry/api';
 import AWS from 'aws-sdk';
 import { AttributeNames } from './enums';
 import { ServicesExtensions } from './services';
@@ -37,7 +37,6 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
 
     setConfig(config: Config = {}) {
         this._config = Object.assign({}, config);
-        if (config.logger) this._logger = config.logger;
     }
 
     protected init(): InstrumentationModuleDefinition<typeof AWS> {
@@ -51,9 +50,9 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
     }
 
     protected patch(moduleExports: typeof AWS) {
-        this.servicesExtensions = new ServicesExtensions(this.tracer, this._logger, this._config);
+        this.servicesExtensions = new ServicesExtensions(this.tracer, this._config);
 
-        this._logger.debug(`applying patch to ${AwsInstrumentation.component}`);
+        diag.debug(`applying patch to ${AwsInstrumentation.component}`);
         this.unpatch(moduleExports);
         this._wrap(moduleExports?.Request.prototype, 'send', this._getRequestSendPatch.bind(this));
         this._wrap(moduleExports?.Request.prototype, 'promise', this._getRequestPromisePatch.bind(this));
@@ -82,7 +81,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
 
     private _startAwsSpan(
         request: AWS.Request<any, any>,
-        additionalAttributes?: Attributes,
+        additionalSpanAttributes?: SpanAttributes,
         spanKind?: SpanKind,
         spanName?: string
     ): Span {
@@ -100,7 +99,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
                 [AttributeNames.AWS_SERVICE_API]: service?.api?.className,
                 [AttributeNames.AWS_SERVICE_IDENTIFIER]: service?.serviceIdentifier,
                 [AttributeNames.AWS_SERVICE_NAME]: service?.api?.abbreviation,
-                ...additionalAttributes,
+                ...additionalSpanAttributes,
             },
         });
 
@@ -114,7 +113,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
                 () => this._config.preRequestHook(span, request),
                 (e: Error) => {
                     if (e)
-                        this._logger.error(`${AwsInstrumentation.component} instrumentation: preRequestHook error`, e);
+                        diag.error(`${AwsInstrumentation.component} instrumentation: preRequestHook error`, e);
                 },
                 true
             );
@@ -126,7 +125,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
             safeExecuteInTheMiddle(
                 () => this._config.responseHook(span, response),
                 (e: Error) => {
-                    if (e) this._logger.error(`${AwsInstrumentation.component} instrumentation: responseHook error`, e);
+                    if (e) diag.error(`${AwsInstrumentation.component} instrumentation: responseHook error`, e);
                 },
                 true
             );
@@ -134,14 +133,14 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
     }
 
     private _registerCompletedEvent(span: Span, request: AWS.Request<any, any>, completedEventContext: Context) {
-        const thisInstrumentation = this;
+        const self = this;
         request.on('complete', (response) => {
             // read issue https://github.com/aspecto-io/opentelemetry-ext-js/issues/60
             context.with(completedEventContext, () => {
-                if (!request[thisInstrumentation.REQUEST_SPAN_KEY]) {
+                if (!request[self.REQUEST_SPAN_KEY]) {
                     return;
                 }
-                request[thisInstrumentation.REQUEST_SPAN_KEY] = undefined;
+                request[self.REQUEST_SPAN_KEY] = undefined;
 
                 if (response.error) {
                     span.setAttribute(AttributeNames.AWS_ERROR, response.error);
@@ -150,28 +149,26 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
                 this._callUserResponseHook(span, response);
                 this.servicesExtensions.responseHook(response, span);
 
-                span.setAttributes({
-                    [AttributeNames.AWS_REQUEST_ID]: response.requestId,
-                });
+                span.setAttribute(AttributeNames.AWS_REQUEST_ID, response.requestId);
                 span.end();
             });
         });
     }
 
     private _getRequestSendPatch(original: (callback?: (err: any, data: any) => void) => void) {
-        const thisInstrumentation = this;
+        const self = this;
         return function (callback?: (err: any, data: any) => void) {
             const awsRequest: AWS.Request<any, any> = this;
             /* 
         if the span was already started, we don't want to start a new one 
         when Request.promise() is called
       */
-            if (this._asm.currentState === 'complete' || awsRequest[thisInstrumentation.REQUEST_SPAN_KEY]) {
+            if (this._asm.currentState === 'complete' || awsRequest[self.REQUEST_SPAN_KEY]) {
                 return original.apply(this, arguments);
             }
 
-            const requestMetadata = thisInstrumentation.servicesExtensions.requestHook(awsRequest);
-            const span = thisInstrumentation._startAwsSpan(
+            const requestMetadata = self.servicesExtensions.requestHook(awsRequest);
+            const span = self._startAwsSpan(
                 awsRequest,
                 requestMetadata.spanAttributes,
                 requestMetadata.spanKind,
@@ -180,27 +177,27 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
             const activeContextWithSpan = setSpan(context.active(), span);
             const callbackWithContext = context.bind(callback, activeContextWithSpan);
 
-            thisInstrumentation._callUserPreRequestHook(span, awsRequest);
-            thisInstrumentation._registerCompletedEvent(span, awsRequest, activeContextWithSpan);
+            self._callUserPreRequestHook(span, awsRequest);
+            self._registerCompletedEvent(span, awsRequest, activeContextWithSpan);
 
             return context.with(activeContextWithSpan, () => {
-                thisInstrumentation.servicesExtensions.requestPostSpanHook(awsRequest);
-                return thisInstrumentation._callOriginalFunction(() => original.call(awsRequest, callbackWithContext));
+                self.servicesExtensions.requestPostSpanHook(awsRequest);
+                return self._callOriginalFunction(() => original.call(awsRequest, callbackWithContext));
             });
         };
     }
 
     private _getRequestPromisePatch(original: () => Promise<any>) {
-        const thisInstrumentation = this;
+        const self = this;
         return function (): Promise<any> {
             const awsRequest: AWS.Request<any, any> = this;
             // if the span was already started, we don't want to start a new one when Request.promise() is called
-            if (this._asm.currentState === 'complete' || awsRequest[thisInstrumentation.REQUEST_SPAN_KEY]) {
+            if (this._asm.currentState === 'complete' || awsRequest[self.REQUEST_SPAN_KEY]) {
                 return original.apply(this, arguments);
             }
 
-            const requestMetadata = thisInstrumentation.servicesExtensions.requestHook(awsRequest);
-            const span = thisInstrumentation._startAwsSpan(
+            const requestMetadata = self.servicesExtensions.requestHook(awsRequest);
+            const span = self._startAwsSpan(
                 awsRequest,
                 requestMetadata.spanAttributes,
                 requestMetadata.spanKind,
@@ -208,16 +205,16 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
             );
 
             const activeContextWithSpan = setSpan(context.active(), span);
-            thisInstrumentation._callUserPreRequestHook(span, awsRequest);
-            thisInstrumentation._registerCompletedEvent(span, awsRequest, activeContextWithSpan);
+            self._callUserPreRequestHook(span, awsRequest);
+            self._registerCompletedEvent(span, awsRequest, activeContextWithSpan);
 
             const origPromise: Promise<any> = context.with(activeContextWithSpan, () => {
-                thisInstrumentation.servicesExtensions.requestPostSpanHook(awsRequest);
-                return thisInstrumentation._callOriginalFunction(() => original.call(awsRequest, arguments));
+                self.servicesExtensions.requestPostSpanHook(awsRequest);
+                return self._callOriginalFunction(() => original.call(awsRequest, arguments));
             });
 
             return requestMetadata.isIncoming
-                ? thisInstrumentation._bindPromise(origPromise, activeContextWithSpan)
+                ? self._bindPromise(origPromise, activeContextWithSpan)
                 : origPromise;
         };
     }

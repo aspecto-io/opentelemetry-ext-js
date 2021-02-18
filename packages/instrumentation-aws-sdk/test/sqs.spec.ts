@@ -2,7 +2,7 @@ import 'mocha';
 import { AwsInstrumentation } from '../src';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { ContextManager } from '@opentelemetry/context-base';
-import { context, SpanKind, StatusCode } from '@opentelemetry/api';
+import { context, SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan, Span } from '@opentelemetry/tracing';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { mockAwsSend } from './testing-utils';
@@ -383,8 +383,8 @@ describe('sqs', () => {
                 .getFinishedSpans()
                 .filter((s) => s.attributes[SqsAttributeNames.MESSAGING_OPERATION] === 'process');
             expect(processSpans.length).toBe(2);
-            expect(processSpans[0].status.code).toStrictEqual(StatusCode.UNSET);
-            expect(processSpans[1].status.code).toStrictEqual(StatusCode.UNSET);
+            expect(processSpans[0].status.code).toStrictEqual(SpanStatusCode.UNSET);
+            expect(processSpans[1].status.code).toStrictEqual(SpanStatusCode.UNSET);
         });
     });
 });

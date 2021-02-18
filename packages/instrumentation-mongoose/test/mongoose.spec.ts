@@ -2,14 +2,12 @@ import 'mocha';
 import expect from 'expect';
 import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';
-import { context, NoopLogger } from '@opentelemetry/api';
+import { context } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
 import { MongooseInstrumentation } from '../src';
 
-const logger = new NoopLogger();
 const instrumentation = new MongooseInstrumentation({
-    logger,
     dbStatementSerializer: (_operation: string, payload) => JSON.stringify(payload),
 });
 

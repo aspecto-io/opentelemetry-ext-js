@@ -1,11 +1,11 @@
 import expect from 'expect';
 import { ReadableSpan } from '@opentelemetry/tracing';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
-import { StatusCode } from '@opentelemetry/api';
+import { SpanStatusCode } from '@opentelemetry/api';
 import { SerializerPayload } from '../src';
 
 export const assertSpan = (span: ReadableSpan) => {
-    expect(span.status.code).toBe(StatusCode.UNSET);
+    expect(span.status.code).toBe(SpanStatusCode.UNSET);
     expect(span.attributes[DatabaseAttribute.DB_SYSTEM]).toEqual('mongodb');
     expect(span.attributes[DatabaseAttribute.DB_MONGODB_COLLECTION]).toEqual('users');
     expect(span.attributes[DatabaseAttribute.DB_NAME]).toEqual('test');
