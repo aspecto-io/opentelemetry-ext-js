@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-sequelize",
-    "version": "0.0.1",
+    "version": "0.1.0",
     "description": "open telemetry instrumentation for the `sequelize` module",
     "keywords": [
         "sequelize",
