@@ -93,7 +93,6 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
     // which calls `query` and create internal span which we don't need to instrument
     private _getConnectionPatch(original: Function) {
         return function (...args: unknown[]) {
-            console.log('blabla');
             return context.with(suppressInstrumentation(context.active()), () => original.apply(this, args));
         };
     }
