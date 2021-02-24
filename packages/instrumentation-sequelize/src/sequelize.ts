@@ -1,4 +1,13 @@
-import { context, setSpan, Span, SpanKind, SpanStatusCode, getSpan, diag } from '@opentelemetry/api';
+import {
+    context,
+    setSpan,
+    Span,
+    SpanKind,
+    SpanStatusCode,
+    getSpan,
+    diag,
+    suppressInstrumentation,
+} from '@opentelemetry/api';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
 import * as sequelize from 'sequelize';
 import { SequelizeInstrumentationConfig } from './types';
@@ -8,6 +17,7 @@ import {
     InstrumentationConfig,
     InstrumentationModuleDefinition,
     InstrumentationNodeModuleDefinition,
+    InstrumentationNodeModuleFile,
     isWrapped,
     safeExecuteInTheMiddle,
 } from '@opentelemetry/instrumentation';
@@ -27,13 +37,38 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
     }
 
     protected init(): InstrumentationModuleDefinition<typeof sequelize> {
+        const connectionManagerInstrumentation = new InstrumentationNodeModuleFile<any>(
+            'sequelize/lib/dialects/abstract/connection-manager.js',
+            ['*'],
+            this.patchConnectionManager.bind(this),
+            this.unpatchConnectionManager.bind(this)
+        );
+
         const module = new InstrumentationNodeModuleDefinition<typeof sequelize>(
             SequelizeInstrumentation.component,
             ['*'],
             this.patch.bind(this),
-            this.unpatch.bind(this)
+            this.unpatch.bind(this),
+            [connectionManagerInstrumentation]
         );
         return module;
+    }
+
+    protected patchConnectionManager(moduleExports: any): any {
+        if (moduleExports === undefined || moduleExports === null) {
+            return moduleExports;
+        }
+        diag.debug(`applying patch to sequelize ConnectionManager`);
+        this.unpatchConnectionManager(moduleExports);
+        this._wrap(moduleExports.ConnectionManager.prototype, 'getConnection', this._getConnectionPatch.bind(this));
+        return moduleExports;
+    }
+
+    protected unpatchConnectionManager(moduleExports: any): any {
+        if (isWrapped(moduleExports?.ConnectionManager?.prototype?.getConnection)) {
+            this._unwrap(moduleExports.ConnectionManager.prototype, 'getConnection');
+        }
+        return moduleExports;
     }
 
     protected patch(moduleExports: typeof sequelize): typeof sequelize {
@@ -52,6 +87,14 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
         if (isWrapped(moduleExports.Sequelize.prototype.query)) {
             this._unwrap(moduleExports.Sequelize.prototype, 'query');
         }
+    }
+
+    // run getConnection with suppressInstrumentation, as it might call internally to `databaseVersion` function
+    // which calls `query` and create internal span which we don't need to instrument
+    private _getConnectionPatch(original: Function) {
+        return function (...args: unknown[]) {
+            return context.with(suppressInstrumentation(context.active()), () => original.apply(this, args));
+        };
     }
 
     private _createQueryPatch(original: Function) {
@@ -101,11 +144,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
                         safeExecuteInTheMiddle(
                             () => self._config.responseHook(newSpan, response),
                             (e: Error) => {
-                                if (e)
-                                    diag.error(
-                                        'sequelize instrumentation: responseHook error',
-                                        e
-                                    );
+                                if (e) diag.error('sequelize instrumentation: responseHook error', e);
                             },
                             true
                         );
