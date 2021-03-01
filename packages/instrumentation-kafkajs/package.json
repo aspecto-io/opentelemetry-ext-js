@@ -24,7 +24,7 @@
         "build": "tsc",
         "prepare": "yarn run build",
         "test": "mocha",
-        "test:ci": "npm run test",
+        "test:ci": "yarn test",
         "watch": "tsc -w",
         "version:update": "node ../../scripts/version-update.js",
         "version": "yarn run version:update"

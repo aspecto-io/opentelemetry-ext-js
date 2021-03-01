@@ -34,7 +34,7 @@
         "version": "yarn run version:update",
         "test": "mocha",
         "test-all-versions": "tav",
-        "test:ci": "npm run test-all-versions"
+        "test:ci": "yarn test-all-versions"
     },
     "bugs": {
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
