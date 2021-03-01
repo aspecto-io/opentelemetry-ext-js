@@ -4,7 +4,6 @@ import { MongooseInstrumentationConfig, SerializerPayload } from './types';
 import { startSpan, handleCallbackResponse, handlePromiseResponse } from './utils';
 import {
     InstrumentationBase,
-    InstrumentationConfig,
     InstrumentationModuleDefinition,
     InstrumentationNodeModuleDefinition,
 } from '@opentelemetry/instrumentation';
@@ -29,8 +28,6 @@ const contextCaptureFunctions = [
     'findOneAndRemove',
 ];
 
-type Config = InstrumentationConfig & MongooseInstrumentationConfig;
-
 // when mongoose functions are called, we store the original call context
 // and then set it as the parent for the spans created by Query/Aggregate exec()
 // calls. this bypass the unlinked spans issue on thenables await operations.
@@ -39,15 +36,16 @@ export const _STORED_PARENT_SPAN: unique symbol = Symbol('stored-parent-span');
 export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose> {
     static readonly component = 'mongoose';
     protected _config: MongooseInstrumentationConfig;
+    private moduleVersion: string;
 
-    constructor(config: Config = {}) {
+    constructor(config: MongooseInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-mongoose', VERSION, Object.assign({}, config));
 
         // According to specification, statement is not set by default on mongodb spans.
         if (!config.dbStatementSerializer) this._config.dbStatementSerializer = () => undefined;
     }
 
-    setConfig(config: Config = {}) {
+    setConfig(config: MongooseInstrumentationConfig = {}) {
         this._config = Object.assign({}, config);
         if (!config.dbStatementSerializer) this._config.dbStatementSerializer = () => undefined;
     }
@@ -62,8 +60,9 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
         return module;
     }
 
-    protected patch(moduleExports: typeof mongoose) {
+    protected patch(moduleExports: typeof mongoose, moduleVersion: string) {
         diag.debug('mongoose instrumentation: patching');
+        this.moduleVersion = moduleVersion
 
         this._wrap(moduleExports.Model.prototype, 'save', this.patchOnModelMethods('save'));
         this._wrap(moduleExports.Model.prototype, 'remove', this.patchOnModelMethods('remove'));
@@ -112,6 +111,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
                     collection: this._model.collection,
                     parentSpan,
                 });
+                self._addModuleVersionIfNeeded(span);
 
                 return self._handleResponse(span, originalAggregate, this, arguments, callback);
             };
@@ -139,6 +139,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
                     parentSpan,
                     collection: this.mongooseCollection,
                 });
+                self._addModuleVersionIfNeeded(span);
 
                 return self._handleResponse(span, originalExec, this, arguments, callback);
             };
@@ -164,6 +165,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
                     attributes,
                     collection: this.constructor.collection,
                 });
+                self._addModuleVersionIfNeeded(span);
 
                 if (options instanceof Function) {
                     callback = options;
@@ -226,6 +228,12 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
             return context.with(suppressInstrumentation(context.active()), originalFunction);
         } else {
             return originalFunction();
+        }
+    }
+
+    private _addModuleVersionIfNeeded(span: Span) {
+        if (this._config.moduleVersionAttributeName) {
+            span.setAttribute(this._config.moduleVersionAttributeName, this.moduleVersion);
         }
     }
 }

@@ -267,7 +267,6 @@ describe('instrumentation-aws-sdk', () => {
         it('responseHook called and add response attribute to span', (done) => {
             mockAwsSend(responseMockSuccess, 'data returned from operation');
             const config = {
-                enabled: true,
                 responseHook: (span: Span, response: any) => {
                     span.setAttribute('attribute from response hook', response['data']);
                 },
@@ -312,7 +311,6 @@ describe('instrumentation-aws-sdk', () => {
         it('suppressInternalInstrumentation set to true with promise()', async () => {
             mockAwsSend(responseMockSuccess, 'data returned from operation', true);
             const config = {
-                enabled: true,
                 suppressInternalInstrumentation: true,
             };
 
@@ -325,6 +323,26 @@ describe('instrumentation-aws-sdk', () => {
             await s3.createBucket({ Bucket: 'aws-test-bucket' }).promise();
             const awsSpans = getAwsSpans();
             expect(awsSpans.length).toBe(1);
+        });
+
+        it('setting moduleVersionAttributeName is adding module version', async () => {
+            mockAwsSend(responseMockSuccess, 'data returned from operation', true);
+            const config = {
+                moduleVersionAttributeName: 'module.version',
+                suppressInternalInstrumentation: true
+            };
+
+            instrumentation.disable();
+            instrumentation.setConfig(config);
+            instrumentation.enable();
+
+            const s3 = new AWS.S3();
+
+            await s3.createBucket({ Bucket: 'aws-test-bucket' }).promise();
+            const awsSpans = getAwsSpans();
+            expect(awsSpans.length).toBe(1);
+
+            expect(awsSpans[0].attributes['module.version']).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
         });
     });
 });
