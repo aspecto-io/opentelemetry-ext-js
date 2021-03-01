@@ -498,4 +498,49 @@ describe('mongoose instrumentation', () => {
             expect(spans[0].attributes[RESPONSE]).toBe(undefined);
         });
     });
+
+    describe('moduleVersionAttributeName config', () => {
+        const VERSION_ATTR = 'module.version';
+        before(() => {
+            instrumentation.disable();
+            instrumentation.setConfig({
+                moduleVersionAttributeName: VERSION_ATTR
+            });
+            instrumentation.enable();
+        });
+
+        it('moduleVersionAttributeName works with exec patch', async () => {
+            await User.deleteOne({ email: 'john.doe@example.com' });
+            const spans = getSpans();
+            expect(spans.length).toBe(1);
+            assertSpan(spans[0]);
+            expect(typeof spans[0].attributes[VERSION_ATTR]).toBe('string');
+        });
+
+        it('moduleVersionAttributeName with model methods patch', async () => {
+            const document = {
+                firstName: 'Test first name',
+                lastName: 'Test last name',
+                email: 'test@example.com',
+            };
+            const user: IUser = new User(document);
+            await user.save();
+            const spans = getSpans();
+            expect(spans.length).toBe(1);
+            assertSpan(spans[0]);
+            expect(typeof spans[0].attributes[VERSION_ATTR]).toBe('string');
+        });
+
+        it('moduleVersionAttributeName works with aggregate patch', async () => {
+            await User.aggregate([
+                { $match: { firstName: 'John' } },
+                { $group: { _id: 'John', total: { $sum: '$amount' } } },
+            ]);
+
+            const spans = getSpans();
+            expect(spans.length).toBe(1);
+            assertSpan(spans[0]);
+            expect(typeof spans[0].attributes[VERSION_ATTR]).toBe('string');
+        });
+    })
 });
