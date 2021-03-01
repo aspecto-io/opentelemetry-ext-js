@@ -19,6 +19,20 @@ export function startSpan({ tracer, attributes }: StartSpanPayload): Span {
     });
 }
 
+export function normalizeArguments(params, options, callback) {
+    // Copied normalizeArguments function from @elastic/elasticsearch
+    if (typeof options === 'function') {
+        callback = options;
+        options = {};
+    }
+    if (typeof params === 'function' || params == null) {
+        callback = params;
+        params = {};
+        options = {};
+    }
+    return [params, options, callback];
+}
+
 function getPort(port: string, protocol: string): string {
     if (port) return port;
 
@@ -62,6 +76,18 @@ export function onResponse(
             true
         );
     }
+
+    span.end();
+}
+
+export function onError(span: Span, err) {
+    span.recordException(err);
+    span.setStatus({
+        code: SpanStatusCode.ERROR,
+        message: err.message,
+    });
+
+    span.end();
 }
 
 export const defaultDbStatementSerializer: DbStatementSerializer = (params, options) =>

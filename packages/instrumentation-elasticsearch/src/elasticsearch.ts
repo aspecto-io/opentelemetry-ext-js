@@ -1,6 +1,5 @@
-import { diag, context, SpanStatusCode, suppressInstrumentation } from '@opentelemetry/api';
+import { diag, context, suppressInstrumentation } from '@opentelemetry/api';
 import type elasticsearch from '@elastic/elasticsearch';
-import { ApiError, ApiResponse } from '@elastic/elasticsearch';
 import { ElasticsearchInstrumentationConfig } from './types';
 import {
     InstrumentationBase,
@@ -11,47 +10,16 @@ import {
 } from '@opentelemetry/instrumentation';
 import { VERSION } from './version';
 import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
-import { startSpan, onResponse, defaultDbStatementSerializer } from './utils';
-import { normalizeArguments } from '@elastic/elasticsearch/api/utils';
+import { startSpan, onError, onResponse, defaultDbStatementSerializer, normalizeArguments } from './utils';
+import { ELASTICSEARCH_API_FILES } from './helpers';
 
 type Config = InstrumentationConfig & ElasticsearchInstrumentationConfig;
 
-const apiFiles = [
-    'async_search',
-    'autoscaling',
-    'cat',
-    'ccr',
-    'cluster',
-    'dangling_indices',
-    'enrich',
-    'eql',
-    'graph',
-    'ilm',
-    'indices',
-    'ingest',
-    'license',
-    'logstash',
-    'migration',
-    'ml',
-    'monitoring',
-    'nodes',
-    'rollup',
-    'searchable_snapshots',
-    'security',
-    'slm',
-    'snapshot',
-    'sql',
-    'ssl',
-    'tasks',
-    'text_structure',
-    'transform',
-    'watcher',
-    'xpack',
-];
-
 export class ElasticsearchInstrumentation extends InstrumentationBase<typeof elasticsearch> {
     static readonly component = '@elastic/elasticsearch';
+
     protected _config: ElasticsearchInstrumentationConfig;
+    private _isEnabled = false;
 
     constructor(config: Config = {}) {
         super('opentelemetry-instrumentation-elasticsearch', VERSION, Object.assign({}, config));
@@ -62,22 +30,14 @@ export class ElasticsearchInstrumentation extends InstrumentationBase<typeof ela
     }
 
     protected init(): InstrumentationModuleDefinition<typeof elasticsearch> {
-        const apiInstrumentationNodeModule = apiFiles.map((apiClassName) => {
-            return new InstrumentationNodeModuleFile<any>(
-                `@elastic/elasticsearch/api/api/${apiClassName}.js`,
-                ['*'],
-                this.patchApiClass.bind(this, apiClassName),
-                this.unpatchApiClass.bind(this, apiClassName)
-            );
-        });
-
-        apiInstrumentationNodeModule.push(
-            new InstrumentationNodeModuleFile<any>(
-                `@elastic/elasticsearch/api/index.js`,
-                ['*'],
-                this.patchApiClass.bind(this, 'client'),
-                this.unpatchApiClass.bind(this)
-            )
+        const apiModuleFiles = ELASTICSEARCH_API_FILES.map(
+            ({ path, operationClassName }) =>
+                new InstrumentationNodeModuleFile<any>(
+                    `@elastic/elasticsearch/api/${path}`,
+                    ['*'],
+                    this.patch.bind(this, operationClassName),
+                    this.unpatch.bind(this)
+                )
         );
 
         const module = new InstrumentationNodeModuleDefinition<typeof elasticsearch>(
@@ -85,58 +45,86 @@ export class ElasticsearchInstrumentation extends InstrumentationBase<typeof ela
             ['*'],
             undefined,
             undefined,
-            apiInstrumentationNodeModule
+            apiModuleFiles
         );
-
-        normalizeArguments;
 
         return module;
     }
 
-    protected patchApiClass(apiClassName, moduleExports) {
-        Object.keys(moduleExports.prototype).forEach((functionName) => {
-            this._wrap(moduleExports.prototype, functionName, this.patchApiFunc.bind(this, apiClassName, functionName));
+    private patchObject(operationClassName: string, object) {
+        Object.keys(object).forEach((functionName) => {
+            if (typeof object[functionName] === 'object') {
+                this.patchObject(`${operationClassName}.${functionName}`, object[functionName]);
+            } else {
+                this._wrap(object, functionName, this.wrappedApiRequest.bind(this, operationClassName, functionName));
+            }
         });
-
-        return moduleExports;
     }
 
-    protected unpatchApiClass(moduleExports) {
-        diag.debug(`elasticsearch instrumentation: unpatch elasticsearch: ${moduleExports}`);
+    protected patch(operationClassName: string, moduleExports) {
+        diag.debug(`elasticsearch instrumentation: patch elasticsearch ${operationClassName}.`);
+        this._isEnabled = true;
 
-        Object.keys(moduleExports.prototype).forEach((functionName) => {
-            this._unwrap(moduleExports.prototype, functionName);
-        });
+        const modulePrototypeKeys = Object.keys(moduleExports.prototype);
+        if (modulePrototypeKeys.length > 0) {
+            modulePrototypeKeys.forEach((functionName) => {
+                this._wrap(
+                    moduleExports.prototype,
+                    functionName,
+                    this.wrappedApiRequest.bind(this, operationClassName, functionName)
+                );
+            });
+            return moduleExports;
+        }
 
-        return moduleExports;
-    }
-
-    private patchApiFunc(apiClassName: string, functionName: string, originalFunction: Function) {
+        // For versions <= 7.9.0
         const self = this;
-        const dbStatementSerializer = this._config.dbStatementSerializer || defaultDbStatementSerializer;
-        return function (...args) {
-            const [params, options, originalCallback] = normalizeArguments(...args);
+        return function (opts) {
+            const module = moduleExports(opts);
+            self.patchObject(operationClassName, module);
+            return module;
+        };
+    }
 
+    protected unpatch(moduleExports) {
+        diag.debug(`elasticsearch instrumentation: unpatch elasticsearch.`);
+        this._isEnabled = false;
+
+        const modulePrototypeKeys = Object.keys(moduleExports.prototype);
+        if (modulePrototypeKeys.length > 0) {
+            modulePrototypeKeys.forEach((functionName) => {
+                this._unwrap(moduleExports.prototype, functionName);
+            });
+        } else {
+            // Unable to unwrap function for versions <= 7.9.0. Using _isEnabled flag instead.
+        }
+    }
+
+    private wrappedApiRequest(apiClassName: string, functionName: string, originalFunction: Function) {
+        const self = this;
+        return function (...args) {
+            if (!self._isEnabled) {
+                return originalFunction.apply(this, args);
+            }
+
+            const [params, options, originalCallback] = normalizeArguments(args[0], args[1], args[2]);
             const span = startSpan({
                 tracer: self.tracer,
                 attributes: {
                     [DatabaseAttribute.DB_OPERATION]: `${apiClassName}.${functionName}`,
-                    [DatabaseAttribute.DB_STATEMENT]: dbStatementSerializer(params, options),
+                    [DatabaseAttribute.DB_STATEMENT]: (
+                        self._config.dbStatementSerializer || defaultDbStatementSerializer
+                    )(params, options),
                 },
             });
 
             if (originalCallback) {
-                const wrappedCallback = function (err: ApiError, result: ApiResponse) {
+                const wrappedCallback = function (err, result) {
                     if (err) {
-                        span.recordException(err);
-                        span.setStatus({
-                            code: SpanStatusCode.ERROR,
-                            message: err.message,
-                        });
+                        onError(span, err);
                     } else {
                         onResponse(span, result, self._config.responseHook);
                     }
-                    span.end();
 
                     return originalCallback.call(this, err, result);
                 };
@@ -144,20 +132,13 @@ export class ElasticsearchInstrumentation extends InstrumentationBase<typeof ela
                 return self._callOriginalFunction(() => originalFunction.call(this, params, options, wrappedCallback));
             } else {
                 const promise = self._callOriginalFunction(() => originalFunction.apply(this, args));
-
                 promise.then(
-                    (result: ApiResponse) => {
+                    (result) => {
                         onResponse(span, result, self._config.responseHook);
-                        span.end();
                         return result;
                     },
-                    (err: ApiError) => {
-                        span.recordException(err);
-                        span.setStatus({
-                            code: SpanStatusCode.ERROR,
-                            message: err.message,
-                        });
-                        span.end();
+                    (err) => {
+                        onError(span, err);
                         return err;
                     }
                 );
