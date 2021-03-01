@@ -1,4 +1,4 @@
-import { diag, context, suppressInstrumentation, setSpan } from '@opentelemetry/api';
+import { diag, context, suppressInstrumentation, setSpan, Span } from '@opentelemetry/api';
 import type elasticsearch from '@elastic/elasticsearch';
 import { ElasticsearchInstrumentationConfig } from './types';
 import {
@@ -12,11 +12,13 @@ import { VERSION } from './version';
 import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
 import { startSpan, onError, onResponse, defaultDbStatementSerializer, normalizeArguments } from './utils';
 import { ELASTICSEARCH_API_FILES } from './helpers';
+
 export class ElasticsearchInstrumentation extends InstrumentationBase<typeof elasticsearch> {
     static readonly component = '@elastic/elasticsearch';
 
     protected _config: ElasticsearchInstrumentationConfig;
     private _isEnabled = false;
+    private moduleVersion: string;
 
     constructor(config: ElasticsearchInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-elasticsearch', VERSION, Object.assign({}, config));
@@ -58,8 +60,9 @@ export class ElasticsearchInstrumentation extends InstrumentationBase<typeof ela
         });
     }
 
-    protected patch(operationClassName: string, moduleExports) {
+    protected patch(operationClassName: string, moduleExports, moduleVersion: string) {
         diag.debug(`elasticsearch instrumentation: patch elasticsearch ${operationClassName}.`);
+        this.moduleVersion = moduleVersion;
         this._isEnabled = true;
 
         const modulePrototypeKeys = Object.keys(moduleExports.prototype);
@@ -115,6 +118,7 @@ export class ElasticsearchInstrumentation extends InstrumentationBase<typeof ela
                     )(operation, params, options),
                 },
             });
+            self._addModuleVersionIfNeeded(span);
 
             if (originalCallback) {
                 const wrappedCallback = function (err, result) {
@@ -148,12 +152,18 @@ export class ElasticsearchInstrumentation extends InstrumentationBase<typeof ela
         };
     }
 
-    private _callOriginalFunction<T>(span, originalFunction: (...args: any[]) => T): T {
+    private _callOriginalFunction<T>(span: Span, originalFunction: (...args: any[]) => T): T {
         if (this._config?.suppressInternalInstrumentation) {
             return context.with(suppressInstrumentation(context.active()), originalFunction);
         } else {
             const activeContextWithSpan = setSpan(context.active(), span);
             return context.with(activeContextWithSpan, originalFunction);
+        }
+    }
+
+    private _addModuleVersionIfNeeded(span: Span) {
+        if (this._config.moduleVersionAttributeName) {
+            span.setAttribute(this._config.moduleVersionAttributeName, this.moduleVersion);
         }
     }
 }

@@ -36,6 +36,7 @@ Elasticsearch instrumentation has few options available to choose from. You can 
 | `suppressInternalInstrumentation` | `boolean` | Elasticsearch operation use http/https under the hood. Setting this to true will hide the underlying request spans (if instrumented). |
 | `responseHook` | `ElasticsearchResponseCustomAttributesFunction` | Hook called before response is returned, which allows to add custom attributes to span.      |
 | `dbStatementSerializer` | `DbStatementSerializer` | Elasticsearch instrumentation will serialize `db.statement` using the specified function.
+| `moduleVersionAttributeName` | `string` | If passed, a span attribute will be added to all spans with key of the provided `moduleVersionAttributeName` and value of the patched module version |
 
 Please make sure `dbStatementSerializer` is error proof, as errors are not handled while executing this function.
 
