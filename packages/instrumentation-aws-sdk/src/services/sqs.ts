@@ -15,11 +15,9 @@ import { RequestMetadata, ServiceExtension } from './ServiceExtension';
 import * as AWS from 'aws-sdk';
 import {
     MessageBodyAttributeMap,
-    SendMessageRequest,
-    SendMessageBatchRequest,
     SendMessageBatchRequestEntry,
 } from 'aws-sdk/clients/sqs';
-import { AwsSdkSqsProcessCustomAttributeFunction } from '../types';
+import { AwsSdkSqsProcessCustomAttributeFunction, NormalizedRequest, NormalizedResponse } from '../types';
 
 export enum SqsAttributeNames {
     // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md
@@ -64,8 +62,8 @@ export class SqsServiceExtension implements ServiceExtension {
         private sqsProcessHook: AwsSdkSqsProcessCustomAttributeFunction
     ) {}
 
-    requestHook(request: AWS.Request<any, any>): RequestMetadata {
-        const queueUrl = this.extractQueueUrl(request);
+    requestPreSpanHook(request: NormalizedRequest): RequestMetadata {
+        const queueUrl = this.extractQueueUrl(request.commandInput);
         const queueName = this.extractQueueNameFromUrl(queueUrl);
         let spanKind: SpanKind = SpanKind.CLIENT;
         let spanName: string;
@@ -79,8 +77,7 @@ export class SqsServiceExtension implements ServiceExtension {
 
         let isIncoming = false;
 
-        const operation = (request as any)?.operation;
-        switch (operation) {
+        switch (request.commandName) {
             case 'receiveMessage':
                 {
                     isIncoming = true;
@@ -88,8 +85,7 @@ export class SqsServiceExtension implements ServiceExtension {
                     spanName = `${queueName} receive`;
                     spanAttributes[SqsAttributeNames.MESSAGING_OPERATION] = 'receive';
 
-                    const params: Record<string, any> = (request as any).params;
-                    params.MessageAttributeNames = (params.MessageAttributeNames ?? []).concat(propagation.fields());
+                    request.commandInput.MessageAttributeNames = (request.commandInput.MessageAttributeNames ?? []).concat(propagation.fields());
                 }
                 break;
 
@@ -108,22 +104,22 @@ export class SqsServiceExtension implements ServiceExtension {
         };
     }
 
-    requestPostSpanHook = (request: AWS.Request<any, any>) => {
-        const operation = (request as any)?.operation;
-        switch (operation) {
+    requestPostSpanHook = (request: NormalizedRequest) => {
+        switch (request.commandName) {
             case 'sendMessage':
                 {
-                    const params: SendMessageRequest = (request as any).params;
-                    params.MessageAttributes = this.InjectPropagationContext(params.MessageAttributes);
+                    const origMessageAttributes = request.commandInput['MessageAttributes'] ?? {};
+                    if(origMessageAttributes) {
+                        request.commandInput['MessageAttributes'] = this.InjectPropagationContext(origMessageAttributes);
+                    }
                 }
                 break;
 
             case 'sendMessageBatch':
                 {
-                    const params: SendMessageBatchRequest = (request as any).params;
-                    params.Entries.forEach((messageParams: SendMessageBatchRequestEntry) => {
+                    request.commandInput?.Entries?.forEach((messageParams: SendMessageBatchRequestEntry) => {
                         messageParams.MessageAttributes = this.InjectPropagationContext(
-                            messageParams.MessageAttributes
+                            messageParams.MessageAttributes ?? {}
                         );
                     });
                 }
@@ -131,10 +127,10 @@ export class SqsServiceExtension implements ServiceExtension {
         }
     };
 
-    responseHook = (response: AWS.Response<any, any>, span: Span) => {
+    responseHook = (response: NormalizedResponse, span: Span) => {
         const messages: AWS.SQS.Message[] = response?.data?.Messages;
         if (messages) {
-            const queueUrl = this.extractQueueUrl((response as any)?.request);
+            const queueUrl = this.extractQueueUrl(response.request.commandInput);
             const queueName = this.extractQueueNameFromUrl(queueUrl);
 
             pubsubPropagation.patchMessagesArrayToStartProcessSpans<AWS.SQS.Message>({
@@ -153,16 +149,15 @@ export class SqsServiceExtension implements ServiceExtension {
                         [SqsAttributeNames.MESSAGING_OPERATION]: 'process',
                     },
                 }),
-                processHook: (span: Span, message: AWS.SQS.Message) =>
-                    this.sqsProcessHook ? this.sqsProcessHook(span, message) : {},
+                processHook: (span: Span, message: AWS.SQS.Message) => this.sqsProcessHook?.(span, message),
             });
 
             pubsubPropagation.patchArrayForProcessSpans(messages, this.tracer, context.active());
         }
     };
 
-    extractQueueUrl = (request: AWS.Request<any, any>): string => {
-        return (request as any)?.params?.QueueUrl;
+    extractQueueUrl = (commandInput: Record<string, any>): string => {
+        return commandInput?.QueueUrl;
     };
 
     extractQueueNameFromUrl = (queueUrl: string): string => {

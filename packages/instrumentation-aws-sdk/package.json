@@ -38,6 +38,7 @@
         "opentelemetry-propagation-utils": "^0.4.0"
     },
     "devDependencies": {
+        "@aws-sdk/types": "^3.6.1",
         "@opentelemetry/api": "^0.17.0",
         "@opentelemetry/node": "^0.17.0",
         "@opentelemetry/tracing": "^0.17.0",

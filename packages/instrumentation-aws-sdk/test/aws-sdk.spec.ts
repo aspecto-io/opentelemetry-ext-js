@@ -222,7 +222,7 @@ describe('instrumentation-aws-sdk', () => {
             mockAwsSend(responseMockSuccess, 'data returned from operation');
             const config = {
                 preRequestHook: (span: Span, request: any) => {
-                    span.setAttribute('attribute from hook', request.params['Bucket']);
+                    span.setAttribute('attribute from hook', request.commandInput['Bucket']);
                 },
             };
 
