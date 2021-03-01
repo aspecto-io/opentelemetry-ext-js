@@ -3,6 +3,7 @@
     "private": true,
     "scripts": {
         "test": "lerna run test",
+        "test:ci": "npm run test",
         "build": "lerna run build",
         "postinstall": "lerna bootstrap",
         "prettier": "prettier --config .prettierrc.yml --write \"**/*.{ts,tsx,js,jsx,json}\"",

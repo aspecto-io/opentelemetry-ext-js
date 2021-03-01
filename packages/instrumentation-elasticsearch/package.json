@@ -32,7 +32,9 @@
         "watch": "tsc -w",
         "version:update": "node ../../scripts/version-update.js",
         "version": "yarn run version:update",
-        "test": "mocha"
+        "test": "mocha",
+        "test-all-versions": "tav",
+        "test:ci": "npm run test-all-versions"
     },
     "bugs": {
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
@@ -40,8 +42,7 @@
     "dependencies": {
         "@opentelemetry/api": "^0.17.0",
         "@opentelemetry/instrumentation": "^0.17.0",
-        "@opentelemetry/semantic-conventions": "^0.17.0",
-        "test-all-versions": "^5.0.1"
+        "@opentelemetry/semantic-conventions": "^0.17.0"
     },
     "devDependencies": {
         "@elastic/elasticsearch": "^7.8.0",
@@ -51,7 +52,8 @@
         "expect": "^26.6.2",
         "mocha": "^8.3.0",
         "ts-node": "^9.1.1",
-        "typescript": "^4.0.3"
+        "typescript": "^4.0.3",
+        "test-all-versions": "^5.0.1"
     },
     "mocha": {
         "extension": [
