@@ -1,15 +1,7 @@
 import { Span } from '@opentelemetry/api';
 import { InstrumentationConfig } from '@opentelemetry/instrumentation';
 
-export interface SerializerPayload {
-    condition?: any;
-    options?: any;
-    updates?: any;
-    document?: any;
-    aggregatePipeline?: any;
-}
-
-export type DbStatementSerializer = (params?: object, options?: object) => string;
+export type DbStatementSerializer = (operation?: string, params?: object, options?: object) => string;
 
 export type ElasticsearchResponseCustomAttributesFunction = (span: Span, response: any) => void;
 
