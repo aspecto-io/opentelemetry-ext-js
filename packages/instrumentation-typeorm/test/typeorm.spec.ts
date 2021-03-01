@@ -136,6 +136,24 @@ describe('instrumentation-typeorm', () => {
             expect(attributes[DatabaseAttribute.DB_OPERATION]).toBe('remove');
             expect(attributes[DatabaseAttribute.DB_SYSTEM]).toBe(options.type);
         });
+
+        it('moduleVersionAttributeName works', async () => {
+            setMocks();
+            instrumentation.disable();
+            instrumentation.setConfig({
+                moduleVersionAttributeName: 'module.version'
+            });
+            instrumentation.enable();
+
+            const connection = await typeorm.createConnection(options);
+            const statement = { test: 123 };
+            await connection.manager.remove(statement);
+            const typeOrmSpans = getTypeormSpans();
+
+            expect(typeOrmSpans.length).toBe(1);
+            const attributes = typeOrmSpans[0].attributes;
+            expect(attributes['module.version']).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
+        });
     });
 
     describe('multiple connections', () => {

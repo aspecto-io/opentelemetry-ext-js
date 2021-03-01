@@ -283,6 +283,6 @@ describe('instrumentation-sequelize', () => {
         }
         const spans = getSequelizeSpans();
         expect(spans.length).toBe(1);
-        expect(typeof spans[0].attributes['module.version']).toBe('string');
-    })
+        expect(spans[0].attributes['module.version']).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
+    });
 });

@@ -341,9 +341,8 @@ describe('instrumentation-aws-sdk', () => {
             await s3.createBucket({ Bucket: 'aws-test-bucket' }).promise();
             const awsSpans = getAwsSpans();
             expect(awsSpans.length).toBe(1);
-            console.log(awsSpans[0].attributes);
 
-            expect(typeof awsSpans[0].attributes['module.version']).toBe('string');
+            expect(awsSpans[0].attributes['module.version']).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
         });
     });
 });

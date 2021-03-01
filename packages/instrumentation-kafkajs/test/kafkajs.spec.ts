@@ -376,7 +376,7 @@ describe('instrumentation-kafkajs', () => {
                 const spans = memoryExporter.getFinishedSpans();
                 expect(spans.length).toBe(1);
                 const span = spans[0];
-                expect(typeof span.attributes['module.version']).toBe('string');
+                expect(span.attributes['module.version']).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
             });
         });
     });
@@ -648,7 +648,7 @@ describe('instrumentation-kafkajs', () => {
                 const spans = memoryExporter.getFinishedSpans();
                 expect(spans.length).toBe(1);
                 const span = spans[0];
-                expect(typeof span.attributes['module.version']).toBe('string');
+                expect(span.attributes['module.version']).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
             });
         });
     });

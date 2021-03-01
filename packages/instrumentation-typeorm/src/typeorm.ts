@@ -6,24 +6,22 @@ import { VERSION } from './version';
 import type * as typeorm from 'typeorm';
 import {
     InstrumentationBase,
-    InstrumentationConfig,
     InstrumentationModuleDefinition,
     InstrumentationNodeModuleDefinition,
     isWrapped,
     safeExecuteInTheMiddle,
 } from '@opentelemetry/instrumentation';
 
-type Config = InstrumentationConfig & TypeormInstrumentationConfig;
-
 export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> {
     static readonly component = 'typeorm';
-    protected _config!: Config;
+    protected _config!: TypeormInstrumentationConfig;
+    private moduleVersion: string;
 
-    constructor(config: Config = {}) {
+    constructor(config: TypeormInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-typeorm', VERSION, Object.assign({}, config));
     }
 
-    setConfig(config: Config = {}) {
+    setConfig(config: TypeormInstrumentationConfig = {}) {
         this._config = Object.assign({}, config);
     }
 
@@ -37,7 +35,8 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
         return module;
     }
 
-    protected patch(moduleExports: typeof typeorm) {
+    protected patch(moduleExports: typeof typeorm, moduleVersion: string) {
+        this.moduleVersion = moduleVersion;
         if (moduleExports === undefined || moduleExports === null) {
             return moduleExports;
         }
@@ -110,6 +109,10 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                     component: 'typeorm',
                 };
 
+                if (self._config.moduleVersionAttributeName) {
+                    attributes[self._config.moduleVersionAttributeName] = self.moduleVersion;
+                }
+
                 Object.entries(attributes).forEach(([key, value]) => {
                     if (value === undefined) delete attributes[key];
                 });
@@ -128,8 +131,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                         safeExecuteInTheMiddle(
                             () => self._config.responseHook(newSpan, resolved),
                             (e: Error) => {
-                                if (e)
-                                    diag.error('typeorm instrumentation: responseHook error', e);
+                                if (e) diag.error('typeorm instrumentation: responseHook error', e);
                             },
                             true
                         );

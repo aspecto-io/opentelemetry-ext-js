@@ -471,16 +471,16 @@ describe('mongoose instrumentation', () => {
         });
 
         it('responseHook works with callback in aggregate patch', (done) => {
-            User.aggregate([
-                { $match: { firstName: 'John' } },
-                { $group: { _id: 'John', total: { $sum: '$amount' } } },
-            ], () => {
-                const spans = getSpans();
-                expect(spans.length).toBe(1);
-                assertSpan(spans[0]);
-                expect(JSON.parse(spans[0].attributes[RESPONSE] as string)).toEqual([{ _id: 'John', total: 0 }]);
-                done();
-            });
+            User.aggregate(
+                [{ $match: { firstName: 'John' } }, { $group: { _id: 'John', total: { $sum: '$amount' } } }],
+                () => {
+                    const spans = getSpans();
+                    expect(spans.length).toBe(1);
+                    assertSpan(spans[0]);
+                    expect(JSON.parse(spans[0].attributes[RESPONSE] as string)).toEqual([{ _id: 'John', total: 0 }]);
+                    done();
+                }
+            );
         });
 
         it('error in response hook does not fail anything', async () => {
@@ -504,7 +504,7 @@ describe('mongoose instrumentation', () => {
         before(() => {
             instrumentation.disable();
             instrumentation.setConfig({
-                moduleVersionAttributeName: VERSION_ATTR
+                moduleVersionAttributeName: VERSION_ATTR,
             });
             instrumentation.enable();
         });
@@ -514,7 +514,7 @@ describe('mongoose instrumentation', () => {
             const spans = getSpans();
             expect(spans.length).toBe(1);
             assertSpan(spans[0]);
-            expect(typeof spans[0].attributes[VERSION_ATTR]).toBe('string');
+            expect(spans[0].attributes[VERSION_ATTR]).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
         });
 
         it('moduleVersionAttributeName with model methods patch', async () => {
@@ -528,7 +528,7 @@ describe('mongoose instrumentation', () => {
             const spans = getSpans();
             expect(spans.length).toBe(1);
             assertSpan(spans[0]);
-            expect(typeof spans[0].attributes[VERSION_ATTR]).toBe('string');
+            expect(spans[0].attributes[VERSION_ATTR]).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
         });
 
         it('moduleVersionAttributeName works with aggregate patch', async () => {
@@ -540,7 +540,7 @@ describe('mongoose instrumentation', () => {
             const spans = getSpans();
             expect(spans.length).toBe(1);
             assertSpan(spans[0]);
-            expect(typeof spans[0].attributes[VERSION_ATTR]).toBe('string');
+            expect(spans[0].attributes[VERSION_ATTR]).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
         });
-    })
+    });
 });
