@@ -16,7 +16,7 @@ For further automatic instrumentation instruction see the [@opentelemetry/instru
 ```js
 const { NodeTracerProvider } = require('@opentelemetry/node');
 const { registerInstrumentations } = require('@opentelemetry/instrumentation');
-const { SequelizeInstrumentation } = require('opentelemetry-instrumentation-mongoose');
+const { MongooseInstrumentation } = require('opentelemetry-instrumentation-mongoose');
 
 registerInstrumentations({
   traceProvider,
