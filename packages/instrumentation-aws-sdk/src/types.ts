@@ -33,4 +33,10 @@ export interface AwsSdkInstrumentationConfig extends InstrumentationConfig {
      * effectively causing those http spans to be non-recordable.
      */
     suppressInternalInstrumentation?: boolean;
+
+    /** 
+     * If passed, a span attribute will be added to all spans with key of the provided "moduleVersionAttributeName" 
+     * and value of the module version.
+     */
+    moduleVersionAttributeName?: string;
 }

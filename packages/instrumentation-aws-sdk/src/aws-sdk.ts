@@ -16,26 +16,24 @@ import { AwsSdkInstrumentationConfig } from './types';
 import { VERSION } from './version';
 import {
     InstrumentationBase,
-    InstrumentationConfig,
     InstrumentationModuleDefinition,
     InstrumentationNodeModuleDefinition,
     isWrapped,
     safeExecuteInTheMiddle,
 } from '@opentelemetry/instrumentation';
 
-type Config = InstrumentationConfig & AwsSdkInstrumentationConfig;
-
 export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
     static readonly component = 'aws-sdk';
-    protected _config!: Config;
+    protected _config!: AwsSdkInstrumentationConfig;
     private REQUEST_SPAN_KEY = Symbol('opentelemetry.instrumentation.aws-sdk.span');
     private servicesExtensions: ServicesExtensions;
+    private moduleVersion: string;
 
-    constructor(config: Config = {}) {
+    constructor(config: AwsSdkInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-aws-sdk', VERSION, Object.assign({}, config));
     }
 
-    setConfig(config: Config = {}) {
+    setConfig(config: AwsSdkInstrumentationConfig = {}) {
         this._config = Object.assign({}, config);
     }
 
@@ -49,7 +47,8 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
         return module;
     }
 
-    protected patch(moduleExports: typeof AWS) {
+    protected patch(moduleExports: typeof AWS, moduleVersion: string) {
+        this.moduleVersion = moduleVersion;
         this.servicesExtensions = new ServicesExtensions(this.tracer, this._config);
 
         diag.debug(`applying patch to ${AwsInstrumentation.component}`);
@@ -102,6 +101,10 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
                 ...additionalSpanAttributes,
             },
         });
+
+        if (this._config.moduleVersionAttributeName) {
+            newSpan.setAttribute(this._config.moduleVersionAttributeName, this.moduleVersion);
+        }
 
         request[this.REQUEST_SPAN_KEY] = newSpan;
         return newSpan;

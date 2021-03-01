@@ -14,7 +14,6 @@ import { SequelizeInstrumentationConfig } from './types';
 import { VERSION } from './version';
 import {
     InstrumentationBase,
-    InstrumentationConfig,
     InstrumentationModuleDefinition,
     InstrumentationNodeModuleDefinition,
     InstrumentationNodeModuleFile,
@@ -22,17 +21,16 @@ import {
     safeExecuteInTheMiddle,
 } from '@opentelemetry/instrumentation';
 
-type Config = InstrumentationConfig & SequelizeInstrumentationConfig;
-
 export class SequelizeInstrumentation extends InstrumentationBase<typeof sequelize> {
     static readonly component = 'sequelize';
-    protected _config!: Config;
+    protected _config!: SequelizeInstrumentationConfig;
+    private moduleVersion: string;
 
-    constructor(config: Config = {}) {
+    constructor(config: SequelizeInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-sequelize', VERSION, Object.assign({}, config));
     }
 
-    setConfig(config: Config = {}) {
+    setConfig(config: SequelizeInstrumentationConfig = {}) {
         this._config = Object.assign({}, config);
     }
 
@@ -71,7 +69,8 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
         return moduleExports;
     }
 
-    protected patch(moduleExports: typeof sequelize): typeof sequelize {
+    protected patch(moduleExports: typeof sequelize, moduleVersion: string) {
+        this.moduleVersion = moduleVersion;
         if (moduleExports === undefined || moduleExports === null) {
             return moduleExports;
         }
@@ -127,6 +126,10 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
                 component: 'sequelize',
                 // [GeneralAttribute.NET_PEER_IP]: '?', // Part of protocol
             };
+
+            if (self._config.moduleVersionAttributeName) {
+                attributes[self._config.moduleVersionAttributeName] = self.moduleVersion;
+            }
 
             Object.entries(attributes).forEach(([key, value]) => {
                 if (value === undefined) delete attributes[key];

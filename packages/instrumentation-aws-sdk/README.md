@@ -43,7 +43,8 @@ aws-sdk instrumentation has few options available to choose from. You can set th
 | `preRequestHook` | `AwsSdkRequestCustomAttributeFunction` | Hook called before request send, which allow to add custom attributes to span. |
 | `responseHook` | `AwsSdkResponseCustomAttributeFunction` | Hook for adding custom attributes when response is received from aws. |
 | `sqsProcessHook` | `AwsSdkSqsProcessCustomAttributeFunction` | Hook called after starting sqs `process` span (for each sqs received message), which allow to add custom attributes to it. |
-| `suppressInternalInstrumentation` | boolean | Most aws operation use http request under the hood. If http instrumentation is enabled, each aws operation will also create an http/s child describing the communication with amazon servers. Setting the suppressInternalInstrumentation` config value to `true` will cause the instrumentation to suppress instrumentation of underlying operations, effectively causing those http spans to be non-recordable. |
+| `suppressInternalInstrumentation` | `boolean` | Most aws operation use http requests under the hood. Set this to `true` to hide all underlying http spans. |
+| `moduleVersionAttributeName` | `string` | If passed, a span attribute will be added to all spans with key of the provided `moduleVersionAttributeName` and value of the patched module version |
 
 
 
