@@ -1,4 +1,4 @@
-import { diag, context, suppressInstrumentation } from '@opentelemetry/api';
+import { diag, context, suppressInstrumentation, setSpan } from '@opentelemetry/api';
 import type elasticsearch from '@elastic/elasticsearch';
 import { ElasticsearchInstrumentationConfig } from './types';
 import {
@@ -12,20 +12,17 @@ import { VERSION } from './version';
 import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
 import { startSpan, onError, onResponse, defaultDbStatementSerializer, normalizeArguments } from './utils';
 import { ELASTICSEARCH_API_FILES } from './helpers';
-
-type Config = InstrumentationConfig & ElasticsearchInstrumentationConfig;
-
 export class ElasticsearchInstrumentation extends InstrumentationBase<typeof elasticsearch> {
     static readonly component = '@elastic/elasticsearch';
 
     protected _config: ElasticsearchInstrumentationConfig;
     private _isEnabled = false;
 
-    constructor(config: Config = {}) {
+    constructor(config: ElasticsearchInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-elasticsearch', VERSION, Object.assign({}, config));
     }
 
-    setConfig(config: Config = {}) {
+    setConfig(config: ElasticsearchInstrumentationConfig = {}) {
         this._config = Object.assign({}, config);
     }
 
@@ -108,13 +105,14 @@ export class ElasticsearchInstrumentation extends InstrumentationBase<typeof ela
             }
 
             const [params, options, originalCallback] = normalizeArguments(args[0], args[1], args[2]);
+            const operation = `${apiClassName}.${functionName}`;
             const span = startSpan({
                 tracer: self.tracer,
                 attributes: {
-                    [DatabaseAttribute.DB_OPERATION]: `${apiClassName}.${functionName}`,
+                    [DatabaseAttribute.DB_OPERATION]: operation,
                     [DatabaseAttribute.DB_STATEMENT]: (
                         self._config.dbStatementSerializer || defaultDbStatementSerializer
-                    )(params, options),
+                    )(operation, params, options),
                 },
             });
 
@@ -129,9 +127,11 @@ export class ElasticsearchInstrumentation extends InstrumentationBase<typeof ela
                     return originalCallback.call(this, err, result);
                 };
 
-                return self._callOriginalFunction(() => originalFunction.call(this, params, options, wrappedCallback));
+                return self._callOriginalFunction(span, () =>
+                    originalFunction.call(this, params, options, wrappedCallback)
+                );
             } else {
-                const promise = self._callOriginalFunction(() => originalFunction.apply(this, args));
+                const promise = self._callOriginalFunction(span, () => originalFunction.apply(this, args));
                 promise.then(
                     (result) => {
                         onResponse(span, result, self._config.responseHook);
@@ -148,11 +148,12 @@ export class ElasticsearchInstrumentation extends InstrumentationBase<typeof ela
         };
     }
 
-    private _callOriginalFunction<T>(originalFunction: (...args: any[]) => T): T {
+    private _callOriginalFunction<T>(span, originalFunction: (...args: any[]) => T): T {
         if (this._config?.suppressInternalInstrumentation) {
             return context.with(suppressInstrumentation(context.active()), originalFunction);
         } else {
-            return originalFunction();
+            const activeContextWithSpan = setSpan(context.active(), span);
+            return context.with(activeContextWithSpan, originalFunction);
         }
     }
 }
