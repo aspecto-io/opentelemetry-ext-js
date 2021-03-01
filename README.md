@@ -23,6 +23,7 @@ js extensions for the [open-telemetry](https://opentelemetry.io/) project, from 
 | [opentelemetry-instrumentation-typeorm](./packages/instrumentation-typeorm) | [`TypeORM`](https://typeorm.io/) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-typeorm.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-typeorm) |
 | [opentelemetry-instrumentation-sequelize](./packages/instrumentation-sequelize) | [`Sequelize`](https://sequelize.org/) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-sequelize.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-sequelize) |
 | [opentelemetry-instrumentation-mongoose](./packages/instrumentation-mongoose) | [`mongoose`](https://mongoosejs.com/) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-mongoose.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-mongoose) |
+| [opentelemetry-instrumentation-elasticsearch](./packages/instrumentation-elasticsearch) | [`elasticsearch`](https://www.npmjs.com/package/@elastic/elasticsearch) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-elasticsearch.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-elasticsearch) |
 
 ## Compatibility with opentelemetry versions
 ### Instrumentations in this repo are using opentelemetry [Instrumentation API](https://github.com/open-telemetry/opentelemetry-js/tree/main/packages/opentelemetry-instrumentation).
