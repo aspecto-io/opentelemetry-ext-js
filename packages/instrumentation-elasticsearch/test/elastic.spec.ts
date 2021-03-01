@@ -26,7 +26,7 @@ describe('elasticsearch instrumentation', () => {
     beforeEach(() => {
         memoryExporter.reset();
     });
-
+    /*
     it('should create valid span', async () => {
         let client = new Client({ node: 'http://localhost:9200' });
 
@@ -63,4 +63,5 @@ describe('elasticsearch instrumentation', () => {
         const spans = memoryExporter.getFinishedSpans();
         expect(spans?.length).toBe(0);
     });
+*/
 });
