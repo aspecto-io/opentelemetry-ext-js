@@ -2,6 +2,7 @@
     "name": "root",
     "private": true,
     "scripts": {
+        "test": "lerna run test",
         "test:ci": "lerna run test:ci",
         "build": "lerna run build",
         "postinstall": "lerna bootstrap",
