@@ -8,4 +8,9 @@ export interface SequelizeInstrumentationConfig extends InstrumentationConfig {
     responseHook?: SequelizeResponseCustomAttributesFunction;
     /** Set to true if you only want to trace operation which has parent spans */
     ignoreOrphanedSpans?: boolean;
+    /** 
+     * If passed, a span attribute will be added to all spans with key of the provided "moduleVersionAttributeName" 
+     * and value of the module version.
+     */
+    moduleVersionAttributeName?: string;
 }

@@ -267,4 +267,22 @@ describe('instrumentation-sequelize', () => {
             expect(spans.length).toBe(0);
         });
     });
+
+    it('moduleVersionAttributeName', async () => {
+        instrumentation.disable();
+        const instance = new sequelize.Sequelize(`postgres://john@$localhost:1111/my-name`, { logging: false });
+        instance.define('User', { firstName: { type: sequelize.DataTypes.STRING } });
+        instrumentation.setConfig({
+            moduleVersionAttributeName: 'module.version',
+        });
+        instrumentation.enable();
+        try {
+            await instance.models.User.create({ firstName: 'Nir' });
+        } catch {
+            // Error is thrown but we don't care
+        }
+        const spans = getSequelizeSpans();
+        expect(spans.length).toBe(1);
+        expect(typeof spans[0].attributes['module.version']).toBe('string');
+    })
 });
