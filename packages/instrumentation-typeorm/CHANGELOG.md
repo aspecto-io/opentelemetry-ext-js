@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-typeorm@0.2.0...opentelemetry-instrumentation-typeorm@0.2.1) (2021-03-01)
+
+
+### Features
+
+* add moduleVersionAttributeName config to all plugins ([#71](https://github.com/aspecto-io/opentelemetry-ext-js/issues/71)) ([2af9ef2](https://github.com/aspecto-io/opentelemetry-ext-js/commit/2af9ef2457f849602b9303bc4a2287c2cc6d8936))
+
+
+
+
+
 # [0.2.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-typeorm@0.1.0...opentelemetry-instrumentation-typeorm@0.2.0) (2021-02-18)
 
 
