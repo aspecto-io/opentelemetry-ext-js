@@ -343,7 +343,7 @@ describe('instrumentation-aws-sdk', () => {
             expect(awsSpans.length).toBe(1);
             console.log(awsSpans[0].attributes);
 
-            expect(awsSpans[0].attributes['module.version']).toBeDefined();
+            expect(typeof awsSpans[0].attributes['module.version']).toBe('string');
         });
     });
 });

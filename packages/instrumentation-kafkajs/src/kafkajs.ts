@@ -19,24 +19,22 @@ import { VERSION } from './version';
 import { bufferTextMapGetter } from './propagtor';
 import {
     InstrumentationBase,
-    InstrumentationConfig,
     InstrumentationModuleDefinition,
     InstrumentationNodeModuleDefinition,
     safeExecuteInTheMiddle,
     isWrapped,
 } from '@opentelemetry/instrumentation';
 
-type Config = InstrumentationConfig & KafkaJsInstrumentationConfig;
-
 export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> {
     static readonly component = 'kafkajs';
-    protected _config!: Config;
+    protected _config!: KafkaJsInstrumentationConfig;
+    private moduleVersion: string;
 
-    constructor(config: Config = {}) {
+    constructor(config: KafkaJsInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-kafkajs', VERSION, Object.assign({}, config));
     }
 
-    setConfig(config: Config = {}) {
+    setConfig(config: KafkaJsInstrumentationConfig = {}) {
         this._config = Object.assign({}, config);
     }
 
@@ -50,8 +48,9 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
         return module;
     }
 
-    protected patch(moduleExports: typeof kafkaJs) {
+    protected patch(moduleExports: typeof kafkaJs, moduleVersion: string) {
         diag.debug('kafkajs instrumentation: applying patch');
+        this.moduleVersion = moduleVersion
 
         this.unpatch(moduleExports);
         this._wrap(moduleExports?.Kafka?.prototype, 'producer', this._getProducerPatch.bind(this));
@@ -266,6 +265,10 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
             context
         );
 
+        if (this._config.moduleVersionAttributeName) {
+            span.setAttribute(this._config.moduleVersionAttributeName, this.moduleVersion);
+        }
+
         if (this._config?.consumerHook && message) {
             safeExecuteInTheMiddle(
                 () => this._config.consumerHook!(span, topic, message),
@@ -288,6 +291,10 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
                 [MessagingAttribute.MESSAGING_DESTINATION_KIND]: 'topic',
             },
         });
+
+        if (this._config.moduleVersionAttributeName) {
+            span.setAttribute(this._config.moduleVersionAttributeName, this.moduleVersion);
+        }
 
         message.headers = message.headers ?? {};
         propagation.inject(setSpan(context.active(), span), message.headers);

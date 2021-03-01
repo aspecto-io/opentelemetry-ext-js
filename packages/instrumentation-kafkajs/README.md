@@ -43,6 +43,7 @@ kafkajs instrumentation has few options available to choose from. You can set th
 | -------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `producerHook` | `KafkaProducerCustomAttributeFunction` | Hook called before producer message is sent, which allow to add custom attributes to span.      |
 | `consumerHook` | `KafkaConsumerCustomAttributeFunction` | Hook called before consumer message is processed, which allow to add custom attributes to span. |
+| `moduleVersionAttributeName` | string | If passed, a span attribute will be added to all spans with key of the provided `moduleVersionAttributeName` and value of the patched module version |
 
 ---
 

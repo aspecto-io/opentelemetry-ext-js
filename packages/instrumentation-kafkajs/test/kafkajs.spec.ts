@@ -1,5 +1,5 @@
 import 'mocha';
-import { KafkaJsInstrumentation } from '../src';
+import { KafkaJsInstrumentation, KafkaJsInstrumentationConfig } from '../src';
 import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
@@ -296,8 +296,7 @@ describe('instrumentation-kafkajs', () => {
             beforeEach(async () => {
                 patchProducerSend(async (): Promise<RecordMetadata[]> => []);
 
-                const config = {
-                    enabled: true,
+                const config: KafkaJsInstrumentationConfig = {
                     producerHook: (span: Span, topic: string, message: Message) => {
                         span.setAttribute('attribute-from-hook', message.value as string);
                     },
@@ -329,8 +328,7 @@ describe('instrumentation-kafkajs', () => {
             beforeEach(async () => {
                 patchProducerSend(async (): Promise<RecordMetadata[]> => []);
 
-                const config = {
-                    enabled: true,
+                const config: KafkaJsInstrumentationConfig = {
                     producerHook: (span: Span, topic: string, message: Message) => {
                         throw new Error('error thrown from producer hook');
                     },
@@ -355,6 +353,30 @@ describe('instrumentation-kafkajs', () => {
                 expect(spans.length).toBe(1);
                 const span = spans[0];
                 expect(span.status.code).toStrictEqual(SpanStatusCode.UNSET);
+            });
+        });
+
+        describe('moduleVersionAttributeName config', () => {
+            beforeEach(async () => {
+                const config: KafkaJsInstrumentationConfig = {
+                    moduleVersionAttributeName: 'module.version'
+                };
+                instrumentation.disable();
+                instrumentation.setConfig(config);
+                instrumentation.enable();
+                producer = kafka.producer();
+            });
+    
+            it('adds module version to producer span', async () => {
+                await producer.send({
+                    topic: 'topic-name-1',
+                    messages: [{ value: 'testing message content' }],
+                });
+
+                const spans = memoryExporter.getFinishedSpans();
+                expect(spans.length).toBe(1);
+                const span = spans[0];
+                expect(typeof span.attributes['module.version']).toBe('string');
             });
         });
     });
@@ -426,8 +448,7 @@ describe('instrumentation-kafkajs', () => {
 
         describe('successful consumer hook', () => {
             beforeEach(async () => {
-                const config = {
-                    enabled: true,
+                const config: KafkaJsInstrumentationConfig = {
                     consumerHook: (span: Span, topic: string, message: Message) => {
                         span.setAttribute('attribute key from hook', message.value.toString());
                     },
@@ -456,8 +477,7 @@ describe('instrumentation-kafkajs', () => {
 
         describe('throwing consumer hook', () => {
             beforeEach(async () => {
-                const config = {
-                    enabled: true,
+                const config: KafkaJsInstrumentationConfig = {
                     consumerHook: (span: Span, topic: string, message: Message) => {
                         throw new Error('error thrown from consumer hook');
                     },
@@ -602,6 +622,33 @@ describe('instrumentation-kafkajs', () => {
 
                 expect(msg2Span.parentSpanId).toStrictEqual(recvSpan.spanContext.spanId);
                 expect(msg2Span.attributes[MessagingAttribute.MESSAGING_OPERATION]).toStrictEqual('process');
+            });
+        });
+
+        describe('moduleVersionAttributeName config', () => {
+            beforeEach(async () => {
+                const config: KafkaJsInstrumentationConfig = {
+                    moduleVersionAttributeName: 'module.version'
+                };
+                instrumentation.disable();
+                instrumentation.setConfig(config);
+                instrumentation.enable();
+                consumer = kafka.consumer({
+                    groupId: 'testing-group-id',
+                });
+                consumer.run({
+                    eachMessage: async (payload: EachMessagePayload): Promise<void> => {},
+                });
+            });
+    
+            it('adds module version to consumer span', async () => {
+                const payload: EachMessagePayload = createEachMessagePayload();
+                await runConfig.eachMessage(payload);
+    
+                const spans = memoryExporter.getFinishedSpans();
+                expect(spans.length).toBe(1);
+                const span = spans[0];
+                expect(typeof span.attributes['module.version']).toBe('string');
             });
         });
     });
