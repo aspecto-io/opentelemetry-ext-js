@@ -8,6 +8,8 @@ import { Neo4jInstrumentation } from '../src';
 import { assertSpan } from './assert';
 import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
 import { normalizeResponse } from './test-utils';
+import { map, mergeMap } from 'rxjs/operators';
+import { concat } from 'rxjs';
 
 const instrumentation = new Neo4jInstrumentation();
 instrumentation.enable();
@@ -161,9 +163,9 @@ describe('neo4j instrumentation', () => {
             instrumentation.setConfig({ ignoreOrphanedSpans: true });
             instrumentation.enable();
             const parent = provider.getTracer('test-tracer').startSpan('main');
-            await context.with(setSpan(context.active(), parent), () => 
+            await context.with(setSpan(context.active(), parent), () =>
                 driver.session().run('CREATE (n:MyLabel) RETURN n')
-            )
+            );
 
             const spans = getSpans();
             expect(spans.length).toBe(1);
@@ -226,13 +228,192 @@ describe('neo4j instrumentation', () => {
             instrumentation.disable();
             instrumentation.setConfig({
                 responseHook: () => {
-                    throw new Error('I throw..')
+                    throw new Error('I throw..');
                 },
             });
             instrumentation.enable();
             await driver.session().run('CREATE (n:MyLabel) RETURN n');
             const span = getSingleSpan();
             assertSpan(span);
+        });
+    });
+
+    describe('transaction', async () => {
+        it('instruments session readTransaction', async () => {
+            await driver.session().readTransaction((txc) => {
+                return txc.run('MATCH (person:Person) RETURN person.name AS name');
+            });
+            const span = getSingleSpan();
+            assertSpan(span);
+            expect(span.attributes[DatabaseAttribute.DB_OPERATION]).toBe('MATCH');
+            expect(span.attributes[DatabaseAttribute.DB_STATEMENT]).toBe(
+                'MATCH (person:Person) RETURN person.name AS name'
+            );
+        });
+
+        it('instruments session writeTransaction', async () => {
+            await driver.session().writeTransaction((txc) => {
+                return txc.run('MATCH (person:Person) RETURN person.name AS name');
+            });
+            const span = getSingleSpan();
+            assertSpan(span);
+            expect(span.attributes[DatabaseAttribute.DB_OPERATION]).toBe('MATCH');
+            expect(span.attributes[DatabaseAttribute.DB_STATEMENT]).toBe(
+                'MATCH (person:Person) RETURN person.name AS name'
+            );
+        });
+
+        it('instruments explicit transactions', async () => {
+            const txc = driver.session().beginTransaction();
+            await txc.run('MERGE (bob:Person {name: "Bob"}) RETURN bob.name AS name');
+            await txc.run('MERGE (adam:Person {name: "Adam"}) RETURN adam.name AS name');
+            await txc.commit();
+
+            const spans = getSpans();
+            expect(spans.length).toBe(2);
+        });
+    });
+
+    describe('rxSession', () => {
+        it('instruments "run"', (done) => {
+            driver
+                .rxSession()
+                .run('MERGE (n:MyLabel) RETURN n')
+                .records()
+                .subscribe({
+                    complete: () => {
+                        const span = getSingleSpan();
+                        assertSpan(span);
+                        done();
+                    },
+                });
+        });
+
+        it('works when piping response', (done) => {
+            const rxSession = driver.rxSession();
+            rxSession
+                .run('MERGE (james:Person {name: $nameParam}) RETURN james.name AS name', {
+                    nameParam: 'Bob',
+                })
+                .records()
+                .pipe(map((record) => record.get('name')))
+                .subscribe({
+                    next: () => {},
+                    complete: () => {
+                        const span = getSingleSpan();
+                        assertSpan(span);
+                        expect(span.attributes[DatabaseAttribute.DB_STATEMENT]).toBe(
+                            'MERGE (james:Person {name: $nameParam}) RETURN james.name AS name'
+                        );
+                        done();
+                    },
+                    error: () => {},
+                });
+        });
+
+        it('works with response hook', (done) => {
+            instrumentation.disable();
+            instrumentation.setConfig({
+                responseHook: (span, response) => {
+                    span.setAttribute('db.response', normalizeResponse(response));
+                },
+            });
+            instrumentation.enable();
+
+            driver
+                .rxSession()
+                .run('MERGE (n:MyLabel) RETURN n')
+                .records()
+                .subscribe({
+                    complete: () => {
+                        const span = getSingleSpan();
+                        assertSpan(span);
+                        expect(span.attributes['db.response']).toBe(`[{"n":{"labels":["MyLabel"],"properties":{}}}]`);
+                        done();
+                    },
+                });
+        });
+    });
+
+    describe('reactive transaction', () => {
+        it('instruments rx session readTransaction', (done) => {
+            driver
+                .rxSession()
+                .readTransaction((txc) =>
+                    txc
+                        .run('MATCH (person:Person) RETURN person.name AS name')
+                        .records()
+                        .pipe(map((record) => record.get('name')))
+                )
+                .subscribe({
+                    next: () => {},
+                    complete: () => {
+                        const span = getSingleSpan();
+                        assertSpan(span);
+                        expect(span.attributes[DatabaseAttribute.DB_STATEMENT]).toBe(
+                            'MATCH (person:Person) RETURN person.name AS name'
+                        );
+                        done();
+                    },
+                    error: () => {},
+                });
+        });
+
+        it('instruments rx session writeTransaction', (done) => {
+            driver
+                .rxSession()
+                .writeTransaction((txc) =>
+                    txc
+                        .run('MATCH (person:Person) RETURN person.name AS name')
+                        .records()
+                        .pipe(map((record) => record.get('name')))
+                )
+                .subscribe({
+                    next: () => {},
+                    complete: () => {
+                        const span = getSingleSpan();
+                        assertSpan(span);
+                        expect(span.attributes[DatabaseAttribute.DB_STATEMENT]).toBe(
+                            'MATCH (person:Person) RETURN person.name AS name'
+                        );
+                        done();
+                    },
+                    error: () => {},
+                });
+        });
+
+        it('instruments rx explicit transactions', (done) => {
+            driver
+                .rxSession()
+                .beginTransaction()
+                .pipe(
+                    mergeMap((txc) =>
+                        concat(
+                            txc
+                                .run('MERGE (bob:Person {name: $nameParam}) RETURN bob.name AS name', {
+                                    nameParam: 'Bob',
+                                })
+                                .records()
+                                .pipe(map((r: any) => r.get('name'))),
+                            txc
+                                .run('MERGE (adam:Person {name: $nameParam}) RETURN adam.name AS name', {
+                                    nameParam: 'Adam',
+                                })
+                                .records()
+                                .pipe(map((r: any) => r.get('name'))),
+                            txc.commit()
+                        )
+                    )
+                )
+                .subscribe({
+                    next: () => {},
+                    complete: () => {
+                        const spans = getSpans();
+                        expect(spans.length).toBe(2);
+                        done();
+                    },
+                    error: () => {},
+                });
         });
     });
 });

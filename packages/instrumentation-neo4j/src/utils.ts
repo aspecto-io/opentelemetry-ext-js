@@ -1,7 +1,7 @@
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
 
 export function getAttributesFromNeo4jSession(session: any) {
-    const connectionHolder = session._mode === 'WRITE' ? session._writeConnectionHolder : session._readConnectionHolder;
+    const connectionHolder = (session._mode === 'WRITE' ? session._writeConnectionHolder : session._readConnectionHolder) ?? session._connectionHolder;
     const address = connectionHolder._connectionProvider._address;
     const auth = connectionHolder._connectionProvider._authToken;
 

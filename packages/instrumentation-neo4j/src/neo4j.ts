@@ -27,11 +27,14 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
     }
 
     protected init(): InstrumentationModuleDefinition<Neo4J> {
-        const apiModuleFiles = new InstrumentationNodeModuleFile<neo4j.Session>(
-            'neo4j-driver/lib/session.js',
-            ['*'],
-            this.patchSession.bind(this),
-            this.unpatchSession.bind(this)
+        const apiModuleFiles = ['session', 'transaction'].map(
+            (file) =>
+                new InstrumentationNodeModuleFile<neo4j.Session>(
+                    `neo4j-driver/lib/${file}.js`,
+                    ['*'],
+                    this.patchSessionOrTransaction.bind(this),
+                    this.unpatchSessionOrTransaction.bind(this)
+                )
         );
 
         const module = new InstrumentationNodeModuleDefinition<Neo4J>(
@@ -39,20 +42,23 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
             ['*'],
             undefined,
             undefined,
-            [apiModuleFiles]
+            apiModuleFiles
         );
 
         return module;
     }
 
-    private patchSession(Session: { default: () => neo4j.Session }, moduleVersion: string) {
+    private patchSessionOrTransaction(
+        fileExport: { default: () => neo4j.Session | neo4j.Transaction },
+        moduleVersion: string
+    ) {
         const self = this;
-        this._wrap(Session.default.prototype, 'run', (originalRun: neo4j.Session['run']) => {
+        this._wrap(fileExport.default.prototype, 'run', (originalRun: neo4j.Session['run']) => {
             return function (query: string) {
                 if (self._config?.ignoreOrphanedSpans && !getSpan(context.active())) {
                     return originalRun.apply(this, arguments);
                 }
-                
+
                 const connectionAttributes = getAttributesFromNeo4jSession(this);
                 const operation = query.split(/\s+/)[0];
                 const span = self.tracer.startSpan(`Neo4j ${operation}`, {
@@ -76,11 +82,11 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
                     if (observer.onKeys) {
                         return originalSubscribe.call(this, {
                             ...observer,
-                            onKeys: function() {
+                            onKeys: function () {
                                 span.end();
                                 return observer.onKeys.apply(this, arguments);
-                            }
-                        })
+                            },
+                        });
                     }
 
                     return originalSubscribe.call(this, {
@@ -88,7 +94,7 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
                         onNext: function (record: neo4j.Record) {
                             if (self._config.responseHook) {
                                 records.push(record);
-                            };
+                            }
                             if (observer.onNext) observer.onNext.apply(this, arguments);
                         },
                         onCompleted: function (summary: neo4j.ResultSummary) {
@@ -120,10 +126,10 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
                 return response;
             };
         });
-        return Session;
+        return fileExport;
     }
 
-    private unpatchSession(Session: { default: () => neo4j.Session }) {
-        this._unwrap(Session.default.prototype, 'run');
+    private unpatchSessionOrTransaction(fileExport: { default: () => neo4j.Session | neo4j.Transaction }) {
+        this._unwrap(fileExport.default.prototype, 'run');
     }
 }
