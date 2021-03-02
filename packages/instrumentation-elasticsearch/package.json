@@ -48,9 +48,12 @@
         "@elastic/elasticsearch": "^7.8.0",
         "@opentelemetry/node": "^0.17.0",
         "@opentelemetry/tracing": "^0.17.0",
-        "@types/mocha": "^8.2.0",
+        "@types/chai": "^4.2.15",
+        "@types/mocha": "^8.2.1",
+        "chai": "^4.3.0",
         "expect": "^26.6.2",
         "mocha": "^8.3.0",
+        "sinon": "^9.2.4",
         "ts-node": "^9.1.1",
         "typescript": "^4.0.3",
         "test-all-versions": "^5.0.1"

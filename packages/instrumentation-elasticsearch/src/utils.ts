@@ -33,7 +33,7 @@ export function normalizeArguments(params, options, callback) {
     return [params, options, callback];
 }
 
-function getPort(port: string, protocol: string): string {
+export function getPort(port: string, protocol: string): string {
     if (port) return port;
 
     if (protocol === 'https:') return '443';
@@ -42,7 +42,7 @@ function getPort(port: string, protocol: string): string {
     return '';
 }
 
-function getNetAttributes(url: string): SpanAttributes {
+export function getNetAttributes(url: string): SpanAttributes {
     const { port, protocol, hostname } = new URL(url);
 
     return {
@@ -90,5 +90,5 @@ export function onError(span: Span, err) {
     span.end();
 }
 
-export const defaultDbStatementSerializer: DbStatementSerializer = (params, options) =>
+export const defaultDbStatementSerializer: DbStatementSerializer = (operation, params, options) =>
     JSON.stringify({ params, options });
