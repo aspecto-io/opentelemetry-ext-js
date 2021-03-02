@@ -53,7 +53,7 @@ export class ElasticsearchInstrumentation extends InstrumentationBase<typeof ela
     private patchObject(operationClassName: string, object) {
         Object.keys(object).forEach((functionName) => {
             if (typeof object[functionName] === 'object') {
-                this.patchObject(`${operationClassName}.${functionName}`, object[functionName]);
+                this.patchObject(functionName, object[functionName]);
             } else {
                 this._wrap(object, functionName, this.wrappedApiRequest.bind(this, operationClassName, functionName));
             }

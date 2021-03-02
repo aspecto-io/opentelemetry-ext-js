@@ -1,8 +1,9 @@
+import 'mocha';
+import { stub, assert, spy } from 'sinon';
+import { expect } from 'chai';
 import * as Utils from '../src/utils';
 import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
-import { stub, assert, spy } from 'sinon';
-import { expect } from 'chai';
 
 describe('elasticsearch utils', () => {
     const spanMock = {
