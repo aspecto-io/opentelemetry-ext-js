@@ -1,4 +1,4 @@
-import { SpanStatusCode, diag } from '@opentelemetry/api';
+import { SpanStatusCode, diag, getSpan, context } from '@opentelemetry/api';
 import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
 import { VERSION } from './version';
 import type * as neo4j from 'neo4j-driver';
@@ -20,6 +20,10 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
 
     constructor(config: Neo4jInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-neo4j', VERSION, Object.assign({}, config));
+    }
+
+    setConfig(config: Neo4jInstrumentationConfig = {}) {
+        this._config = config;
     }
 
     protected init(): InstrumentationModuleDefinition<Neo4J> {
@@ -45,6 +49,10 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
         const self = this;
         this._wrap(Session.default.prototype, 'run', (originalRun: neo4j.Session['run']) => {
             return function (query: string) {
+                if (self._config?.ignoreOrphanedSpans && !getSpan(context.active())) {
+                    return originalRun.apply(this, arguments);
+                }
+                
                 const connectionAttributes = getAttributesFromNeo4jSession(this);
                 const operation = query.split(/\s+/)[0];
                 const span = self.tracer.startSpan(`Neo4j ${operation}`, {
