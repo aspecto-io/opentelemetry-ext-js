@@ -2,7 +2,7 @@ import 'mocha';
 import expect from 'expect';
 import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';
-import { context, SpanStatusCode } from '@opentelemetry/api';
+import { context, setSpan, SpanStatusCode } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { Neo4jInstrumentation } from '../src';
 import { assertSpan } from './assert';
@@ -156,13 +156,14 @@ describe('neo4j instrumentation', () => {
             expect(spans.length).toBe(0);
         });
 
-        it.skip('does capture span when ignoreOrphanedSpans is set to true and has parent span', async () => {
+        it('does capture span when ignoreOrphanedSpans is set to true and has parent span', async () => {
             instrumentation.disable();
             instrumentation.setConfig({ ignoreOrphanedSpans: true });
             instrumentation.enable();
-            const tracer = provider.getTracer('test-tracer');
-            const parent = tracer.startSpan('main');
-            await driver.session().run('CREATE (n:MyLabel) RETURN n');
+            const parent = provider.getTracer('test-tracer').startSpan('main');
+            await context.with(setSpan(context.active(), parent), () => 
+                driver.session().run('CREATE (n:MyLabel) RETURN n')
+            )
 
             const spans = getSpans();
             expect(spans.length).toBe(1);
