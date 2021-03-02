@@ -72,7 +72,7 @@ describe('elasticsearch instrumentation', () => {
     it('should create another valid span', async () => {
         esNock.get('/_cluster/settings').reply(200, {});
 
-        const settings = await client.cluster.getSettings();
+        await client.cluster.getSettings();
         const spans = memoryExporter.getFinishedSpans();
 
         expect(spans?.length).to.equal(1);
