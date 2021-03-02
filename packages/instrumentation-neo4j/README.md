@@ -2,6 +2,7 @@
 [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-neo4j.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-neo4j)
 
 This module provides automatic instrumentation for [`neo4j-javascript-driver`](https://github.com/neo4j/neo4j-javascript-driver).  
+> Supports versions **>=4.0.0** of neo4j-driver
 
 ## Installation
 

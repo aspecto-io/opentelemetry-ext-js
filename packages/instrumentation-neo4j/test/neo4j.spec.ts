@@ -61,7 +61,7 @@ describe('neo4j instrumentation', () => {
             const res = await driver.session().run('CREATE (n:MyLabel) RETURN n');
 
             expect(res.records.length).toBe(1);
-            expect(res.records[0].toObject().n.labels).toEqual(['MyLabel']);
+            expect((res.records[0].toObject() as any).n.labels).toEqual(['MyLabel']);
 
             const span = getSingleSpan();
             assertSpan(span);
