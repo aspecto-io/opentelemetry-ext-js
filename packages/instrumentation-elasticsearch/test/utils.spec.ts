@@ -59,7 +59,6 @@ describe('elasticsearch utils', () => {
             assert.calledOnce(endStub);
             assert.calledWith(setStatusStub, { code: SpanStatusCode.OK });
 
-            // setStatusStub.
             setAttributesStub.restore();
             setStatusStub.restore();
             endStub.restore();
