@@ -7,6 +7,21 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo
+        volumes:
+          - "~/data:/data/db"
+        ports:
+          - 27017:27017
+      neo4j:
+        image: neo4j:4.2.3
+        ports:
+          - 7474:7474
+          - 11011:7687
+        env:
+          NEO4J_AUTH: neo4j/test
+
     steps:
       - uses: actions/checkout@v2
 
@@ -15,12 +30,6 @@ jobs:
 
       - name: Build
         run: yarn build
-
-      - name: Start required docker containers for unit tests
-        run: |
-          docker run -d -p 27017:27017 -v ~/data:/data/db mongo &
-          docker run --name testneo4j -p7474:7474 -p11011:7687 -d --env NEO4J_AUTH=neo4j/test neo4j:4.2.3 &
-          wait
 
       - name: Test
         run: yarn test
