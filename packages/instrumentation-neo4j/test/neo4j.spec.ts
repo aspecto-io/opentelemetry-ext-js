@@ -1,4 +1,4 @@
-import mocha from 'mocha';
+import 'mocha';
 import expect from 'expect';
 import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';

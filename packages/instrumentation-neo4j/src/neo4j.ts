@@ -80,23 +80,19 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
                 response.subscribe = function (observer) {
                     const records = [];
 
-                    if (observer.onKeys) {
-                        return originalSubscribe.call(this, {
-                            ...observer,
-                            onKeys: function () {
-                                span.end();
-                                return observer.onKeys.apply(this, arguments);
-                            },
-                        });
-                    }
-
                     return originalSubscribe.call(this, {
                         ...observer,
+                        onKeys: function (_keys: string[]) {
+                            if (!observer.onCompleted) {
+                                span.end();
+                            }
+                            if (observer.onKeys) return observer.onKeys.apply(this, arguments);
+                        },
                         onNext: function (record: neo4j.Record) {
                             if (self._config.responseHook) {
                                 records.push(record);
                             }
-                            if (observer.onNext) observer.onNext.apply(this, arguments);
+                            if (observer.onNext) return observer.onNext.apply(this, arguments);
                         },
                         onCompleted: function (summary: neo4j.ResultSummary) {
                             if (self._config.responseHook) {
@@ -111,7 +107,7 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
                                 );
                             }
                             span.end();
-                            if (observer.onCompleted) observer.onCompleted.apply(this, arguments);
+                            if (observer.onCompleted) return observer.onCompleted.apply(this, arguments);
                         },
                         onError: function (err: Error) {
                             span.recordException(err);
@@ -120,7 +116,7 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
                                 message: err.message,
                             });
                             span.end();
-                            if (observer.onError) observer.onError.apply(this, arguments);
+                            if (observer.onError) return observer.onError.apply(this, arguments);
                         },
                     });
                 };
