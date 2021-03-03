@@ -471,16 +471,16 @@ describe('mongoose instrumentation', () => {
         });
 
         it('responseHook works with callback in aggregate patch', (done) => {
-            User.aggregate([
-                { $match: { firstName: 'John' } },
-                { $group: { _id: 'John', total: { $sum: '$amount' } } },
-            ], () => {
-                const spans = getSpans();
-                expect(spans.length).toBe(1);
-                assertSpan(spans[0]);
-                expect(JSON.parse(spans[0].attributes[RESPONSE] as string)).toEqual([{ _id: 'John', total: 0 }]);
-                done();
-            });
+            User.aggregate(
+                [{ $match: { firstName: 'John' } }, { $group: { _id: 'John', total: { $sum: '$amount' } } }],
+                () => {
+                    const spans = getSpans();
+                    expect(spans.length).toBe(1);
+                    assertSpan(spans[0]);
+                    expect(JSON.parse(spans[0].attributes[RESPONSE] as string)).toEqual([{ _id: 'John', total: 0 }]);
+                    done();
+                }
+            );
         });
 
         it('error in response hook does not fail anything', async () => {
@@ -496,6 +496,51 @@ describe('mongoose instrumentation', () => {
             expect(spans.length).toBe(1);
             assertSpan(spans[0]);
             expect(spans[0].attributes[RESPONSE]).toBe(undefined);
+        });
+    });
+
+    describe('moduleVersionAttributeName config', () => {
+        const VERSION_ATTR = 'module.version';
+        before(() => {
+            instrumentation.disable();
+            instrumentation.setConfig({
+                moduleVersionAttributeName: VERSION_ATTR,
+            });
+            instrumentation.enable();
+        });
+
+        it('moduleVersionAttributeName works with exec patch', async () => {
+            await User.deleteOne({ email: 'john.doe@example.com' });
+            const spans = getSpans();
+            expect(spans.length).toBe(1);
+            assertSpan(spans[0]);
+            expect(spans[0].attributes[VERSION_ATTR]).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
+        });
+
+        it('moduleVersionAttributeName with model methods patch', async () => {
+            const document = {
+                firstName: 'Test first name',
+                lastName: 'Test last name',
+                email: 'test@example.com',
+            };
+            const user: IUser = new User(document);
+            await user.save();
+            const spans = getSpans();
+            expect(spans.length).toBe(1);
+            assertSpan(spans[0]);
+            expect(spans[0].attributes[VERSION_ATTR]).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
+        });
+
+        it('moduleVersionAttributeName works with aggregate patch', async () => {
+            await User.aggregate([
+                { $match: { firstName: 'John' } },
+                { $group: { _id: 'John', total: { $sum: '$amount' } } },
+            ]);
+
+            const spans = getSpans();
+            expect(spans.length).toBe(1);
+            assertSpan(spans[0]);
+            expect(spans[0].attributes[VERSION_ATTR]).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
         });
     });
 });

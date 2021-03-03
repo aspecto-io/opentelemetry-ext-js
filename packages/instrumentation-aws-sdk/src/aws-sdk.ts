@@ -45,15 +45,15 @@ type Config = InstrumentationConfig & AwsSdkInstrumentationConfig;
 const storedV3ClientConfig = Symbol('otel.aws-sdk.client.config');
 export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
     static readonly component = 'aws-sdk';
-    protected _config!: Config;
+    protected _config!: AwsSdkInstrumentationConfig;
     private REQUEST_SPAN_KEY = Symbol('opentelemetry.instrumentation.aws-sdk.span');
     private servicesExtensions: ServicesExtensions;
 
-    constructor(config: Config = {}) {
+    constructor(config: AwsSdkInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-aws-sdk', VERSION, Object.assign({}, config));
     }
 
-    setConfig(config: Config = {}) {
+    setConfig(config: AwsSdkInstrumentationConfig = {}) {
         this._config = Object.assign({}, config);
     }
 
@@ -81,9 +81,9 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
         return [v2Module, v3MiddlewareStack, v3SmithyClient];
     }
 
-    protected patchV3ConstructStack(moduleExports) {
+    protected patchV3ConstructStack(moduleExports, moduleVersion: string) {
         diag.debug(`applying patch to aws-sdk v3 constructStack`);
-        this._wrap(moduleExports, 'constructStack', this._getV3ConstructStackPatch.bind(this));
+        this._wrap(moduleExports, 'constructStack', this._getV3ConstructStackPatch.bind(this, moduleVersion));
         return moduleExports;
     }
 
@@ -105,13 +105,13 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
         return moduleExports;
     }
 
-    protected patchV2(moduleExports: typeof AWS) {
+    protected patchV2(moduleExports: typeof AWS, moduleVersion: string) {
         this.servicesExtensions = new ServicesExtensions(this.tracer, this._config);
 
         diag.debug(`applying patch to ${AwsInstrumentation.component}`);
         this.unpatchV2(moduleExports);
-        this._wrap(moduleExports?.Request.prototype, 'send', this._getRequestSendPatch.bind(this));
-        this._wrap(moduleExports?.Request.prototype, 'promise', this._getRequestPromisePatch.bind(this));
+        this._wrap(moduleExports?.Request.prototype, 'send', this._getRequestSendPatch.bind(this, moduleVersion));
+        this._wrap(moduleExports?.Request.prototype, 'promise', this._getRequestPromisePatch.bind(this, moduleVersion));
 
         return moduleExports;
     }
@@ -135,7 +135,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
         return target;
     }
 
-    private _startAwsV3Span(normalizedRequest: NormalizedRequest, metadata: RequestMetadata): Span {
+    private _startAwsV3Span(normalizedRequest: NormalizedRequest, metadata: RequestMetadata, moduleVersion: string): Span {
         const name = metadata.spanName ?? `${normalizedRequest.serviceName}.${normalizedRequest.commandName}`;
         const newSpan = this.tracer.startSpan(name, {
             kind: metadata.spanKind,
@@ -145,13 +145,18 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
             },
         });
 
+        if(this._config.moduleVersionAttributeName) {
+            newSpan.setAttribute(this._config.moduleVersionAttributeName, moduleVersion);
+        }
+
         return newSpan;
     }
 
     private _startAwsV2Span(
         request: AWS.Request<any, any>,
         metadata: RequestMetadata,
-        normalizedRequest: NormalizedRequest
+        normalizedRequest: NormalizedRequest,
+        moduleVersion: string,
     ): Span {
         const operation = (request as any).operation;
         const service = (request as any).service;
@@ -171,6 +176,10 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
                 ...metadata.spanAttributes,
             },
         });
+
+        if(this._config.moduleVersionAttributeName) {
+            newSpan.setAttribute(this._config.moduleVersionAttributeName, moduleVersion);
+        }
 
         return newSpan;
     }
@@ -233,11 +242,11 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
         });
     }
 
-    private _getV3ConstructStackPatch(original: (...args: unknown[]) => MiddlewareStack<any, any>) {
+    private _getV3ConstructStackPatch(moduleVersion: string, original: (...args: unknown[]) => MiddlewareStack<any, any>) {
         const self = this;
         return function constructStack(...args: unknown[]): MiddlewareStack<any, any> {
             const stack: MiddlewareStack<any, any> = original.apply(this, args);
-            self.patchV3MiddlewareStack(stack);
+            self.patchV3MiddlewareStack(moduleVersion, stack);
             return stack;
         };
     }
@@ -250,25 +259,26 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
         }
     }
 
-    private patchV3MiddlewareStack(middlewareStackToPatch: MiddlewareStack<any, any>) {
-        this._wrap(middlewareStackToPatch, 'resolve', this._getV3MiddlewareStackResolvePatch.bind(this));
+    private patchV3MiddlewareStack(moduleVersion: string, middlewareStackToPatch: MiddlewareStack<any, any>) {
+        this._wrap(middlewareStackToPatch, 'resolve', this._getV3MiddlewareStackResolvePatch.bind(this, moduleVersion));
 
         // 'clone' and 'concat' functions are internally calling 'constructStack' which is in same
         // module, thus not patched, and we need to take care of it specifically.
-        this._wrap(middlewareStackToPatch, 'clone', this._getV3MiddlewareStackClonePatch.bind(this));
-        this._wrap(middlewareStackToPatch, 'concat', this._getV3MiddlewareStackClonePatch.bind(this));
+        this._wrap(middlewareStackToPatch, 'clone', this._getV3MiddlewareStackClonePatch.bind(this, moduleVersion));
+        this._wrap(middlewareStackToPatch, 'concat', this._getV3MiddlewareStackClonePatch.bind(this, moduleVersion));
     }
 
-    private _getV3MiddlewareStackClonePatch(original: (...args: unknown[]) => MiddlewareStack<any, any>) {
+    private _getV3MiddlewareStackClonePatch(moduleVersion: string, original: (...args: unknown[]) => MiddlewareStack<any, any>) {
         const self = this;
         return function (...args: unknown[]) {
             const newStack = original.apply(this, arguments);
-            self.patchV3MiddlewareStack(newStack);
+            self.patchV3MiddlewareStack(moduleVersion, newStack);
             return newStack;
         };
     }
 
     private _getV3MiddlewareStackResolvePatch(
+        moduleVersion: string,
         original: (_handler: unknown, context: HandlerExecutionContext) => AwsV3MiddlewareHandler<any, any>
     ) {
         const self = this;
@@ -290,7 +300,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
                     region,
                 );
                 const requestMetadata = self.servicesExtensions.requestPreSpanHook(normalizedRequest);
-                const span = self._startAwsV3Span(normalizedRequest, requestMetadata);
+                const span = self._startAwsV3Span(normalizedRequest, requestMetadata, moduleVersion);
 
                 self._callUserPreRequestHook(span, normalizedRequest);
                 const activeContextWithSpan = setSpan(context.active(), span);
@@ -331,7 +341,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
         };
     }
 
-    private _getRequestSendPatch(original: (callback?: (err: any, data: any) => void) => void) {
+    private _getRequestSendPatch(moduleVersion: string, original: (callback?: (err: any, data: any) => void) => void) {
         const self = this;
         return function (callback?: (err: any, data: any) => void) {
             const awsV2Request: AWS.Request<any, any> = this;
@@ -345,7 +355,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
 
             const normalizedRequest = normalizeV2Request(awsV2Request);
             const requestMetadata = self.servicesExtensions.requestPreSpanHook(normalizedRequest);
-            const span = self._startAwsV2Span(awsV2Request, requestMetadata, normalizedRequest);
+            const span = self._startAwsV2Span(awsV2Request, requestMetadata, normalizedRequest, moduleVersion);
             awsV2Request[self.REQUEST_SPAN_KEY] = span;
             const activeContextWithSpan = setSpan(context.active(), span);
             const callbackWithContext = context.bind(callback, activeContextWithSpan);
@@ -360,7 +370,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
         };
     }
 
-    private _getRequestPromisePatch(original: () => Promise<any>) {
+    private _getRequestPromisePatch(moduleVersion: string, original: () => Promise<any>) {
         const self = this;
         return function (): Promise<any> {
             const awsV2Request: AWS.Request<any, any> = this;
@@ -371,7 +381,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
 
             const normalizedRequest = normalizeV2Request(awsV2Request);
             const requestMetadata = self.servicesExtensions.requestPreSpanHook(normalizedRequest);
-            const span = self._startAwsV2Span(awsV2Request, requestMetadata, normalizedRequest);
+            const span = self._startAwsV2Span(awsV2Request, requestMetadata, normalizedRequest, moduleVersion);
             awsV2Request[self.REQUEST_SPAN_KEY] = span;
 
             const activeContextWithSpan = setSpan(context.active(), span);
@@ -398,4 +408,5 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
             return originalFunction();
         }
     }
+
 }
