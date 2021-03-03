@@ -83,10 +83,11 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
                     return originalSubscribe.call(this, {
                         ...observer,
                         onKeys: function (_keys: string[]) {
+                            if (!observer.onKeys) return;
                             if (!observer.onCompleted) {
                                 span.end();
                             }
-                            if (observer.onKeys) return observer.onKeys.apply(this, arguments);
+                            return observer.onKeys.apply(this, arguments);
                         },
                         onNext: function (record: neo4j.Record) {
                             if (self._config.responseHook) {
