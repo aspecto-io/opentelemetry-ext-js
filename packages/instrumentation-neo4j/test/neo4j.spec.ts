@@ -73,6 +73,7 @@ describe('neo4j instrumentation', () => {
 
             const span = getSingleSpan();
             assertSpan(span);
+            expect(span.name).toBe('CREATE neo4j');
             expect(span.attributes[DatabaseAttribute.DB_OPERATION]).toBe('CREATE');
             expect(span.attributes[DatabaseAttribute.DB_STATEMENT]).toBe('CREATE (n:MyLabel) RETURN n');
         });
@@ -144,6 +145,12 @@ describe('neo4j instrumentation', () => {
                 assertSpan(span);
                 expect(span.attributes[DatabaseAttribute.DB_OPERATION]).toBe('MATCH');
             }
+        });
+
+        it('captures operation with trailing white spaces', async () => {
+            await driver.session().run('  MATCH (k) RETURN k ');
+            const span = getSingleSpan();
+            expect(span.attributes[DatabaseAttribute.DB_OPERATION]).toBe('MATCH');
         });
 
         it('set module versions when config is set', async () => {

@@ -1,6 +1,6 @@
 import { Span } from '@opentelemetry/api';
 import { InstrumentationConfig } from '@opentelemetry/instrumentation';
-import { QueryResult } from 'neo4j-driver';
+import type { QueryResult } from 'neo4j-driver';
 
 export type Neo4jResponseCustomAttributesFunction = (span: Span, response: QueryResult) => void;
 

@@ -1,9 +1,10 @@
 import expect from 'expect';
 import { ReadableSpan } from '@opentelemetry/tracing';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
-import { SpanStatusCode } from '@opentelemetry/api';
+import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
 
 export const assertSpan = (span: ReadableSpan) => {
+    expect(span.kind).toBe(SpanKind.CLIENT);
     expect(span.status.code).toBe(SpanStatusCode.UNSET);
     expect(span.attributes[DatabaseAttribute.DB_SYSTEM]).toEqual('neo4j');
     expect(span.attributes[DatabaseAttribute.DB_NAME]).toEqual('neo4j');

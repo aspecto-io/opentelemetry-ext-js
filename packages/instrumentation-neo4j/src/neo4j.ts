@@ -1,4 +1,4 @@
-import { SpanStatusCode, diag, getSpan, context } from '@opentelemetry/api';
+import { SpanStatusCode, diag, getSpan, context, SpanKind } from '@opentelemetry/api';
 import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
 import { VERSION } from './version';
 import type * as neo4j from 'neo4j-driver';
@@ -31,7 +31,7 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
             (file) =>
                 new InstrumentationNodeModuleFile<neo4j.Session>(
                     `neo4j-driver/lib/${file}.js`,
-                    ['*'],
+                    ['>=4.0.0'],
                     this.patchSessionOrTransaction.bind(this),
                     this.unpatchSessionOrTransaction.bind(this)
                 )
@@ -39,7 +39,7 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
 
         const module = new InstrumentationNodeModuleDefinition<Neo4J>(
             Neo4jInstrumentation.component,
-            ['*'],
+            ['>=4.0.0'],
             undefined,
             undefined,
             apiModuleFiles
@@ -60,14 +60,15 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
                 }
 
                 const connectionAttributes = getAttributesFromNeo4jSession(this);
-                const operation = query.split(/\s+/)[0];
-                const span = self.tracer.startSpan(`Neo4j ${operation}`, {
+                const operation = query.trim().split(/\s+/)[0];
+                const span = self.tracer.startSpan(`${operation} ${connectionAttributes[DatabaseAttribute.DB_NAME]}`, {
                     attributes: {
                         ...connectionAttributes,
                         [DatabaseAttribute.DB_SYSTEM]: 'neo4j',
                         [DatabaseAttribute.DB_OPERATION]: operation,
                         [DatabaseAttribute.DB_STATEMENT]: query,
                     },
+                    kind: SpanKind.CLIENT,
                 });
                 if (self._config.moduleVersionAttributeName) {
                     span.setAttribute(self._config.moduleVersionAttributeName, moduleVersion);
@@ -113,6 +114,7 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
                             if (observer.onCompleted) observer.onCompleted.apply(this, arguments);
                         },
                         onError: function (err: Error) {
+                            span.recordException(err);
                             span.setStatus({
                                 code: SpanStatusCode.ERROR,
                                 message: err.message,
