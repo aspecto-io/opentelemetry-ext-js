@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-mongoose",
-    "version": "0.2.2-dev.0",
+    "version": "0.2.1",
     "description": "open telemetry instrumentation for the `mongoose` module",
     "keywords": [
         "mongoose",
