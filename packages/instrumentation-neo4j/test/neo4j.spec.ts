@@ -46,10 +46,11 @@ describe('neo4j instrumentation', function () {
         });
         
         let keepChecking = true;
-        setTimeout(() => { keepChecking = false}, 8000);
+        const timeoutId = setTimeout(() => { keepChecking = false}, 8000);
         while (keepChecking) {
             try {
                 await driver.verifyConnectivity();
+                clearTimeout(timeoutId);
                 return;
             } catch (err) {
                 await new Promise((res) => setTimeout(res, 1000));
@@ -141,6 +142,28 @@ describe('neo4j instrumentation', function () {
                         expect(keys).toEqual(['n']);
                         done();
                     },
+                });
+        });
+
+        it('when passing "onKeys" and onCompleted, span is closed in onCompleted, and response hook is called', (done) => {
+            instrumentation.disable();
+            instrumentation.setConfig({ responseHook: (span) => span.setAttribute('test', 'cool')});
+            instrumentation.enable();
+
+            driver
+                .session()
+                .run('MATCH (n) RETURN n')
+                .subscribe({
+                    onKeys: () => {
+                        const spans = getSpans();
+                        expect(spans.length).toBe(0);
+                    },
+                    onCompleted: () => {
+                        const span = getSingleSpan();
+                        assertSpan(span);
+                        expect(span.attributes['test']).toBe('cool');
+                        done();
+                    }
                 });
         });
 
