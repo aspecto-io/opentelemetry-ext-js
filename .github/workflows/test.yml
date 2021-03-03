@@ -22,8 +22,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
 
       - name: Fetch all history for all tags and branches
         run: git fetch
