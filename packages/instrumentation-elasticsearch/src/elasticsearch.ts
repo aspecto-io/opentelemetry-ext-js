@@ -3,14 +3,21 @@ import type elasticsearch from '@elastic/elasticsearch';
 import { ElasticsearchInstrumentationConfig } from './types';
 import {
     InstrumentationBase,
-    InstrumentationConfig,
     InstrumentationModuleDefinition,
     InstrumentationNodeModuleDefinition,
     InstrumentationNodeModuleFile,
 } from '@opentelemetry/instrumentation';
 import { VERSION } from './version';
+import { AttributeNames } from './enums';
 import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
-import { startSpan, onError, onResponse, defaultDbStatementSerializer, normalizeArguments } from './utils';
+import {
+    startSpan,
+    onError,
+    onResponse,
+    defaultDbStatementSerializer,
+    normalizeArguments,
+    getIndexName,
+} from './utils';
 import { ELASTICSEARCH_API_FILES } from './helpers';
 
 export class ElasticsearchInstrumentation extends InstrumentationBase<typeof elasticsearch> {
@@ -113,6 +120,7 @@ export class ElasticsearchInstrumentation extends InstrumentationBase<typeof ela
                 tracer: self.tracer,
                 attributes: {
                     [DatabaseAttribute.DB_OPERATION]: operation,
+                    [AttributeNames.ELASTICSEARCH_INDICES]: getIndexName(params),
                     [DatabaseAttribute.DB_STATEMENT]: (
                         self._config.dbStatementSerializer || defaultDbStatementSerializer
                     )(operation, params, options),

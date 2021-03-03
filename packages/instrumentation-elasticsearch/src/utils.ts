@@ -9,6 +9,20 @@ interface StartSpanPayload {
     attributes: SpanAttributes;
 }
 
+export function getIndexName(params) {
+    if (!params?.index) {
+        return undefined;
+    }
+
+    if (typeof params.index === 'string') {
+        return params.index;
+    }
+
+    if (Array.isArray(params.index)) {
+        return params.index.join(',');
+    }
+}
+
 export function startSpan({ tracer, attributes }: StartSpanPayload): Span {
     return tracer.startSpan('elasticsearch.request', {
         kind: SpanKind.CLIENT,

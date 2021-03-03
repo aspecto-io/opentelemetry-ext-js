@@ -52,6 +52,7 @@ describe('elasticsearch instrumentation', () => {
         expect(spans?.length).to.equal(2);
         expect(spans[0].attributes).to.deep.equal({
             'db.system': 'elasticsearch',
+            'elasticsearch.request.indices': 'the-simpsons',
             'db.operation': 'client.index',
             'db.statement':
                 '{"params":{"index":"the-simpsons","type":"_doc","body":{"character":"Homer Simpson","quote":"Doh!"}}}',
@@ -61,6 +62,7 @@ describe('elasticsearch instrumentation', () => {
         });
         expect(spans[1].attributes).to.deep.equal({
             'db.system': 'elasticsearch',
+            'elasticsearch.request.indices': 'the-simpsons',
             'db.operation': 'client.search',
             'db.statement': '{"params":{"index":"the-simpsons"}}',
             'net.transport': 'IP.TCP',

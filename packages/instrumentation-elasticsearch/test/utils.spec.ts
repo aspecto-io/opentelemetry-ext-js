@@ -142,6 +142,35 @@ describe('elasticsearch utils', () => {
         });
     });
 
+    context('getIndexName', () => {
+        it('should accept index string', () => {
+            const index = Utils.getIndexName({ index: 'test' });
+            expect(index).to.equal('test');
+        });
+
+        it('should accept index array', () => {
+            const indexes = Utils.getIndexName({ index: ['index1', 'index2'] });
+
+            expect(indexes).to.equal('index1,index2');
+        });
+
+        it('should accept no index', () => {
+            const undefinedParams = Utils.getIndexName(undefined);
+            const emptyObject = Utils.getIndexName({});
+
+            expect(undefinedParams).to.be.undefined;
+            expect(emptyObject).to.be.undefined;
+        });
+
+        it('should ignore unexpected index', () => {
+            const functionIndex = Utils.getIndexName({ index: () => {} });
+            const objectIndex = Utils.getIndexName({ index: {} });
+
+            expect(functionIndex).to.be.undefined;
+            expect(objectIndex).to.be.undefined;
+        });
+    });
+
     context('startSpan', () => {
         const tracerMock = {
             startSpan: (name, options?, context?): any => {},
