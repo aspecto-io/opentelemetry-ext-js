@@ -17,6 +17,14 @@ instrumentation.disable();
 
 import neo4j, { Driver } from 'neo4j-driver';
 
+/** 
+ * Tests require neo4j to run, and expose bolt port of 11011
+ * 
+ * Use this command to run the required neo4j using docker:
+ * docker run --name testneo4j -p7474:7474 -p11011:7687 -d --env NEO4J_AUTH=neo4j/test neo4j:4.2.3
+ * */ 
+    
+
 describe('neo4j instrumentation', () => {
     const provider = new NodeTracerProvider();
     const memoryExporter = new InMemorySpanExporter();
@@ -33,7 +41,7 @@ describe('neo4j instrumentation', () => {
     };
 
     before(async () => {
-        driver = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('neo4j', 'flows'), {
+        driver = neo4j.driver('bolt://localhost:11011', neo4j.auth.basic('neo4j', 'test'), {
             disableLosslessIntegers: true,
         });
         await driver.verifyConnectivity();

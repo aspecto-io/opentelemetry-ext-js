@@ -35,6 +35,7 @@ Neo4j instrumentation has few options available to choose from. You can set the 
 | Options        | Type                                   | Description                                                                                     |
 | -------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `responseHook` | `Neo4jResponseCustomAttributesFunction` | Hook called before response is returned, which allows to add custom attributes to span.      |
+| `ignoreOrphanedSpans` | `boolean` | Set to true if you only want to trace operation which has parent spans |
 | `moduleVersionAttributeName` | `string` | If passed, a span attribute will be added to all spans with key of the provided `moduleVersionAttributeName` and value of the patched module version |
 
 

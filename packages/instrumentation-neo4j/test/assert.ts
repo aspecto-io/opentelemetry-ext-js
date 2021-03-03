@@ -9,6 +9,6 @@ export const assertSpan = (span: ReadableSpan) => {
     expect(span.attributes[DatabaseAttribute.DB_NAME]).toEqual('neo4j');
     expect(span.attributes[DatabaseAttribute.DB_USER]).toEqual('neo4j');
     expect(span.attributes[GeneralAttribute.NET_PEER_NAME]).toEqual('localhost');
-    expect(span.attributes[GeneralAttribute.NET_PEER_PORT]).toEqual(7687);
+    expect(span.attributes[GeneralAttribute.NET_PEER_PORT]).toEqual(11011);
     expect(span.attributes[GeneralAttribute.NET_TRANSPORT]).toEqual('IP.TCP');
 };
