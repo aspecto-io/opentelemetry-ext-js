@@ -1,4 +1,4 @@
-import 'mocha';
+import mocha from 'mocha';
 import expect from 'expect';
 import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';
@@ -17,15 +17,15 @@ instrumentation.disable();
 
 import neo4j, { Driver } from 'neo4j-driver';
 
-/** 
+/**
  * Tests require neo4j to run, and expose bolt port of 11011
- * 
+ *
  * Use this command to run the required neo4j using docker:
  * docker run --name testneo4j -p7474:7474 -p11011:7687 -d --env NEO4J_AUTH=neo4j/test neo4j:4.2.3
- * */ 
-    
+ * */
 
-describe('neo4j instrumentation', () => {
+describe('neo4j instrumentation', function () {
+    this.timeout(10000);
     const provider = new NodeTracerProvider();
     const memoryExporter = new InMemorySpanExporter();
     const spanProcessor = new SimpleSpanProcessor(memoryExporter);
@@ -44,7 +44,18 @@ describe('neo4j instrumentation', () => {
         driver = neo4j.driver('bolt://localhost:11011', neo4j.auth.basic('neo4j', 'test'), {
             disableLosslessIntegers: true,
         });
-        await driver.verifyConnectivity();
+        
+        let keepChecking = true;
+        setTimeout(() => { keepChecking = false}, 8000);
+        while (keepChecking) {
+            try {
+                await driver.verifyConnectivity();
+                return;
+            } catch (err) {
+                await new Promise((res) => setTimeout(res, 1000));
+            } 
+        }
+        throw new Error('Could not connect to neo4j in allowed time frame')
     });
 
     after(async () => {
