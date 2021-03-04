@@ -58,6 +58,15 @@ type DbStatementSerializer = (operation: string, payload: SerializerPayload) => 
 ```
 Please make sure `dbStatementSerializer` is error proof, as errors are not handled while executing this function.
 
+## Difference from [opentelemetry-plugin-mongoose](https://github.com/wdalmut/opentelemetry-plugin-mongoose)
+
+* This lib is using the opentelemetry instrumentation api, as opposed to the old plugin api.
+* This lib is using the latest opentelemetry version, as opposed to 0.6.0.
+* Strictly follows opentelemetry database client [semantic conventions](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md).
+* Has the ability to suppress internal instrumentation.
+* Provides statement serializer and a response hook.
+* Contains several bug fixes.
+
 ---
 
 This extension (and many others) was developed by [Aspecto](https://www.aspecto.io/) with ❤️
