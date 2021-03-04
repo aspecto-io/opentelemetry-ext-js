@@ -33,6 +33,7 @@
         "test": "mocha",
         "test:ci": "tav",
         "watch": "tsc -w",
+        "install": "yarn",
         "version:update": "node ../../scripts/version-update.js",
         "version": "yarn run version:update"
     },
