@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.2](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-mongoose@0.2.1...opentelemetry-instrumentation-mongoose@0.2.2) (2021-03-04)
+
+
+### Features
+
+* new elasticsearch instrumentation ([#70](https://github.com/aspecto-io/opentelemetry-ext-js/issues/70)) ([08625e2](https://github.com/aspecto-io/opentelemetry-ext-js/commit/08625e2ab795fc0a5a74205329f1b057ae7070b5))
+
+
+
+
+
 ## [0.2.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-mongoose@0.2.0...opentelemetry-instrumentation-mongoose@0.2.1) (2021-03-01)
 
 
