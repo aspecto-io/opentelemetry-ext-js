@@ -28,6 +28,7 @@
     },
     "scripts": {
         "build": "tsc",
+        "remove": "rm",
         "prepare": "yarn run build",
         "test": "mocha",
         "test:ci": "tav",
