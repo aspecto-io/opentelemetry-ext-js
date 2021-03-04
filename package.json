@@ -3,6 +3,8 @@
     "private": true,
     "scripts": {
         "test": "lerna run test",
+        "install:ci": "lerna run yarn --since origin/master",
+        "build:ci": "lerna run build --since origin/master",
         "test:ci": "lerna run test:ci --since origin/master",
         "build": "lerna run build",
         "postinstall": "lerna bootstrap",
