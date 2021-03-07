@@ -487,7 +487,6 @@ describe('neo4j instrumentation', function () {
         it('instruments as expected in routing mode', async () => {
             if (!shouldCheck) {
                 // Versions 4.0.0, 4.0.1 and 4.0.2 of neo4j-driver don't allow connection to local neo4j in routing mode.
-                // We allow unauthorized to be thrown on this case.
                 console.log(`Skipping unsupported test for version ${version}`)
                 return;
             }
