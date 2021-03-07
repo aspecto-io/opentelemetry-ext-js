@@ -17,7 +17,7 @@ import {
     MessageBodyAttributeMap,
     SendMessageBatchRequestEntry,
 } from 'aws-sdk/clients/sqs';
-import { AwsSdkSqsProcessCustomAttributeFunction, NormalizedRequest, NormalizedResponse } from '../types';
+import { AwsSdkInstrumentationConfig, AwsSdkSqsProcessCustomAttributeFunction, NormalizedRequest, NormalizedResponse } from '../types';
 
 export enum SqsAttributeNames {
     // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md
@@ -57,10 +57,6 @@ class SqsContextGetter implements TextMapGetter<AWS.SQS.MessageBodyAttributeMap>
 const sqsContextGetter = new SqsContextGetter();
 
 export class SqsServiceExtension implements ServiceExtension {
-    constructor(
-        private tracer: Tracer,
-        private sqsProcessHook: AwsSdkSqsProcessCustomAttributeFunction
-    ) {}
 
     requestPreSpanHook(request: NormalizedRequest): RequestMetadata {
         const queueUrl = this.extractQueueUrl(request.commandInput);
@@ -127,7 +123,7 @@ export class SqsServiceExtension implements ServiceExtension {
         }
     };
 
-    responseHook = (response: NormalizedResponse, span: Span) => {
+    responseHook = (response: NormalizedResponse, span: Span, tracer: Tracer, config: AwsSdkInstrumentationConfig) => {
         const messages: AWS.SQS.Message[] = response?.data?.Messages;
         if (messages) {
             const queueUrl = this.extractQueueUrl(response.request.commandInput);
@@ -136,7 +132,7 @@ export class SqsServiceExtension implements ServiceExtension {
             pubsubPropagation.patchMessagesArrayToStartProcessSpans<AWS.SQS.Message>({
                 messages,
                 parentContext: setSpan(context.active(), span),
-                tracer: this.tracer,
+                tracer,
                 messageToSpanDetails: (message: AWS.SQS.Message) => ({
                     name: queueName,
                     parentContext: propagation.extract(ROOT_CONTEXT, message.MessageAttributes, sqsContextGetter),
@@ -149,10 +145,10 @@ export class SqsServiceExtension implements ServiceExtension {
                         [SqsAttributeNames.MESSAGING_OPERATION]: 'process',
                     },
                 }),
-                processHook: (span: Span, message: AWS.SQS.Message) => this.sqsProcessHook?.(span, message),
+                processHook: (span: Span, message: AWS.SQS.Message) => config.sqsProcessHook?.(span, message),
             });
 
-            pubsubPropagation.patchArrayForProcessSpans(messages, this.tracer, context.active());
+            pubsubPropagation.patchArrayForProcessSpans(messages, tracer, context.active());
         }
     };
 

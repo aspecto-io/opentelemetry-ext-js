@@ -47,7 +47,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
     static readonly component = 'aws-sdk';
     protected _config!: AwsSdkInstrumentationConfig;
     private REQUEST_SPAN_KEY = Symbol('opentelemetry.instrumentation.aws-sdk.span');
-    private servicesExtensions: ServicesExtensions;
+    private servicesExtensions: ServicesExtensions = new ServicesExtensions();
 
     constructor(config: AwsSdkInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-aws-sdk', VERSION, Object.assign({}, config));
@@ -106,7 +106,6 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
     }
 
     protected patchV2(moduleExports: typeof AWS, moduleVersion: string) {
-        this.servicesExtensions = new ServicesExtensions(this.tracer, this._config);
 
         diag.debug(`applying patch to ${AwsInstrumentation.component}`);
         this.unpatchV2(moduleExports);
@@ -233,7 +232,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
                 if (response.error) {
                     span.setAttribute(AttributeNames.AWS_ERROR, response.error);
                 } else {
-                    this.servicesExtensions.responseHook(normalizedResponse, span);
+                    this.servicesExtensions.responseHook(normalizedResponse, span, self.tracer, self._config);
                 }
 
                 span.setAttribute(AttributeNames.AWS_REQUEST_ID, response.requestId);
@@ -323,7 +322,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
                             data: response.output,
                             request: normalizedRequest,
                         };
-                        self.servicesExtensions.responseHook(normalizedResponse, span);
+                        self.servicesExtensions.responseHook(normalizedResponse, span, self.tracer, self._config);
                         self._callUserResponseHook(span, normalizedResponse);
                         return response;
                     })

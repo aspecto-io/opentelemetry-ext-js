@@ -7,8 +7,8 @@ import { DynamodbServiceExtension } from './dynamodb';
 export class ServicesExtensions implements ServiceExtension {
     services: Map<string, ServiceExtension> = new Map();
 
-    constructor(tracer: Tracer, instrumentationConfig: AwsSdkInstrumentationConfig) {
-        this.services.set('sqs', new SqsServiceExtension(tracer, instrumentationConfig?.sqsProcessHook));
+    constructor() {
+        this.services.set('sqs', new SqsServiceExtension());
         this.services.set('dynamodb', new DynamodbServiceExtension());
     }
 
@@ -27,8 +27,8 @@ export class ServicesExtensions implements ServiceExtension {
         return serviceExtension.requestPostSpanHook(request);
     }
 
-    responseHook(response: NormalizedResponse, span: Span) {
+    responseHook(response: NormalizedResponse, span: Span, tracer: Tracer, config: AwsSdkInstrumentationConfig) {
         const serviceExtension = this.services.get(response.request.serviceName);
-        serviceExtension?.responseHook?.(response, span);
+        serviceExtension?.responseHook?.(response, span, tracer, config);
     }
 }
