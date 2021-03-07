@@ -470,10 +470,7 @@ describe('neo4j instrumentation', function () {
 
     describe('routing mode', () => {
         // When the connection string starts with "neo4j" routing mode is used
-        let routingDriver: Driver;
-        before(async () => {
-            routingDriver = neo4j.driver('neo4j://localhost:11011', neo4j.auth.basic('neo4j', 'test'));
-        });
+        const routingDriver: Driver = neo4j.driver('neo4j://localhost:11011', neo4j.auth.basic('neo4j', 'test'));;
 
         after(async () => {
             await routingDriver.close();
