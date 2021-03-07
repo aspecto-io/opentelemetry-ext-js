@@ -470,24 +470,29 @@ describe('neo4j instrumentation', function () {
 
     describe('routing mode', () => {
         // When the connection string starts with "neo4j" routing mode is used
-        const routingDriver: Driver = neo4j.driver('neo4j://localhost:11011', neo4j.auth.basic('neo4j', 'test'));
+        let routingDriver: Driver;
+        const version = require('neo4j-driver/package.json').version;
+        const shouldCheck = !['4.0.0', '4.0.1', '4.0.2'].includes(version)
+
+        before(() => {
+            if (shouldCheck) {
+                routingDriver = neo4j.driver('neo4j://localhost:11011', neo4j.auth.basic('neo4j', 'test'));
+            }
+        });
 
         after(async () => {
-            await routingDriver.close();
+            shouldCheck && await routingDriver.close();
         });
 
         it('instruments as expected in routing mode', async () => {
-            try {
-                await routingDriver.session().run('CREATE (n:MyLabel) RETURN n');
-            } catch (err) {
-                if (err.message !== 'The client is unauthorized due to authentication failure.') {
-                    throw err;
-                } else {
-                    // Versions 4.0.0, 4.0.1 and 4.0.2 of neo4j-driver don't allow connection to local neo4j in routing mode.
-                    // We allow unauthorized to be thrown on this case. 
-                    return;
-                }
+            if (!shouldCheck) {
+                // Versions 4.0.0, 4.0.1 and 4.0.2 of neo4j-driver don't allow connection to local neo4j in routing mode.
+                // We allow unauthorized to be thrown on this case.
+                console.log(`Skipping unsupported test for version ${version}`)
+                return;
             }
+
+            await routingDriver.session().run('CREATE (n:MyLabel) RETURN n');
 
             const span = getSingleSpan();
             assertSpan(span);
