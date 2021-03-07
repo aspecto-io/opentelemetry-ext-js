@@ -93,6 +93,8 @@ describe('instrumentation-aws-sdk', () => {
                 expect(spanCreateBucket.attributes[AttributeNames.AWS_SERVICE_IDENTIFIER]).toBe('s3');
                 expect(spanCreateBucket.attributes[AttributeNames.AWS_SERVICE_NAME]).toBe('Amazon S3');
                 expect(spanCreateBucket.attributes[AttributeNames.AWS_REQUEST_ID]).toBe(responseMockSuccess.requestId);
+                expect(spanCreateBucket.attributes[AttributeNames.AWS_REGION]).toBe('us-east-1');
+                
                 expect(spanCreateBucket.name).toBe('aws.s3.createBucket');
 
                 expect(spanPutObject.attributes[AttributeNames.COMPONENT]).toBe('aws-sdk');
@@ -102,6 +104,7 @@ describe('instrumentation-aws-sdk', () => {
                 expect(spanPutObject.attributes[AttributeNames.AWS_SERVICE_IDENTIFIER]).toBe('s3');
                 expect(spanPutObject.attributes[AttributeNames.AWS_SERVICE_NAME]).toBe('Amazon S3');
                 expect(spanPutObject.attributes[AttributeNames.AWS_REQUEST_ID]).toBe(responseMockSuccess.requestId);
+                expect(spanPutObject.attributes[AttributeNames.AWS_REGION]).toBe('us-east-1');
                 expect(spanPutObject.name).toBe('aws.s3.putObject');
             });
 
@@ -144,6 +147,7 @@ describe('instrumentation-aws-sdk', () => {
                 const [spanCreateBucket, spanPutObjectCb] = awsSpans;
                 expect(spanCreateBucket.attributes[AttributeNames.AWS_OPERATION]).toBe('createBucket');
                 expect(spanPutObjectCb.attributes[AttributeNames.AWS_OPERATION]).toBe('putObject');
+                expect(spanPutObjectCb.attributes[AttributeNames.AWS_REGION]).toBe('us-east-1');
             });
 
             it('adds proper number of spans with correct attributes if only promise was used', async () => {
@@ -173,6 +177,7 @@ describe('instrumentation-aws-sdk', () => {
                 const [spanCreateBucket, spanPutObjectCb] = awsSpans;
                 expect(spanCreateBucket.attributes[AttributeNames.AWS_OPERATION]).toBe('createBucket');
                 expect(spanPutObjectCb.attributes[AttributeNames.AWS_OPERATION]).toBe('putObject');
+                expect(spanPutObjectCb.attributes[AttributeNames.AWS_REGION]).toBe('us-east-1');
             });
 
             it('should create span if no callback is supplied', (done) => {

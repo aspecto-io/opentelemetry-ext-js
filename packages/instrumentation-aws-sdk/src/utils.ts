@@ -13,11 +13,12 @@ export const removeSuffixFromStringIfExists = (str: string, suffixToRemove: stri
 };
 
 export const normalizeV2Request = (awsV2Request: Request<any, any>): NormalizedRequest => {
+    const service = (awsV2Request as any)?.service;
     return {
-        serviceName: (awsV2Request as any)?.service?.serviceIdentifier?.toLowerCase(),
+        serviceName: service?.serviceIdentifier?.toLowerCase(),
         commandName: toCamelCase((awsV2Request as any).operation),
         commandInput: (awsV2Request as any).params,
-        region: (awsV2Request as any)?.config?.region,
+        region: service?.config?.region,
     };
 };
 
