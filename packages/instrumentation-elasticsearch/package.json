@@ -1,18 +1,24 @@
 {
-    "name": "opentelemetry-instrumentation-kafkajs",
+    "name": "opentelemetry-instrumentation-elasticsearch",
     "version": "0.2.2",
-    "description": "open telemetry instrumentation for the `kafkajs` kafka client",
+    "description": "open telemetry instrumentation for the `elasticsearch` module",
     "keywords": [
-        "kafka",
-        "opentelemetry",
-        "kafkajs"
+        "elasticsearch",
+        "@elastic/elasticsearch",
+        "opentelemetry"
     ],
+    "author": {
+        "name": "Aspecto",
+        "email": "support@aspecto.io",
+        "url": "https://aspecto.io"
+    },
     "homepage": "https://github.com/aspecto-io/opentelemetry-ext-js",
     "license": "Apache-2.0",
     "main": "dist/src/index.js",
     "files": [
-        "dist/src/**/*.js",
-        "dist/src/**/*.d.ts",
+        "dist/**/*.js",
+        "dist/**/*.js.map",
+        "dist/**/*.d.ts",
         "LICENSE",
         "README.md"
     ],
@@ -23,11 +29,12 @@
     "scripts": {
         "build": "tsc",
         "prepare": "yarn run build",
-        "test": "mocha",
-        "test:ci": "yarn test",
         "watch": "tsc -w",
         "version:update": "node ../../scripts/version-update.js",
-        "version": "yarn run version:update"
+        "version": "yarn run version:update",
+        "test": "mocha",
+        "test-all-versions": "tav",
+        "test:ci": "yarn test-all-versions"
     },
     "bugs": {
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
@@ -38,14 +45,19 @@
         "@opentelemetry/semantic-conventions": "^0.17.0"
     },
     "devDependencies": {
+        "@elastic/elasticsearch": "^7.8.0",
         "@opentelemetry/node": "^0.17.0",
         "@opentelemetry/tracing": "^0.17.0",
-        "@types/mocha": "^8.2.0",
+        "@types/chai": "^4.2.15",
+        "@types/mocha": "^8.2.1",
+        "chai": "^4.3.0",
         "expect": "^26.6.2",
-        "kafkajs": "^1.12.0",
         "mocha": "^8.3.0",
+        "nock": "^13.0.9",
+        "sinon": "^9.2.4",
+        "test-all-versions": "^5.0.1",
         "ts-node": "^9.1.1",
-        "typescript": "^3.9.5"
+        "typescript": "^4.0.3"
     },
     "mocha": {
         "extension": [

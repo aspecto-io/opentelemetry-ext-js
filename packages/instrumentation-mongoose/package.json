@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-mongoose",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "description": "open telemetry instrumentation for the `mongoose` module",
     "keywords": [
         "mongoose",
@@ -30,6 +30,7 @@
         "build": "tsc",
         "prepare": "yarn run build",
         "test": "mocha",
+        "test:ci": "yarn test",
         "watch": "tsc -w",
         "version:update": "node ../../scripts/version-update.js",
         "version": "yarn run version:update"
