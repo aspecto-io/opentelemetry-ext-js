@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.3](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-mongoose@0.2.2...opentelemetry-instrumentation-mongoose@0.2.3) (2021-03-07)
+
+**Note:** Version bump only for package opentelemetry-instrumentation-mongoose
+
+
+
+
+
 ## [0.2.2](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-mongoose@0.2.1...opentelemetry-instrumentation-mongoose@0.2.2) (2021-03-04)
 
 
