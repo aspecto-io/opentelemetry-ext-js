@@ -1,7 +1,7 @@
 # OpenTelemetry aws-sdk Instrumentation for Node.js
 [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-aws-sdk.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-aws-sdk)
 
-This module provides automatic instrumentation for [`aws-sdk`](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/).
+This module provides automatic instrumentation for [`aws-sdk` v2](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/) and [`@aws-sdk` v3](https://github.com/aws/aws-sdk-js-v3)
 
 ## Installation
 
@@ -49,16 +49,21 @@ aws-sdk instrumentation has few options available to choose from. You can set th
 
 
 ## Span Attributes
-This instrumentation patch the internal `Request` object, which means that each sdk operation will create a single span with attributes from 3 sources:
+Both V2 and V3 instrumentations are collecting the following attributes:
+| Attribute Name | Type | Description | Example |
+| -------------- | ---- | ----------- | ------- |
+| `rpc.system` | string | Always equals "aws-api" | 
+| `rpc.method` | string | The name of the operation corresponding to the request, normalized to camelCase | `putObject` |
+| `rpc.service` | string | The name of the service to which a request is made, as returned by the AWS SDK, normalized to lower case | `s3` | 
+| `aws.region` | string | Region name for the request | "eu-west-1" |
 
-### Default attributes
-Each span will have the following attributes:
+### V2 attributes
+In addition to the above attributes, the instrumentation also collect the following for V2 ONLY:
 | Attribute Name | Type | Description | Example |
 | -------------- | ---- | ----------- | ------- |
 | `component` | string | Always equals "aws-sdk" | "aws-sdk" |
 | `aws.operation` | string | The method name for the request. | for `SQS.sendMessage(...)` the operation is "sendMessage" |
 | `aws.signature.version` | string | AWS version of authentication signature on the request. | "v4" |
-| `aws.region` | string | Region name for the request | "eu-west-1" |
 | `aws.service.api` | string | The sdk class name for the service | "SQS" |
 | `aws.service.identifier` | string | Identifier for the service in the sdk | "sqs" |
 | `aws.service.name` | string | Abbreviation name for the service | "Amazon SQS" |
@@ -66,15 +71,15 @@ Each span will have the following attributes:
 | `aws.error` | string | information about a service or networking error, as returned from AWS | "UriParameterError: Expected uri parameter to have length >= 1, but found "" for params.Bucket" |
 
 ### Custom User Attributes
-The instrumentation user can configure a `preRequestHook` function which will be called before each request, with the request object and the corresponding span.  
+The instrumentation user can configure a `preRequestHook` function which will be called before each request, with a normalized request object (across v2 and v3) and the corresponding span.  
 This hook can be used to add custom attributes to the span with any logic.  
 For example, user can add interesting attributes from the `request.params`, and write custom logic based on the service and operation.
 Usage example:
 ```js
 awsInstrumentationConfig = {
   preRequestHook: (span, request) => {
-    if (span.attributes["aws.service.api"] === 's3') {
-      span.setAttribute("s3.bucket.name", request.params["Bucket"]);
+    if (span.serviceName === 's3') {
+      span.setAttribute("s3.bucket.name", request.commandInput["Bucket"]);
     }
   }
 };
@@ -85,6 +90,7 @@ AWS contains dozens of services accessible with the JS SDK. For many services, t
 
 Specific service logic currently implemented for:
 * [SQS](./docs/sqs.md)
+* DynamoDb
 
 ---
 
