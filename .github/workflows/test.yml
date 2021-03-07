@@ -32,7 +32,7 @@ jobs:
         run: yarn
 
       - name: Build
-        run: yarn build
+        run: yarn build:ci
 
       - name: Test
         run: yarn test:ci
