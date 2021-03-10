@@ -11,8 +11,10 @@ import type amqp from 'amqplib';
 import { AmqplibInstrumentationConfig } from './types';
 import {
     CHANNEL_SPANS_NOT_ENDED,
+    CONNECTION_ATTRIBUTES,
     endAllSpansOnChannel,
     endConsumerSpan,
+    getConnectionAttributesFromUrl,
     MESSAGE_STORED_SPAN,
     normalizeExchange,
 } from './utils';
@@ -30,17 +32,35 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
     }
 
     protected init(): InstrumentationModuleDefinition<typeof amqp> {
-        const channelModelModulePFile = new InstrumentationNodeModuleFile<amqp.Channel>(
+        const channelModelModuleFile = new InstrumentationNodeModuleFile<amqp.Channel>(
             `amqplib/lib/channel_model.js`,
-            ['*'],
+            ['>=0.5.5'],
             this.patchChannelModel.bind(this),
             this.unpatchChannelModel.bind(this)
         );
 
-        const module = new InstrumentationNodeModuleDefinition<typeof amqp>('amqplib', ['*'], undefined, undefined, [
-            channelModelModulePFile,
+        const connectModuleFile = new InstrumentationNodeModuleFile<amqp.Channel>(
+            `amqplib/lib/connect.js`,
+            ['>=0.5.5'],
+            this.patchConnect.bind(this),
+            this.unpatchConnect.bind(this)
+        );
+
+        const module = new InstrumentationNodeModuleDefinition<typeof amqp>('amqplib', ['>=0.5.5'], undefined, undefined, [
+            channelModelModuleFile,
+            connectModuleFile,
         ]);
         return module;
+    }
+
+    private patchConnect(moduleExports: any) {
+        this._wrap(moduleExports, 'connect', this._getConnectPatch.bind(this));
+        return moduleExports;
+    }
+
+    private unpatchConnect(moduleExports: any) {
+        this._unwrap(moduleExports, 'connect');
+        return moduleExports;
     }
 
     private patchChannelModel(moduleExports: any, moduleVersion: string) {
@@ -67,10 +87,24 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         return moduleExports;
     }
 
+    private _getConnectPatch(original: (url: string | amqp.Options.Connect, socketOptions, openCallback) => amqp.Connection) {
+        return function patchedConnect(url: string | amqp.Options.Connect, socketOptions, openCallback) {
+            return original.call(this, url, socketOptions, function (err, conn: amqp.Connection) {
+                if (err === null) {
+                    Object.defineProperty(conn, CONNECTION_ATTRIBUTES, {
+                        value: getConnectionAttributesFromUrl(url, conn),
+                        enumerable: false,
+                    });
+                }
+                openCallback.apply(this, arguments);
+            });
+        }
+    }
+
     private _getChannelEmitPatch(original: (eventName: string, ...args: unknown[]) => void) {
         return function emit(eventName: string) {
             if (eventName === 'close') {
-                endAllSpansOnChannel(this, true);
+                endAllSpansOnChannel(this, true, '');
             }
             return original.apply(this, arguments);
         };
@@ -78,7 +112,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
 
     private _getAckAllPromisePatch(isRejected: boolean, original: () => void) {
         return function ackAll(): void {
-            endAllSpansOnChannel(this, isRejected);
+            endAllSpansOnChannel(this, isRejected, 'nackAll');
             return original.apply(this, arguments);
         };
     }
@@ -88,6 +122,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         isPatchingReject: boolean,
         original: (message: amqp.Message, allUpTo?: boolean, requeue?: boolean) => void
     ) {
+        const operation = isPatchingReject ? 'reject' : 'nack';
         return function ack(message: amqp.Message, allUpTo?: boolean, requeue?: boolean): void {
             const channel = this;
             // we use this patch in reject function as well, but it has different signature
@@ -98,14 +133,14 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
             if (msgIndex < 0) {
                 // should not happen in happy flow
                 // but possible if user is calling the api function ack twice with same message
-                endConsumerSpan(message, isRejected, requeueResolved);
+                endConsumerSpan(message, isRejected, operation, requeueResolved);
             } else if (!isPatchingReject && allUpTo) {
                 for (let i = 0; i <= msgIndex; i++) {
-                    endConsumerSpan(spansNotEnded[i], isRejected, requeueResolved);
+                    endConsumerSpan(spansNotEnded[i], isRejected, operation, requeueResolved);
                 }
                 spansNotEnded.splice(0, msgIndex + 1);
             } else {
-                endConsumerSpan(message, isRejected, requeueResolved);
+                endConsumerSpan(message, isRejected, operation, requeueResolved);
                 spansNotEnded.splice(msgIndex, 1);
             }
             return original.apply(this, arguments);
@@ -144,12 +179,10 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
                     {
                         kind: SpanKind.CONSUMER,
                         attributes: {
-                            [MessagingAttribute.MESSAGING_SYSTEM]: channel?.connection?.serverProperties?.product?.toLowerCase?.(),
+                            ...channel?.connection?.[CONNECTION_ATTRIBUTES],
                             [MessagingAttribute.MESSAGING_DESTINATION]: exchange,
                             [MessagingAttribute.MESSAGING_DESTINATION_KIND]: exchange ? 'topic' : 'queue',
                             [MessagingAttribute.MESSAGING_RABBITMQ_ROUTING_KEY]: msg?.fields?.routingKey,
-                            [MessagingAttribute.MESSAGING_PROTOCOL]: 'AMQP',
-                            [MessagingAttribute.MESSAGING_PROTOCOL_VERSION]: '0.9.1', // this is the only protocol supported by the instrumented library
                             [MessagingAttribute.MESSAGING_OPERATION]: MessagingOperationName.PROCESS,
                         },
                     },
@@ -211,12 +244,10 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
             const span = self.tracer.startSpan(`${normalizedExchange} -> ${routingKey} send`, {
                 kind: SpanKind.PRODUCER,
                 attributes: {
-                    [MessagingAttribute.MESSAGING_SYSTEM]: this.connection?.serverProperties?.product?.toLowerCase?.(),
+                    ...this.connection[CONNECTION_ATTRIBUTES],
                     [MessagingAttribute.MESSAGING_DESTINATION]: exchange,
                     [MessagingAttribute.MESSAGING_DESTINATION_KIND]: exchange ? 'topic' : 'queue',
                     [MessagingAttribute.MESSAGING_RABBITMQ_ROUTING_KEY]: routingKey,
-                    [MessagingAttribute.MESSAGING_PROTOCOL]: 'AMQP',
-                    [MessagingAttribute.MESSAGING_PROTOCOL_VERSION]: '0.9.1', // this is the only protocol supported by the instrumented library
                 },
             });
 
