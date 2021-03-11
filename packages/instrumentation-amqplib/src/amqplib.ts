@@ -4,6 +4,7 @@ import {
     InstrumentationModuleDefinition,
     InstrumentationNodeModuleDefinition,
     InstrumentationNodeModuleFile,
+    isWrapped,
     safeExecuteInTheMiddle,
 } from '@opentelemetry/instrumentation';
 import { MessagingAttribute, MessagingOperationName } from '@opentelemetry/semantic-conventions';
@@ -30,8 +31,16 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
     }
 
     protected init(): InstrumentationModuleDefinition<typeof amqp> {
+
         const channelModelModuleFile = new InstrumentationNodeModuleFile<amqp.Channel>(
             `amqplib/lib/channel_model.js`,
+            ['>=0.5.5'],
+            this.patchChannelModel.bind(this),
+            this.unpatchChannelModel.bind(this)
+        );
+
+        const callbackModelModuleFile = new InstrumentationNodeModuleFile<amqp.Channel>(
+            `amqplib/lib/callback_model.js`,
             ['>=0.5.5'],
             this.patchChannelModel.bind(this),
             this.unpatchChannelModel.bind(this)
@@ -47,41 +56,61 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         const module = new InstrumentationNodeModuleDefinition<typeof amqp>('amqplib', ['>=0.5.5'], undefined, undefined, [
             channelModelModuleFile,
             connectModuleFile,
+            callbackModelModuleFile
         ]);
         return module;
     }
 
     private patchConnect(moduleExports: any) {
+        moduleExports = this.unpatchConnect(moduleExports);
         this._wrap(moduleExports, 'connect', this._getConnectPatch.bind(this));
         return moduleExports;
     }
 
     private unpatchConnect(moduleExports: any) {
-        this._unwrap(moduleExports, 'connect');
+        if(isWrapped(moduleExports.connect)) {
+            this._unwrap(moduleExports, 'connect');
+        }
         return moduleExports;
     }
 
     private patchChannelModel(moduleExports: any, moduleVersion: string) {
-        this._wrap(moduleExports.Channel.prototype, 'publish', this._getPublishPromisePatch.bind(this, moduleVersion));
-        this._wrap(moduleExports.Channel.prototype, 'consume', this._getConsumePromisePatch.bind(this, moduleVersion));
-        this._wrap(moduleExports.Channel.prototype, 'ack', this._getAckPromisePatch.bind(this, false, EndOperation.Ack));
-        this._wrap(moduleExports.Channel.prototype, 'nack', this._getAckPromisePatch.bind(this, true, EndOperation.Nack));
-        this._wrap(moduleExports.Channel.prototype, 'reject', this._getAckPromisePatch.bind(this, true, EndOperation.Reject));
-        this._wrap(moduleExports.Channel.prototype, 'ackAll', this._getAckAllPromisePatch.bind(this, false, EndOperation.AckAll));
-        this._wrap(moduleExports.Channel.prototype, 'nackAll', this._getAckAllPromisePatch.bind(this, true, EndOperation.NackAll));
+        this._wrap(moduleExports.Channel.prototype, 'publish', this._getPublishPatch.bind(this, moduleVersion));
+        this._wrap(moduleExports.Channel.prototype, 'consume', this._getConsumePatch.bind(this, moduleVersion));
+        this._wrap(moduleExports.Channel.prototype, 'ack', this._getAckPatch.bind(this, false, EndOperation.Ack));
+        this._wrap(moduleExports.Channel.prototype, 'nack', this._getAckPatch.bind(this, true, EndOperation.Nack));
+        this._wrap(moduleExports.Channel.prototype, 'reject', this._getAckPatch.bind(this, true, EndOperation.Reject));
+        this._wrap(moduleExports.Channel.prototype, 'ackAll', this._getAckAllPatch.bind(this, false, EndOperation.AckAll));
+        this._wrap(moduleExports.Channel.prototype, 'nackAll', this._getAckAllPatch.bind(this, true, EndOperation.NackAll));
         this._wrap(moduleExports.Channel.prototype, 'emit', this._getChannelEmitPatch.bind(this));
         return moduleExports;
     }
 
     private unpatchChannelModel(moduleExports: any) {
-        this._unwrap(moduleExports.Channel.prototype, 'publish');
-        this._unwrap(moduleExports.Channel.prototype, 'consume');
-        this._unwrap(moduleExports.Channel.prototype, 'ack');
-        this._unwrap(moduleExports.Channel.prototype, 'nack');
-        this._unwrap(moduleExports.Channel.prototype, 'reject');
-        this._unwrap(moduleExports.Channel.prototype, 'ackAll');
-        this._unwrap(moduleExports.Channel.prototype, 'nackAll');
-        this._unwrap(moduleExports.Channel.prototype, 'emit');
+        if(isWrapped(moduleExports.Channel.prototype.publish)) {
+            this._unwrap(moduleExports.Channel.prototype, 'publish');
+        };
+        if(isWrapped(moduleExports.Channel.prototype.consume)) {
+            this._unwrap(moduleExports.Channel.prototype, 'consume');
+        };
+        if(isWrapped(moduleExports.Channel.prototype.ack)) {
+            this._unwrap(moduleExports.Channel.prototype, 'ack');
+        };
+        if(isWrapped(moduleExports.Channel.prototype.nack)) {
+            this._unwrap(moduleExports.Channel.prototype, 'nack');
+        };
+        if(isWrapped(moduleExports.Channel.prototype.reject)) {
+            this._unwrap(moduleExports.Channel.prototype, 'reject');
+        };
+        if(isWrapped(moduleExports.Channel.prototype.ackAll)) {
+            this._unwrap(moduleExports.Channel.prototype, 'ackAll');
+        };
+        if(isWrapped(moduleExports.Channel.prototype.nackAll)) {
+            this._unwrap(moduleExports.Channel.prototype, 'nackAll');
+        };
+        if(isWrapped(moduleExports.Channel.prototype.emit)) {
+            this._unwrap(moduleExports.Channel.prototype, 'emit');
+        };
         return moduleExports;
     }
 
@@ -111,7 +140,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         };
     }
 
-    private _getAckAllPromisePatch(isRejected: boolean, endOperation: EndOperation, original: () => void) {
+    private _getAckAllPatch(isRejected: boolean, endOperation: EndOperation, original: () => void) {
         const self = this;
         return function ackAll(): void {
             self.endAllSpansOnChannel(this, isRejected, endOperation);
@@ -119,7 +148,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         };
     }
 
-    private _getAckPromisePatch(
+    private _getAckPatch(
         isRejected: boolean,
         endOperation: EndOperation,
         original: (message: amqp.Message, allUpTo?: boolean, requeue?: boolean) => void
@@ -149,7 +178,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         };
     }
 
-    private _getConsumePromisePatch(
+    private _getConsumePatch(
         moduleVersion: string,
         original: (
             queue: string,
@@ -228,11 +257,12 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
                     span.end();
                 }
             };
-            return original.call(this, queue, patchedOnMessage, options);
+            arguments[1] = patchedOnMessage;
+            return original.apply(this, arguments);
         };
     }
 
-    private _getPublishPromisePatch(
+    private _getPublishPatch(
         moduleVersion: string,
         original: (exchange: string, routingKey: string, content: Buffer, options?: amqp.Options.Publish) => boolean
     ) {
@@ -276,7 +306,9 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
 
             // calling original publish function is only storing the message in queue.
             // it does not send it and waits for an ack, so the span duration is expected to be very short.
-            const originalRes = original.call(this, exchange, routingKey, content, modifiedOptions);
+            const argumentsCopy = [...arguments];
+            argumentsCopy[3] = modifiedOptions;
+            const originalRes = original.apply(this, argumentsCopy);
             if (!originalRes) {
                 span.setStatus({
                     code: SpanStatusCode.ERROR,
