@@ -224,9 +224,9 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
                     span.setAttribute(self._config.moduleVersionAttributeName, moduleVersion);
                 }
 
-                if (self._config.consumerHook) {
+                if (self._config.consumeHook) {
                     safeExecuteInTheMiddle(
-                        () => self._config.consumerHook(span, msg),
+                        () => self._config.consumeHook(span, msg),
                         (e) => {
                             if (e) {
                                 diag.error('amqplib instrumentation: consumerHook error', e);
@@ -360,10 +360,10 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         rejected: boolean,
         endOperation: EndOperation
     ) {
-        if (!this._config.consumerEndHook) return;
+        if (!this._config.consumeEndHook) return;
     
         safeExecuteInTheMiddle(
-            () => this._config.consumerEndHook(span, msg, rejected, endOperation),
+            () => this._config.consumeEndHook(span, msg, rejected, endOperation),
             (e) => {
                 if (e) {
                     diag.error('amqplib instrumentation: consumerEndHook error', e);

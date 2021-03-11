@@ -68,7 +68,7 @@ describe('amqplib instrumentation promise model', function () {
         // instrumentation.disable();
         endHookSpy = sinon.spy();
         instrumentation.setConfig({
-            consumerEndHook: endHookSpy,
+            consumeEndHook: endHookSpy,
         });
         instrumentation.enable();
 
@@ -423,11 +423,11 @@ describe('amqplib instrumentation promise model', function () {
                     expect(publishParams.routingKey).toStrictEqual(queueName);
                     expect(publishParams.content.toString()).toStrictEqual(msgPayload);
                 },
-                consumerHook: (span: Span, msg: amqp.ConsumeMessage | null): void => {
+                consumeHook: (span: Span, msg: amqp.ConsumeMessage | null): void => {
                     span.setAttribute(attributeNameFromHook, hookAttributeValue);
                     expect(msg.content.toString()).toStrictEqual(msgPayload);
                 },
-                consumerEndHook: (
+                consumeEndHook: (
                     span: Span,
                     msg: amqp.ConsumeMessage | null,
                     rejected: boolean,
@@ -465,7 +465,7 @@ describe('amqplib instrumentation promise model', function () {
                     span.setAttribute(attributeNameFromHook, hookAttributeValue);
                     throw new Error('error from hook');
                 },
-                consumerHook: (span: Span, msg: amqp.ConsumeMessage | null): void => {
+                consumeHook: (span: Span, msg: amqp.ConsumeMessage | null): void => {
                     span.setAttribute(attributeNameFromHook, hookAttributeValue);
                     throw new Error('error from hook');
                 },

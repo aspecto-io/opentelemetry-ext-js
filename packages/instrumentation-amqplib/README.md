@@ -33,6 +33,7 @@ amqplib instrumentation has few options available to choose from. You can set th
 
 | Options        | Type                                   | Description                                                                                     |
 | -------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `publishHook` | `strAmqplibPublishCustomAttributeFunctioning` | hook for adding custom attributes before publish message is sent |
+| `consumeHook` | `AmqplibConsumerCustomAttributeFunction` | hook for adding custom attributes before consumer message is processed |
+| `consumeEndHook` | `strAmqplibPublishCustomAttributeFunctioning` | hook for adding custom attributes after consumer message is acked to server |
 | `moduleVersionAttributeName` | `string` | If passed, a span attribute will be added to all spans with key of the provided `moduleVersionAttributeName` and value of the patched module version |
-
-

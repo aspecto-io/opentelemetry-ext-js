@@ -37,10 +37,10 @@ export interface AmqplibInstrumentationConfig extends InstrumentationConfig {
     publishHook?: AmqplibPublishCustomAttributeFunction;
 
     /** hook for adding custom attributes before consumer message is processed */
-    consumerHook?: AmqplibConsumerCustomAttributeFunction;
+    consumeHook?: AmqplibConsumerCustomAttributeFunction;
 
     /** hook for adding custom attributes after consumer message is acked to server */
-    consumerEndHook?: AmqplibConsumerEndCustomAttributeFunction;
+    consumeEndHook?: AmqplibConsumerEndCustomAttributeFunction;
 
     /**
      * If passed, a span attribute will be added to all spans with key of the provided "moduleVersionAttributeName"

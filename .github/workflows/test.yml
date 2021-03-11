@@ -8,10 +8,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
     services:
+
       mongo:
         image: mongo
         ports:
           - 27017:27017
+
       neo4j:
         image: neo4j:4.2.3
         ports:
@@ -19,6 +21,12 @@ jobs:
           - 11011:7687
         env:
           NEO4J_AUTH: neo4j/test
+          
+      rabbitmq:
+        image: rabbitmq:3
+        prots:
+          - 22221:5672
+        
 
     steps:
       - uses: actions/checkout@v2

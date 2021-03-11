@@ -29,7 +29,8 @@
         "version:update": "node ../../scripts/version-update.js",
         "version": "yarn run version:update",
         "test-all-versions": "tav",
-        "test:ci": "yarn test-all-versions"
+        "test:ci": "yarn test-all-versions",
+        "test:docker:run": "docker run -d --hostname demo-amqplib-rabbit --name amqplib-unittests -p 22221:5672 rabbitmq:3"
     },
     "bugs": {
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
