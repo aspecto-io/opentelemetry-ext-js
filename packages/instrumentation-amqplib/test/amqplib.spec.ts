@@ -5,7 +5,7 @@ import lodash from 'lodash';
 import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { HttpTraceContext } from '@opentelemetry/core';
-import { AmqplibInstrumentation, PublishParams } from '../src';
+import { AmqplibInstrumentation, EndOperation, PublishParams } from '../src';
 
 const instrumentation = new AmqplibInstrumentation();
 instrumentation.enable();
@@ -40,6 +40,23 @@ const asyncConsume = (
     );
 };
 
+const expectConsumeEndSpyStatus = (spy: sinon.SinonSpy, expectedEndOperations: EndOperation[]): void => {
+    expect(spy.callCount).toBe(expectedEndOperations.length);
+    expectedEndOperations.forEach( (endOperation: EndOperation, index: number) => {
+        expect(spy.args[index][3]).toStrictEqual(endOperation);
+    });
+}
+
+const installConsumeEndHook = (): sinon.SinonSpy => {
+    instrumentation.disable();
+    const consumerEndHookSpy = sinon.spy();
+    instrumentation.setConfig({
+        consumerEndHook: consumerEndHookSpy,
+    });
+    instrumentation.enable();
+    return consumerEndHookSpy;
+}
+
 const msgPayload = 'payload from test';
 const queueName = 'queue-name-from-unittest';
 
@@ -73,6 +90,7 @@ describe('amqplib instrumentation', function () {
     });
 
     it('simple publish and consume from queue', async () => {
+        const endHookSpy = installConsumeEndHook();
         const hadSpaceInBuffer = channel.sendToQueue(queueName, Buffer.from(msgPayload));
         expect(hadSpaceInBuffer).toBeTruthy();
 
@@ -108,18 +126,24 @@ describe('amqplib instrumentation', function () {
         // assert context propagation
         expect(consumeSpan.spanContext.traceId).toStrictEqual(publishSpan.spanContext.traceId);
         expect(consumeSpan.parentSpanId).toStrictEqual(publishSpan.spanContext.spanId);
+
+        expectConsumeEndSpyStatus(endHookSpy, [EndOperation.AutoAck]);
     });
 
     describe('ending consume spans', () => {
         it('message acked sync', async () => {
+            const endHookSpy = installConsumeEndHook();
+
             channel.sendToQueue(queueName, Buffer.from(msgPayload));
 
             await asyncConsume(channel, queueName, [(msg) => channel.ack(msg)]);
             // assert consumed message span has ended
             expect(memoryExporter.getFinishedSpans().length).toBe(2);
+            expectConsumeEndSpyStatus(endHookSpy, [EndOperation.Ack]);
         });
 
         it('message acked async', async () => {
+            const endHookSpy = installConsumeEndHook();
             channel.sendToQueue(queueName, Buffer.from(msgPayload));
 
             // start async timer and ack the message after the callback returns
@@ -134,9 +158,11 @@ describe('amqplib instrumentation', function () {
             });
             // assert consumed message span has ended
             expect(memoryExporter.getFinishedSpans().length).toBe(2);
+            expectConsumeEndSpyStatus(endHookSpy, [EndOperation.Ack]);
         });
 
         it('message nack no requeue', async () => {
+            const endHookSpy = installConsumeEndHook();
             channel.sendToQueue(queueName, Buffer.from(msgPayload));
 
             await asyncConsume(channel, queueName, [(msg) => channel.nack(msg, false, false)]);
@@ -146,9 +172,12 @@ describe('amqplib instrumentation', function () {
             const [_, consumerSpan] = memoryExporter.getFinishedSpans();
             expect(consumerSpan.status.code).toStrictEqual(SpanStatusCode.ERROR);
             expect(consumerSpan.status.message).toStrictEqual('nack called on message without requeue');
+            expectConsumeEndSpyStatus(endHookSpy, [EndOperation.Nack]);
         });
 
         it('message nack requeue, then acked', async () => {
+            const endHookSpy = installConsumeEndHook();
+
             channel.sendToQueue(queueName, Buffer.from(msgPayload));
 
             // @ts-ignore
@@ -162,18 +191,22 @@ describe('amqplib instrumentation', function () {
             expect(rejectedConsumerSpan.status.code).toStrictEqual(SpanStatusCode.ERROR);
             expect(rejectedConsumerSpan.status.message).toStrictEqual('nack called on message with requeue');
             expect(successConsumerSpan.status.code).toStrictEqual(SpanStatusCode.UNSET);
+            expectConsumeEndSpyStatus(endHookSpy, [EndOperation.Nack, EndOperation.Ack]);
         });
 
         it('ack allUpTo 2 msgs sync', async () => {
+            const endHookSpy = installConsumeEndHook();
             lodash.times(3, () => channel.sendToQueue(queueName, Buffer.from(msgPayload)));
 
             // @ts-ignore
             await asyncConsume(channel, queueName, [null, (msg) => channel.ack(msg, true), (msg) => channel.ack(msg)]);
             // assert all 3 messages are acked, including the first one which is acked by allUpTo
             expect(memoryExporter.getFinishedSpans().length).toBe(6);
+            expectConsumeEndSpyStatus(endHookSpy, [EndOperation.Ack, EndOperation.Ack, EndOperation.Ack]);
         });
 
         it('nack allUpTo 2 msgs sync', async () => {
+            const endHookSpy = installConsumeEndHook();
             lodash.times(3, () => channel.sendToQueue(queueName, Buffer.from(msgPayload)));
 
             // @ts-ignore
@@ -190,9 +223,11 @@ describe('amqplib instrumentation', function () {
                     'nack called on message without requeue'
                 );
             });
+            expectConsumeEndSpyStatus(endHookSpy, [EndOperation.Nack, EndOperation.Nack, EndOperation.Nack]);
         });
 
         it('ack not in received order', async () => {
+            const endHookSpy = installConsumeEndHook();
             lodash.times(3, () => channel.sendToQueue(queueName, Buffer.from(msgPayload)));
 
             // @ts-ignore
@@ -202,18 +237,22 @@ describe('amqplib instrumentation', function () {
             channel.ack(msgs[0]);
             // assert all 3 span messages are ended
             expect(memoryExporter.getFinishedSpans().length).toBe(6);
+            expectConsumeEndSpyStatus(endHookSpy, [EndOperation.Ack, EndOperation.Ack, EndOperation.Ack]);
         });
 
         it('ackAll', async () => {
+            const endHookSpy = installConsumeEndHook();
             lodash.times(2, () => channel.sendToQueue(queueName, Buffer.from(msgPayload)));
 
             // @ts-ignore
             await asyncConsume(channel, queueName, [null, () => channel.ackAll()]);
             // assert all 2 span messages are ended by call to ackAll
             expect(memoryExporter.getFinishedSpans().length).toBe(4);
+            expectConsumeEndSpyStatus(endHookSpy, [EndOperation.AckAll, EndOperation.AckAll]);
         });
 
         it('nackAll', async () => {
+            const endHookSpy = installConsumeEndHook();
             lodash.times(2, () => channel.sendToQueue(queueName, Buffer.from(msgPayload)));
 
             // @ts-ignore
@@ -227,9 +266,11 @@ describe('amqplib instrumentation', function () {
                     expect(memoryExporter.getFinishedSpans()[i].status.message).toStrictEqual('nackAll called on message without requeue');
                 }
                 );
+            expectConsumeEndSpyStatus(endHookSpy, [EndOperation.NackAll, EndOperation.NackAll]);
         });
 
         it('reject', async () => {
+            const endHookSpy = installConsumeEndHook();
             lodash.times(1, () => channel.sendToQueue(queueName, Buffer.from(msgPayload)));
 
             // @ts-ignore
@@ -237,9 +278,11 @@ describe('amqplib instrumentation', function () {
             expect(memoryExporter.getFinishedSpans().length).toBe(2);
             expect(memoryExporter.getFinishedSpans()[1].status.code).toStrictEqual(SpanStatusCode.ERROR);
             expect(memoryExporter.getFinishedSpans()[1].status.message).toStrictEqual('reject called on message without requeue');
+            expectConsumeEndSpyStatus(endHookSpy, [EndOperation.Reject]);
         });
 
         it('reject with requeue', async () => {
+            const endHookSpy = installConsumeEndHook();
             lodash.times(1, () => channel.sendToQueue(queueName, Buffer.from(msgPayload)));
 
             // @ts-ignore
@@ -252,9 +295,11 @@ describe('amqplib instrumentation', function () {
             expect(memoryExporter.getFinishedSpans()[1].status.message).toStrictEqual('reject called on message with requeue');
             expect(memoryExporter.getFinishedSpans()[2].status.code).toStrictEqual(SpanStatusCode.ERROR);
             expect(memoryExporter.getFinishedSpans()[2].status.message).toStrictEqual('reject called on message without requeue');
+            expectConsumeEndSpyStatus(endHookSpy, [EndOperation.Reject, EndOperation.Reject]);
         });
 
         it('closing channel should end all open spans on it', async () => {
+            const endHookSpy = installConsumeEndHook();
             lodash.times(1, () => channel.sendToQueue(queueName, Buffer.from(msgPayload)));
 
             await new Promise<void>((resolve) =>
@@ -267,13 +312,23 @@ describe('amqplib instrumentation', function () {
             );
 
             expect(memoryExporter.getFinishedSpans().length).toBe(2);
+            expect(memoryExporter.getFinishedSpans()[1].status.code).toStrictEqual(SpanStatusCode.ERROR);
+            expect(memoryExporter.getFinishedSpans()[1].status.message).toStrictEqual('channel closed');
+            expectConsumeEndSpyStatus(endHookSpy, [EndOperation.ChannelClosed]);
         });
 
         it('error on channel should end all open spans on it', (done) => {
+            const endHookSpy = installConsumeEndHook();
             lodash.times(2, () => channel.sendToQueue(queueName, Buffer.from(msgPayload)));
 
             channel.on('close', () => {
                 expect(memoryExporter.getFinishedSpans().length).toBe(4);
+                // second consume ended with valid ack, previous message not acked when channel is errored.
+                // since we first ack the second message, it appear first in the finished spans array
+                expect(memoryExporter.getFinishedSpans()[2].status.code).toStrictEqual(SpanStatusCode.UNSET);
+                expect(memoryExporter.getFinishedSpans()[3].status.code).toStrictEqual(SpanStatusCode.ERROR);
+                expect(memoryExporter.getFinishedSpans()[3].status.message).toStrictEqual('channel error');
+                expectConsumeEndSpyStatus(endHookSpy, [EndOperation.Ack, EndOperation.ChannelError]);
                 done();
             });
             asyncConsume(channel, queueName, [
@@ -372,6 +427,8 @@ describe('amqplib instrumentation', function () {
         it('publish and consume hooks success', async () => {
             const attributeNameFromHook = 'attribute.name.from.hook';
             const hookAttributeValue = 'attribute value from hook';
+            const attributeNameFromEndHook = 'attribute.name.from.endhook';
+            const endHookAttributeValue = 'attribute value from end hook';
             instrumentation.disable();
             instrumentation.setConfig({
                 publishHook: (span: Span, publishParams: PublishParams): void => {
@@ -384,6 +441,10 @@ describe('amqplib instrumentation', function () {
                     span.setAttribute(attributeNameFromHook, hookAttributeValue);
                     expect(msg.content.toString()).toStrictEqual(msgPayload);
                 },
+                consumerEndHook: (span: Span, msg: amqp.ConsumeMessage | null, rejected: boolean, endOperation: EndOperation): void => {
+                    span.setAttribute(attributeNameFromEndHook, endHookAttributeValue);
+                    expect(endOperation).toStrictEqual(EndOperation.AutoAck);
+                }
             });
             instrumentation.enable();
 
@@ -393,9 +454,9 @@ describe('amqplib instrumentation', function () {
                 noAck: true,
             });
             expect(memoryExporter.getFinishedSpans().length).toBe(2);
-            memoryExporter
-                .getFinishedSpans()
-                .forEach((s) => expect(s.attributes[attributeNameFromHook]).toStrictEqual(hookAttributeValue));
+            expect(memoryExporter.getFinishedSpans()[0].attributes[attributeNameFromHook]).toStrictEqual(hookAttributeValue);
+            expect(memoryExporter.getFinishedSpans()[1].attributes[attributeNameFromHook]).toStrictEqual(hookAttributeValue);
+            expect(memoryExporter.getFinishedSpans()[1].attributes[attributeNameFromEndHook]).toStrictEqual(endHookAttributeValue);
         });
 
         it('hooks throw should not affect user flow or span creation', async () => {

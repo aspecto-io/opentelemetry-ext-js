@@ -1,4 +1,4 @@
-import { Span, SpanAttributes, SpanStatusCode } from '@opentelemetry/api';
+import { SpanAttributes } from '@opentelemetry/api';
 import { GeneralAttribute, MessagingAttribute } from '@opentelemetry/semantic-conventions';
 import type amqp from 'amqplib';
 
@@ -7,31 +7,6 @@ export const CHANNEL_SPANS_NOT_ENDED: unique symbol = Symbol('opentelemetry.amqp
 export const CONNECTION_ATTRIBUTES: unique symbol = Symbol('opentelemetry.amqplib.connection.attributes');
 
 export const normalizeExchange = (exchangeName: string) => (exchangeName !== '' ? exchangeName : '<default>');
-
-export const endConsumerSpan = (message: amqp.Message, isRejected: boolean, operation: string, requeue?: boolean) => {
-    const storedSpan: Span = message[MESSAGE_STORED_SPAN];
-    if (!storedSpan) return;
-    if (isRejected) {
-        storedSpan.setStatus({
-            code: SpanStatusCode.ERROR,
-            message: `${operation} called on message ${requeue ? 'with' : 'without'} requeue`,
-        });
-    }
-    storedSpan.end();
-    delete message[MESSAGE_STORED_SPAN];
-};
-
-export const endAllSpansOnChannel = (channel: amqp.Channel[], isRejected: boolean, operation: string) => {
-    const spansNotEnded: amqp.Message[] = channel[CHANNEL_SPANS_NOT_ENDED] ?? [];
-    spansNotEnded.forEach((message) => {
-        endConsumerSpan(message, isRejected, operation, null);
-    });
-    Object.defineProperty(channel, CHANNEL_SPANS_NOT_ENDED, {
-        value: [],
-        enumerable: false,
-        configurable: true,
-    });
-};
 
 const getPort = (portFromUrl: number, protocol: string): number => {
     return portFromUrl || (protocol === 'amqp:' ? 5672 : 5671);
@@ -61,7 +36,9 @@ export const getConnectionAttributesFromUrl = (
         attributes[MessagingAttribute.MESSAGING_URL] = url;
         try {
             const parts = new URL(url);
-            attributes[MessagingAttribute.MESSAGING_PROTOCOL] = parts.protocol?.substr(0, parts.protocol.length - 1).toUpperCase();
+            attributes[MessagingAttribute.MESSAGING_PROTOCOL] = parts.protocol
+                ?.substr(0, parts.protocol.length - 1)
+                .toUpperCase();
             attributes[GeneralAttribute.NET_PEER_NAME] = parts.hostname;
             attributes[GeneralAttribute.NET_PEER_PORT] = getPort(parseInt(parts.port), parts.protocol);
         } catch {}

@@ -8,12 +8,10 @@ import {
 } from '@opentelemetry/instrumentation';
 import { MessagingAttribute, MessagingOperationName } from '@opentelemetry/semantic-conventions';
 import type amqp from 'amqplib';
-import { AmqplibInstrumentationConfig } from './types';
+import { AmqplibInstrumentationConfig, EndOperation } from './types';
 import {
     CHANNEL_SPANS_NOT_ENDED,
     CONNECTION_ATTRIBUTES,
-    endAllSpansOnChannel,
-    endConsumerSpan,
     getConnectionAttributesFromUrl,
     MESSAGE_STORED_SPAN,
     normalizeExchange,
@@ -66,11 +64,11 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
     private patchChannelModel(moduleExports: any, moduleVersion: string) {
         this._wrap(moduleExports.Channel.prototype, 'publish', this._getPublishPromisePatch.bind(this, moduleVersion));
         this._wrap(moduleExports.Channel.prototype, 'consume', this._getConsumePromisePatch.bind(this, moduleVersion));
-        this._wrap(moduleExports.Channel.prototype, 'ack', this._getAckPromisePatch.bind(this, false, false));
-        this._wrap(moduleExports.Channel.prototype, 'nack', this._getAckPromisePatch.bind(this, true, false));
-        this._wrap(moduleExports.Channel.prototype, 'reject', this._getAckPromisePatch.bind(this, true, true));
-        this._wrap(moduleExports.Channel.prototype, 'ackAll', this._getAckAllPromisePatch.bind(this, false));
-        this._wrap(moduleExports.Channel.prototype, 'nackAll', this._getAckAllPromisePatch.bind(this, true));
+        this._wrap(moduleExports.Channel.prototype, 'ack', this._getAckPromisePatch.bind(this, false, EndOperation.Ack));
+        this._wrap(moduleExports.Channel.prototype, 'nack', this._getAckPromisePatch.bind(this, true, EndOperation.Nack));
+        this._wrap(moduleExports.Channel.prototype, 'reject', this._getAckPromisePatch.bind(this, true, EndOperation.Reject));
+        this._wrap(moduleExports.Channel.prototype, 'ackAll', this._getAckAllPromisePatch.bind(this, false, EndOperation.AckAll));
+        this._wrap(moduleExports.Channel.prototype, 'nackAll', this._getAckAllPromisePatch.bind(this, true, EndOperation.NackAll));
         this._wrap(moduleExports.Channel.prototype, 'emit', this._getChannelEmitPatch.bind(this));
         return moduleExports;
     }
@@ -102,45 +100,49 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
     }
 
     private _getChannelEmitPatch(original: (eventName: string, ...args: unknown[]) => void) {
+        const self = this;
         return function emit(eventName: string) {
             if (eventName === 'close') {
-                endAllSpansOnChannel(this, true, '');
+                self.endAllSpansOnChannel(this, true, EndOperation.ChannelClosed);
+            } else if (eventName === 'error') {
+                self.endAllSpansOnChannel(this, true, EndOperation.ChannelError);
             }
             return original.apply(this, arguments);
         };
     }
 
-    private _getAckAllPromisePatch(isRejected: boolean, original: () => void) {
+    private _getAckAllPromisePatch(isRejected: boolean, endOperation: EndOperation, original: () => void) {
+        const self = this;
         return function ackAll(): void {
-            endAllSpansOnChannel(this, isRejected, 'nackAll');
+            self.endAllSpansOnChannel(this, isRejected, endOperation);
             return original.apply(this, arguments);
         };
     }
 
     private _getAckPromisePatch(
         isRejected: boolean,
-        isPatchingReject: boolean,
+        endOperation: EndOperation,
         original: (message: amqp.Message, allUpTo?: boolean, requeue?: boolean) => void
     ) {
-        const operation = isPatchingReject ? 'reject' : 'nack';
+        const self = this;
         return function ack(message: amqp.Message, allUpTo?: boolean, requeue?: boolean): void {
             const channel = this;
             // we use this patch in reject function as well, but it has different signature
-            const requeueResolved = isPatchingReject ? allUpTo : requeue;
+            const requeueResolved = endOperation === EndOperation.Reject ? allUpTo : requeue;
 
             const spansNotEnded: amqp.Message[] = channel[CHANNEL_SPANS_NOT_ENDED] ?? [];
             const msgIndex = spansNotEnded.findIndex((m) => m === message);
             if (msgIndex < 0) {
                 // should not happen in happy flow
                 // but possible if user is calling the api function ack twice with same message
-                endConsumerSpan(message, isRejected, operation, requeueResolved);
-            } else if (!isPatchingReject && allUpTo) {
+                self.endConsumerSpan(message, isRejected, endOperation, requeueResolved);
+            } else if (endOperation !== EndOperation.Reject && allUpTo) {
                 for (let i = 0; i <= msgIndex; i++) {
-                    endConsumerSpan(spansNotEnded[i], isRejected, operation, requeueResolved);
+                    self.endConsumerSpan(spansNotEnded[i], isRejected, endOperation, requeueResolved);
                 }
                 spansNotEnded.splice(0, msgIndex + 1);
             } else {
-                endConsumerSpan(message, isRejected, operation, requeueResolved);
+                self.endConsumerSpan(message, isRejected, endOperation, requeueResolved);
                 spansNotEnded.splice(msgIndex, 1);
             }
             return original.apply(this, arguments);
@@ -222,6 +224,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
                 });
 
                 if (options?.noAck) {
+                    self.callConsumeEndHook(span, msg, false, EndOperation.AutoAck);
                     span.end();
                 }
             };
@@ -284,4 +287,59 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
             return originalRes;
         };
     }
+
+    private endConsumerSpan(
+        message: amqp.Message,
+        isRejected: boolean,
+        operation: EndOperation,
+        requeue: boolean
+    ) {
+        const storedSpan: Span = message[MESSAGE_STORED_SPAN];
+        if (!storedSpan) return;
+        if (isRejected) {
+            storedSpan.setStatus({
+                code: SpanStatusCode.ERROR,
+                message:
+                    operation !== EndOperation.ChannelClosed && operation !== EndOperation.ChannelError
+                        ? `${operation} called on message ${requeue ? 'with' : 'without'} requeue`
+                        : operation,
+            });
+        }
+        this.callConsumeEndHook(storedSpan, message, false, operation);
+        storedSpan.end();
+        delete message[MESSAGE_STORED_SPAN];
+    };
+    
+    private endAllSpansOnChannel(channel: amqp.Channel[], isRejected: boolean, operation: EndOperation) {
+        const spansNotEnded: amqp.Message[] = channel[CHANNEL_SPANS_NOT_ENDED] ?? [];
+        spansNotEnded.forEach((message) => {
+            this.endConsumerSpan(message, isRejected, operation, null);
+        });
+        Object.defineProperty(channel, CHANNEL_SPANS_NOT_ENDED, {
+            value: [],
+            enumerable: false,
+            configurable: true,
+        });
+    };
+
+    private callConsumeEndHook(
+        span: Span,
+        msg: amqp.ConsumeMessage | null,
+        rejected: boolean,
+        endOperation: EndOperation
+    ) {
+        if (!this._config.consumerEndHook) return;
+    
+        safeExecuteInTheMiddle(
+            () => this._config.consumerEndHook(span, msg, rejected, endOperation),
+            (e) => {
+                if (e) {
+                    diag.error('amqplib instrumentation: consumerEndHook error', e);
+                }
+            },
+            true
+        );
+    };    
+    
+    
 }
