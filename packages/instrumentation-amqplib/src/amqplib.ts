@@ -183,7 +183,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
                         attributes: {
                             ...channel?.connection?.[CONNECTION_ATTRIBUTES],
                             [MessagingAttribute.MESSAGING_DESTINATION]: exchange,
-                            [MessagingAttribute.MESSAGING_DESTINATION_KIND]: exchange ? 'topic' : 'queue',
+                            [MessagingAttribute.MESSAGING_DESTINATION_KIND]: 'topic',
                             [MessagingAttribute.MESSAGING_RABBITMQ_ROUTING_KEY]: msg?.fields?.routingKey,
                             [MessagingAttribute.MESSAGING_OPERATION]: MessagingOperationName.PROCESS,
                         },
@@ -249,7 +249,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
                 attributes: {
                     ...this.connection[CONNECTION_ATTRIBUTES],
                     [MessagingAttribute.MESSAGING_DESTINATION]: exchange,
-                    [MessagingAttribute.MESSAGING_DESTINATION_KIND]: exchange ? 'topic' : 'queue',
+                    [MessagingAttribute.MESSAGING_DESTINATION_KIND]: 'topic',
                     [MessagingAttribute.MESSAGING_RABBITMQ_ROUTING_KEY]: routingKey,
                 },
             });
