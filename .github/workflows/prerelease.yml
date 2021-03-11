@@ -2,11 +2,6 @@ name: PreRelease
 
 on: 
   workflow_dispatch:
-    inputs:
-      semanticVersion:
-        description: 'Semantic Version [major | minor | patch ]'
-        required: true
-        default: 'patch'
 
 jobs:
   Publish:
@@ -26,11 +21,6 @@ jobs:
           node-version: 12
           registry-url: https://registry.npmjs.org/
 
-      - name: Configure CI Git User
-        run: |
-          git config --global user.name '@aspecto-system'
-          git config --global user.email 'aspecto-system@users.noreply.github.com'
-
       - name: Install Packages
         run: yarn install
 
@@ -48,7 +38,4 @@ jobs:
 
       - name: Publish package
         run: |
-          yarn publish:ci:prerelease --preid $(echo ${GITHUB_REF##*/}) ${{ github.event.inputs.semanticVersion }}
-        env:
-          GH_TOKEN: ${{ secrets.ADMIN_TOKEN }}
-
+          yarn publish:ci:prerelease --preid $(echo ${GITHUB_REF##*/}) patch
