@@ -21,10 +21,10 @@ jobs:
           - 11011:7687
         env:
           NEO4J_AUTH: neo4j/test
-          
+
       rabbitmq:
         image: rabbitmq:3
-        prots:
+        ports:
           - 22221:5672
         
 
