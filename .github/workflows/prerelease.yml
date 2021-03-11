@@ -1,0 +1,54 @@
+name: PreRelease
+
+on: 
+  workflow_dispatch:
+    inputs:
+      semanticVersion:
+        description: 'Semantic Version [major | minor | patch ]'
+        required: true
+        default: 'patch'
+
+jobs:
+  Publish:
+    name: PreRelease
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.ADMIN_TOKEN }}
+          ref: ${{ github.ref }}
+          # pulls all commits (needed for lerna / semantic release to correctly version)
+          fetch-depth: '0'
+
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+          registry-url: https://registry.npmjs.org/
+
+      - name: Configure CI Git User
+        run: |
+          git config --global user.name '@aspecto-system'
+          git config --global user.email 'aspecto-system@users.noreply.github.com'
+
+      - name: Install Packages
+        run: yarn install
+
+      - name: Build
+        run: yarn build
+
+      - name: Authenticate with Registry
+        run: |
+          yarn logout
+          echo "registry=http://registry.npmjs.org/" >> .npmrc
+          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> .npmrc
+          npm whoami
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish package
+        run: |
+          yarn publish:ci:prerelease --preid $(echo ${GITHUB_REF##*/}) ${{ github.event.inputs.semanticVersion }}
+        env:
+          GH_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+
