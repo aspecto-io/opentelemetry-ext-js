@@ -305,7 +305,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
                         : operation,
             });
         }
-        this.callConsumeEndHook(storedSpan, message, false, operation);
+        this.callConsumeEndHook(storedSpan, message, isRejected, operation);
         storedSpan.end();
         delete message[MESSAGE_STORED_SPAN];
     };
