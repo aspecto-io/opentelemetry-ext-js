@@ -10,11 +10,6 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v2
-        with:
-          token: ${{ secrets.ADMIN_TOKEN }}
-          ref: ${{ github.ref }}
-          # pulls all commits (needed for lerna / semantic release to correctly version)
-          fetch-depth: '0'
 
       - uses: actions/setup-node@v1
         with:
