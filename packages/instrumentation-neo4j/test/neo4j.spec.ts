@@ -472,7 +472,7 @@ describe('neo4j instrumentation', function () {
         // When the connection string starts with "neo4j" routing mode is used
         let routingDriver: Driver;
         const version = require('neo4j-driver/package.json').version;
-        const shouldCheck = !['4.0.0', '4.0.1', '4.0.2'].includes(version)
+        const shouldCheck = !['4.0.0', '4.0.1', '4.0.2'].includes(version);
 
         before(() => {
             if (shouldCheck) {
@@ -481,13 +481,13 @@ describe('neo4j instrumentation', function () {
         });
 
         after(async () => {
-            shouldCheck && await routingDriver.close();
+            shouldCheck && (await routingDriver.close());
         });
 
         it('instruments as expected in routing mode', async () => {
             if (!shouldCheck) {
                 // Versions 4.0.0, 4.0.1 and 4.0.2 of neo4j-driver don't allow connection to local neo4j in routing mode.
-                console.log(`Skipping unsupported test for version ${version}`)
+                console.log(`Skipping unsupported test for version ${version}`);
                 return;
             }
 

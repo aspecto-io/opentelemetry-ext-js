@@ -359,14 +359,14 @@ describe('instrumentation-kafkajs', () => {
         describe('moduleVersionAttributeName config', () => {
             beforeEach(async () => {
                 const config: KafkaJsInstrumentationConfig = {
-                    moduleVersionAttributeName: 'module.version'
+                    moduleVersionAttributeName: 'module.version',
                 };
                 instrumentation.disable();
                 instrumentation.setConfig(config);
                 instrumentation.enable();
                 producer = kafka.producer();
             });
-    
+
             it('adds module version to producer span', async () => {
                 await producer.send({
                     topic: 'topic-name-1',
@@ -628,7 +628,7 @@ describe('instrumentation-kafkajs', () => {
         describe('moduleVersionAttributeName config', () => {
             beforeEach(async () => {
                 const config: KafkaJsInstrumentationConfig = {
-                    moduleVersionAttributeName: 'module.version'
+                    moduleVersionAttributeName: 'module.version',
                 };
                 instrumentation.disable();
                 instrumentation.setConfig(config);
@@ -640,11 +640,11 @@ describe('instrumentation-kafkajs', () => {
                     eachMessage: async (payload: EachMessagePayload): Promise<void> => {},
                 });
             });
-    
+
             it('adds module version to consumer span', async () => {
                 const payload: EachMessagePayload = createEachMessagePayload();
                 await runConfig.eachMessage(payload);
-    
+
                 const spans = memoryExporter.getFinishedSpans();
                 expect(spans.length).toBe(1);
                 const span = spans[0];

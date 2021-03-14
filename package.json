@@ -8,6 +8,7 @@
         "build:ci": "lerna run build --since origin/master",
         "postinstall": "lerna bootstrap",
         "prettier": "prettier --config .prettierrc.yml --write \"**/*.{ts,tsx,js,jsx,json}\"",
+        "prettier:fix": "yarn run prettier --write",
         "version:update": "lerna run version:update",
         "version": "git add packages/**/version.ts",
         "publish:ci": "lerna publish --yes --allow-branch master --create-release github --conventionalCommits",
