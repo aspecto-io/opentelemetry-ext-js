@@ -1,11 +1,9 @@
 import 'mocha';
 import expect from 'expect';
-import sinon from 'sinon';
-import lodash from 'lodash';
 import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { HttpTraceContext } from '@opentelemetry/core';
-import { AmqplibInstrumentation, EndOperation, PublishParams } from '../src';
+import { AmqplibInstrumentation } from '../src';
 
 const instrumentation = new AmqplibInstrumentation();
 instrumentation.enable();
