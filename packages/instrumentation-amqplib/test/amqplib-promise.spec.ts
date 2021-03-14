@@ -65,7 +65,6 @@ describe('amqplib instrumentation promise model', function () {
     beforeEach(async () => {
         memoryExporter.reset();
 
-        // instrumentation.disable();
         endHookSpy = sinon.spy();
         instrumentation.setConfig({
             consumeEndHook: endHookSpy,
@@ -330,7 +329,7 @@ describe('amqplib instrumentation promise model', function () {
         });
 
         // what should we do in this case?
-        // can cause memory leak since the plugin saves a copy of the msg
+        // can cause memory leak since the plugin saves a copy of the msg which will never gets collected
         it.skip('throw exception from consumer callback', async () => {
             lodash.times(1, () => channel.sendToQueue(queueName, Buffer.from(msgPayload)));
 
