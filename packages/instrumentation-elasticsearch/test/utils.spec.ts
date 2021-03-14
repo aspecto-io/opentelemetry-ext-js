@@ -175,7 +175,7 @@ describe('elasticsearch utils', () => {
         const tracerMock = {
             startSpan: (name, options?, context?): any => {},
         };
-        it('should start span with client kink', () => {
+        it('should start span with client kind', () => {
             const startSpanStub = stub(tracerMock, 'startSpan');
 
             Utils.startSpan({
