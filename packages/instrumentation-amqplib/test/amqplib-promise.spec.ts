@@ -35,8 +35,9 @@ describe('amqplib instrumentation promise model', function () {
     });
     after(async () => {
         await conn.close();
-        // the 'close' event might take some time to arrive
-        await new Promise((resolve) => setTimeout(resolve, 70));
+        // the 'close' event on the emitter might take some time to arrive after close promise ends,
+        // we add small timeout to let it settle before going on to next 
+        await new Promise((resolve) => setTimeout(resolve, 5));
         instrumentation.disable();
     });
 
