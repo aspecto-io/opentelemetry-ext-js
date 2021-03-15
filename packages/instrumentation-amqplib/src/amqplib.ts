@@ -63,7 +63,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
 
     private patchConnect(moduleExports: any) {
         moduleExports = this.unpatchConnect(moduleExports);
-        this._wrap(moduleExports, 'connect', this._getConnectPatch.bind(this));
+        this._wrap(moduleExports, 'connect', this.getConnectPatch.bind(this));
         return moduleExports;
     }
 
@@ -75,14 +75,14 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
     }
 
     private patchChannelModel(moduleExports: any, moduleVersion: string) {
-        this._wrap(moduleExports.Channel.prototype, 'publish', this._getPublishPatch.bind(this, moduleVersion));
-        this._wrap(moduleExports.Channel.prototype, 'consume', this._getConsumePatch.bind(this, moduleVersion));
-        this._wrap(moduleExports.Channel.prototype, 'ack', this._getAckPatch.bind(this, false, EndOperation.Ack));
-        this._wrap(moduleExports.Channel.prototype, 'nack', this._getAckPatch.bind(this, true, EndOperation.Nack));
-        this._wrap(moduleExports.Channel.prototype, 'reject', this._getAckPatch.bind(this, true, EndOperation.Reject));
-        this._wrap(moduleExports.Channel.prototype, 'ackAll', this._getAckAllPatch.bind(this, false, EndOperation.AckAll));
-        this._wrap(moduleExports.Channel.prototype, 'nackAll', this._getAckAllPatch.bind(this, true, EndOperation.NackAll));
-        this._wrap(moduleExports.Channel.prototype, 'emit', this._getChannelEmitPatch.bind(this));
+        this._wrap(moduleExports.Channel.prototype, 'publish', this.getPublishPatch.bind(this, moduleVersion));
+        this._wrap(moduleExports.Channel.prototype, 'consume', this.getConsumePatch.bind(this, moduleVersion));
+        this._wrap(moduleExports.Channel.prototype, 'ack', this.getAckPatch.bind(this, false, EndOperation.Ack));
+        this._wrap(moduleExports.Channel.prototype, 'nack', this.getAckPatch.bind(this, true, EndOperation.Nack));
+        this._wrap(moduleExports.Channel.prototype, 'reject', this.getAckPatch.bind(this, true, EndOperation.Reject));
+        this._wrap(moduleExports.Channel.prototype, 'ackAll', this.getAckAllPatch.bind(this, false, EndOperation.AckAll));
+        this._wrap(moduleExports.Channel.prototype, 'nackAll', this.getAckAllPatch.bind(this, true, EndOperation.NackAll));
+        this._wrap(moduleExports.Channel.prototype, 'emit', this.getChannelEmitPatch.bind(this));
         return moduleExports;
     }
 
@@ -114,7 +114,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         return moduleExports;
     }
 
-    private _getConnectPatch(original: (url: string | amqp.Options.Connect, socketOptions, openCallback) => amqp.Connection) {
+    private getConnectPatch(original: (url: string | amqp.Options.Connect, socketOptions, openCallback) => amqp.Connection) {
         return function patchedConnect(url: string | amqp.Options.Connect, socketOptions, openCallback) {
             console.log('patched connect', {url});
             return original.call(this, url, socketOptions, function (err, conn: amqp.Connection) {
@@ -129,7 +129,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         }
     }
 
-    private _getChannelEmitPatch(original: (eventName: string, ...args: unknown[]) => void) {
+    private getChannelEmitPatch(original: (eventName: string, ...args: unknown[]) => void) {
         const self = this;
         return function emit(eventName: string) {
             if (eventName === 'close') {
@@ -141,7 +141,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         };
     }
 
-    private _getAckAllPatch(isRejected: boolean, endOperation: EndOperation, original: () => void) {
+    private getAckAllPatch(isRejected: boolean, endOperation: EndOperation, original: () => void) {
         const self = this;
         return function ackAll(): void {
             self.endAllSpansOnChannel(this, isRejected, endOperation);
@@ -149,7 +149,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         };
     }
 
-    private _getAckPatch(
+    private getAckPatch(
         isRejected: boolean,
         endOperation: EndOperation,
         original: (message: amqp.Message, allUpTo?: boolean, requeue?: boolean) => void
@@ -179,7 +179,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         };
     }
 
-    private _getConsumePatch(
+    private getConsumePatch(
         moduleVersion: string,
         original: (
             queue: string,
@@ -263,7 +263,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         };
     }
 
-    private _getPublishPatch(
+    private getPublishPatch(
         moduleVersion: string,
         original: (exchange: string, routingKey: string, content: Buffer, options?: amqp.Options.Publish) => boolean
     ) {
