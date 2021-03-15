@@ -36,7 +36,7 @@ describe('amqplib instrumentation promise model', function () {
     after(async () => {
         // wait a bit to give a chance for previous channel operations to arrive to server
         // this might create flaky tests
-        await new Promise((resolve) => setTimeout(resolve, 20));
+        await new Promise((resolve) => setTimeout(resolve, 50));
         await conn.close();
         instrumentation.disable();
     });
