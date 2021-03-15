@@ -37,7 +37,7 @@ describe('amqplib instrumentation promise model', function () {
         await conn.close();
         // the 'close' event on the emitter might take some time to arrive after close promise ends,
         // we add small timeout to let it settle before going on to next
-        await new Promise((resolve) => setTimeout(resolve, 5));
+        await new Promise((resolve) => setTimeout(resolve, 20));
         instrumentation.disable();
     });
 
@@ -225,7 +225,6 @@ describe('amqplib instrumentation promise model', function () {
             channel.ack(msgs[2]);
             channel.ack(msgs[0]);
             // assert all 3 span messages are ended
-            console.log(memoryExporter.getFinishedSpans());
             expect(memoryExporter.getFinishedSpans().length).toBe(6);
             expectConsumeEndSpyStatus([EndOperation.Ack, EndOperation.Ack, EndOperation.Ack]);
         });
