@@ -21,7 +21,15 @@ registerInstrumentations({
   traceProvider,
   instrumentations: [
     new ElasticsearchInstrumentation({
-      // see under for available configuration
+      // Config example (all optional)
+      suppressInternalInstrumentation: false,
+      moduleVersionAttributeName: 'elasticsearchClient.version',
+      responseHook: (span, result) => {
+        span.setAttribute('db.response', JSON.stringify(result));
+      },
+      dbStatementSerializer: (operation, params, options) => {
+        return JSON.stringify(params);
+      }
     })
   ]
 });
@@ -31,14 +39,25 @@ registerInstrumentations({
 
 Elasticsearch instrumentation has few options available to choose from. You can set the following (all optional):
 
-| Options        | Type                                   | Description                                                                                     |
-| -------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `suppressInternalInstrumentation` | `boolean` | Elasticsearch operation use http/https under the hood. Setting this to true will hide the underlying request spans (if instrumented). |
-| `responseHook` | `ElasticsearchResponseCustomAttributesFunction` | Hook called before response is returned, which allows to add custom attributes to span.      |
-| `dbStatementSerializer` | `DbStatementSerializer` | Elasticsearch instrumentation will serialize `db.statement` using the specified function.
-| `moduleVersionAttributeName` | `string` | If passed, a span attribute will be added to all spans with key of the provided `moduleVersionAttributeName` and value of the patched module version |
+| Options | Type | Default | Description |
+| --- | --- | --- | --- |
+| `suppressInternalInstrumentation` | `boolean` | `false` | Elasticsearch operation use http/https under the hood. Setting this to true will hide the underlying request spans (if instrumented). |
+| `responseHook` | `ResponseHook` (function) | `undefined` | Hook called before response is returned, which allows to add custom attributes to span.<br>Function receive params: `span`<br>`result` (object) |
+| `dbStatementSerializer` | `DbStatementSerializer` (function) | `JSON.stringify({params, options})` | Elasticsearch instrumentation will serialize `db.statement` using this function response.<br>Function receive params: `operation` (string)<br>`params` (object)<br>`options` (object)<br>Function response must be a `string`
+| `moduleVersionAttributeName` | `string` | `undefined` | If passed, a span attribute will be added to all spans with key of the provided `moduleVersionAttributeName` and value of the `@elastic/elasticsearch` version |
 
 Please make sure `dbStatementSerializer` is error proof, as errors are not handled while executing this function.
+
+### `db.operation` attribute
+`db.operation` contain the API function called. 
+For the full list see [API reference](https://www.elastic.co/guide/en/elasticsearch/client/javascript-api/current/api-reference.html).
+
+Few examples: 
+* `client.bulk`
+* `client.search`
+* `client.index`
+* `cat.shards`
+* `cluster.health`
 
 ---
 

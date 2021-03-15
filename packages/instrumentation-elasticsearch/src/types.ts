@@ -3,7 +3,7 @@ import { InstrumentationConfig } from '@opentelemetry/instrumentation';
 
 export type DbStatementSerializer = (operation?: string, params?: object, options?: object) => string;
 
-export type ElasticsearchResponseCustomAttributesFunction = (span: Span, response: any) => void;
+export type ResponseHook = (span: Span, response: any) => void;
 
 export interface ElasticsearchInstrumentationConfig extends InstrumentationConfig {
     /**
@@ -19,7 +19,7 @@ export interface ElasticsearchInstrumentationConfig extends InstrumentationConfi
     dbStatementSerializer?: DbStatementSerializer;
 
     /** hook for adding custom attributes using the response payload */
-    responseHook?: ElasticsearchResponseCustomAttributesFunction;
+    responseHook?: ResponseHook;
 
     /**
      * If passed, a span attribute will be added to all spans with key of the provided "moduleVersionAttributeName"
