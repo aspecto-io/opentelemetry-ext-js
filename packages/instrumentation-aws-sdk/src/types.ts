@@ -34,8 +34,8 @@ export interface AwsSdkInstrumentationConfig extends InstrumentationConfig {
      */
     suppressInternalInstrumentation?: boolean;
 
-    /** 
-     * If passed, a span attribute will be added to all spans with key of the provided "moduleVersionAttributeName" 
+    /**
+     * If passed, a span attribute will be added to all spans with key of the provided "moduleVersionAttributeName"
      * and value of the module version.
      */
     moduleVersionAttributeName?: string;

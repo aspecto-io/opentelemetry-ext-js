@@ -1,4 +1,15 @@
-import { SpanKind, Span, SpanStatusCode, Context, propagation, Link, getSpan, setSpan, context, diag } from '@opentelemetry/api';
+import {
+    SpanKind,
+    Span,
+    SpanStatusCode,
+    Context,
+    propagation,
+    Link,
+    getSpan,
+    setSpan,
+    context,
+    diag,
+} from '@opentelemetry/api';
 import { ROOT_CONTEXT } from '@opentelemetry/context-base';
 import { MessagingAttribute, MessagingOperationName } from '@opentelemetry/semantic-conventions';
 import * as kafkaJs from 'kafkajs';
@@ -50,7 +61,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
 
     protected patch(moduleExports: typeof kafkaJs, moduleVersion: string) {
         diag.debug('kafkajs instrumentation: applying patch');
-        this.moduleVersion = moduleVersion
+        this.moduleVersion = moduleVersion;
 
         this.unpatch(moduleExports);
         this._wrap(moduleExports?.Kafka?.prototype, 'producer', this._getProducerPatch.bind(this));
@@ -77,11 +88,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
             if (isWrapped(newConsumer.run)) {
                 self._unwrap(newConsumer, 'run');
             }
-            self._wrap(
-                newConsumer,
-                'run',
-                self._getConsumerRunPatch.bind(self)
-            );
+            self._wrap(newConsumer, 'run', self._getConsumerRunPatch.bind(self));
 
             return newConsumer;
         };
@@ -95,20 +102,12 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
             if (isWrapped(newProducer.sendBatch)) {
                 self._unwrap(newProducer, 'sendBatch');
             }
-            self._wrap(
-                newProducer,
-                'sendBatch',
-                self._getProducerSendBatchPatch.bind(self)
-            );
+            self._wrap(newProducer, 'sendBatch', self._getProducerSendBatchPatch.bind(self));
 
             if (isWrapped(newProducer.send)) {
                 self._unwrap(newProducer, 'send');
             }
-            self._wrap(
-                newProducer,
-                'send',
-                self._getProducerSendPatch.bind(self)
-            );
+            self._wrap(newProducer, 'send', self._getProducerSendPatch.bind(self));
 
             return newProducer;
         };
@@ -121,21 +120,13 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
                 if (isWrapped(config.eachMessage)) {
                     self._unwrap(config, 'eachMessage');
                 }
-                self._wrap(
-                    config,
-                    'eachMessage',
-                    self._getConsumerEachMessagePatch.bind(self)
-                );
+                self._wrap(config, 'eachMessage', self._getConsumerEachMessagePatch.bind(self));
             }
             if (config?.eachBatch) {
                 if (isWrapped(config.eachBatch)) {
                     self._unwrap(config, 'eachBatch');
                 }
-                self._wrap(
-                    config,
-                    'eachBatch',
-                    self._getConsumerEachBatchPatch.bind(self)
-                );
+                self._wrap(config, 'eachBatch', self._getConsumerEachBatchPatch.bind(self));
             }
             return original.call(this, config);
         };
@@ -206,9 +197,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
         const self = this;
         return function (batch: ProducerBatch): Promise<RecordMetadata[]> {
             const spans: Span[] = batch.topicMessages.flatMap((topicMessage) =>
-                topicMessage.messages.map((message) =>
-                    self._startProducerSpan(topicMessage.topic, message)
-                )
+                topicMessage.messages.map((message) => self._startProducerSpan(topicMessage.topic, message))
             );
 
             const origSendResult: Promise<RecordMetadata[]> = original.apply(this, arguments);

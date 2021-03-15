@@ -60,11 +60,7 @@ function setErrorStatus(span: Span, error: any = {}) {
     });
 }
 
-function applyResponseHook(
-    span: Span,
-    response: any,
-    responseHook?: MongooseResponseCustomAttributesFunction
-) {
+function applyResponseHook(span: Span, response: any, responseHook?: MongooseResponseCustomAttributesFunction) {
     if (responseHook) {
         safeExecuteInTheMiddle(
             () => responseHook(span, response),
