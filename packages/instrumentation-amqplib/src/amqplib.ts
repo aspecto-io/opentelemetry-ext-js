@@ -9,8 +9,9 @@ import {
 } from '@opentelemetry/instrumentation';
 import { MessagingAttribute, MessagingOperationName } from '@opentelemetry/semantic-conventions';
 import type amqp from 'amqplib';
-import { AmqplibInstrumentationConfig, EndOperation } from './types';
+import { AmqplibInstrumentationConfig, DEFAULT_CONFIG, EndOperation } from './types';
 import {
+    CHANNEL_CONSUME_TIMEOUT_TIMER,
     CHANNEL_SPANS_NOT_ENDED,
     CONNECTION_ATTRIBUTES,
     getConnectionAttributesFromUrl,
@@ -23,15 +24,14 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
     protected _config: AmqplibInstrumentationConfig;
 
     constructor(config: AmqplibInstrumentationConfig = {}) {
-        super('opentelemetry-instrumentation-amqplib', VERSION, Object.assign({}, config));
+        super('opentelemetry-instrumentation-amqplib', VERSION, Object.assign({}, DEFAULT_CONFIG, config));
     }
 
     setConfig(config: AmqplibInstrumentationConfig = {}) {
-        this._config = Object.assign({}, config);
+        this._config = Object.assign({}, DEFAULT_CONFIG, config);
     }
 
     protected init(): InstrumentationModuleDefinition<typeof amqp> {
-
         const channelModelModuleFile = new InstrumentationNodeModuleFile<amqp.Channel>(
             `amqplib/lib/channel_model.js`,
             ['>=0.5.5'],
@@ -53,11 +53,13 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
             this.unpatchConnect.bind(this)
         );
 
-        const module = new InstrumentationNodeModuleDefinition<typeof amqp>('amqplib', ['>=0.5.5'], undefined, undefined, [
-            channelModelModuleFile,
-            connectModuleFile,
-            callbackModelModuleFile
-        ]);
+        const module = new InstrumentationNodeModuleDefinition<typeof amqp>(
+            'amqplib',
+            ['>=0.5.5'],
+            undefined,
+            undefined,
+            [channelModelModuleFile, connectModuleFile, callbackModelModuleFile]
+        );
         return module;
     }
 
@@ -68,7 +70,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
     }
 
     private unpatchConnect(moduleExports: any) {
-        if(isWrapped(moduleExports.connect)) {
+        if (isWrapped(moduleExports.connect)) {
             this._unwrap(moduleExports, 'connect');
         }
         return moduleExports;
@@ -80,41 +82,51 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         this._wrap(moduleExports.Channel.prototype, 'ack', this.getAckPatch.bind(this, false, EndOperation.Ack));
         this._wrap(moduleExports.Channel.prototype, 'nack', this.getAckPatch.bind(this, true, EndOperation.Nack));
         this._wrap(moduleExports.Channel.prototype, 'reject', this.getAckPatch.bind(this, true, EndOperation.Reject));
-        this._wrap(moduleExports.Channel.prototype, 'ackAll', this.getAckAllPatch.bind(this, false, EndOperation.AckAll));
-        this._wrap(moduleExports.Channel.prototype, 'nackAll', this.getAckAllPatch.bind(this, true, EndOperation.NackAll));
+        this._wrap(
+            moduleExports.Channel.prototype,
+            'ackAll',
+            this.getAckAllPatch.bind(this, false, EndOperation.AckAll)
+        );
+        this._wrap(
+            moduleExports.Channel.prototype,
+            'nackAll',
+            this.getAckAllPatch.bind(this, true, EndOperation.NackAll)
+        );
         this._wrap(moduleExports.Channel.prototype, 'emit', this.getChannelEmitPatch.bind(this));
         return moduleExports;
     }
 
     private unpatchChannelModel(moduleExports: any) {
-        if(isWrapped(moduleExports.Channel.prototype.publish)) {
+        if (isWrapped(moduleExports.Channel.prototype.publish)) {
             this._unwrap(moduleExports.Channel.prototype, 'publish');
-        };
-        if(isWrapped(moduleExports.Channel.prototype.consume)) {
+        }
+        if (isWrapped(moduleExports.Channel.prototype.consume)) {
             this._unwrap(moduleExports.Channel.prototype, 'consume');
-        };
-        if(isWrapped(moduleExports.Channel.prototype.ack)) {
+        }
+        if (isWrapped(moduleExports.Channel.prototype.ack)) {
             this._unwrap(moduleExports.Channel.prototype, 'ack');
-        };
-        if(isWrapped(moduleExports.Channel.prototype.nack)) {
+        }
+        if (isWrapped(moduleExports.Channel.prototype.nack)) {
             this._unwrap(moduleExports.Channel.prototype, 'nack');
-        };
-        if(isWrapped(moduleExports.Channel.prototype.reject)) {
+        }
+        if (isWrapped(moduleExports.Channel.prototype.reject)) {
             this._unwrap(moduleExports.Channel.prototype, 'reject');
-        };
-        if(isWrapped(moduleExports.Channel.prototype.ackAll)) {
+        }
+        if (isWrapped(moduleExports.Channel.prototype.ackAll)) {
             this._unwrap(moduleExports.Channel.prototype, 'ackAll');
-        };
-        if(isWrapped(moduleExports.Channel.prototype.nackAll)) {
+        }
+        if (isWrapped(moduleExports.Channel.prototype.nackAll)) {
             this._unwrap(moduleExports.Channel.prototype, 'nackAll');
-        };
-        if(isWrapped(moduleExports.Channel.prototype.emit)) {
+        }
+        if (isWrapped(moduleExports.Channel.prototype.emit)) {
             this._unwrap(moduleExports.Channel.prototype, 'emit');
-        };
+        }
         return moduleExports;
     }
 
-    private getConnectPatch(original: (url: string | amqp.Options.Connect, socketOptions, openCallback) => amqp.Connection) {
+    private getConnectPatch(
+        original: (url: string | amqp.Options.Connect, socketOptions, openCallback) => amqp.Connection
+    ) {
         return function patchedConnect(url: string | amqp.Options.Connect, socketOptions, openCallback) {
             return original.call(this, url, socketOptions, function (err, conn: amqp.Connection) {
                 if (err === null) {
@@ -125,7 +137,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
                 }
                 openCallback.apply(this, arguments);
             });
-        }
+        };
     }
 
     private getChannelEmitPatch(original: (eventName: string, ...args: unknown[]) => void) {
@@ -133,6 +145,11 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         return function emit(eventName: string) {
             if (eventName === 'close') {
                 self.endAllSpansOnChannel(this, true, EndOperation.ChannelClosed);
+                const activeTimer = this[CHANNEL_CONSUME_TIMEOUT_TIMER];
+                if (activeTimer) {
+                    clearInterval(activeTimer);
+                }
+                delete this[CHANNEL_CONSUME_TIMEOUT_TIMER];
             } else if (eventName === 'error') {
                 self.endAllSpansOnChannel(this, true, EndOperation.ChannelError);
             }
@@ -159,15 +176,15 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
             // we use this patch in reject function as well, but it has different signature
             const requeueResolved = endOperation === EndOperation.Reject ? allUpTo : requeue;
 
-            const spansNotEnded: amqp.Message[] = channel[CHANNEL_SPANS_NOT_ENDED] ?? [];
-            const msgIndex = spansNotEnded.findIndex((m) => m === message);
+            const spansNotEnded: { msg: amqp.Message }[] = channel[CHANNEL_SPANS_NOT_ENDED] ?? [];
+            const msgIndex = spansNotEnded.findIndex((msgDetails) => msgDetails.msg === message);
             if (msgIndex < 0) {
                 // should not happen in happy flow
                 // but possible if user is calling the api function ack twice with same message
                 self.endConsumerSpan(message, isRejected, endOperation, requeueResolved);
             } else if (endOperation !== EndOperation.Reject && allUpTo) {
                 for (let i = 0; i <= msgIndex; i++) {
-                    self.endConsumerSpan(spansNotEnded[i], isRejected, endOperation, requeueResolved);
+                    self.endConsumerSpan(spansNotEnded[i].msg, isRejected, endOperation, requeueResolved);
                 }
                 spansNotEnded.splice(0, msgIndex + 1);
             } else {
@@ -194,6 +211,17 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         ): Promise<amqp.Replies.Consume> {
             const channel = this;
             if (!channel.hasOwnProperty(CHANNEL_SPANS_NOT_ENDED)) {
+                if (self._config.consumeTimeoutMs) {
+                    const timer = setInterval(() => {
+                        self.checkConsumeTimeoutOnChannel(channel);
+                    }, self._config.consumeTimeoutMs);
+                    timer.unref();
+                    Object.defineProperty(channel, CHANNEL_CONSUME_TIMEOUT_TIMER, {
+                        value: timer,
+                        enumerable: false,
+                        configurable: true,
+                    });
+                }
                 Object.defineProperty(channel, CHANNEL_SPANS_NOT_ENDED, {
                     value: [],
                     enumerable: false,
@@ -238,7 +266,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
 
                 if (!options?.noAck) {
                     // store the message on the channel so we can close the span on ackAll etc
-                    channel[CHANNEL_SPANS_NOT_ENDED].push(msg);
+                    channel[CHANNEL_SPANS_NOT_ENDED].push({ msg, timeOfConsume: new Date() });
 
                     // store the span on the message, so we can end it when user call 'ack' on it
                     Object.defineProperty(msg, MESSAGE_STORED_SPAN, {
@@ -320,15 +348,10 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         };
     }
 
-    private endConsumerSpan(
-        message: amqp.Message,
-        isRejected: boolean,
-        operation: EndOperation,
-        requeue: boolean
-    ) {
+    private endConsumerSpan(message: amqp.Message, isRejected: boolean, operation: EndOperation, requeue: boolean) {
         const storedSpan: Span = message[MESSAGE_STORED_SPAN];
         if (!storedSpan) return;
-        if (isRejected) {
+        if (isRejected !== false) {
             storedSpan.setStatus({
                 code: SpanStatusCode.ERROR,
                 message:
@@ -340,19 +363,19 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         this.callConsumeEndHook(storedSpan, message, isRejected, operation);
         storedSpan.end();
         delete message[MESSAGE_STORED_SPAN];
-    };
-    
+    }
+
     private endAllSpansOnChannel(channel: amqp.Channel[], isRejected: boolean, operation: EndOperation) {
-        const spansNotEnded: amqp.Message[] = channel[CHANNEL_SPANS_NOT_ENDED] ?? [];
-        spansNotEnded.forEach((message) => {
-            this.endConsumerSpan(message, isRejected, operation, null);
+        const spansNotEnded: { msg: amqp.Message }[] = channel[CHANNEL_SPANS_NOT_ENDED] ?? [];
+        spansNotEnded.forEach((msgDetails) => {
+            this.endConsumerSpan(msgDetails.msg, isRejected, operation, null);
         });
         Object.defineProperty(channel, CHANNEL_SPANS_NOT_ENDED, {
             value: [],
             enumerable: false,
             configurable: true,
         });
-    };
+    }
 
     private callConsumeEndHook(
         span: Span,
@@ -361,7 +384,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         endOperation: EndOperation
     ) {
         if (!this._config.consumeEndHook) return;
-    
+
         safeExecuteInTheMiddle(
             () => this._config.consumeEndHook(span, msg, rejected, endOperation),
             (e) => {
@@ -371,7 +394,20 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
             },
             true
         );
-    };    
-    
-    
+    }
+
+    private checkConsumeTimeoutOnChannel(channel: amqp.Channel) {
+        const currentTime = new Date().getTime();
+        const spansNotEnded: { msg: amqp.Message; timeOfConsume: Date }[] = channel[CHANNEL_SPANS_NOT_ENDED] ?? [];
+        let i: number;
+        for (i = 0; i < spansNotEnded.length; i++) {
+            const currMessage = spansNotEnded[i];
+            const timeFromConsume = currentTime - currMessage.timeOfConsume.getTime();
+            if (timeFromConsume < this._config.consumeTimeoutMs) {
+                break;
+            }
+            this.endConsumerSpan(currMessage.msg, null, EndOperation.InstrumentationTimeout, true);
+        }
+        spansNotEnded.splice(0, i);
+    }
 }

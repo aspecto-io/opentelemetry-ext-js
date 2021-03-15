@@ -1,10 +1,10 @@
 import { diag, SpanAttributes, SpanAttributeValue } from '@opentelemetry/api';
 import { GeneralAttribute, MessagingAttribute } from '@opentelemetry/semantic-conventions';
 import type amqp from 'amqplib';
-import { attempt, isArguments } from 'lodash';
 
 export const MESSAGE_STORED_SPAN: unique symbol = Symbol('opentelemetry.amqplib.message.stored-span');
 export const CHANNEL_SPANS_NOT_ENDED: unique symbol = Symbol('opentelemetry.amqplib.channel.spans-not-ended');
+export const CHANNEL_CONSUME_TIMEOUT_TIMER: unique symbol = Symbol('opentelemetry.amqplib.channel.consumer-timeout-timer');
 export const CONNECTION_ATTRIBUTES: unique symbol = Symbol('opentelemetry.amqplib.connection.attributes');
 
 export const normalizeExchange = (exchangeName: string) => (exchangeName !== '' ? exchangeName : '<default>');

@@ -330,7 +330,14 @@ describe('amqplib instrumentation promise model', function () {
 
         // what should we do in this case?
         // can cause memory leak since the plugin saves a copy of the msg which will never gets collected
-        it.skip('throw exception from consumer callback', async () => {
+        it('throw exception from consumer callback trigger timeout', async () => {
+            instrumentation.disable();
+            instrumentation.setConfig({
+                consumeEndHook: endHookSpy,
+                consumeTimeoutMs: 1,
+            });
+            instrumentation.enable();
+
             lodash.times(1, () => channel.sendToQueue(queueName, Buffer.from(msgPayload)));
 
             try {
@@ -343,7 +350,11 @@ describe('amqplib instrumentation promise model', function () {
                 // console.log(err);
             }
 
+            // we have timeout of 1 ms, so we wait more than that and check span indeed ended
+            await new Promise(resolve => setTimeout(resolve, 10));
+
             expect(memoryExporter.getFinishedSpans().length).toBe(2);
+            expectConsumeEndSpyStatus([EndOperation.InstrumentationTimeout]);
         });
     });
 
@@ -444,12 +455,8 @@ describe('amqplib instrumentation promise model', function () {
                 noAck: true,
             });
             expect(memoryExporter.getFinishedSpans().length).toBe(2);
-            expect(memoryExporter.getFinishedSpans()[0].attributes[attributeNameFromHook]).toEqual(
-                hookAttributeValue
-            );
-            expect(memoryExporter.getFinishedSpans()[1].attributes[attributeNameFromHook]).toEqual(
-                hookAttributeValue
-            );
+            expect(memoryExporter.getFinishedSpans()[0].attributes[attributeNameFromHook]).toEqual(hookAttributeValue);
+            expect(memoryExporter.getFinishedSpans()[1].attributes[attributeNameFromHook]).toEqual(hookAttributeValue);
             expect(memoryExporter.getFinishedSpans()[1].attributes[attributeNameFromEndHook]).toEqual(
                 endHookAttributeValue
             );
