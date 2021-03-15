@@ -57,7 +57,7 @@ describe('amqplib instrumentation callback model', function () {
         instrumentation.disable();
         try {
             channel.close((err) => {
-                done()
+                done();
             });
         } catch {}
     });
@@ -103,17 +103,17 @@ describe('amqplib instrumentation callback model', function () {
         });
     });
 
-    it('end span with ack sync', done => {
+    it('end span with ack sync', (done) => {
         channel.sendToQueue(queueName, Buffer.from(msgPayload));
 
-        asyncConsume(channel, queueName, [(msg) => channel.ack(msg)]).then( () => {
+        asyncConsume(channel, queueName, [(msg) => channel.ack(msg)]).then(() => {
             // assert consumed message span has ended
             expect(memoryExporter.getFinishedSpans().length).toBe(2);
             done();
         });
     });
 
-    it('end span with ack async', done => {
+    it('end span with ack async', (done) => {
         channel.sendToQueue(queueName, Buffer.from(msgPayload));
 
         asyncConsume(channel, queueName, [
@@ -121,9 +121,8 @@ describe('amqplib instrumentation callback model', function () {
                 setTimeout(() => {
                     channel.ack(msg);
                     expect(memoryExporter.getFinishedSpans().length).toBe(2);
-                    done();                            
+                    done();
                 }, 1),
         ]);
     });
-
 });

@@ -60,7 +60,7 @@ export interface AmqplibInstrumentationConfig extends InstrumentationConfig {
      * will close the span if user did not call ack after this timeout.
      * If timeout is not big enough, span might be closed with 'InstrumentationTimeout',
      * and then received valid ack from the user later which will not be instrumented.
-     * 
+     *
      * Default is 1 minute
      */
     consumeTimeoutMs?: number;

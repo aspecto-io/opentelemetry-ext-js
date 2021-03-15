@@ -351,7 +351,7 @@ describe('amqplib instrumentation promise model', function () {
             }
 
             // we have timeout of 1 ms, so we wait more than that and check span indeed ended
-            await new Promise(resolve => setTimeout(resolve, 10));
+            await new Promise((resolve) => setTimeout(resolve, 10));
 
             expect(memoryExporter.getFinishedSpans().length).toBe(2);
             expectConsumeEndSpyStatus([EndOperation.InstrumentationTimeout]);

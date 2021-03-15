@@ -4,7 +4,9 @@ import type amqp from 'amqplib';
 
 export const MESSAGE_STORED_SPAN: unique symbol = Symbol('opentelemetry.amqplib.message.stored-span');
 export const CHANNEL_SPANS_NOT_ENDED: unique symbol = Symbol('opentelemetry.amqplib.channel.spans-not-ended');
-export const CHANNEL_CONSUME_TIMEOUT_TIMER: unique symbol = Symbol('opentelemetry.amqplib.channel.consumer-timeout-timer');
+export const CHANNEL_CONSUME_TIMEOUT_TIMER: unique symbol = Symbol(
+    'opentelemetry.amqplib.channel.consumer-timeout-timer'
+);
 export const CONNECTION_ATTRIBUTES: unique symbol = Symbol('opentelemetry.amqplib.connection.attributes');
 
 export const normalizeExchange = (exchangeName: string) => (exchangeName !== '' ? exchangeName : '<default>');
@@ -24,7 +26,7 @@ const getHostname = (hostnameFromUrl: string): string => {
     // if user supplies empty hostname, it gets forwarded to 'net' package which default it to localhost.
     // https://nodejs.org/docs/latest-v12.x/api/net.html#net_socket_connect_options_connectlistener
     return hostnameFromUrl || 'localhost';
-}
+};
 
 const extractConnectionAttributeOrLog = (
     url: string | amqp.Options.Connect,
@@ -33,11 +35,14 @@ const extractConnectionAttributeOrLog = (
     nameForLog: string
 ): SpanAttributes => {
     if (attributeValue) {
-        return {[attributeKey]: attributeValue}
+        return { [attributeKey]: attributeValue };
     } else {
-        diag.error(`amqplib instrumentation: could not extract connection attribute ${nameForLog} from user supplied url`, {
-            url,
-        });
+        diag.error(
+            `amqplib instrumentation: could not extract connection attribute ${nameForLog} from user supplied url`,
+            {
+                url,
+            }
+        );
         return {};
     }
 };
@@ -57,18 +62,22 @@ export const getConnectionAttributesFromUrl = (
 
     url = url || 'amqp://localhost';
     if (typeof url === 'object') {
-
         const connectOptions = url as amqp.Options.Connect;
 
         const protocol = getProtocol(connectOptions.protocol);
-        Object.assign(attributes, {...extractConnectionAttributeOrLog(url, MessagingAttribute.MESSAGING_PROTOCOL, protocol, 'protocol')});
-        
+        Object.assign(attributes, {
+            ...extractConnectionAttributeOrLog(url, MessagingAttribute.MESSAGING_PROTOCOL, protocol, 'protocol'),
+        });
+
         const hostname = getHostname(connectOptions?.hostname);
-        Object.assign(attributes, {...extractConnectionAttributeOrLog(url, GeneralAttribute.NET_PEER_NAME, hostname, 'hostname')});
+        Object.assign(attributes, {
+            ...extractConnectionAttributeOrLog(url, GeneralAttribute.NET_PEER_NAME, hostname, 'hostname'),
+        });
 
         const port = getPort(connectOptions.port, protocol);
-        Object.assign(attributes, {...extractConnectionAttributeOrLog(url, GeneralAttribute.NET_PEER_PORT, port, 'port')});
-
+        Object.assign(attributes, {
+            ...extractConnectionAttributeOrLog(url, GeneralAttribute.NET_PEER_PORT, port, 'port'),
+        });
 
         attributes[GeneralAttribute.NET_PEER_PORT] = getPort(url.port, protocol);
     } else {
@@ -77,14 +86,19 @@ export const getConnectionAttributesFromUrl = (
             const urlParts = new URL(url);
 
             const protocol = getProtocol(urlParts.protocol);
-            Object.assign(attributes, {...extractConnectionAttributeOrLog(url, MessagingAttribute.MESSAGING_PROTOCOL, protocol, 'protocol')});
+            Object.assign(attributes, {
+                ...extractConnectionAttributeOrLog(url, MessagingAttribute.MESSAGING_PROTOCOL, protocol, 'protocol'),
+            });
 
             const hostname = getHostname(urlParts.hostname);
-            Object.assign(attributes, {...extractConnectionAttributeOrLog(url, GeneralAttribute.NET_PEER_NAME, hostname, 'hostname')});
+            Object.assign(attributes, {
+                ...extractConnectionAttributeOrLog(url, GeneralAttribute.NET_PEER_NAME, hostname, 'hostname'),
+            });
 
             const port = getPort(parseInt(urlParts.port), protocol);
-            Object.assign(attributes, {...extractConnectionAttributeOrLog(url, GeneralAttribute.NET_PEER_PORT, port, 'port')});
-
+            Object.assign(attributes, {
+                ...extractConnectionAttributeOrLog(url, GeneralAttribute.NET_PEER_PORT, port, 'port'),
+            });
         } catch (err) {
             diag.error('amqplib instrumentation: error while extracting connection details from connection url', {
                 url,
