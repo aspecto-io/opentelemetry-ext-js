@@ -1,5 +1,5 @@
 import { Tracer, SpanAttributes, SpanStatusCode, diag, Span, SpanKind } from '@opentelemetry/api';
-import { DbStatementSerializer, ElasticsearchResponseCustomAttributesFunction } from './types';
+import { DbStatementSerializer, ResponseHook } from './types';
 import { safeExecuteInTheMiddle } from '@opentelemetry/instrumentation';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
 import { ApiResponse } from '@elastic/elasticsearch/lib/Transport';
@@ -66,11 +66,7 @@ export function getNetAttributes(url: string): SpanAttributes {
     };
 }
 
-export function onResponse(
-    span: Span,
-    result: ApiResponse,
-    responseHook?: ElasticsearchResponseCustomAttributesFunction
-) {
+export function onResponse(span: Span, result: ApiResponse, responseHook?: ResponseHook) {
     span.setAttributes({
         ...getNetAttributes(result.meta.connection.url.toString()),
     });
