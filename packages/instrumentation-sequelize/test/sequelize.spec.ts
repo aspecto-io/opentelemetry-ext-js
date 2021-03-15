@@ -8,6 +8,9 @@ import { ContextManager } from '@opentelemetry/context-base';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
 import expect from 'expect';
 
+// should be available in node_modules from sequelize installation
+const Promise = require('bluebird');
+
 const instrumentation = new SequelizeInstrumentation();
 import * as sequelize from 'sequelize';
 

@@ -8,7 +8,16 @@
     no callback |       0           |       1    
     callback    |       1           |       2   
  */
-import { Span, SpanAttributes, SpanKind, context, setSpan, suppressInstrumentation, Context, diag } from '@opentelemetry/api';
+import {
+    Span,
+    SpanAttributes,
+    SpanKind,
+    context,
+    setSpan,
+    suppressInstrumentation,
+    Context,
+    diag,
+} from '@opentelemetry/api';
 import AWS from 'aws-sdk';
 import { AttributeNames } from './enums';
 import { ServicesExtensions } from './services';
@@ -115,8 +124,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
             safeExecuteInTheMiddle(
                 () => this._config.preRequestHook(span, request),
                 (e: Error) => {
-                    if (e)
-                        diag.error(`${AwsInstrumentation.component} instrumentation: preRequestHook error`, e);
+                    if (e) diag.error(`${AwsInstrumentation.component} instrumentation: preRequestHook error`, e);
                 },
                 true
             );
@@ -216,9 +224,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
                 return self._callOriginalFunction(() => original.call(awsRequest, arguments));
             });
 
-            return requestMetadata.isIncoming
-                ? self._bindPromise(origPromise, activeContextWithSpan)
-                : origPromise;
+            return requestMetadata.isIncoming ? self._bindPromise(origPromise, activeContextWithSpan) : origPromise;
         };
     }
 

@@ -30,8 +30,8 @@ export interface MongooseInstrumentationConfig extends InstrumentationConfig {
     /** hook for adding custom attributes using the response payload */
     responseHook?: MongooseResponseCustomAttributesFunction;
 
-    /** 
-     * If passed, a span attribute will be added to all spans with key of the provided "moduleVersionAttributeName" 
+    /**
+     * If passed, a span attribute will be added to all spans with key of the provided "moduleVersionAttributeName"
      * and value of the module version.
      */
     moduleVersionAttributeName?: string;
