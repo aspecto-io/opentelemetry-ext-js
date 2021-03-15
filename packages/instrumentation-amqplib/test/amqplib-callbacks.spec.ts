@@ -66,38 +66,38 @@ describe('amqplib instrumentation callback model', function () {
         const hadSpaceInBuffer = channel.sendToQueue(queueName, Buffer.from(msgPayload));
         expect(hadSpaceInBuffer).toBeTruthy();
 
-        asyncConsume(channel, queueName, [(msg) => expect(msg.content.toString()).toStrictEqual(msgPayload)], {
+        asyncConsume(channel, queueName, [(msg) => expect(msg.content.toString()).toEqual(msgPayload)], {
             noAck: true,
         }).then(() => {
             const [publishSpan, consumeSpan] = memoryExporter.getFinishedSpans();
 
             // assert publish span
-            expect(publishSpan.kind).toStrictEqual(SpanKind.PRODUCER);
-            expect(publishSpan.attributes[MessagingAttribute.MESSAGING_SYSTEM]).toStrictEqual('rabbitmq');
-            expect(publishSpan.attributes[MessagingAttribute.MESSAGING_DESTINATION]).toStrictEqual(''); // according to spec: "This will be an empty string if the default exchange is used"
-            expect(publishSpan.attributes[MessagingAttribute.MESSAGING_DESTINATION_KIND]).toStrictEqual('topic');
-            expect(publishSpan.attributes[MessagingAttribute.MESSAGING_RABBITMQ_ROUTING_KEY]).toStrictEqual(queueName);
-            expect(publishSpan.attributes[MessagingAttribute.MESSAGING_PROTOCOL]).toStrictEqual('AMQP');
-            expect(publishSpan.attributes[MessagingAttribute.MESSAGING_PROTOCOL_VERSION]).toStrictEqual('0.9.1');
-            expect(publishSpan.attributes[MessagingAttribute.MESSAGING_URL]).toStrictEqual(url);
-            expect(publishSpan.attributes[GeneralAttribute.NET_PEER_NAME]).toStrictEqual('localhost');
-            expect(publishSpan.attributes[GeneralAttribute.NET_PEER_PORT]).toStrictEqual(22221);
+            expect(publishSpan.kind).toEqual(SpanKind.PRODUCER);
+            expect(publishSpan.attributes[MessagingAttribute.MESSAGING_SYSTEM]).toEqual('rabbitmq');
+            expect(publishSpan.attributes[MessagingAttribute.MESSAGING_DESTINATION]).toEqual(''); // according to spec: "This will be an empty string if the default exchange is used"
+            expect(publishSpan.attributes[MessagingAttribute.MESSAGING_DESTINATION_KIND]).toEqual('topic');
+            expect(publishSpan.attributes[MessagingAttribute.MESSAGING_RABBITMQ_ROUTING_KEY]).toEqual(queueName);
+            expect(publishSpan.attributes[MessagingAttribute.MESSAGING_PROTOCOL]).toEqual('AMQP');
+            expect(publishSpan.attributes[MessagingAttribute.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
+            expect(publishSpan.attributes[MessagingAttribute.MESSAGING_URL]).toEqual(url);
+            expect(publishSpan.attributes[GeneralAttribute.NET_PEER_NAME]).toEqual('localhost');
+            expect(publishSpan.attributes[GeneralAttribute.NET_PEER_PORT]).toEqual(22221);
 
             // assert consume span
-            expect(consumeSpan.kind).toStrictEqual(SpanKind.CONSUMER);
-            expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_SYSTEM]).toStrictEqual('rabbitmq');
-            expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_DESTINATION]).toStrictEqual(''); // according to spec: "This will be an empty string if the default exchange is used"
-            expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_DESTINATION_KIND]).toStrictEqual('topic');
-            expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_RABBITMQ_ROUTING_KEY]).toStrictEqual(queueName);
-            expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_PROTOCOL]).toStrictEqual('AMQP');
-            expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_PROTOCOL_VERSION]).toStrictEqual('0.9.1');
-            expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_URL]).toStrictEqual(url);
-            expect(consumeSpan.attributes[GeneralAttribute.NET_PEER_NAME]).toStrictEqual('localhost');
-            expect(consumeSpan.attributes[GeneralAttribute.NET_PEER_PORT]).toStrictEqual(22221);
+            expect(consumeSpan.kind).toEqual(SpanKind.CONSUMER);
+            expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_SYSTEM]).toEqual('rabbitmq');
+            expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_DESTINATION]).toEqual(''); // according to spec: "This will be an empty string if the default exchange is used"
+            expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_DESTINATION_KIND]).toEqual('topic');
+            expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_RABBITMQ_ROUTING_KEY]).toEqual(queueName);
+            expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_PROTOCOL]).toEqual('AMQP');
+            expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
+            expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_URL]).toEqual(url);
+            expect(consumeSpan.attributes[GeneralAttribute.NET_PEER_NAME]).toEqual('localhost');
+            expect(consumeSpan.attributes[GeneralAttribute.NET_PEER_PORT]).toEqual(22221);
 
             // assert context propagation
-            expect(consumeSpan.spanContext.traceId).toStrictEqual(publishSpan.spanContext.traceId);
-            expect(consumeSpan.parentSpanId).toStrictEqual(publishSpan.spanContext.spanId);
+            expect(consumeSpan.spanContext.traceId).toEqual(publishSpan.spanContext.traceId);
+            expect(consumeSpan.parentSpanId).toEqual(publishSpan.spanContext.spanId);
 
             done();
         });
