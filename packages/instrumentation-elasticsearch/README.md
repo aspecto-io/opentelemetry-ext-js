@@ -21,6 +21,7 @@ registerInstrumentations({
   traceProvider,
   instrumentations: [
     new ElasticsearchInstrumentation({
+      // Config example (all optional)
       suppressInternalInstrumentation: false,
       moduleVersionAttributeName: 'elasticsearchClient.version',
       responseHook: (span, result) => {
@@ -41,8 +42,8 @@ Elasticsearch instrumentation has few options available to choose from. You can 
 | Options | Type | Default | Description |
 | --- | --- | --- | --- |
 | `suppressInternalInstrumentation` | `boolean` | `false` | Elasticsearch operation use http/https under the hood. Setting this to true will hide the underlying request spans (if instrumented). |
-| `responseHook` | `function` | `undefined` | Hook called before response is returned, which allows to add custom attributes to span.<br>Function receive params: `span`<br>`result` (object) |
-| `dbStatementSerializer` | `function` | `JSON.stringify({params, options})` | Elasticsearch instrumentation will serialize `db.statement` using this function response.<br>Function receive params: `operation` (string)<br>`params` (object)<br>`options` (object)<br>Function response must be a `string`
+| `responseHook` | `ResponseHook` (function) | `undefined` | Hook called before response is returned, which allows to add custom attributes to span.<br>Function receive params: `span`<br>`result` (object) |
+| `dbStatementSerializer` | `DbStatementSerializer` (function) | `JSON.stringify({params, options})` | Elasticsearch instrumentation will serialize `db.statement` using this function response.<br>Function receive params: `operation` (string)<br>`params` (object)<br>`options` (object)<br>Function response must be a `string`
 | `moduleVersionAttributeName` | `string` | `undefined` | If passed, a span attribute will be added to all spans with key of the provided `moduleVersionAttributeName` and value of the `@elastic/elasticsearch` version |
 
 Please make sure `dbStatementSerializer` is error proof, as errors are not handled while executing this function.
