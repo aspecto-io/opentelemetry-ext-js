@@ -62,7 +62,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
 
     protected patch(moduleExports: typeof mongoose, moduleVersion: string) {
         diag.debug('mongoose instrumentation: patching');
-        this.moduleVersion = moduleVersion
+        this.moduleVersion = moduleVersion;
 
         this._wrap(moduleExports.Model.prototype, 'save', this.patchOnModelMethods('save'));
         this._wrap(moduleExports.Model.prototype, 'remove', this.patchOnModelMethods('remove'));
@@ -209,13 +209,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
         const self = this;
         if (callback instanceof Function) {
             return self._callOriginalFunction(() =>
-                handleCallbackResponse(
-                    callback,
-                    exec,
-                    originalThis,
-                    span,
-                    self._config.responseHook
-                )
+                handleCallbackResponse(callback, exec, originalThis, span, self._config.responseHook)
             );
         } else {
             const response = self._callOriginalFunction(() => exec.apply(originalThis, args));

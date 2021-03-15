@@ -59,10 +59,7 @@ class SqsContextGetter implements TextMapGetter<AWS.SQS.MessageBodyAttributeMap>
 const sqsContextGetter = new SqsContextGetter();
 
 export class SqsServiceExtension implements ServiceExtension {
-    constructor(
-        private tracer: Tracer,
-        private sqsProcessHook: AwsSdkSqsProcessCustomAttributeFunction
-    ) {}
+    constructor(private tracer: Tracer, private sqsProcessHook: AwsSdkSqsProcessCustomAttributeFunction) {}
 
     requestHook(request: AWS.Request<any, any>): RequestMetadata {
         const queueUrl = this.extractQueueUrl(request);
