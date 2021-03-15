@@ -34,10 +34,9 @@ describe('amqplib instrumentation promise model', function () {
         conn = await amqp.connect(url);
     });
     after(async () => {
-        // wait a bit to give a chance for previous channel operations to arrive to server
-        // this might create flaky tests
-        await new Promise((resolve) => setTimeout(resolve, 70));
         await conn.close();
+        // the 'close' event might take some time to arrive
+        await new Promise((resolve) => setTimeout(resolve, 70));
         instrumentation.disable();
     });
 
