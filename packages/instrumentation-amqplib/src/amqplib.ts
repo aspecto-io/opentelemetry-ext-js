@@ -116,7 +116,6 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
 
     private getConnectPatch(original: (url: string | amqp.Options.Connect, socketOptions, openCallback) => amqp.Connection) {
         return function patchedConnect(url: string | amqp.Options.Connect, socketOptions, openCallback) {
-            console.log('patched connect', {url});
             return original.call(this, url, socketOptions, function (err, conn: amqp.Connection) {
                 if (err === null) {
                     Object.defineProperty(conn, CONNECTION_ATTRIBUTES, {
