@@ -52,3 +52,4 @@ and never ack the msg.
 To insure we don't leak memory, the instrumentation has internal timeout **which is not
 correlated to the server timeout if one is set**, and which will trigger ending the span when reached.
 This timeout is by default set to 1 minute, and should be reviewed in each use case, for example if handling consumed messages is expected to take more than 1 minute.
+If you want to disable this behavior, set `consumeTimeoutMs` to `null` or `0`.
