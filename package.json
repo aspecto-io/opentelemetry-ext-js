@@ -5,7 +5,7 @@
         "test": "lerna run test",
         "test:ci": "lerna run test:ci --since origin/master",
         "build": "lerna run build",
-        "build:ci": "lerna run build --since origin/master",
+        "build:ci": "lerna run build",
         "postinstall": "lerna bootstrap",
         "prettier": "prettier --config .prettierrc.yml --write \"**/*.{ts,tsx,js,jsx,json}\"",
         "version:update": "lerna run version:update",
