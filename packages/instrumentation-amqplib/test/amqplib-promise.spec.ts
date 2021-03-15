@@ -221,6 +221,7 @@ describe('amqplib instrumentation promise model', function () {
 
             // @ts-ignore
             const msgs = await asyncConsume(channel, queueName, [null, null, null]);
+            console.log(msgs);
             channel.ack(msgs[1]);
             channel.ack(msgs[2]);
             channel.ack(msgs[0]);
