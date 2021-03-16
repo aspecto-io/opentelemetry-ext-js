@@ -343,6 +343,7 @@ describe('amqplib instrumentation promise model', function () {
             });
             instrumentation.enable();
 
+            channel.on('error', (err) => console.log('got error on throwing from consumer hook', err));
             lodash.times(1, () => channel.sendToQueue(queueName, Buffer.from(msgPayload)));
 
             try {
