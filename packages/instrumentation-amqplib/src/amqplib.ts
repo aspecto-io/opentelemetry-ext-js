@@ -151,7 +151,6 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
                 }
                 delete this[CHANNEL_CONSUME_TIMEOUT_TIMER];
             } else if (eventName === 'error') {
-                console.log('channel error!', arguments[1]);
                 self.endAllSpansOnChannel(this, true, EndOperation.ChannelError);
             }
             return original.apply(this, arguments);
