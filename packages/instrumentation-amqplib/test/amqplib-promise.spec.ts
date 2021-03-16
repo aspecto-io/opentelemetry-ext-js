@@ -76,7 +76,9 @@ describe('amqplib instrumentation promise model', function () {
         await channel.purgeQueue(queueName);
         // install an error handler, otherwise when we have tests that create error on the channel,
         // it throws and crash process
-        channel.on('error', () => {});
+        channel.on('error', (err) => {
+            console.log(err);
+        });
     });
     afterEach(async () => {
         try {
