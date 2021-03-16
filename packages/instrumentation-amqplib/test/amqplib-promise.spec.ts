@@ -317,10 +317,8 @@ describe('amqplib instrumentation promise model', function () {
                 expect(memoryExporter.getFinishedSpans()[3].status.code).toEqual(SpanStatusCode.ERROR);
                 expect(memoryExporter.getFinishedSpans()[3].status.message).toEqual('channel error');
                 expectConsumeEndSpyStatus([EndOperation.Ack, EndOperation.ChannelError]);
-                console.log('got close from test');
                 done();
             });
-            channel.on('error', (err) => console.log('got error from test', err));
             asyncConsume(channel, queueName, [
                 null,
                 (msg) => {
@@ -341,7 +339,6 @@ describe('amqplib instrumentation promise model', function () {
             });
             instrumentation.enable();
 
-            channel.on('error', (err) => console.log('got error on throwing from consumer hook', err));
             lodash.times(1, () => channel.sendToQueue(queueName, Buffer.from(msgPayload)));
 
             await asyncConsume(channel, queueName, [null]);
