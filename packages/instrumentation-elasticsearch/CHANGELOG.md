@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.2.3](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-elasticsearch@0.2.2...opentelemetry-instrumentation-elasticsearch@0.2.3) (2021-03-15)
+
+**Note:** Version bump only for package opentelemetry-instrumentation-elasticsearch
+
+
+
+
+
 ## 0.2.2 (2021-03-04)
 
 

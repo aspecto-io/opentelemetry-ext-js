@@ -141,7 +141,7 @@ describe('instrumentation-typeorm', () => {
             setMocks();
             instrumentation.disable();
             instrumentation.setConfig({
-                moduleVersionAttributeName: 'module.version'
+                moduleVersionAttributeName: 'module.version',
             });
             instrumentation.enable();
 

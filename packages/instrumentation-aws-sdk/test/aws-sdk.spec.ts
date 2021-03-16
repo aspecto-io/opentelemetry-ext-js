@@ -334,7 +334,7 @@ describe('instrumentation-aws-sdk', () => {
             mockAwsSend(responseMockSuccess, 'data returned from operation', true);
             const config = {
                 moduleVersionAttributeName: 'module.version',
-                suppressInternalInstrumentation: true
+                suppressInternalInstrumentation: true,
             };
 
             instrumentation.disable();

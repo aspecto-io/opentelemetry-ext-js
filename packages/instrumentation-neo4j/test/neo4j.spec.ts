@@ -44,9 +44,11 @@ describe('neo4j instrumentation', function () {
         driver = neo4j.driver('bolt://localhost:11011', neo4j.auth.basic('neo4j', 'test'), {
             disableLosslessIntegers: true,
         });
-        
+
         let keepChecking = true;
-        const timeoutId = setTimeout(() => { keepChecking = false}, 8000);
+        const timeoutId = setTimeout(() => {
+            keepChecking = false;
+        }, 8000);
         while (keepChecking) {
             try {
                 await driver.verifyConnectivity();
@@ -54,9 +56,9 @@ describe('neo4j instrumentation', function () {
                 return;
             } catch (err) {
                 await new Promise((res) => setTimeout(res, 1000));
-            } 
+            }
         }
-        throw new Error('Could not connect to neo4j in allowed time frame')
+        throw new Error('Could not connect to neo4j in allowed time frame');
     });
 
     after(async () => {
@@ -147,7 +149,7 @@ describe('neo4j instrumentation', function () {
 
         it('when passing "onKeys" and onCompleted, span is closed in onCompleted, and response hook is called', (done) => {
             instrumentation.disable();
-            instrumentation.setConfig({ responseHook: (span) => span.setAttribute('test', 'cool')});
+            instrumentation.setConfig({ responseHook: (span) => span.setAttribute('test', 'cool') });
             instrumentation.enable();
 
             driver
@@ -163,7 +165,7 @@ describe('neo4j instrumentation', function () {
                         assertSpan(span);
                         expect(span.attributes['test']).toBe('cool');
                         done();
-                    }
+                    },
                 });
         });
 
@@ -463,6 +465,36 @@ describe('neo4j instrumentation', function () {
                     },
                     error: () => {},
                 });
+        });
+    });
+
+    describe('routing mode', () => {
+        // When the connection string starts with "neo4j" routing mode is used
+        let routingDriver: Driver;
+        const version = require('neo4j-driver/package.json').version;
+        const shouldCheck = !['4.0.0', '4.0.1', '4.0.2'].includes(version);
+
+        before(() => {
+            if (shouldCheck) {
+                routingDriver = neo4j.driver('neo4j://localhost:11011', neo4j.auth.basic('neo4j', 'test'));
+            }
+        });
+
+        after(async () => {
+            shouldCheck && (await routingDriver.close());
+        });
+
+        it('instruments as expected in routing mode', async () => {
+            if (!shouldCheck) {
+                // Versions 4.0.0, 4.0.1 and 4.0.2 of neo4j-driver don't allow connection to local neo4j in routing mode.
+                console.log(`Skipping unsupported test for version ${version}`);
+                return;
+            }
+
+            await routingDriver.session().run('CREATE (n:MyLabel) RETURN n');
+
+            const span = getSingleSpan();
+            assertSpan(span);
         });
     });
 });

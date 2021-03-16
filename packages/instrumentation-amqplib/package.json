@@ -1,13 +1,14 @@
 {
-    "name": "opentelemetry-instrumentation-aws-sdk",
+    "name": "opentelemetry-instrumentation-amqplib",
     "version": "0.2.3",
-    "description": "open telemetry instrumentation for the `aws-sdk` package",
+    "description": "open telemetry instrumentation for the `amqplib` package",
     "keywords": [
-        "aws",
+        "amqplib",
         "opentelemetry",
-        "aws-sdk"
+        "rabbitmq",
+        "AMQP 0-9-1"
     ],
-    "homepage": "https://github.com/aspecto-io/opentelemetry-ext-js",
+    "homepage": "https://github.com/aspecto-io/opentelemetry-amqplib",
     "license": "Apache-2.0",
     "main": "dist/src/index.js",
     "files": [
@@ -18,16 +19,18 @@
     ],
     "repository": {
         "type": "git",
-        "url": "https://github.com/aspecto-io/opentelemetry-ext-js.git"
+        "url": "https://github.com/aspecto-io/opentelemetry-amqplib.git"
     },
     "scripts": {
         "build": "tsc",
         "prepare": "yarn run build",
         "test": "mocha",
-        "test:ci": "yarn test",
         "watch": "tsc -w",
         "version:update": "node ../../scripts/version-update.js",
-        "version": "yarn run version:update"
+        "version": "yarn run version:update",
+        "test-all-versions": "tav",
+        "test:ci": "yarn test-all-versions",
+        "test:docker:run": "docker run -d --hostname demo-amqplib-rabbit --name amqplib-unittests -p 22221:5672 rabbitmq:3"
     },
     "bugs": {
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
@@ -35,18 +38,23 @@
     "dependencies": {
         "@opentelemetry/api": "^0.17.0",
         "@opentelemetry/instrumentation": "^0.17.0",
-        "@opentelemetry/semantic-conventions": "^0.17.0",
-        "opentelemetry-propagation-utils": "^0.4.0"
+        "@opentelemetry/semantic-conventions": "^0.17.0"
     },
     "devDependencies": {
-        "@aws-sdk/types": "^3.6.1",
         "@opentelemetry/api": "^0.17.0",
+        "@opentelemetry/core": "^0.17.0",
         "@opentelemetry/node": "^0.17.0",
         "@opentelemetry/tracing": "^0.17.0",
+        "@types/amqplib": "^0.5.17",
+        "@types/lodash": "^4.14.168",
         "@types/mocha": "^8.2.0",
-        "aws-sdk": "^2.780.0",
+        "@types/sinon": "^9.0.11",
+        "amqplib": "^0.7.1",
         "expect": "^26.6.2",
+        "lodash": "^4.17.21",
         "mocha": "^8.3.0",
+        "sinon": "^9.2.4",
+        "test-all-versions": "^5.0.1",
         "ts-node": "^9.1.1",
         "typescript": "^4.0.5"
     },
