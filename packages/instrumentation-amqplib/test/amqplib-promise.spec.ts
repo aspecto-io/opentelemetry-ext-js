@@ -333,9 +333,7 @@ describe('amqplib instrumentation promise model', function () {
             ]);
         });
 
-        // what should we do in this case?
-        // can cause memory leak since the plugin saves a copy of the msg which will never gets collected
-        it('throw exception from consumer callback trigger timeout', async () => {
+        it('not acking the message trigger timeout', async () => {
             instrumentation.disable();
             instrumentation.setConfig({
                 consumeEndHook: endHookSpy,
@@ -346,15 +344,7 @@ describe('amqplib instrumentation promise model', function () {
             channel.on('error', (err) => console.log('got error on throwing from consumer hook', err));
             lodash.times(1, () => channel.sendToQueue(queueName, Buffer.from(msgPayload)));
 
-            try {
-                await asyncConsume(channel, queueName, [
-                    (msg) => {
-                        throw Error('error from unit test');
-                    },
-                ]);
-            } catch (err) {
-                // console.log(err);
-            }
+            await asyncConsume(channel, queueName, [null]);
 
             // we have timeout of 1 ms, so we wait more than that and check span indeed ended
             await new Promise((resolve) => setTimeout(resolve, 10));
