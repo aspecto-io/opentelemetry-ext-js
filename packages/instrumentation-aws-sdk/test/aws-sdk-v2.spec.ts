@@ -10,9 +10,11 @@ import { mockAwsSend } from './testing-utils';
 import expect from 'expect';
 
 const instrumentation = new AwsInstrumentation();
+instrumentation.enable();
+instrumentation.disable();
 import AWS from 'aws-sdk';
 
-describe('instrumentation-aws-sdk', () => {
+describe('instrumentation-aws-sdk-v2', () => {
     const provider = new NodeTracerProvider();
     const memoryExporter = new InMemorySpanExporter();
     const spanProcessor = new SimpleSpanProcessor(memoryExporter);
@@ -47,11 +49,13 @@ describe('instrumentation-aws-sdk', () => {
     beforeEach(() => {
         contextManager = new AsyncHooksContextManager();
         context.setGlobalContextManager(contextManager.enable());
+        instrumentation.enable();
     });
 
     afterEach(() => {
         memoryExporter.reset();
         contextManager.disable();
+        instrumentation.disable();
     });
 
     describe('functional', () => {
@@ -347,7 +351,7 @@ describe('instrumentation-aws-sdk', () => {
             const awsSpans = getAwsSpans();
             expect(awsSpans.length).toBe(1);
 
-            expect(awsSpans[0].attributes['module.version']).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
+            expect(awsSpans[0].attributes['module.version']).toMatch(/2.\d{1,4}\.\d{1,5}.*/);
         });
     });
 });

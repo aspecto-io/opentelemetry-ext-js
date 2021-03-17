@@ -2,6 +2,7 @@
     "name": "root",
     "private": true,
     "scripts": {
+        "watch": "lerna run watch --parallel",
         "test": "lerna run test",
         "test:ci": "lerna run test:ci --since origin/master",
         "build": "lerna run build",

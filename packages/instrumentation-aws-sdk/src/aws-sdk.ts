@@ -40,9 +40,8 @@ import type {
 import { extractAttributesFromNormalizedRequest, normalizeV2Request, normalizeV3Request, removeSuffixFromStringIfExists } from './utils';
 import { RequestMetadata } from './services/ServiceExtension';
 
-type Config = InstrumentationConfig & AwsSdkInstrumentationConfig;
+const storedV3ClientConfig = Symbol('opentelemetry.aws-sdk.client.config');
 
-const storedV3ClientConfig = Symbol('otel.aws-sdk.client.config');
 export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
     static readonly component = 'aws-sdk';
     protected _config!: AwsSdkInstrumentationConfig;
@@ -259,7 +258,9 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
     }
 
     private patchV3MiddlewareStack(moduleVersion: string, middlewareStackToPatch: MiddlewareStack<any, any>) {
-        this._wrap(middlewareStackToPatch, 'resolve', this._getV3MiddlewareStackResolvePatch.bind(this, moduleVersion));
+        if(!isWrapped(middlewareStackToPatch.resolve)) {
+            this._wrap(middlewareStackToPatch, 'resolve', this._getV3MiddlewareStackResolvePatch.bind(this, moduleVersion));
+        }
 
         // 'clone' and 'concat' functions are internally calling 'constructStack' which is in same
         // module, thus not patched, and we need to take care of it specifically.
@@ -285,13 +286,14 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
             _handler: unknown,
             awsExecutionContext: HandlerExecutionContext
         ): AwsV3MiddlewareHandler<any, any> {
+
             const origHandler = original.apply(this, arguments);
             const patchedHandler = async function (command: AwsV3Command<any, any, any, any, any>): Promise<any> {
                 const clientConfig = command[storedV3ClientConfig];
                 const regionPromise = clientConfig?.region?.();
                 const region = regionPromise ? await regionPromise : undefined;
                 const serviceName = clientConfig.serviceId ?? removeSuffixFromStringIfExists(awsExecutionContext.clientName, 'Client');
-                const commandName = awsExecutionContext.commandName ?? command.constructor.name;
+                const commandName = awsExecutionContext.commandName ?? command.constructor?.name;
                 const normalizedRequest = normalizeV3Request(
                     serviceName,
                     commandName,
@@ -307,7 +309,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
                     self.servicesExtensions.requestPostSpanHook(normalizedRequest);
                     return self._callOriginalFunction(() => origHandler.apply(this, arguments));
                 });
-                resultPromise
+                const promiseWithResponseLogic = resultPromise
                     .then((response) => {
                         const requestId = response.output?.$metadata?.requestId;
                         if (requestId) {
@@ -327,14 +329,25 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
                         return response;
                     })
                     .catch((err) => {
+                        const requestId = err?.RequestId;
+                        if (requestId) {
+                            span.setAttribute(AttributeNames.AWS_REQUEST_ID, requestId);
+                        }
+                        const extendedRequestId = err?.extendedRequestId;
+                        if (extendedRequestId) {
+                            span.setAttribute(AttributeNames.AWS_REQUEST_EXTENDED_ID, extendedRequestId);
+                        }
+
                         span.setStatus({ code: SpanStatusCode.ERROR, message: err.message });
                         span.recordException(err);
                         throw err;
                     })
-                    .finally(() => span.end());
+                    .finally(() => {
+                        span.end();
+                    });
                 return requestMetadata.isIncoming
-                    ? self._bindPromise(resultPromise, activeContextWithSpan)
-                    : resultPromise;
+                    ? self._bindPromise(promiseWithResponseLogic, activeContextWithSpan)
+                    : promiseWithResponseLogic;
             };
             return patchedHandler;
         };
