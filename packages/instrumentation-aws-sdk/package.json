@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-aws-sdk",
-    "version": "0.2.3",
+    "version": "0.3.0",
     "description": "open telemetry instrumentation for the `aws-sdk` package",
     "keywords": [
         "aws",
@@ -36,7 +36,7 @@
         "@opentelemetry/api": "^0.18.0",
         "@opentelemetry/instrumentation": "^0.18.0",
         "@opentelemetry/semantic-conventions": "^0.18.0",
-        "opentelemetry-propagation-utils": "^0.4.0"
+        "opentelemetry-propagation-utils": "^0.5.0"
     },
     "devDependencies": {
         "@opentelemetry/api": "^0.18.0",
