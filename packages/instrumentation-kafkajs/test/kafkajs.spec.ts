@@ -3,8 +3,7 @@ import { KafkaJsInstrumentation, KafkaJsInstrumentationConfig } from '../src';
 import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
-import { ContextManager } from '@opentelemetry/context-base';
-import { context, propagation, SpanKind, SpanStatusCode, Span } from '@opentelemetry/api';
+import { context, propagation, SpanKind, SpanStatusCode, Span, ContextManager } from '@opentelemetry/api';
 import { MessagingAttribute } from '@opentelemetry/semantic-conventions';
 import expect from 'expect';
 
