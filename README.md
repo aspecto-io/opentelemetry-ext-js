@@ -14,7 +14,7 @@
 
 js extensions for the [open-telemetry](https://opentelemetry.io/) project, from [Aspecto](https://www.aspecto.io/) with :heart:
 
-**Compatible with [otel v0.18.0](https://github.com/open-telemetry/opentelemetry-js/releases/tag/v0.18.0)**
+**Compatible with [otel core packages v0.18.0](https://github.com/open-telemetry/opentelemetry-js/releases/tag/v0.18.0) and api version v0.18.1**
 ## Instrumentations
 | Instrumentation Package | Instrumented Lib | NPM |
 | --- | --- | --- |
@@ -32,7 +32,7 @@ js extensions for the [open-telemetry](https://opentelemetry.io/) project, from 
 For documentation using with the old [plugin](https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-core/src/trace/Plugin.ts) api, please go [here](https://github.com/aspecto-io/opentelemetry-ext-js/tree/4393fff108c477d05ecd02dd7d9552ea1d482853).
 
 **Tested and verified against otel v0.18.0**
-- Versions **0.3.x** of the instrumentations are compatible with otel version v0.18.0
+- Versions **0.3.x** of the instrumentations are compatible with otel core packages version v0.18.0 and api version v0.18.1
 - Versions **0.2.x** of the instrumentations are compatible with otel version v0.17.0
 - Versions **0.1.x** of the instrumentations are compatible with otel version v0.16.0
 - Versions **0.0.x** of the instrumentations are compatible with otel version v0.15.0
