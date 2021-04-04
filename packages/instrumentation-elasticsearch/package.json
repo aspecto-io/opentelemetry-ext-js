@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-elasticsearch",
-    "version": "0.2.3",
+    "version": "0.3.0",
     "description": "open telemetry instrumentation for the `elasticsearch` module",
     "keywords": [
         "elasticsearch",
@@ -40,14 +40,14 @@
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
     },
     "dependencies": {
-        "@opentelemetry/api": "^0.17.0",
-        "@opentelemetry/instrumentation": "^0.17.0",
-        "@opentelemetry/semantic-conventions": "^0.17.0"
+        "@opentelemetry/api": "^0.18.0",
+        "@opentelemetry/instrumentation": "^0.18.0",
+        "@opentelemetry/semantic-conventions": "^0.18.0"
     },
     "devDependencies": {
         "@elastic/elasticsearch": "^7.8.0",
-        "@opentelemetry/node": "^0.17.0",
-        "@opentelemetry/tracing": "^0.17.0",
+        "@opentelemetry/node": "^0.18.0",
+        "@opentelemetry/tracing": "^0.18.0",
         "@types/chai": "^4.2.15",
         "@types/mocha": "^8.2.1",
         "chai": "^4.3.0",

@@ -1,0 +1,4 @@
+packages/*/dist/*
+node_modules
+*.md
+*.yml

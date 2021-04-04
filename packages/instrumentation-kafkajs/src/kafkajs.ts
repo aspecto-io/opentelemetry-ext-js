@@ -9,8 +9,8 @@ import {
     setSpan,
     context,
     diag,
+    ROOT_CONTEXT,
 } from '@opentelemetry/api';
-import { ROOT_CONTEXT } from '@opentelemetry/context-base';
 import { MessagingAttribute, MessagingOperationName } from '@opentelemetry/semantic-conventions';
 import * as kafkaJs from 'kafkajs';
 import {

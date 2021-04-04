@@ -2,9 +2,8 @@ import 'mocha';
 import { SequelizeInstrumentation } from '../src';
 import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan, Span } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';
-import { context, diag, SpanStatusCode } from '@opentelemetry/api';
+import { context, diag, SpanStatusCode, ContextManager, DiagConsoleLogger } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
-import { ContextManager } from '@opentelemetry/context-base';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
 import expect from 'expect';
 
@@ -248,7 +247,7 @@ describe('instrumentation-sequelize', () => {
             expect(spans.length).toBe(1);
             expect(mockedLogger.getMessage()).toBe('sequelize instrumentation: responseHook error');
             expect(mockedLogger.getError().message).toBe('Throwing');
-            diag.setLogger();
+            diag.setLogger(new DiagConsoleLogger());
         });
     });
 

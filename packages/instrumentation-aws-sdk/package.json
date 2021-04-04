@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-aws-sdk",
-    "version": "0.2.3",
+    "version": "0.3.0",
     "description": "open telemetry instrumentation for the `aws-sdk` package",
     "keywords": [
         "aws",
@@ -33,18 +33,18 @@
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
     },
     "dependencies": {
-        "@opentelemetry/api": "^0.17.0",
-        "@opentelemetry/instrumentation": "^0.17.0",
-        "@opentelemetry/semantic-conventions": "^0.17.0",
-        "opentelemetry-propagation-utils": "^0.4.0"
+        "@opentelemetry/api": "^0.18.0",
+        "@opentelemetry/instrumentation": "^0.18.0",
+        "@opentelemetry/semantic-conventions": "^0.18.0",
+        "opentelemetry-propagation-utils": "^0.5.0"
     },
     "devDependencies": {
         "@aws-sdk/client-s3": "^3.8.1",
         "@aws-sdk/client-sqs": "^3.8.1",
         "@aws-sdk/types": "^3.6.1",
-        "@opentelemetry/api": "^0.17.0",
-        "@opentelemetry/node": "^0.17.0",
-        "@opentelemetry/tracing": "^0.17.0",
+        "@opentelemetry/api": "^0.18.0",
+        "@opentelemetry/node": "^0.18.0",
+        "@opentelemetry/tracing": "^0.18.0",
         "@types/mocha": "^8.2.0",
         "aws-sdk": "^2.780.0",
         "expect": "^26.6.2",

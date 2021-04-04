@@ -1,9 +1,8 @@
 import 'mocha';
 import { AwsInstrumentation } from '../src';
 import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan, Span } from '@opentelemetry/tracing';
-import { context, SpanStatusCode } from '@opentelemetry/api';
+import { context, SpanStatusCode, ContextManager } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/node';
-import { ContextManager } from '@opentelemetry/context-base';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { AttributeNames } from '../src/enums';
 import { mockAwsSend } from './testing-utils';

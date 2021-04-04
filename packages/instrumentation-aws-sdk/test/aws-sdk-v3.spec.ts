@@ -1,9 +1,8 @@
 import 'mocha';
 import { AwsInstrumentation, NormalizedRequest, NormalizedResponse } from '../src';
 import { InMemorySpanExporter, SimpleSpanProcessor, Span } from '@opentelemetry/tracing';
-import { context, SpanStatusCode, getSpan } from '@opentelemetry/api';
+import { context, SpanStatusCode, ContextManager } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/node';
-import { ContextManager } from '@opentelemetry/context-base';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { MessagingAttribute, RpcAttribute } from '@opentelemetry/semantic-conventions';
 import { AttributeNames } from '../src/enums';
