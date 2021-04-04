@@ -50,8 +50,8 @@ describe('instrumentation-aws-sdk-v3', () => {
             const awsRes = await s3Client.putObject(params);
             expect(memoryExporter.getFinishedSpans().length).toBe(1);
             const [span] = memoryExporter.getFinishedSpans();
-            expect(span.attributes['rpc.system']).toEqual('aws-api');
-            expect(span.attributes['rpc.method']).toEqual('putObject');
+            expect(span.attributes[RpcAttribute.RPC_SYSTEM]).toEqual('aws-api');
+            expect(span.attributes[RpcAttribute.RPC_METHOD]).toEqual('putObject');
             expect(span.attributes[RpcAttribute.RPC_SERVICE]).toEqual('s3');
             expect(span.attributes[AttributeNames.AWS_REGION]).toEqual(region);
             expect(span.name).toEqual('s3.putObject');
@@ -66,8 +66,8 @@ describe('instrumentation-aws-sdk-v3', () => {
             s3Client.putObject(params, (err: any, data?: PutObjectCommandOutput) => {
                 expect(memoryExporter.getFinishedSpans().length).toBe(1);
                 const [span] = memoryExporter.getFinishedSpans();
-                expect(span.attributes['rpc.system']).toEqual('aws-api');
-                expect(span.attributes['rpc.method']).toEqual('putObject');
+                expect(span.attributes[RpcAttribute.RPC_SYSTEM]).toEqual('aws-api');
+                expect(span.attributes[RpcAttribute.RPC_METHOD]).toEqual('putObject');
                 expect(span.attributes[RpcAttribute.RPC_SERVICE]).toEqual('s3');
                 expect(span.attributes[AttributeNames.AWS_REGION]).toEqual(region);
                 expect(span.name).toEqual('s3.putObject');
@@ -85,8 +85,8 @@ describe('instrumentation-aws-sdk-v3', () => {
             await client.send(new PutObjectCommand(params));
             expect(memoryExporter.getFinishedSpans().length).toBe(1);
             const [span] = memoryExporter.getFinishedSpans();
-            expect(span.attributes['rpc.system']).toEqual('aws-api');
-            expect(span.attributes['rpc.method']).toEqual('putObject');
+            expect(span.attributes[RpcAttribute.RPC_SYSTEM]).toEqual('aws-api');
+            expect(span.attributes[RpcAttribute.RPC_METHOD]).toEqual('putObject');
             expect(span.attributes[RpcAttribute.RPC_SERVICE]).toEqual('s3');
             expect(span.attributes[AttributeNames.AWS_REGION]).toEqual(region);
             expect(span.name).toEqual('s3.putObject');
@@ -111,8 +111,8 @@ describe('instrumentation-aws-sdk-v3', () => {
                 expect(span.events.length).toBe(1);
                 expect(span.events[0].name).toEqual('exception');
 
-                expect(span.attributes['rpc.system']).toEqual('aws-api');
-                expect(span.attributes['rpc.method']).toEqual('putObject');
+                expect(span.attributes[RpcAttribute.RPC_SYSTEM]).toEqual('aws-api');
+                expect(span.attributes[RpcAttribute.RPC_METHOD]).toEqual('putObject');
                 expect(span.attributes[RpcAttribute.RPC_SERVICE]).toEqual('s3');
                 expect(span.attributes[AttributeNames.AWS_REGION]).toEqual(region);
                 expect(span.attributes[AttributeNames.AWS_REQUEST_ID]).toEqual('MS95GTS7KXQ34X2S');
@@ -219,8 +219,8 @@ describe('instrumentation-aws-sdk-v3', () => {
                 const [span] = memoryExporter.getFinishedSpans();
 
                 // make sure we have the general aws attributes:
-                expect(span.attributes['rpc.system']).toEqual('aws-api');
-                expect(span.attributes['rpc.method']).toEqual('sendMessage');
+                expect(span.attributes[RpcAttribute.RPC_SYSTEM]).toEqual('aws-api');
+                expect(span.attributes[RpcAttribute.RPC_METHOD]).toEqual('sendMessage');
                 expect(span.attributes[RpcAttribute.RPC_SERVICE]).toEqual('sqs');
                 expect(span.attributes[AttributeNames.AWS_REGION]).toEqual(region);
 
@@ -245,8 +245,8 @@ describe('instrumentation-aws-sdk-v3', () => {
                 const [span] = memoryExporter.getFinishedSpans();
 
                 // make sure we have the general aws attributes:
-                expect(span.attributes['rpc.system']).toEqual('aws-api');
-                expect(span.attributes['rpc.method']).toEqual('receiveMessage');
+                expect(span.attributes[RpcAttribute.RPC_SYSTEM]).toEqual('aws-api');
+                expect(span.attributes[RpcAttribute.RPC_METHOD]).toEqual('receiveMessage');
                 expect(span.attributes[RpcAttribute.RPC_SERVICE]).toEqual('sqs');
                 expect(span.attributes[AttributeNames.AWS_REGION]).toEqual(region);
 

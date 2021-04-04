@@ -41,8 +41,8 @@ export const extractAttributesFromNormalizedRequest = (normalizedRequest: Normal
     // TODO: replace the hard-coded attributes with semantic-conventions once this PR gets merged and published:
     // https://github.com/open-telemetry/opentelemetry-js/pull/1976#pullrequestreview-600468850
     return {
-        'rpc.system': 'aws-api',
-        'rpc.method': normalizedRequest.commandName,
+        [RpcAttribute.RPC_SYSTEM]: 'aws-api',
+        [RpcAttribute.RPC_METHOD]: normalizedRequest.commandName,
         [RpcAttribute.RPC_SERVICE]: normalizedRequest.serviceName,
         [AttributeNames.AWS_REGION]: normalizedRequest.region,
     };
