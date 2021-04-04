@@ -42,11 +42,11 @@ describe('instrumentation-aws-sdk-v3', () => {
     });
 
     describe('functional', () => {
-        nock(`https://ot-demo-test.s3.${region}.amazonaws.com/`)
-            .put('/aws-ot-s3-test-object.txt?x-id=PutObject')
-            .reply(200, fs.readFileSync('./test/mock-responses/s3-put-object.xml', 'utf8'));
-
         it('promise await', async () => {
+            nock(`https://ot-demo-test.s3.${region}.amazonaws.com/`)
+                .put('/aws-ot-s3-test-object.txt?x-id=PutObject')
+                .reply(200, fs.readFileSync('./test/mock-responses/s3-put-object.xml', 'utf8'));
+
             const params = { Bucket: 'ot-demo-test', Key: 'aws-ot-s3-test-object.txt' };
             const awsRes = await s3Client.putObject(params);
             expect(memoryExporter.getFinishedSpans().length).toBe(1);
@@ -59,6 +59,10 @@ describe('instrumentation-aws-sdk-v3', () => {
         });
 
         it('callback interface', (done) => {
+            nock(`https://ot-demo-test.s3.${region}.amazonaws.com/`)
+                .put('/aws-ot-s3-test-object.txt?x-id=PutObject')
+                .reply(200, fs.readFileSync('./test/mock-responses/s3-put-object.xml', 'utf8'));
+
             const params = { Bucket: 'ot-demo-test', Key: 'aws-ot-s3-test-object.txt' };
             s3Client.putObject(params, (err: any, data?: PutObjectCommandOutput) => {
                 expect(memoryExporter.getFinishedSpans().length).toBe(1);
@@ -246,7 +250,7 @@ describe('instrumentation-aws-sdk-v3', () => {
                 expect(span.attributes['rpc.method']).toEqual('receiveMessage');
                 expect(span.attributes[RpcAttribute.RPC_SERVICE]).toEqual('sqs');
                 expect(span.attributes[AttributeNames.AWS_REGION]).toEqual(region);
-                
+
                 // console.log(getSpan(context.active()));
             });
         });

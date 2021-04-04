@@ -25,7 +25,6 @@ import { AwsSdkInstrumentationConfig, NormalizedRequest, NormalizedResponse } fr
 import { VERSION } from './version';
 import {
     InstrumentationBase,
-    InstrumentationConfig,
     InstrumentationModuleDefinition,
     InstrumentationNodeModuleDefinition,
     isWrapped,
