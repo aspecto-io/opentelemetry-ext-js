@@ -1,7 +1,7 @@
 import 'mocha';
 import { AwsInstrumentation, NormalizedRequest, NormalizedResponse } from '../src';
 import { InMemorySpanExporter, SimpleSpanProcessor, Span } from '@opentelemetry/tracing';
-import { context, SpanStatusCode, ContextManager } from '@opentelemetry/api';
+import { context, SpanStatusCode, ContextManager, getSpan } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { MessagingAttribute, RpcAttribute } from '@opentelemetry/semantic-conventions';
@@ -250,7 +250,8 @@ describe('instrumentation-aws-sdk-v3', () => {
                 expect(span.attributes[RpcAttribute.RPC_SERVICE]).toEqual('sqs');
                 expect(span.attributes[AttributeNames.AWS_REGION]).toEqual(region);
 
-                // console.log(getSpan(context.active()));
+                const receiveCallbackSpan = getSpan(context.active());
+                expect(receiveCallbackSpan).toBeDefined();
             });
         });
     });
