@@ -1,4 +1,4 @@
-// set aws environment variables, so tests are able to run
+// set aws environment variables, so tests in non aws environment are able to run
 process.env.AWS_ACCESS_KEY_ID = 'testing';
 process.env.AWS_SECRET_ACCESS_KEY = 'testing';
 
