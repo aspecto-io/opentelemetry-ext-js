@@ -2,10 +2,9 @@ import { Span } from '@opentelemetry/api';
 import { InstrumentationConfig } from '@opentelemetry/instrumentation';
 import type AWS from 'aws-sdk';
 
-
 /**
  * These are normalized request and response, which are used by both sdk v2 and v3.
- * They organize the relevant data in one interface which can be processed in a 
+ * They organize the relevant data in one interface which can be processed in a
  * uniform manner in hooks
  */
 export interface NormalizedRequest {

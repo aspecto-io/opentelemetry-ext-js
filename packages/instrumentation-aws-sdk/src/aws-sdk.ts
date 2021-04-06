@@ -311,10 +311,13 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
                         const resolvedRegion = await Promise.resolve(regionPromise);
                         normalizedRequest.region = resolvedRegion;
                         span.setAttribute(AttributeNames.AWS_REGION, resolvedRegion);
-                    } catch(e) {
+                    } catch (e) {
                         // there is nothing much we can do in this case.
                         // we'll just continue without region
-                        diag.debug(`${AwsInstrumentation.component} instrumentation: failed to extract region from async function`, e)
+                        diag.debug(
+                            `${AwsInstrumentation.component} instrumentation: failed to extract region from async function`,
+                            e
+                        );
                     }
 
                     self._callUserPreRequestHook(span, normalizedRequest);

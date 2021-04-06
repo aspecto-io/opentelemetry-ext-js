@@ -158,7 +158,9 @@ describe('sqs', () => {
             );
             expect(awsReceiveSpan.length).toBe(1);
 
-            const processSpans = spans.filter((s) => s.attributes[MessagingAttribute.MESSAGING_OPERATION] === 'process');
+            const processSpans = spans.filter(
+                (s) => s.attributes[MessagingAttribute.MESSAGING_OPERATION] === 'process'
+            );
             expect(processSpans.length).toBe(2);
             expect(processSpans[0].parentSpanId).toStrictEqual(awsReceiveSpan[0].spanContext.spanId);
             expect(processSpans[1].parentSpanId).toStrictEqual(awsReceiveSpan[0].spanContext.spanId);

@@ -13,11 +13,13 @@ import {
 import { pubsubPropagation } from 'opentelemetry-propagation-utils';
 import { RequestMetadata, ServiceExtension } from './ServiceExtension';
 import * as AWS from 'aws-sdk';
+import { MessageBodyAttributeMap, SendMessageBatchRequestEntry } from 'aws-sdk/clients/sqs';
 import {
-    MessageBodyAttributeMap,
-    SendMessageBatchRequestEntry,
-} from 'aws-sdk/clients/sqs';
-import { AwsSdkInstrumentationConfig, AwsSdkSqsProcessCustomAttributeFunction, NormalizedRequest, NormalizedResponse } from '../types';
+    AwsSdkInstrumentationConfig,
+    AwsSdkSqsProcessCustomAttributeFunction,
+    NormalizedRequest,
+    NormalizedResponse,
+} from '../types';
 import { MessagingAttribute } from '@opentelemetry/semantic-conventions';
 
 export const START_SPAN_FUNCTION = Symbol('opentelemetry.instrumentation.aws-sdk.sqs.start_span');
@@ -48,7 +50,6 @@ class SqsContextGetter implements TextMapGetter<AWS.SQS.MessageBodyAttributeMap>
 const sqsContextGetter = new SqsContextGetter();
 
 export class SqsServiceExtension implements ServiceExtension {
-
     requestPreSpanHook(request: NormalizedRequest): RequestMetadata {
         const queueUrl = this.extractQueueUrl(request.commandInput);
         const queueName = this.extractQueueNameFromUrl(queueUrl);
@@ -72,7 +73,9 @@ export class SqsServiceExtension implements ServiceExtension {
                     spanName = `${queueName} receive`;
                     spanAttributes[MessagingAttribute.MESSAGING_OPERATION] = 'receive';
 
-                    request.commandInput.MessageAttributeNames = (request.commandInput.MessageAttributeNames ?? []).concat(propagation.fields());
+                    request.commandInput.MessageAttributeNames = (
+                        request.commandInput.MessageAttributeNames ?? []
+                    ).concat(propagation.fields());
                 }
                 break;
 
@@ -96,8 +99,10 @@ export class SqsServiceExtension implements ServiceExtension {
             case 'sendMessage':
                 {
                     const origMessageAttributes = request.commandInput['MessageAttributes'] ?? {};
-                    if(origMessageAttributes) {
-                        request.commandInput['MessageAttributes'] = this.InjectPropagationContext(origMessageAttributes);
+                    if (origMessageAttributes) {
+                        request.commandInput['MessageAttributes'] = this.InjectPropagationContext(
+                            origMessageAttributes
+                        );
                     }
                 }
                 break;

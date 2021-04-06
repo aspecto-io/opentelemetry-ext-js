@@ -240,19 +240,19 @@ describe('instrumentation-aws-sdk-v3', () => {
                     QueueUrl: 'https://sqs.us-east-1.amazonaws.com/731241200085/otel-demo-aws-sdk',
                     MaxNumberOfMessages: 3,
                 };
-                sqsClient.receiveMessage(params).then(res => {
+                sqsClient.receiveMessage(params).then((res) => {
                     expect(memoryExporter.getFinishedSpans().length).toBe(1);
                     const [span] = memoryExporter.getFinishedSpans();
-    
+
                     // make sure we have the general aws attributes:
                     expect(span.attributes[RpcAttribute.RPC_SYSTEM]).toEqual('aws-api');
                     expect(span.attributes[RpcAttribute.RPC_METHOD]).toEqual('receiveMessage');
                     expect(span.attributes[RpcAttribute.RPC_SERVICE]).toEqual('sqs');
                     expect(span.attributes[AttributeNames.AWS_REGION]).toEqual(region);
-    
+
                     const receiveCallbackSpan = getSpan(context.active());
-                    expect(receiveCallbackSpan).toBeDefined();   
-                    const attributes = (receiveCallbackSpan as unknown as ReadableSpan).attributes;
+                    expect(receiveCallbackSpan).toBeDefined();
+                    const attributes = ((receiveCallbackSpan as unknown) as ReadableSpan).attributes;
                     expect(attributes[MessagingAttribute.MESSAGING_OPERATION]).toMatch(MessagingOperationName.RECEIVE);
                     done();
                 });

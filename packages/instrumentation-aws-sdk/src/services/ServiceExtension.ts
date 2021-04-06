@@ -16,5 +16,10 @@ export interface ServiceExtension {
     // called before request is sent, and after span is started
     requestPostSpanHook?: (request: NormalizedRequest) => void;
 
-    responseHook?: (response: NormalizedResponse, span: Span, tracer: Tracer, config: AwsSdkInstrumentationConfig) => void;
+    responseHook?: (
+        response: NormalizedResponse,
+        span: Span,
+        tracer: Tracer,
+        config: AwsSdkInstrumentationConfig
+    ) => void;
 }
