@@ -18,16 +18,7 @@ import {
     SendMessageBatchRequestEntry,
 } from 'aws-sdk/clients/sqs';
 import { AwsSdkInstrumentationConfig, AwsSdkSqsProcessCustomAttributeFunction, NormalizedRequest, NormalizedResponse } from '../types';
-
-export enum SqsAttributeNames {
-    // https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/messaging.md
-    MESSAGING_SYSTEM = 'messaging.system',
-    MESSAGING_DESTINATION = 'messaging.destination',
-    MESSAGING_DESTINATIONKIND = 'messaging.destination_kind',
-    MESSAGING_MESSAGE_ID = 'messaging.message_id',
-    MESSAGING_OPERATION = 'messaging.operation',
-    MESSAGING_URL = 'messaging.url',
-}
+import { MessagingAttribute } from '@opentelemetry/semantic-conventions';
 
 export const START_SPAN_FUNCTION = Symbol('opentelemetry.instrumentation.aws-sdk.sqs.start_span');
 
@@ -65,10 +56,10 @@ export class SqsServiceExtension implements ServiceExtension {
         let spanName: string;
 
         const spanAttributes = {
-            [SqsAttributeNames.MESSAGING_SYSTEM]: 'aws.sqs',
-            [SqsAttributeNames.MESSAGING_DESTINATIONKIND]: 'queue',
-            [SqsAttributeNames.MESSAGING_DESTINATION]: queueName,
-            [SqsAttributeNames.MESSAGING_URL]: queueUrl,
+            [MessagingAttribute.MESSAGING_SYSTEM]: 'aws.sqs',
+            [MessagingAttribute.MESSAGING_DESTINATION_KIND]: 'queue',
+            [MessagingAttribute.MESSAGING_DESTINATION]: queueName,
+            [MessagingAttribute.MESSAGING_URL]: queueUrl,
         };
 
         let isIncoming = false;
@@ -79,7 +70,7 @@ export class SqsServiceExtension implements ServiceExtension {
                     isIncoming = true;
                     spanKind = SpanKind.CONSUMER;
                     spanName = `${queueName} receive`;
-                    spanAttributes[SqsAttributeNames.MESSAGING_OPERATION] = 'receive';
+                    spanAttributes[MessagingAttribute.MESSAGING_OPERATION] = 'receive';
 
                     request.commandInput.MessageAttributeNames = (request.commandInput.MessageAttributeNames ?? []).concat(propagation.fields());
                 }
@@ -137,12 +128,12 @@ export class SqsServiceExtension implements ServiceExtension {
                     name: queueName,
                     parentContext: propagation.extract(ROOT_CONTEXT, message.MessageAttributes, sqsContextGetter),
                     attributes: {
-                        [SqsAttributeNames.MESSAGING_SYSTEM]: 'aws.sqs',
-                        [SqsAttributeNames.MESSAGING_DESTINATION]: queueName,
-                        [SqsAttributeNames.MESSAGING_DESTINATIONKIND]: 'queue',
-                        [SqsAttributeNames.MESSAGING_MESSAGE_ID]: message.MessageId,
-                        [SqsAttributeNames.MESSAGING_URL]: queueUrl,
-                        [SqsAttributeNames.MESSAGING_OPERATION]: 'process',
+                        [MessagingAttribute.MESSAGING_SYSTEM]: 'aws.sqs',
+                        [MessagingAttribute.MESSAGING_DESTINATION]: queueName,
+                        [MessagingAttribute.MESSAGING_DESTINATION_KIND]: 'queue',
+                        [MessagingAttribute.MESSAGING_MESSAGE_ID]: message.MessageId,
+                        [MessagingAttribute.MESSAGING_URL]: queueUrl,
+                        [MessagingAttribute.MESSAGING_OPERATION]: 'process',
                     },
                 }),
                 processHook: (span: Span, message: AWS.SQS.Message) => config.sqsProcessHook?.(span, message),
