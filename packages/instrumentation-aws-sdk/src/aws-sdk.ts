@@ -36,7 +36,13 @@ import type {
     Command as AwsV3Command,
     Handler as AwsV3MiddlewareHandler,
 } from '@aws-sdk/types';
-import { extractAttributesFromNormalizedRequest, normalizeV2Request, normalizeV3Request, removeSuffixFromStringIfExists } from './utils';
+import {
+    bindPromise,
+    extractAttributesFromNormalizedRequest,
+    normalizeV2Request,
+    normalizeV3Request,
+    removeSuffixFromStringIfExists,
+} from './utils';
 import { RequestMetadata } from './services/ServiceExtension';
 
 const storedV3ClientConfig = Symbol('opentelemetry.aws-sdk.client.config');
@@ -104,7 +110,6 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
     }
 
     protected patchV2(moduleExports: typeof AWS, moduleVersion: string) {
-
         diag.debug(`applying patch to ${AwsInstrumentation.component}`);
         this.unpatchV2(moduleExports);
         this._wrap(moduleExports?.Request.prototype, 'send', this._getRequestSendPatch.bind(this, moduleVersion));
@@ -122,17 +127,11 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
         }
     }
 
-    private _bindPromise(target: Promise<any>, contextForCallbacks: Context) {
-        const origThen = target.then;
-        target.then = function (onFulfilled, onRejected) {
-            const newOnFulfilled = context.bind(onFulfilled, contextForCallbacks);
-            const newOnRejected = context.bind(onRejected, contextForCallbacks);
-            return origThen.call(this, newOnFulfilled, newOnRejected);
-        };
-        return target;
-    }
-
-    private _startAwsV3Span(normalizedRequest: NormalizedRequest, metadata: RequestMetadata, moduleVersion: string): Span {
+    private _startAwsV3Span(
+        normalizedRequest: NormalizedRequest,
+        metadata: RequestMetadata,
+        moduleVersion: string
+    ): Span {
         const name = metadata.spanName ?? `${normalizedRequest.serviceName}.${normalizedRequest.commandName}`;
         const newSpan = this.tracer.startSpan(name, {
             kind: metadata.spanKind,
@@ -142,7 +141,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
             },
         });
 
-        if(this._config.moduleVersionAttributeName) {
+        if (this._config.moduleVersionAttributeName) {
             newSpan.setAttribute(this._config.moduleVersionAttributeName, moduleVersion);
         }
 
@@ -153,7 +152,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
         request: AWS.Request<any, any>,
         metadata: RequestMetadata,
         normalizedRequest: NormalizedRequest,
-        moduleVersion: string,
+        moduleVersion: string
     ): Span {
         const operation = (request as any).operation;
         const service = (request as any).service;
@@ -174,7 +173,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
             },
         });
 
-        if(this._config.moduleVersionAttributeName) {
+        if (this._config.moduleVersionAttributeName) {
             newSpan.setAttribute(this._config.moduleVersionAttributeName, moduleVersion);
         }
 
@@ -239,7 +238,10 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
         });
     }
 
-    private _getV3ConstructStackPatch(moduleVersion: string, original: (...args: unknown[]) => MiddlewareStack<any, any>) {
+    private _getV3ConstructStackPatch(
+        moduleVersion: string,
+        original: (...args: unknown[]) => MiddlewareStack<any, any>
+    ) {
         const self = this;
         return function constructStack(...args: unknown[]): MiddlewareStack<any, any> {
             const stack: MiddlewareStack<any, any> = original.apply(this, args);
@@ -253,12 +255,16 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
         return function send(command: AwsV3Command<any, any, any, any, any>): Promise<any> {
             command[storedV3ClientConfig] = this.config;
             return original.apply(this, arguments);
-        }
+        };
     }
 
     private patchV3MiddlewareStack(moduleVersion: string, middlewareStackToPatch: MiddlewareStack<any, any>) {
-        if(!isWrapped(middlewareStackToPatch.resolve)) {
-            this._wrap(middlewareStackToPatch, 'resolve', this._getV3MiddlewareStackResolvePatch.bind(this, moduleVersion));
+        if (!isWrapped(middlewareStackToPatch.resolve)) {
+            this._wrap(
+                middlewareStackToPatch,
+                'resolve',
+                this._getV3MiddlewareStackResolvePatch.bind(this, moduleVersion)
+            );
         }
 
         // 'clone' and 'concat' functions are internally calling 'constructStack' which is in same
@@ -267,7 +273,10 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
         this._wrap(middlewareStackToPatch, 'concat', this._getV3MiddlewareStackClonePatch.bind(this, moduleVersion));
     }
 
-    private _getV3MiddlewareStackClonePatch(moduleVersion: string, original: (...args: unknown[]) => MiddlewareStack<any, any>) {
+    private _getV3MiddlewareStackClonePatch(
+        moduleVersion: string,
+        original: (...args: unknown[]) => MiddlewareStack<any, any>
+    ) {
         const self = this;
         return function (...args: unknown[]) {
             const newStack = original.apply(this, arguments);
@@ -285,68 +294,80 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
             _handler: unknown,
             awsExecutionContext: HandlerExecutionContext
         ): AwsV3MiddlewareHandler<any, any> {
-
             const origHandler = original.apply(this, arguments);
-            const patchedHandler = async function (command: AwsV3Command<any, any, any, any, any>): Promise<any> {
+            const patchedHandler = function (command: AwsV3Command<any, any, any, any, any>): Promise<any> {
                 const clientConfig = command[storedV3ClientConfig];
                 const regionPromise = clientConfig?.region?.();
-                const region = regionPromise ? await regionPromise : undefined;
-                const serviceName = clientConfig.serviceId ?? removeSuffixFromStringIfExists(awsExecutionContext.clientName, 'Client');
+                const serviceName =
+                    clientConfig.serviceId ?? removeSuffixFromStringIfExists(awsExecutionContext.clientName, 'Client');
                 const commandName = awsExecutionContext.commandName ?? command.constructor?.name;
-                const normalizedRequest = normalizeV3Request(
-                    serviceName,
-                    commandName,
-                    command.input,
-                    region,
-                );
+                const normalizedRequest = normalizeV3Request(serviceName, commandName, command.input, undefined);
                 const requestMetadata = self.servicesExtensions.requestPreSpanHook(normalizedRequest);
                 const span = self._startAwsV3Span(normalizedRequest, requestMetadata, moduleVersion);
-
-                self._callUserPreRequestHook(span, normalizedRequest);
                 const activeContextWithSpan = setSpan(context.active(), span);
-                const resultPromise = context.with(activeContextWithSpan, () => {
-                    self.servicesExtensions.requestPostSpanHook(normalizedRequest);
-                    return self._callOriginalFunction(() => origHandler.apply(this, arguments));
-                });
-                const promiseWithResponseLogic = resultPromise
-                    .then((response) => {
-                        const requestId = response.output?.$metadata?.requestId;
-                        if (requestId) {
-                            span.setAttribute(AttributeNames.AWS_REQUEST_ID, requestId);
-                        }
-                        const extendedRequestId = response.output?.$metadata?.extendedRequestId;
-                        if (extendedRequestId) {
-                            span.setAttribute(AttributeNames.AWS_REQUEST_EXTENDED_ID, extendedRequestId);
-                        }
 
-                        const normalizedResponse: NormalizedResponse = {
-                            data: response.output,
-                            request: normalizedRequest,
-                        };
-                        self.servicesExtensions.responseHook(normalizedResponse, span, self.tracer, self._config);
-                        self._callUserResponseHook(span, normalizedResponse);
-                        return response;
-                    })
-                    .catch((err) => {
-                        const requestId = err?.RequestId;
-                        if (requestId) {
-                            span.setAttribute(AttributeNames.AWS_REQUEST_ID, requestId);
-                        }
-                        const extendedRequestId = err?.extendedRequestId;
-                        if (extendedRequestId) {
-                            span.setAttribute(AttributeNames.AWS_REQUEST_EXTENDED_ID, extendedRequestId);
-                        }
+                const handlerPromise = new Promise(async (resolve, reject) => {
+                    try {
+                        const resolvedRegion = await Promise.resolve(regionPromise);
+                        normalizedRequest.region = resolvedRegion;
+                        span.setAttribute(AttributeNames.AWS_REGION, resolvedRegion);
+                    } catch(e) {
+                        // there is nothing much we can do in this case.
+                        // we'll just continue without region
+                        diag.debug(`${AwsInstrumentation.component} instrumentation: failed to extract region from async function`, e)
+                    }
 
-                        span.setStatus({ code: SpanStatusCode.ERROR, message: err.message });
-                        span.recordException(err);
-                        throw err;
-                    })
-                    .finally(() => {
-                        span.end();
+                    self._callUserPreRequestHook(span, normalizedRequest);
+                    const resultPromise = context.with(activeContextWithSpan, () => {
+                        self.servicesExtensions.requestPostSpanHook(normalizedRequest);
+                        return self._callOriginalFunction(() => origHandler.apply(this, arguments));
                     });
+                    const promiseWithResponseLogic = resultPromise
+                        .then((response) => {
+                            const requestId = response.output?.$metadata?.requestId;
+                            if (requestId) {
+                                span.setAttribute(AttributeNames.AWS_REQUEST_ID, requestId);
+                            }
+                            const extendedRequestId = response.output?.$metadata?.extendedRequestId;
+                            if (extendedRequestId) {
+                                span.setAttribute(AttributeNames.AWS_REQUEST_EXTENDED_ID, extendedRequestId);
+                            }
+
+                            const normalizedResponse: NormalizedResponse = {
+                                data: response.output,
+                                request: normalizedRequest,
+                            };
+                            self.servicesExtensions.responseHook(normalizedResponse, span, self.tracer, self._config);
+                            self._callUserResponseHook(span, normalizedResponse);
+                            return response;
+                        })
+                        .catch((err) => {
+                            const requestId = err?.RequestId;
+                            if (requestId) {
+                                span.setAttribute(AttributeNames.AWS_REQUEST_ID, requestId);
+                            }
+                            const extendedRequestId = err?.extendedRequestId;
+                            if (extendedRequestId) {
+                                span.setAttribute(AttributeNames.AWS_REQUEST_EXTENDED_ID, extendedRequestId);
+                            }
+
+                            span.setStatus({ code: SpanStatusCode.ERROR, message: err.message });
+                            span.recordException(err);
+                            throw err;
+                        })
+                        .finally(() => {
+                            span.end();
+                        });
+                    promiseWithResponseLogic
+                        .then((res) => {
+                            resolve(res);
+                        })
+                        .catch((err) => reject(err));
+                });
+
                 return requestMetadata.isIncoming
-                    ? self._bindPromise(promiseWithResponseLogic, activeContextWithSpan)
-                    : promiseWithResponseLogic;
+                    ? bindPromise(handlerPromise, activeContextWithSpan, 2)
+                    : handlerPromise;
             };
             return patchedHandler;
         };
@@ -404,7 +425,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
                 return self._callOriginalFunction(() => original.call(awsV2Request, arguments));
             });
 
-            return requestMetadata.isIncoming ? self._bindPromise(origPromise, activeContextWithSpan) : origPromise;
+            return requestMetadata.isIncoming ? bindPromise(origPromise, activeContextWithSpan) : origPromise;
         };
     }
 
@@ -419,5 +440,4 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
             return originalFunction();
         }
     }
-
 }

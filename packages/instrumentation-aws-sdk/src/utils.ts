@@ -1,6 +1,6 @@
 import { NormalizedRequest } from './types';
 import type { Request } from 'aws-sdk';
-import { SpanAttributes } from '@opentelemetry/api';
+import { Context, SpanAttributes, context } from '@opentelemetry/api';
 import { RpcAttribute } from '@opentelemetry/semantic-conventions';
 import { AttributeNames } from './enums';
 
@@ -33,17 +33,30 @@ export const normalizeV3Request = (
         serviceName: serviceName?.toLowerCase(),
         commandName,
         commandInput,
-        region
+        region,
     };
 };
 
 export const extractAttributesFromNormalizedRequest = (normalizedRequest: NormalizedRequest): SpanAttributes => {
-    // TODO: replace the hard-coded attributes with semantic-conventions once this PR gets merged and published:
-    // https://github.com/open-telemetry/opentelemetry-js/pull/1976#pullrequestreview-600468850
     return {
         [RpcAttribute.RPC_SYSTEM]: 'aws-api',
         [RpcAttribute.RPC_METHOD]: normalizedRequest.commandName,
         [RpcAttribute.RPC_SERVICE]: normalizedRequest.serviceName,
         [AttributeNames.AWS_REGION]: normalizedRequest.region,
     };
+};
+
+export const bindPromise = (
+    target: Promise<any>,
+    contextForCallbacks: Context,
+    rebindCount: number = 1
+): Promise<any> => {
+    const origThen = target.then;
+    target.then = function (onFulfilled, onRejected) {
+        const newOnFulfilled = context.bind(onFulfilled, contextForCallbacks);
+        const newOnRejected = context.bind(onRejected, contextForCallbacks);
+        const patchedPromise = origThen.call(this, newOnFulfilled, newOnRejected);
+        return rebindCount > 1 ? bindPromise(patchedPromise, contextForCallbacks, rebindCount - 1) : patchedPromise;
+    };
+    return target;
 };

@@ -1,10 +1,10 @@
 import 'mocha';
 import { AwsInstrumentation, NormalizedRequest, NormalizedResponse } from '../src';
-import { InMemorySpanExporter, SimpleSpanProcessor, Span } from '@opentelemetry/tracing';
+import { InMemorySpanExporter, ReadableSpan, SimpleSpanProcessor, Span } from '@opentelemetry/tracing';
 import { context, SpanStatusCode, ContextManager, getSpan } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
-import { MessagingAttribute, RpcAttribute } from '@opentelemetry/semantic-conventions';
+import { MessagingAttribute, MessagingOperationName, RpcAttribute } from '@opentelemetry/semantic-conventions';
 import { AttributeNames } from '../src/enums';
 import expect from 'expect';
 import * as fs from 'fs';
@@ -231,7 +231,7 @@ describe('instrumentation-aws-sdk-v3', () => {
                 expect(span.attributes[MessagingAttribute.MESSAGING_URL]).toEqual(params.QueueUrl);
             });
 
-            it('sqs receive add messaging attributes and context', async () => {
+            it('sqs receive add messaging attributes and context', (done) => {
                 nock(`https://sqs.${region}.amazonaws.com/`)
                     .post('/')
                     .reply(200, fs.readFileSync('./test/mock-responses/sqs-receive.xml', 'utf8'));
@@ -240,18 +240,22 @@ describe('instrumentation-aws-sdk-v3', () => {
                     QueueUrl: 'https://sqs.us-east-1.amazonaws.com/731241200085/otel-demo-aws-sdk',
                     MaxNumberOfMessages: 3,
                 };
-                const awsRes = await sqsClient.receiveMessage(params);
-                expect(memoryExporter.getFinishedSpans().length).toBe(1);
-                const [span] = memoryExporter.getFinishedSpans();
-
-                // make sure we have the general aws attributes:
-                expect(span.attributes[RpcAttribute.RPC_SYSTEM]).toEqual('aws-api');
-                expect(span.attributes[RpcAttribute.RPC_METHOD]).toEqual('receiveMessage');
-                expect(span.attributes[RpcAttribute.RPC_SERVICE]).toEqual('sqs');
-                expect(span.attributes[AttributeNames.AWS_REGION]).toEqual(region);
-
-                const receiveCallbackSpan = getSpan(context.active());
-                expect(receiveCallbackSpan).toBeDefined();
+                sqsClient.receiveMessage(params).then(res => {
+                    expect(memoryExporter.getFinishedSpans().length).toBe(1);
+                    const [span] = memoryExporter.getFinishedSpans();
+    
+                    // make sure we have the general aws attributes:
+                    expect(span.attributes[RpcAttribute.RPC_SYSTEM]).toEqual('aws-api');
+                    expect(span.attributes[RpcAttribute.RPC_METHOD]).toEqual('receiveMessage');
+                    expect(span.attributes[RpcAttribute.RPC_SERVICE]).toEqual('sqs');
+                    expect(span.attributes[AttributeNames.AWS_REGION]).toEqual(region);
+    
+                    const receiveCallbackSpan = getSpan(context.active());
+                    expect(receiveCallbackSpan).toBeDefined();   
+                    const attributes = (receiveCallbackSpan as unknown as ReadableSpan).attributes;
+                    expect(attributes[MessagingAttribute.MESSAGING_OPERATION]).toMatch(MessagingOperationName.RECEIVE);
+                    done();
+                });
             });
         });
     });
