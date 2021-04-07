@@ -20,6 +20,8 @@
   </strong>
 </p>
 
+---
+
 js extensions for the [open-telemetry](https://opentelemetry.io/) project, from [Aspecto](https://www.aspecto.io/) with :heart:
 
 **Compatible with [otel v0.18.0](https://github.com/open-telemetry/opentelemetry-js/releases/tag/v0.18.0)**
