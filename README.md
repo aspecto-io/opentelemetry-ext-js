@@ -1,6 +1,6 @@
 # opentelemetry-ext-js
 
-<p align="center">
+<p>
     <a href="https://github.com/aspecto-io/opentelemetry-ext-js/actions?query=workflow%3ABuild">
         <img alt="Build" src="https://github.com/aspecto-io/opentelemetry-ext-js/workflows/Build/badge.svg">
     </a>
@@ -12,7 +12,7 @@
     </a>    
 </p>
 
-<p align="center">
+<p>
   <strong>
     <a href="doc/conventions.md">Conventions<a/>
     &nbsp;&nbsp;&bull;&nbsp;&nbsp;
