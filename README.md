@@ -1,6 +1,6 @@
 # opentelemetry-ext-js
 
-<p>
+<p align="center">
     <a href="https://github.com/aspecto-io/opentelemetry-ext-js/actions?query=workflow%3ABuild">
         <img alt="Build" src="https://github.com/aspecto-io/opentelemetry-ext-js/workflows/Build/badge.svg">
     </a>
@@ -10,6 +10,14 @@
         <a href="http://makeapullrequest.com">
         <img alt="license" src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg">
     </a>    
+</p>
+
+<p align="center">
+  <strong>
+    <a href="doc/conventions.md">Conventions<a/>
+    &nbsp;&nbsp;&bull;&nbsp;&nbsp;
+    <a href="doc/development-guide.md">Development Guide<a/>
+  </strong>
 </p>
 
 js extensions for the [open-telemetry](https://opentelemetry.io/) project, from [Aspecto](https://www.aspecto.io/) with :heart:

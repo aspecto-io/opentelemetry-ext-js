@@ -1,4 +1,4 @@
-# Instrumentation Libraries Semantic Conventions
+# Instrumentation Libraries Conventions
 This document is an extension to the [open telemetry Trace Semantic Conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions) document. It records additional conventions which we found useful for the instrumentations in this repo.
 
 ## Instrumentation Configuration
