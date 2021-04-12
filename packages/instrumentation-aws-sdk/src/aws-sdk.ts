@@ -78,7 +78,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
 
         const v2Module = new InstrumentationNodeModuleDefinition<typeof AWS>(
             AwsInstrumentation.component,
-            ['*'],
+            ['^2.17.0'],
             this.patchV2.bind(this),
             this.unpatchV2.bind(this)
         );
