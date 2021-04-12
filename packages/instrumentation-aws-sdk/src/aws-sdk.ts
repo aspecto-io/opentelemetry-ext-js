@@ -64,14 +64,14 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
     protected init(): InstrumentationModuleDefinition<typeof AWS>[] {
         const v3MiddlewareStack = new InstrumentationNodeModuleDefinition<typeof AWS>(
             '@aws-sdk/middleware-stack',
-            ['*'],
+            ['^3.0.0'],
             this.patchV3ConstructStack.bind(this),
             this.unpatchV3ConstructStack.bind(this)
         );
 
         const v3SmithyClient = new InstrumentationNodeModuleDefinition<typeof AWS>(
             '@aws-sdk/smithy-client',
-            ['*'],
+            ['^3.0.0'],
             this.patchV3SmithyClient.bind(this),
             this.unpatchV3SmithyClient.bind(this)
         );
