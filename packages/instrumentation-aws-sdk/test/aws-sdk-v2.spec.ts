@@ -9,9 +9,11 @@ import { mockAwsSend } from './testing-utils';
 import expect from 'expect';
 
 const instrumentation = new AwsInstrumentation();
+instrumentation.enable();
+instrumentation.disable();
 import AWS from 'aws-sdk';
 
-describe('instrumentation-aws-sdk', () => {
+describe('instrumentation-aws-sdk-v2', () => {
     const provider = new NodeTracerProvider();
     const memoryExporter = new InMemorySpanExporter();
     const spanProcessor = new SimpleSpanProcessor(memoryExporter);
@@ -30,7 +32,7 @@ describe('instrumentation-aws-sdk', () => {
     };
 
     const getAwsSpans = (): ReadableSpan[] => {
-        return memoryExporter.getFinishedSpans().filter((s) => s.attributes[AttributeNames.COMPONENT] === 'aws-sdk');
+        return memoryExporter.getFinishedSpans().filter((s) => s.instrumentationLibrary.name.includes('aws-sdk'));
     };
 
     before(() => {
@@ -46,11 +48,13 @@ describe('instrumentation-aws-sdk', () => {
     beforeEach(() => {
         contextManager = new AsyncHooksContextManager();
         context.setGlobalContextManager(contextManager.enable());
+        instrumentation.enable();
     });
 
     afterEach(() => {
         memoryExporter.reset();
         contextManager.disable();
+        instrumentation.disable();
     });
 
     describe('functional', () => {
@@ -85,22 +89,23 @@ describe('instrumentation-aws-sdk', () => {
                 expect(awsSpans.length).toBe(2);
                 const [spanCreateBucket, spanPutObject] = awsSpans;
 
-                expect(spanCreateBucket.attributes[AttributeNames.COMPONENT]).toBe('aws-sdk');
                 expect(spanCreateBucket.attributes[AttributeNames.AWS_OPERATION]).toBe('createBucket');
                 expect(spanCreateBucket.attributes[AttributeNames.AWS_SIGNATURE_VERSION]).toBe('s3');
                 expect(spanCreateBucket.attributes[AttributeNames.AWS_SERVICE_API]).toBe('S3');
                 expect(spanCreateBucket.attributes[AttributeNames.AWS_SERVICE_IDENTIFIER]).toBe('s3');
                 expect(spanCreateBucket.attributes[AttributeNames.AWS_SERVICE_NAME]).toBe('Amazon S3');
                 expect(spanCreateBucket.attributes[AttributeNames.AWS_REQUEST_ID]).toBe(responseMockSuccess.requestId);
+                expect(spanCreateBucket.attributes[AttributeNames.AWS_REGION]).toBe('us-east-1');
+
                 expect(spanCreateBucket.name).toBe('aws.s3.createBucket');
 
-                expect(spanPutObject.attributes[AttributeNames.COMPONENT]).toBe('aws-sdk');
                 expect(spanPutObject.attributes[AttributeNames.AWS_OPERATION]).toBe('putObject');
                 expect(spanPutObject.attributes[AttributeNames.AWS_SIGNATURE_VERSION]).toBe('s3');
                 expect(spanPutObject.attributes[AttributeNames.AWS_SERVICE_API]).toBe('S3');
                 expect(spanPutObject.attributes[AttributeNames.AWS_SERVICE_IDENTIFIER]).toBe('s3');
                 expect(spanPutObject.attributes[AttributeNames.AWS_SERVICE_NAME]).toBe('Amazon S3');
                 expect(spanPutObject.attributes[AttributeNames.AWS_REQUEST_ID]).toBe(responseMockSuccess.requestId);
+                expect(spanPutObject.attributes[AttributeNames.AWS_REGION]).toBe('us-east-1');
                 expect(spanPutObject.name).toBe('aws.s3.putObject');
             });
 
@@ -143,6 +148,7 @@ describe('instrumentation-aws-sdk', () => {
                 const [spanCreateBucket, spanPutObjectCb] = awsSpans;
                 expect(spanCreateBucket.attributes[AttributeNames.AWS_OPERATION]).toBe('createBucket');
                 expect(spanPutObjectCb.attributes[AttributeNames.AWS_OPERATION]).toBe('putObject');
+                expect(spanPutObjectCb.attributes[AttributeNames.AWS_REGION]).toBe('us-east-1');
             });
 
             it('adds proper number of spans with correct attributes if only promise was used', async () => {
@@ -172,6 +178,7 @@ describe('instrumentation-aws-sdk', () => {
                 const [spanCreateBucket, spanPutObjectCb] = awsSpans;
                 expect(spanCreateBucket.attributes[AttributeNames.AWS_OPERATION]).toBe('createBucket');
                 expect(spanPutObjectCb.attributes[AttributeNames.AWS_OPERATION]).toBe('putObject');
+                expect(spanPutObjectCb.attributes[AttributeNames.AWS_REGION]).toBe('us-east-1');
             });
 
             it('should create span if no callback is supplied', (done) => {
@@ -221,7 +228,7 @@ describe('instrumentation-aws-sdk', () => {
             mockAwsSend(responseMockSuccess, 'data returned from operation');
             const config = {
                 preRequestHook: (span: Span, request: any) => {
-                    span.setAttribute('attribute from hook', request.params['Bucket']);
+                    span.setAttribute('attribute from hook', request.commandInput['Bucket']);
                 },
             };
 
@@ -341,7 +348,7 @@ describe('instrumentation-aws-sdk', () => {
             const awsSpans = getAwsSpans();
             expect(awsSpans.length).toBe(1);
 
-            expect(awsSpans[0].attributes['module.version']).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
+            expect(awsSpans[0].attributes['module.version']).toMatch(/2.\d{1,4}\.\d{1,5}.*/);
         });
     });
 });

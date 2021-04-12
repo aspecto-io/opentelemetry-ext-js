@@ -5,12 +5,12 @@ import { context, SpanKind, SpanStatusCode, ContextManager } from '@opentelemetr
 import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan, Span } from '@opentelemetry/tracing';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { mockAwsSend } from './testing-utils';
-import { SqsAttributeNames } from '../src/services/sqs';
 import { Message } from 'aws-sdk/clients/sqs';
 import expect from 'expect';
 
 const instrumentation = new AwsInstrumentation();
 import AWS, { AWSError } from 'aws-sdk';
+import { MessagingAttribute } from '@opentelemetry/semantic-conventions';
 
 const provider = new NodeTracerProvider();
 const memoryExporter = new InMemorySpanExporter();
@@ -154,11 +154,13 @@ describe('sqs', () => {
 
         const expectReceiver2ProcessWithNChildrenEach = (spans: ReadableSpan[], numChildPerProcessSpan: number) => {
             const awsReceiveSpan = spans.filter(
-                (s) => s.attributes[SqsAttributeNames.MESSAGING_OPERATION] === 'receive'
+                (s) => s.attributes[MessagingAttribute.MESSAGING_OPERATION] === 'receive'
             );
             expect(awsReceiveSpan.length).toBe(1);
 
-            const processSpans = spans.filter((s) => s.attributes[SqsAttributeNames.MESSAGING_OPERATION] === 'process');
+            const processSpans = spans.filter(
+                (s) => s.attributes[MessagingAttribute.MESSAGING_OPERATION] === 'process'
+            );
             expect(processSpans.length).toBe(2);
             expect(processSpans[0].parentSpanId).toStrictEqual(awsReceiveSpan[0].spanContext.spanId);
             expect(processSpans[1].parentSpanId).toStrictEqual(awsReceiveSpan[0].spanContext.spanId);
@@ -337,7 +339,7 @@ describe('sqs', () => {
 
             const processSpans = memoryExporter
                 .getFinishedSpans()
-                .filter((s) => s.attributes[SqsAttributeNames.MESSAGING_OPERATION] === 'process');
+                .filter((s) => s.attributes[MessagingAttribute.MESSAGING_OPERATION] === 'process');
             expect(processSpans.length).toBe(2);
             expect(processSpans[0].attributes['attribute from sqs process hook']).toBe('msg 1 payload');
             expect(processSpans[1].attributes['attribute from sqs process hook']).toBe('msg 2 payload');
@@ -356,7 +358,7 @@ describe('sqs', () => {
             res.Messages.map((message) => 'some mapping to create child process spans');
             const processSpans = memoryExporter
                 .getFinishedSpans()
-                .filter((s) => s.attributes[SqsAttributeNames.MESSAGING_OPERATION] === 'process');
+                .filter((s) => s.attributes[MessagingAttribute.MESSAGING_OPERATION] === 'process');
             expect(processSpans.length).toBe(2);
         });
 
@@ -380,7 +382,7 @@ describe('sqs', () => {
 
             const processSpans = memoryExporter
                 .getFinishedSpans()
-                .filter((s) => s.attributes[SqsAttributeNames.MESSAGING_OPERATION] === 'process');
+                .filter((s) => s.attributes[MessagingAttribute.MESSAGING_OPERATION] === 'process');
             expect(processSpans.length).toBe(2);
             expect(processSpans[0].status.code).toStrictEqual(SpanStatusCode.UNSET);
             expect(processSpans[1].status.code).toStrictEqual(SpanStatusCode.UNSET);
