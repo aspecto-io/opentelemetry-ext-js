@@ -25,9 +25,9 @@
 js extensions for the [open-telemetry](https://opentelemetry.io/) project, from [Aspecto](https://www.aspecto.io/) with :heart:
 
 The instrumentations in this repo are:
-- vendor neutral
-- strictly complies with [open telemetry semantic conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions)
-- up to date with latest SDK version
+- Vendor neutral
+- Strictly complies with [open telemetry semantic conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions)
+- Up to date with latest SDK version
 
 **Compatible with [SDK v0.18.0](https://github.com/open-telemetry/opentelemetry-js/releases/tag/v0.18.0)**
 ## Instrumentations
