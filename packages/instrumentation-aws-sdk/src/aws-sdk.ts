@@ -162,7 +162,6 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
         const newSpan = this.tracer.startSpan(name, {
             kind: metadata.spanKind ?? SpanKind.CLIENT,
             attributes: {
-                [AttributeNames.COMPONENT]: AwsInstrumentation.component,
                 [AttributeNames.AWS_OPERATION]: operation,
                 [AttributeNames.AWS_SIGNATURE_VERSION]: service?.config?.signatureVersion,
                 [AttributeNames.AWS_SERVICE_API]: service?.api?.className,

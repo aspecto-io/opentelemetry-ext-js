@@ -1,6 +1,4 @@
 export enum AttributeNames {
-    COMPONENT = 'component',
-
     AWS_ERROR = 'aws.error',
     AWS_OPERATION = 'aws.operation',
     AWS_REGION = 'aws.region',

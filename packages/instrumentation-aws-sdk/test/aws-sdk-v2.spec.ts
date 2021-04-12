@@ -32,7 +32,7 @@ describe('instrumentation-aws-sdk-v2', () => {
     };
 
     const getAwsSpans = (): ReadableSpan[] => {
-        return memoryExporter.getFinishedSpans().filter((s) => s.attributes[AttributeNames.COMPONENT] === 'aws-sdk');
+        return memoryExporter.getFinishedSpans().filter((s) => s.instrumentationLibrary.name.includes('aws-sdk'));
     };
 
     before(() => {
@@ -89,7 +89,6 @@ describe('instrumentation-aws-sdk-v2', () => {
                 expect(awsSpans.length).toBe(2);
                 const [spanCreateBucket, spanPutObject] = awsSpans;
 
-                expect(spanCreateBucket.attributes[AttributeNames.COMPONENT]).toBe('aws-sdk');
                 expect(spanCreateBucket.attributes[AttributeNames.AWS_OPERATION]).toBe('createBucket');
                 expect(spanCreateBucket.attributes[AttributeNames.AWS_SIGNATURE_VERSION]).toBe('s3');
                 expect(spanCreateBucket.attributes[AttributeNames.AWS_SERVICE_API]).toBe('S3');
@@ -100,7 +99,6 @@ describe('instrumentation-aws-sdk-v2', () => {
 
                 expect(spanCreateBucket.name).toBe('aws.s3.createBucket');
 
-                expect(spanPutObject.attributes[AttributeNames.COMPONENT]).toBe('aws-sdk');
                 expect(spanPutObject.attributes[AttributeNames.AWS_OPERATION]).toBe('putObject');
                 expect(spanPutObject.attributes[AttributeNames.AWS_SIGNATURE_VERSION]).toBe('s3');
                 expect(spanPutObject.attributes[AttributeNames.AWS_SERVICE_API]).toBe('S3');

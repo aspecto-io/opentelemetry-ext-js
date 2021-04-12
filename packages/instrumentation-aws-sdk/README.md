@@ -61,7 +61,6 @@ Both V2 and V3 instrumentations are collecting the following attributes:
 In addition to the above attributes, the instrumentation also collect the following for V2 ONLY:
 | Attribute Name | Type | Description | Example |
 | -------------- | ---- | ----------- | ------- |
-| `component` | string | Always equals "aws-sdk" | "aws-sdk" |
 | `aws.operation` | string | The method name for the request. | for `SQS.sendMessage(...)` the operation is "sendMessage" |
 | `aws.signature.version` | string | AWS version of authentication signature on the request. | "v4" |
 | `aws.service.api` | string | The sdk class name for the service | "SQS" |
