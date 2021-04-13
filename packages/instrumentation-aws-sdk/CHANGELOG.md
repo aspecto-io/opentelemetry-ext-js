@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.3.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-aws-sdk@0.3.0...opentelemetry-instrumentation-aws-sdk@0.3.1) (2021-04-13)
+
+
+### Features
+
+* **aws-sdk:** support for aws-sdk v3 ([#91](https://github.com/aspecto-io/opentelemetry-ext-js/issues/91)) ([8899079](https://github.com/aspecto-io/opentelemetry-ext-js/commit/889907953cae747888b5d220ea3158bb2b761b24))
+
+
+### BREAKING CHANGES
+
+* **aws-sdk:** remove `component` attribute from aws-sdk spans
+* **aws-sdk:** change hooks function signature in aws-sdk
+
+
+
+
+
 # [0.3.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-aws-sdk@0.2.3...opentelemetry-instrumentation-aws-sdk@0.3.0) (2021-03-18)
 
 
