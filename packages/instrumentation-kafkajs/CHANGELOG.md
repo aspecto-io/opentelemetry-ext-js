@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.3.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-kafkajs@0.3.0...opentelemetry-instrumentation-kafkajs@0.3.1) (2021-04-19)
+
+
+### Bug Fixes
+
+* **instrumentation-kafkajs:** support non promise return value from consumer callbacks ([#99](https://github.com/aspecto-io/opentelemetry-ext-js/issues/99)) ([88a9cae](https://github.com/aspecto-io/opentelemetry-ext-js/commit/88a9caecc1fb5638568a8626761949eb0d0cdb16))
+
+
+
+
+
 # [0.3.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-kafkajs@0.2.3...opentelemetry-instrumentation-kafkajs@0.3.0) (2021-03-18)
 
 
