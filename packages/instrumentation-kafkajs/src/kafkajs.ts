@@ -218,7 +218,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
     }
 
     private _endSpansOnPromise<T>(spans: Span[], sendPromise: Promise<T>): Promise<T> {
-        return sendPromise
+        return Promise.resolve(sendPromise)
             .catch((reason) => {
                 let errorMessage;
                 if (typeof reason === 'string') errorMessage = reason;
