@@ -422,12 +422,12 @@ describe('instrumentation-kafkajs', () => {
                 consumer = kafka.consumer({
                     groupId: 'testing-group-id',
                 });
-                consumer.run({
-                    eachMessage: async (payload: EachMessagePayload): Promise<void> => {},
-                });
             });
 
             it('consume eachMessage create span with expected attributes', async () => {
+                consumer.run({
+                    eachMessage: async (_payload: EachMessagePayload): Promise<void> => {},
+                });
                 const payload: EachMessagePayload = createEachMessagePayload();
                 await runConfig.eachMessage(payload);
 
@@ -442,6 +442,21 @@ describe('instrumentation-kafkajs', () => {
                 expect(span.attributes[MessagingAttribute.MESSAGING_DESTINATION_KIND]).toStrictEqual('topic');
                 expect(span.attributes[MessagingAttribute.MESSAGING_DESTINATION]).toStrictEqual('topic-name-1');
                 expect(span.attributes[MessagingAttribute.MESSAGING_OPERATION]).toStrictEqual('process');
+            });
+
+            it('consumer eachMessage with non promise return value', async () => {
+                consumer.run({
+                    // the usecase of kafkajs callback not returning promise
+                    // is not typescript valid, but it might (and is) implemented in real life (nestjs)
+                    // and does not break the library.
+                    // @ts-ignore
+                    eachMessage: (_payload: EachMessagePayload) => {},
+                });
+                const payload: EachMessagePayload = createEachMessagePayload();
+                await runConfig.eachMessage(payload);
+
+                const spans = memoryExporter.getFinishedSpans();
+                expect(spans.length).toBe(1);
             });
         });
 
@@ -592,12 +607,12 @@ describe('instrumentation-kafkajs', () => {
                 consumer = kafka.consumer({
                     groupId: 'testing-group-id',
                 });
-                consumer.run({
-                    eachBatch: async (payload: EachBatchPayload): Promise<void> => {},
-                });
             });
 
             it('consume eachBatch create span with expected attributes', async () => {
+                consumer.run({
+                    eachBatch: async (payload: EachBatchPayload): Promise<void> => {},
+                });
                 const payload: EachBatchPayload = createEachBatchPayload();
                 await runConfig.eachBatch(payload);
 
@@ -621,6 +636,23 @@ describe('instrumentation-kafkajs', () => {
 
                 expect(msg2Span.parentSpanId).toStrictEqual(recvSpan.spanContext.spanId);
                 expect(msg2Span.attributes[MessagingAttribute.MESSAGING_OPERATION]).toStrictEqual('process');
+            });
+
+            it('consumer eachBatch with non promise return value', async () => {
+                consumer.run({
+                    // the usecase of kafkajs callback not returning promise
+                    // is not typescript valid, but it might (and is) implemented in real life (nestjs)
+                    // and does not break the library.
+                    // @ts-ignore
+                    eachBatch: async (_payload: EachBatchPayload) => {
+                        return;
+                    },
+                });
+                const payload: EachBatchPayload = createEachBatchPayload();
+                await runConfig.eachBatch(payload);
+
+                const spans = memoryExporter.getFinishedSpans();
+                expect(spans.length).toBe(3);
             });
         });
 
