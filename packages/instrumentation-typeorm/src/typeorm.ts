@@ -1,5 +1,5 @@
 import { Span, SpanKind, SpanStatusCode, setSpan, context, diag } from '@opentelemetry/api';
-import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
+import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { TypeormInstrumentationConfig } from './types';
 import { getParamNames } from './utils';
 import { VERSION } from './version';
@@ -97,15 +97,15 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
             return async function (...args: any[]) {
                 const connectionOptions = this?.connection?.options ?? {};
                 const attributes = {
-                    [DatabaseAttribute.DB_SYSTEM]: connectionOptions.type,
-                    [DatabaseAttribute.DB_USER]: connectionOptions.username,
-                    // [GeneralAttribute.NET_PEER_IP]: '?',
-                    [GeneralAttribute.NET_PEER_NAME]: connectionOptions.host,
-                    [GeneralAttribute.NET_PEER_PORT]: connectionOptions.port,
-                    // [GeneralAttribute.NET_TRANSPORT]: '?',
-                    [DatabaseAttribute.DB_NAME]: connectionOptions.database,
-                    [DatabaseAttribute.DB_OPERATION]: opName,
-                    [DatabaseAttribute.DB_STATEMENT]: JSON.stringify(buildStatement(original, args)),
+                    [SemanticAttributes.DB_SYSTEM]: connectionOptions.type,
+                    [SemanticAttributes.DB_USER]: connectionOptions.username,
+                    // [SemanticAttributes.NET_PEER_IP]: '?',
+                    [SemanticAttributes.NET_PEER_NAME]: connectionOptions.host,
+                    [SemanticAttributes.NET_PEER_PORT]: connectionOptions.port,
+                    // [SemanticAttributes.NET_TRANSPORT]: '?',
+                    [SemanticAttributes.DB_NAME]: connectionOptions.database,
+                    [SemanticAttributes.DB_OPERATION]: opName,
+                    [SemanticAttributes.DB_STATEMENT]: JSON.stringify(buildStatement(original, args)),
                     component: 'typeorm',
                 };
 

@@ -2,7 +2,7 @@ import { Tracer, SpanAttributes, SpanStatusCode, context, setSpan, diag, Span, S
 import type { Collection } from 'mongoose';
 import { MongooseResponseCustomAttributesFunction } from './types';
 import { safeExecuteInTheMiddle } from '@opentelemetry/instrumentation';
-import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
+import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 
 // ===== Start Span Utils =====
 
@@ -17,12 +17,12 @@ interface StartSpanPayload {
 
 function getAttributesFromCollection(collection: Collection): SpanAttributes {
     return {
-        [DatabaseAttribute.DB_MONGODB_COLLECTION]: collection.name,
-        [DatabaseAttribute.DB_NAME]: collection.conn.name,
-        [DatabaseAttribute.DB_USER]: collection.conn.user,
-        [GeneralAttribute.NET_PEER_NAME]: collection.conn.host,
-        [GeneralAttribute.NET_PEER_PORT]: collection.conn.port,
-        [GeneralAttribute.NET_TRANSPORT]: 'IP.TCP', // Always true in mongodb
+        [SemanticAttributes.DB_MONGODB_COLLECTION]: collection.name,
+        [SemanticAttributes.DB_NAME]: collection.conn.name,
+        [SemanticAttributes.DB_USER]: collection.conn.user,
+        [SemanticAttributes.NET_PEER_NAME]: collection.conn.host,
+        [SemanticAttributes.NET_PEER_PORT]: collection.conn.port,
+        [SemanticAttributes.NET_TRANSPORT]: 'IP.TCP', // Always true in mongodb
     };
 }
 
@@ -41,8 +41,8 @@ export function startSpan({
             attributes: {
                 ...attributes,
                 ...getAttributesFromCollection(collection),
-                [DatabaseAttribute.DB_OPERATION]: operation,
-                [DatabaseAttribute.DB_SYSTEM]: 'mongodb',
+                [SemanticAttributes.DB_OPERATION]: operation,
+                [SemanticAttributes.DB_SYSTEM]: 'mongodb',
             },
         },
         parentSpan ? setSpan(context.active(), parentSpan) : undefined

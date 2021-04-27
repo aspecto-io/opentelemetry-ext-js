@@ -8,7 +8,7 @@ import {
     InstrumentationNodeModuleDefinition,
 } from '@opentelemetry/instrumentation';
 import { VERSION } from './version';
-import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
+import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 
 const contextCaptureFunctions = [
     'remove',
@@ -97,7 +97,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
             return function exec(this: any, callback?: Function) {
                 const parentSpan = this[_STORED_PARENT_SPAN];
                 const attributes = {
-                    [DatabaseAttribute.DB_STATEMENT]: self._config.dbStatementSerializer('aggregate', {
+                    [SemanticAttributes.DB_STATEMENT]: self._config.dbStatementSerializer('aggregate', {
                         options: this.options,
                         aggregatePipeline: this._pipeline,
                     }),
@@ -125,7 +125,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
             return function exec(this: any, callback?: Function) {
                 const parentSpan = this[_STORED_PARENT_SPAN];
                 const attributes = {
-                    [DatabaseAttribute.DB_STATEMENT]: self._config.dbStatementSerializer(this.op, {
+                    [SemanticAttributes.DB_STATEMENT]: self._config.dbStatementSerializer(this.op, {
                         condition: this._conditions,
                         updates: this._update,
                         options: this.options,
@@ -156,7 +156,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
                     serializePayload.options = options;
                 }
                 const attributes = {
-                    [DatabaseAttribute.DB_STATEMENT]: self._config.dbStatementSerializer(op, serializePayload),
+                    [SemanticAttributes.DB_STATEMENT]: self._config.dbStatementSerializer(op, serializePayload),
                 };
                 const span = startSpan({
                     tracer: self.tracer,

@@ -12,7 +12,7 @@ instrumentation.enable();
 instrumentation.disable();
 
 import amqp from 'amqplib';
-import { GeneralAttribute, MessagingAttribute } from '@opentelemetry/semantic-conventions';
+import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { propagation, Span, SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import { asyncConsume } from './utils';
 
@@ -99,27 +99,31 @@ describe('amqplib instrumentation promise model', function () {
 
         // assert publish span
         expect(publishSpan.kind).toEqual(SpanKind.PRODUCER);
-        expect(publishSpan.attributes[MessagingAttribute.MESSAGING_SYSTEM]).toEqual('rabbitmq');
-        expect(publishSpan.attributes[MessagingAttribute.MESSAGING_DESTINATION]).toEqual(''); // according to spec: "This will be an empty string if the default exchange is used"
-        expect(publishSpan.attributes[MessagingAttribute.MESSAGING_DESTINATION_KIND]).toEqual('topic');
-        expect(publishSpan.attributes[MessagingAttribute.MESSAGING_RABBITMQ_ROUTING_KEY]).toEqual(queueName);
-        expect(publishSpan.attributes[MessagingAttribute.MESSAGING_PROTOCOL]).toEqual('AMQP');
-        expect(publishSpan.attributes[MessagingAttribute.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
-        expect(publishSpan.attributes[MessagingAttribute.MESSAGING_URL]).toEqual(url);
-        expect(publishSpan.attributes[GeneralAttribute.NET_PEER_NAME]).toEqual('localhost');
-        expect(publishSpan.attributes[GeneralAttribute.NET_PEER_PORT]).toEqual(22221);
+        expect(publishSpan.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('rabbitmq');
+        expect(publishSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual(''); // according to spec: "This will be an empty string if the default exchange is used"
+        expect(publishSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toEqual(
+            MessagingDestinationKindValues.TOPIC
+        );
+        expect(publishSpan.attributes['messaging.rabbitmq.routing_key']).toEqual(queueName);
+        expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
+        expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
+        expect(publishSpan.attributes[SemanticAttributes.MESSAGING_URL]).toEqual(url);
+        expect(publishSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual('localhost');
+        expect(publishSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(22221);
 
         // assert consume span
         expect(consumeSpan.kind).toEqual(SpanKind.CONSUMER);
-        expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_SYSTEM]).toEqual('rabbitmq');
-        expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_DESTINATION]).toEqual(''); // according to spec: "This will be an empty string if the default exchange is used"
-        expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_DESTINATION_KIND]).toEqual('topic');
-        expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_RABBITMQ_ROUTING_KEY]).toEqual(queueName);
-        expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_PROTOCOL]).toEqual('AMQP');
-        expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
-        expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_URL]).toEqual(url);
-        expect(consumeSpan.attributes[GeneralAttribute.NET_PEER_NAME]).toEqual('localhost');
-        expect(consumeSpan.attributes[GeneralAttribute.NET_PEER_PORT]).toEqual(22221);
+        expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('rabbitmq');
+        expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual(''); // according to spec: "This will be an empty string if the default exchange is used"
+        expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toEqual(
+            MessagingDestinationKindValues.TOPIC
+        );
+        expect(consumeSpan.attributes['messaging.rabbitmq.routing_key']).toEqual(queueName);
+        expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
+        expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
+        expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_URL]).toEqual(url);
+        expect(consumeSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual('localhost');
+        expect(consumeSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(22221);
 
         // assert context propagation
         expect(consumeSpan.spanContext.traceId).toEqual(publishSpan.spanContext.traceId);
@@ -371,21 +375,25 @@ describe('amqplib instrumentation promise model', function () {
 
             // assert publish span
             expect(publishSpan.kind).toEqual(SpanKind.PRODUCER);
-            expect(publishSpan.attributes[MessagingAttribute.MESSAGING_SYSTEM]).toEqual('rabbitmq');
-            expect(publishSpan.attributes[MessagingAttribute.MESSAGING_DESTINATION]).toEqual(exchangeName);
-            expect(publishSpan.attributes[MessagingAttribute.MESSAGING_DESTINATION_KIND]).toEqual('topic');
-            expect(publishSpan.attributes[MessagingAttribute.MESSAGING_RABBITMQ_ROUTING_KEY]).toEqual(routingKey);
-            expect(publishSpan.attributes[MessagingAttribute.MESSAGING_PROTOCOL]).toEqual('AMQP');
-            expect(publishSpan.attributes[MessagingAttribute.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
+            expect(publishSpan.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('rabbitmq');
+            expect(publishSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual(exchangeName);
+            expect(publishSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toEqual(
+                MessagingDestinationKindValues.TOPIC
+            );
+            expect(publishSpan.attributes['messaging.rabbitmq.routing_key']).toEqual(routingKey);
+            expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
+            expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
 
             // assert consume span
             expect(consumeSpan.kind).toEqual(SpanKind.CONSUMER);
-            expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_SYSTEM]).toEqual('rabbitmq');
-            expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_DESTINATION]).toEqual(exchangeName);
-            expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_DESTINATION_KIND]).toEqual('topic');
-            expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_RABBITMQ_ROUTING_KEY]).toEqual(routingKey);
-            expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_PROTOCOL]).toEqual('AMQP');
-            expect(consumeSpan.attributes[MessagingAttribute.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
+            expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('rabbitmq');
+            expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual(exchangeName);
+            expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toEqual(
+                MessagingDestinationKindValues.TOPIC
+            );
+            expect(consumeSpan.attributes['messaging.rabbitmq.routing_key']).toEqual(routingKey);
+            expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
+            expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
 
             // assert context propagation
             expect(consumeSpan.spanContext.traceId).toEqual(publishSpan.spanContext.traceId);
@@ -496,8 +504,8 @@ describe('amqplib instrumentation promise model', function () {
 
             expect(memoryExporter.getFinishedSpans().length).toBe(2);
             memoryExporter.getFinishedSpans().forEach((s) => {
-                expect(s.attributes[GeneralAttribute.NET_PEER_NAME]).toEqual('localhost');
-                expect(s.attributes[GeneralAttribute.NET_PEER_PORT]).toEqual(22221);
+                expect(s.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual('localhost');
+                expect(s.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(22221);
             });
         });
 

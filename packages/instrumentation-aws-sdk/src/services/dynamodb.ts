@@ -1,6 +1,6 @@
 import { SpanKind } from '@opentelemetry/api';
 import { RequestMetadata, ServiceExtension } from './ServiceExtension';
-import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
+import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { NormalizedRequest } from '../types';
 
 export class DynamodbServiceExtension implements ServiceExtension {
@@ -11,10 +11,10 @@ export class DynamodbServiceExtension implements ServiceExtension {
         const operation = request.commandName;
 
         const spanAttributes = {
-            [DatabaseAttribute.DB_SYSTEM]: 'dynamodb',
-            [DatabaseAttribute.DB_NAME]: request.commandInput?.TableName,
-            [DatabaseAttribute.DB_OPERATION]: operation,
-            [DatabaseAttribute.DB_STATEMENT]: JSON.stringify(request.commandInput),
+            [SemanticAttributes.DB_SYSTEM]: 'dynamodb',
+            [SemanticAttributes.DB_NAME]: request.commandInput?.TableName,
+            [SemanticAttributes.DB_OPERATION]: operation,
+            [SemanticAttributes.DB_STATEMENT]: JSON.stringify(request.commandInput),
         };
 
         return {

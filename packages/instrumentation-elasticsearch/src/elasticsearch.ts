@@ -9,7 +9,7 @@ import {
 } from '@opentelemetry/instrumentation';
 import { VERSION } from './version';
 import { AttributeNames } from './enums';
-import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
+import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import {
     startSpan,
     onError,
@@ -119,9 +119,9 @@ export class ElasticsearchInstrumentation extends InstrumentationBase<typeof ela
             const span = startSpan({
                 tracer: self.tracer,
                 attributes: {
-                    [DatabaseAttribute.DB_OPERATION]: operation,
+                    [SemanticAttributes.DB_OPERATION]: operation,
                     [AttributeNames.ELASTICSEARCH_INDICES]: getIndexName(params),
-                    [DatabaseAttribute.DB_STATEMENT]: (
+                    [SemanticAttributes.DB_STATEMENT]: (
                         self._config.dbStatementSerializer || defaultDbStatementSerializer
                     )(operation, params, options),
                 },

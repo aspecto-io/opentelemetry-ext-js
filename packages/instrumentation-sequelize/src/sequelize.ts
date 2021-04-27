@@ -8,7 +8,7 @@ import {
     diag,
     suppressInstrumentation,
 } from '@opentelemetry/api';
-import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
+import { NetTransportValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import * as sequelize from 'sequelize';
 import { SequelizeInstrumentationConfig } from './types';
 import { VERSION } from './version';
@@ -115,16 +115,16 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
             const config = sequelizeInstance?.config;
 
             const attributes = {
-                [DatabaseAttribute.DB_SYSTEM]: sequelizeInstance.getDialect(),
-                [DatabaseAttribute.DB_USER]: config?.username,
-                [GeneralAttribute.NET_PEER_NAME]: config?.host,
-                [GeneralAttribute.NET_PEER_PORT]: config?.port ? Number(config?.port) : undefined,
-                [GeneralAttribute.NET_TRANSPORT]: self._getNetTransport(config?.protocol),
-                [DatabaseAttribute.DB_NAME]: config?.database,
-                [DatabaseAttribute.DB_OPERATION]: operation,
-                [DatabaseAttribute.DB_STATEMENT]: statement,
+                [SemanticAttributes.DB_SYSTEM]: sequelizeInstance.getDialect(),
+                [SemanticAttributes.DB_USER]: config?.username,
+                [SemanticAttributes.NET_PEER_NAME]: config?.host,
+                [SemanticAttributes.NET_PEER_PORT]: config?.port ? Number(config?.port) : undefined,
+                [SemanticAttributes.NET_TRANSPORT]: self._getNetTransport(config?.protocol),
+                [SemanticAttributes.DB_NAME]: config?.database,
+                [SemanticAttributes.DB_OPERATION]: operation,
+                [SemanticAttributes.DB_STATEMENT]: statement,
                 component: 'sequelize',
-                // [GeneralAttribute.NET_PEER_IP]: '?', // Part of protocol
+                // [SemanticAttributes.NET_PEER_IP]: '?', // Part of protocol
             };
 
             if (self._config.moduleVersionAttributeName) {
@@ -170,7 +170,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
     private _getNetTransport(protocol: string) {
         switch (protocol) {
             case 'tcp':
-                return GeneralAttribute.IP_TCP;
+                return NetTransportValues.IP_TCP;
             default:
                 return undefined;
         }
