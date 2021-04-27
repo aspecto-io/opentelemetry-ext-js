@@ -9,6 +9,7 @@ import { Message } from 'aws-sdk/clients/sqs';
 import expect from 'expect';
 
 const instrumentation = new AwsInstrumentation();
+instrumentation.enable();
 import AWS, { AWSError } from 'aws-sdk';
 import { MessagingAttribute } from '@opentelemetry/semantic-conventions';
 
@@ -46,6 +47,7 @@ describe('sqs', () => {
     afterEach(() => {
         memoryExporter.reset();
         contextManager.disable();
+        instrumentation.disable();
     });
 
     describe('receive context', () => {

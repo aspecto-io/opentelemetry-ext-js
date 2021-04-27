@@ -32,6 +32,7 @@ describe('instrumentation-aws-sdk-v2', () => {
     };
 
     const getAwsSpans = (): ReadableSpan[] => {
+        console.log('for assert', memoryExporter.getFinishedSpans().length);
         return memoryExporter.getFinishedSpans().filter((s) => s.instrumentationLibrary.name.includes('aws-sdk'));
     };
 
@@ -48,6 +49,7 @@ describe('instrumentation-aws-sdk-v2', () => {
     beforeEach(() => {
         contextManager = new AsyncHooksContextManager();
         context.setGlobalContextManager(contextManager.enable());
+        instrumentation.disable();
         instrumentation.enable();
     });
 
@@ -65,13 +67,14 @@ describe('instrumentation-aws-sdk-v2', () => {
                 instrumentation.enable();
             });
 
-            it('adds proper number of spans with correct attributes', async () => {
+            it('adds proper number of spans with correct attributes1', async () => {
                 const s3 = new AWS.S3();
                 const bucketName = 'aws-test-bucket';
                 const keyName = 'aws-test-object.txt';
                 await new Promise((resolve) => {
                     // span 1
                     s3.createBucket({ Bucket: bucketName }, async function (err, data) {
+                        console.log('here');
                         const params = {
                             Bucket: bucketName,
                             Key: keyName,

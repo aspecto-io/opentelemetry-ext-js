@@ -12,11 +12,9 @@ import {
 } from '@opentelemetry/api';
 import { pubsubPropagation } from 'opentelemetry-propagation-utils';
 import { RequestMetadata, ServiceExtension } from './ServiceExtension';
-import * as AWS from 'aws-sdk';
-import { MessageBodyAttributeMap, SendMessageBatchRequestEntry } from 'aws-sdk/clients/sqs';
+import type { SQS } from 'aws-sdk';
 import {
     AwsSdkInstrumentationConfig,
-    AwsSdkSqsProcessCustomAttributeFunction,
     NormalizedRequest,
     NormalizedResponse,
 } from '../types';
@@ -28,8 +26,8 @@ export const END_SPAN_FUNCTION = Symbol('opentelemetry.instrumentation.aws-sdk.s
 
 // https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-quotas.html
 const SQS_MAX_MESSAGE_ATTRIBUTES = 10;
-class SqsContextSetter implements TextMapSetter<AWS.SQS.MessageBodyAttributeMap> {
-    set(carrier: AWS.SQS.MessageBodyAttributeMap, key: string, value: string) {
+class SqsContextSetter implements TextMapSetter<SQS.MessageBodyAttributeMap> {
+    set(carrier: SQS.MessageBodyAttributeMap, key: string, value: string) {
         carrier[key] = {
             DataType: 'String',
             StringValue: value as string,
@@ -38,12 +36,12 @@ class SqsContextSetter implements TextMapSetter<AWS.SQS.MessageBodyAttributeMap>
 }
 const sqsContextSetter = new SqsContextSetter();
 
-class SqsContextGetter implements TextMapGetter<AWS.SQS.MessageBodyAttributeMap> {
-    keys(carrier: AWS.SQS.MessageBodyAttributeMap): string[] {
+class SqsContextGetter implements TextMapGetter<SQS.MessageBodyAttributeMap> {
+    keys(carrier: SQS.MessageBodyAttributeMap): string[] {
         return Object.keys(carrier);
     }
 
-    get(carrier: AWS.SQS.MessageBodyAttributeMap, key: string): string | string[] {
+    get(carrier: SQS.MessageBodyAttributeMap, key: string): string | string[] {
         return carrier?.[key]?.StringValue;
     }
 }
@@ -109,7 +107,7 @@ export class SqsServiceExtension implements ServiceExtension {
 
             case 'sendMessageBatch':
                 {
-                    request.commandInput?.Entries?.forEach((messageParams: SendMessageBatchRequestEntry) => {
+                    request.commandInput?.Entries?.forEach((messageParams: SQS.SendMessageBatchRequestEntry) => {
                         messageParams.MessageAttributes = this.InjectPropagationContext(
                             messageParams.MessageAttributes ?? {}
                         );
@@ -120,16 +118,16 @@ export class SqsServiceExtension implements ServiceExtension {
     };
 
     responseHook = (response: NormalizedResponse, span: Span, tracer: Tracer, config: AwsSdkInstrumentationConfig) => {
-        const messages: AWS.SQS.Message[] = response?.data?.Messages;
+        const messages: SQS.Message[] = response?.data?.Messages;
         if (messages) {
             const queueUrl = this.extractQueueUrl(response.request.commandInput);
             const queueName = this.extractQueueNameFromUrl(queueUrl);
 
-            pubsubPropagation.patchMessagesArrayToStartProcessSpans<AWS.SQS.Message>({
+            pubsubPropagation.patchMessagesArrayToStartProcessSpans<SQS.Message>({
                 messages,
                 parentContext: setSpan(context.active(), span),
                 tracer,
-                messageToSpanDetails: (message: AWS.SQS.Message) => ({
+                messageToSpanDetails: (message: SQS.Message) => ({
                     name: queueName,
                     parentContext: propagation.extract(ROOT_CONTEXT, message.MessageAttributes, sqsContextGetter),
                     attributes: {
@@ -141,7 +139,7 @@ export class SqsServiceExtension implements ServiceExtension {
                         [MessagingAttribute.MESSAGING_OPERATION]: 'process',
                     },
                 }),
-                processHook: (span: Span, message: AWS.SQS.Message) => config.sqsProcessHook?.(span, message),
+                processHook: (span: Span, message: SQS.Message) => config.sqsProcessHook?.(span, message),
             });
 
             pubsubPropagation.patchArrayForProcessSpans(messages, tracer, context.active());
@@ -161,7 +159,7 @@ export class SqsServiceExtension implements ServiceExtension {
         return segments[segments.length - 1];
     };
 
-    InjectPropagationContext(attributesMap?: MessageBodyAttributeMap): MessageBodyAttributeMap {
+    InjectPropagationContext(attributesMap?: SQS.MessageBodyAttributeMap): SQS.MessageBodyAttributeMap {
         const attributes = attributesMap ?? {};
         if (Object.keys(attributes).length < SQS_MAX_MESSAGE_ATTRIBUTES) {
             propagation.inject(context.active(), attributes, sqsContextSetter);
