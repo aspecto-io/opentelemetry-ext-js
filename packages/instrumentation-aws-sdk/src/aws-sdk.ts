@@ -63,13 +63,12 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
     }
 
     protected init(): InstrumentationModuleDefinition<typeof AWS>[] {
-
         const v3MiddlewareStackFile = new InstrumentationNodeModuleFile(
             `@aws-sdk/middleware-stack/dist/cjs/MiddlewareStack.js`,
             ['^3.0.0'],
             this.patchV3ConstructStack.bind(this),
-            this.unpatchV3ConstructStack.bind(this),
-        )
+            this.unpatchV3ConstructStack.bind(this)
+        );
 
         // as for aws-sdk v3.13.1, constructStack is exported from @aws-sdk/middleware-stack as
         // getter instead of function, which fails shimmer.
