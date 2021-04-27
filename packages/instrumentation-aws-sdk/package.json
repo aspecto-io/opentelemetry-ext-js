@@ -40,9 +40,9 @@
         "opentelemetry-propagation-utils": "^0.5.0"
     },
     "devDependencies": {
-        "@aws-sdk/client-s3": "^3.8.1",
-        "@aws-sdk/client-sqs": "^3.8.1",
-        "@aws-sdk/types": "^3.6.1",
+        "@aws-sdk/client-s3": "3.13.1",
+        "@aws-sdk/client-sqs": "3.13.1",
+        "@aws-sdk/types": "3.13.1",
         "@opentelemetry/node": "^0.19.0",
         "@opentelemetry/tracing": "^0.19.0",
         "@types/mocha": "^8.2.0",
