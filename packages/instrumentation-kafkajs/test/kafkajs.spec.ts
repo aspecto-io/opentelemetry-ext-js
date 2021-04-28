@@ -4,7 +4,7 @@ import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan } from '@opente
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { context, propagation, SpanKind, SpanStatusCode, Span, ContextManager } from '@opentelemetry/api';
-import { MessagingAttribute } from '@opentelemetry/semantic-conventions';
+import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import expect from 'expect';
 
 const instrumentation = new KafkaJsInstrumentation();
@@ -132,9 +132,11 @@ describe('instrumentation-kafkajs', () => {
                 expect(span.kind).toStrictEqual(SpanKind.PRODUCER);
                 expect(span.name).toStrictEqual('topic-name-1');
                 expect(span.status.code).toStrictEqual(SpanStatusCode.UNSET);
-                expect(span.attributes[MessagingAttribute.MESSAGING_SYSTEM]).toStrictEqual('kafka');
-                expect(span.attributes[MessagingAttribute.MESSAGING_DESTINATION_KIND]).toStrictEqual('topic');
-                expect(span.attributes[MessagingAttribute.MESSAGING_DESTINATION]).toStrictEqual('topic-name-1');
+                expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toStrictEqual('kafka');
+                expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toStrictEqual(
+                    MessagingDestinationKindValues.TOPIC
+                );
+                expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toStrictEqual('topic-name-1');
 
                 expect(messagesSent.length).toBe(1);
                 expectKafkaHeadersToMatchSpanContext(messagesSent[0], span);
@@ -438,10 +440,12 @@ describe('instrumentation-kafkajs', () => {
                 expect(span.parentSpanId).toBeUndefined();
                 expect(span.kind).toStrictEqual(SpanKind.CONSUMER);
                 expect(span.status.code).toStrictEqual(SpanStatusCode.UNSET);
-                expect(span.attributes[MessagingAttribute.MESSAGING_SYSTEM]).toStrictEqual('kafka');
-                expect(span.attributes[MessagingAttribute.MESSAGING_DESTINATION_KIND]).toStrictEqual('topic');
-                expect(span.attributes[MessagingAttribute.MESSAGING_DESTINATION]).toStrictEqual('topic-name-1');
-                expect(span.attributes[MessagingAttribute.MESSAGING_OPERATION]).toStrictEqual('process');
+                expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toStrictEqual('kafka');
+                expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toStrictEqual(
+                    MessagingDestinationKindValues.TOPIC
+                );
+                expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toStrictEqual('topic-name-1');
+                expect(span.attributes[SemanticAttributes.MESSAGING_OPERATION]).toStrictEqual('process');
             });
 
             it('consumer eachMessage with non promise return value', async () => {
@@ -621,21 +625,23 @@ describe('instrumentation-kafkajs', () => {
                 spans.forEach((span) => {
                     expect(span.name).toStrictEqual('topic-name-1');
                     expect(span.status.code).toStrictEqual(SpanStatusCode.UNSET);
-                    expect(span.attributes[MessagingAttribute.MESSAGING_SYSTEM]).toStrictEqual('kafka');
-                    expect(span.attributes[MessagingAttribute.MESSAGING_DESTINATION_KIND]).toStrictEqual('topic');
-                    expect(span.attributes[MessagingAttribute.MESSAGING_DESTINATION]).toStrictEqual('topic-name-1');
+                    expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toStrictEqual('kafka');
+                    expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toStrictEqual(
+                        MessagingDestinationKindValues.TOPIC
+                    );
+                    expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toStrictEqual('topic-name-1');
                 });
 
                 const [recvSpan, msg1Span, msg2Span] = spans;
 
                 expect(recvSpan.parentSpanId).toBeUndefined();
-                expect(recvSpan.attributes[MessagingAttribute.MESSAGING_OPERATION]).toStrictEqual('receive');
+                expect(recvSpan.attributes[SemanticAttributes.MESSAGING_OPERATION]).toStrictEqual('receive');
 
                 expect(msg1Span.parentSpanId).toStrictEqual(recvSpan.spanContext.spanId);
-                expect(msg1Span.attributes[MessagingAttribute.MESSAGING_OPERATION]).toStrictEqual('process');
+                expect(msg1Span.attributes[SemanticAttributes.MESSAGING_OPERATION]).toStrictEqual('process');
 
                 expect(msg2Span.parentSpanId).toStrictEqual(recvSpan.spanContext.spanId);
-                expect(msg2Span.attributes[MessagingAttribute.MESSAGING_OPERATION]).toStrictEqual('process');
+                expect(msg2Span.attributes[SemanticAttributes.MESSAGING_OPERATION]).toStrictEqual('process');
             });
 
             it('consumer eachBatch with non promise return value', async () => {

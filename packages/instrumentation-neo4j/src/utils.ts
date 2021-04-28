@@ -1,4 +1,4 @@
-import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
+import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 
 export function getAttributesFromNeo4jSession(session: any) {
     const connectionHolder =
@@ -12,16 +12,16 @@ export function getAttributesFromNeo4jSession(session: any) {
     const auth = connectionProvider._authToken;
 
     const attributes = {
-        [GeneralAttribute.NET_TRANSPORT]: 'IP.TCP',
+        [SemanticAttributes.NET_TRANSPORT]: 'IP.TCP',
         // "neo4j" is the default database name. When used, "session._database" is an empty string
-        [DatabaseAttribute.DB_NAME]: session._database ? session._database : 'neo4j',
+        [SemanticAttributes.DB_NAME]: session._database ? session._database : 'neo4j',
     };
     if (address) {
-        attributes[GeneralAttribute.NET_PEER_NAME] = address._host;
-        attributes[GeneralAttribute.NET_PEER_PORT] = address._port;
+        attributes[SemanticAttributes.NET_PEER_NAME] = address._host;
+        attributes[SemanticAttributes.NET_PEER_PORT] = address._port;
     }
     if (auth?.principal) {
-        attributes[DatabaseAttribute.DB_USER] = auth.principal;
+        attributes[SemanticAttributes.DB_USER] = auth.principal;
     }
     return attributes;
 }

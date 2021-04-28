@@ -5,7 +5,7 @@ import { context, ContextManager } from '@opentelemetry/api';
 import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/tracing';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { mockAwsSend } from './testing-utils';
-import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
+import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import expect from 'expect';
 
 const instrumentation = new AwsInstrumentation();
@@ -73,10 +73,10 @@ describe('dynamodb', () => {
                 const spans = memoryExporter.getFinishedSpans();
                 expect(spans.length).toStrictEqual(1);
                 const attrs = spans[0].attributes;
-                expect(attrs[DatabaseAttribute.DB_SYSTEM]).toStrictEqual('dynamodb');
-                expect(attrs[DatabaseAttribute.DB_NAME]).toStrictEqual('test-table');
-                expect(attrs[DatabaseAttribute.DB_OPERATION]).toStrictEqual('query');
-                expect(JSON.parse(attrs[DatabaseAttribute.DB_STATEMENT] as string)).toEqual(params);
+                expect(attrs[SemanticAttributes.DB_SYSTEM]).toStrictEqual('dynamodb');
+                expect(attrs[SemanticAttributes.DB_NAME]).toStrictEqual('test-table');
+                expect(attrs[SemanticAttributes.DB_OPERATION]).toStrictEqual('query');
+                expect(JSON.parse(attrs[SemanticAttributes.DB_STATEMENT] as string)).toEqual(params);
                 expect(err).toBeFalsy();
                 done();
             });

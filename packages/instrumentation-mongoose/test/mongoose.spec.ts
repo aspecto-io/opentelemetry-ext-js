@@ -4,7 +4,7 @@ import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/tracin
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { context } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
-import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
+import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { MongooseInstrumentation } from '../src';
 
 const instrumentation = new MongooseInstrumentation({
@@ -65,7 +65,7 @@ describe('mongoose instrumentation', () => {
         const spans = getSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
-        expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('save');
+        expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('save');
         const statement = getStatement(spans[0]);
         expect(statement.document).toEqual(expect.objectContaining(document));
     });
@@ -83,7 +83,7 @@ describe('mongoose instrumentation', () => {
 
             expect(spans.length).toBe(1);
             assertSpan(spans[0]);
-            expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('save');
+            expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('save');
             const statement = getStatement(spans[0]);
             expect(statement.document).toEqual(expect.objectContaining(document));
             done();
@@ -96,7 +96,7 @@ describe('mongoose instrumentation', () => {
         const spans = getSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
-        expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('find');
+        expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('find');
         const statement = getStatement(spans[0]);
         expect(statement.condition).toEqual({ id: '_test' });
     });
@@ -108,10 +108,10 @@ describe('mongoose instrumentation', () => {
         expect(spans.length).toBe(2);
         assertSpan(spans[0]);
         assertSpan(spans[1]);
-        expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('find');
-        expect(spans[0].attributes[DatabaseAttribute.DB_STATEMENT]).toMatch(/.*{"id":"_test[1-2]"}.*/g);
-        expect(spans[1].attributes[DatabaseAttribute.DB_OPERATION]).toBe('find');
-        expect(spans[1].attributes[DatabaseAttribute.DB_STATEMENT]).toMatch(/.*{"id":"_test[1-2]"}.*/g);
+        expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('find');
+        expect(spans[0].attributes[SemanticAttributes.DB_STATEMENT]).toMatch(/.*{"id":"_test[1-2]"}.*/g);
+        expect(spans[1].attributes[SemanticAttributes.DB_OPERATION]).toBe('find');
+        expect(spans[1].attributes[SemanticAttributes.DB_STATEMENT]).toMatch(/.*{"id":"_test[1-2]"}.*/g);
     });
 
     it('instrumenting find operation with chaining structures', async () => {
@@ -120,7 +120,7 @@ describe('mongoose instrumentation', () => {
         const spans = getSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
-        expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('find');
+        expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('find');
         const statement = getStatement(spans[0]);
         expect(statement.condition).toEqual({ id: '_test' });
         expect(statement.options).toEqual({ skip: 1, limit: 2, sort: { email: 1 } });
@@ -133,7 +133,7 @@ describe('mongoose instrumentation', () => {
         const spans = getSpans();
         expect(spans.length).toBe(2);
         assertSpan(spans[1]);
-        expect(spans[1].attributes[DatabaseAttribute.DB_OPERATION]).toBe('remove');
+        expect(spans[1].attributes[SemanticAttributes.DB_OPERATION]).toBe('remove');
     });
 
     it('instrumenting remove operation with callbacks [deprecated]', (done) => {
@@ -142,7 +142,7 @@ describe('mongoose instrumentation', () => {
                 const spans = getSpans();
                 expect(spans.length).toBe(2);
                 assertSpan(spans[1]);
-                expect(spans[1].attributes[DatabaseAttribute.DB_OPERATION]).toBe('remove');
+                expect(spans[1].attributes[SemanticAttributes.DB_OPERATION]).toBe('remove');
                 expect(getStatement(spans[1]).options).toEqual({ overwrite: true });
                 done();
             })
@@ -155,7 +155,7 @@ describe('mongoose instrumentation', () => {
         const spans = getSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
-        expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('deleteOne');
+        expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('deleteOne');
     });
 
     it('instrumenting updateOne operation on models', async () => {
@@ -165,7 +165,7 @@ describe('mongoose instrumentation', () => {
         const spans = getSpans();
         expect(spans.length).toBe(2);
         assertSpan(spans[1]);
-        expect(spans[1].attributes[DatabaseAttribute.DB_OPERATION]).toBe('updateOne');
+        expect(spans[1].attributes[SemanticAttributes.DB_OPERATION]).toBe('updateOne');
 
         const statement = getStatement(spans[1]);
         expect(statement.options).toEqual({ skip: 0 });
@@ -179,7 +179,7 @@ describe('mongoose instrumentation', () => {
         const spans = getSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
-        expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('updateOne');
+        expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('updateOne');
 
         const statement = getStatement(spans[0]);
         expect(statement.options).toEqual({ skip: 0 });
@@ -193,7 +193,7 @@ describe('mongoose instrumentation', () => {
         const spans = getSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
-        expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('count');
+        expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('count');
         const statement = getStatement(spans[0]);
         expect(statement.options).toEqual({});
         expect(statement.condition).toEqual({});
@@ -205,7 +205,7 @@ describe('mongoose instrumentation', () => {
         const spans = getSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
-        expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('countDocuments');
+        expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('countDocuments');
         const statement = getStatement(spans[0]);
         expect(statement.options).toEqual({});
         expect(statement.condition).toEqual({ email: 'john.doe@example.com' });
@@ -217,7 +217,7 @@ describe('mongoose instrumentation', () => {
         const spans = getSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
-        expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('estimatedDocumentCount');
+        expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('estimatedDocumentCount');
         const statement = getStatement(spans[0]);
         expect(statement.options).toEqual({});
         expect(statement.condition).toEqual({});
@@ -229,7 +229,7 @@ describe('mongoose instrumentation', () => {
         const spans = getSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
-        expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('deleteMany');
+        expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('deleteMany');
         const statement = getStatement(spans[0]);
         expect(statement.options).toEqual({});
         expect(statement.condition).toEqual({});
@@ -241,7 +241,7 @@ describe('mongoose instrumentation', () => {
         const spans = getSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
-        expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('findOne');
+        expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('findOne');
         const statement = getStatement(spans[0]);
         expect(statement.options).toEqual({});
         expect(statement.condition).toEqual({ email: 'john.doe@example.com' });
@@ -253,7 +253,7 @@ describe('mongoose instrumentation', () => {
         const spans = getSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
-        expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('update');
+        expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('update');
         const statement = getStatement(spans[0]);
         expect(statement.options).toEqual({});
         expect(statement.condition).toEqual({ email: 'john.doe@example.com' });
@@ -266,7 +266,7 @@ describe('mongoose instrumentation', () => {
         const spans = getSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
-        expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('updateOne');
+        expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('updateOne');
         const statement = getStatement(spans[0]);
         expect(statement.options).toEqual({});
         expect(statement.condition).toEqual({ email: 'john.doe@example.com' });
@@ -279,7 +279,7 @@ describe('mongoose instrumentation', () => {
         const spans = getSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
-        expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('updateMany');
+        expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('updateMany');
         const statement = getStatement(spans[0]);
         expect(statement.options).toEqual({});
         expect(statement.condition).toEqual({ age: 18 });
@@ -292,7 +292,7 @@ describe('mongoose instrumentation', () => {
         const spans = getSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
-        expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('findOneAndDelete');
+        expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('findOneAndDelete');
         const statement = getStatement(spans[0]);
         expect(statement.options).toEqual({});
         expect(statement.condition).toEqual({ email: 'john.doe@example.com' });
@@ -305,8 +305,8 @@ describe('mongoose instrumentation', () => {
         expect(spans.length).toBe(2);
         assertSpan(spans[0]);
         assertSpan(spans[1]);
-        expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('findOne');
-        expect(spans[1].attributes[DatabaseAttribute.DB_OPERATION]).toBe('findOneAndUpdate');
+        expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('findOne');
+        expect(spans[1].attributes[SemanticAttributes.DB_OPERATION]).toBe('findOneAndUpdate');
         const statement = getStatement(spans[1]);
         expect(statement.options).toEqual({});
         expect(statement.condition).toEqual({ email: 'john.doe@example.com' });
@@ -319,7 +319,7 @@ describe('mongoose instrumentation', () => {
         const spans = getSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
-        expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('findOneAndRemove');
+        expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('findOneAndRemove');
         const statement = getStatement(spans[0]);
         expect(statement.options).toEqual({});
         expect(statement.condition).toEqual({ email: 'john.doe@example.com' });
@@ -332,7 +332,7 @@ describe('mongoose instrumentation', () => {
         const spans = getSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
-        expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('save');
+        expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('save');
         const statement = getStatement(spans[0]);
         expect(statement.options).toEqual({});
         expect(statement.document).toEqual(expect.objectContaining(document));
@@ -347,7 +347,7 @@ describe('mongoose instrumentation', () => {
         const spans = getSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
-        expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('aggregate');
+        expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('aggregate');
         const statement = getStatement(spans[0]);
         expect(statement.aggregatePipeline).toEqual([
             { $match: { firstName: 'John' } },
@@ -362,7 +362,7 @@ describe('mongoose instrumentation', () => {
                 const spans = getSpans();
                 expect(spans.length).toBe(1);
                 assertSpan(spans[0]);
-                expect(spans[0].attributes[DatabaseAttribute.DB_OPERATION]).toBe('aggregate');
+                expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('aggregate');
                 const statement = getStatement(spans[0]);
                 expect(statement.aggregatePipeline).toEqual([
                     { $match: { firstName: 'John' } },
@@ -393,7 +393,7 @@ describe('mongoose instrumentation', () => {
         const spans = getSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
-        expect(spans[0].attributes[DatabaseAttribute.DB_STATEMENT]).toBe(undefined);
+        expect(spans[0].attributes[SemanticAttributes.DB_STATEMENT]).toBe(undefined);
     });
 
     describe('responseHook', () => {

@@ -8,7 +8,11 @@ import { InMemorySpanExporter, ReadableSpan, SimpleSpanProcessor, Span } from '@
 import { context, SpanStatusCode, ContextManager, getSpan } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
-import { MessagingAttribute, MessagingOperationName, RpcAttribute } from '@opentelemetry/semantic-conventions';
+import {
+    MessagingDestinationKindValues,
+    MessagingOperationValues,
+    SemanticAttributes,
+} from '@opentelemetry/semantic-conventions';
 import { AttributeNames } from '../src/enums';
 import expect from 'expect';
 import * as fs from 'fs';
@@ -54,9 +58,9 @@ describe('instrumentation-aws-sdk-v3', () => {
             const awsRes = await s3Client.putObject(params);
             expect(memoryExporter.getFinishedSpans().length).toBe(1);
             const [span] = memoryExporter.getFinishedSpans();
-            expect(span.attributes[RpcAttribute.RPC_SYSTEM]).toEqual('aws-api');
-            expect(span.attributes[RpcAttribute.RPC_METHOD]).toEqual('putObject');
-            expect(span.attributes[RpcAttribute.RPC_SERVICE]).toEqual('s3');
+            expect(span.attributes[SemanticAttributes.RPC_SYSTEM]).toEqual('aws-api');
+            expect(span.attributes[SemanticAttributes.RPC_METHOD]).toEqual('putObject');
+            expect(span.attributes[SemanticAttributes.RPC_SERVICE]).toEqual('s3');
             expect(span.attributes[AttributeNames.AWS_REGION]).toEqual(region);
             expect(span.name).toEqual('s3.putObject');
         });
@@ -70,9 +74,9 @@ describe('instrumentation-aws-sdk-v3', () => {
             s3Client.putObject(params, (err: any, data?: PutObjectCommandOutput) => {
                 expect(memoryExporter.getFinishedSpans().length).toBe(1);
                 const [span] = memoryExporter.getFinishedSpans();
-                expect(span.attributes[RpcAttribute.RPC_SYSTEM]).toEqual('aws-api');
-                expect(span.attributes[RpcAttribute.RPC_METHOD]).toEqual('putObject');
-                expect(span.attributes[RpcAttribute.RPC_SERVICE]).toEqual('s3');
+                expect(span.attributes[SemanticAttributes.RPC_SYSTEM]).toEqual('aws-api');
+                expect(span.attributes[SemanticAttributes.RPC_METHOD]).toEqual('putObject');
+                expect(span.attributes[SemanticAttributes.RPC_SERVICE]).toEqual('s3');
                 expect(span.attributes[AttributeNames.AWS_REGION]).toEqual(region);
                 expect(span.name).toEqual('s3.putObject');
                 done();
@@ -89,9 +93,9 @@ describe('instrumentation-aws-sdk-v3', () => {
             await client.send(new PutObjectCommand(params));
             expect(memoryExporter.getFinishedSpans().length).toBe(1);
             const [span] = memoryExporter.getFinishedSpans();
-            expect(span.attributes[RpcAttribute.RPC_SYSTEM]).toEqual('aws-api');
-            expect(span.attributes[RpcAttribute.RPC_METHOD]).toEqual('putObject');
-            expect(span.attributes[RpcAttribute.RPC_SERVICE]).toEqual('s3');
+            expect(span.attributes[SemanticAttributes.RPC_SYSTEM]).toEqual('aws-api');
+            expect(span.attributes[SemanticAttributes.RPC_METHOD]).toEqual('putObject');
+            expect(span.attributes[SemanticAttributes.RPC_SERVICE]).toEqual('s3');
             expect(span.attributes[AttributeNames.AWS_REGION]).toEqual(region);
             expect(span.name).toEqual('s3.putObject');
         });
@@ -115,9 +119,9 @@ describe('instrumentation-aws-sdk-v3', () => {
                 expect(span.events.length).toBe(1);
                 expect(span.events[0].name).toEqual('exception');
 
-                expect(span.attributes[RpcAttribute.RPC_SYSTEM]).toEqual('aws-api');
-                expect(span.attributes[RpcAttribute.RPC_METHOD]).toEqual('putObject');
-                expect(span.attributes[RpcAttribute.RPC_SERVICE]).toEqual('s3');
+                expect(span.attributes[SemanticAttributes.RPC_SYSTEM]).toEqual('aws-api');
+                expect(span.attributes[SemanticAttributes.RPC_METHOD]).toEqual('putObject');
+                expect(span.attributes[SemanticAttributes.RPC_SERVICE]).toEqual('s3');
                 expect(span.attributes[AttributeNames.AWS_REGION]).toEqual(region);
                 expect(span.attributes[AttributeNames.AWS_REQUEST_ID]).toEqual('MS95GTS7KXQ34X2S');
                 expect(span.name).toEqual('s3.putObject');
@@ -223,16 +227,18 @@ describe('instrumentation-aws-sdk-v3', () => {
                 const [span] = memoryExporter.getFinishedSpans();
 
                 // make sure we have the general aws attributes:
-                expect(span.attributes[RpcAttribute.RPC_SYSTEM]).toEqual('aws-api');
-                expect(span.attributes[RpcAttribute.RPC_METHOD]).toEqual('sendMessage');
-                expect(span.attributes[RpcAttribute.RPC_SERVICE]).toEqual('sqs');
+                expect(span.attributes[SemanticAttributes.RPC_SYSTEM]).toEqual('aws-api');
+                expect(span.attributes[SemanticAttributes.RPC_METHOD]).toEqual('sendMessage');
+                expect(span.attributes[SemanticAttributes.RPC_SERVICE]).toEqual('sqs');
                 expect(span.attributes[AttributeNames.AWS_REGION]).toEqual(region);
 
                 // custom messaging attributes
-                expect(span.attributes[MessagingAttribute.MESSAGING_SYSTEM]).toEqual('aws.sqs');
-                expect(span.attributes[MessagingAttribute.MESSAGING_DESTINATION_KIND]).toEqual('queue');
-                expect(span.attributes[MessagingAttribute.MESSAGING_DESTINATION]).toEqual('otel-demo-aws-sdk');
-                expect(span.attributes[MessagingAttribute.MESSAGING_URL]).toEqual(params.QueueUrl);
+                expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('aws.sqs');
+                expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toEqual(
+                    MessagingDestinationKindValues.QUEUE
+                );
+                expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual('otel-demo-aws-sdk');
+                expect(span.attributes[SemanticAttributes.MESSAGING_URL]).toEqual(params.QueueUrl);
             });
 
             it('sqs receive add messaging attributes and context', (done) => {
@@ -249,15 +255,17 @@ describe('instrumentation-aws-sdk-v3', () => {
                     const [span] = memoryExporter.getFinishedSpans();
 
                     // make sure we have the general aws attributes:
-                    expect(span.attributes[RpcAttribute.RPC_SYSTEM]).toEqual('aws-api');
-                    expect(span.attributes[RpcAttribute.RPC_METHOD]).toEqual('receiveMessage');
-                    expect(span.attributes[RpcAttribute.RPC_SERVICE]).toEqual('sqs');
+                    expect(span.attributes[SemanticAttributes.RPC_SYSTEM]).toEqual('aws-api');
+                    expect(span.attributes[SemanticAttributes.RPC_METHOD]).toEqual('receiveMessage');
+                    expect(span.attributes[SemanticAttributes.RPC_SERVICE]).toEqual('sqs');
                     expect(span.attributes[AttributeNames.AWS_REGION]).toEqual(region);
 
                     const receiveCallbackSpan = getSpan(context.active());
                     expect(receiveCallbackSpan).toBeDefined();
                     const attributes = ((receiveCallbackSpan as unknown) as ReadableSpan).attributes;
-                    expect(attributes[MessagingAttribute.MESSAGING_OPERATION]).toMatch(MessagingOperationName.RECEIVE);
+                    expect(attributes[SemanticAttributes.MESSAGING_OPERATION]).toMatch(
+                        MessagingOperationValues.RECEIVE
+                    );
                     done();
                 });
             });

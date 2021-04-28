@@ -4,7 +4,7 @@ import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan, Span } from '@
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { context, diag, SpanStatusCode, ContextManager, DiagConsoleLogger } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
-import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
+import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import expect from 'expect';
 
 // should be available in node_modules from sequelize installation
@@ -62,13 +62,13 @@ describe('instrumentation-sequelize', () => {
             const attributes = spans[0].attributes;
 
             expect(attributes['component']).toBe('sequelize');
-            expect(attributes[DatabaseAttribute.DB_SYSTEM]).toBe(DB_SYSTEM);
-            expect(attributes[DatabaseAttribute.DB_USER]).toBe(DB_USER);
-            expect(attributes[GeneralAttribute.NET_PEER_NAME]).toBe(NET_PEER_NAME);
-            expect(attributes[GeneralAttribute.NET_PEER_PORT]).toBe(NET_PEER_PORT);
-            expect(attributes[DatabaseAttribute.DB_NAME]).toBe(DB_NAME);
-            expect(attributes[DatabaseAttribute.DB_OPERATION]).toBe('INSERT');
-            expect(attributes[DatabaseAttribute.DB_STATEMENT]).toBe(
+            expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(DB_SYSTEM);
+            expect(attributes[SemanticAttributes.DB_USER]).toBe(DB_USER);
+            expect(attributes[SemanticAttributes.NET_PEER_NAME]).toBe(NET_PEER_NAME);
+            expect(attributes[SemanticAttributes.NET_PEER_PORT]).toBe(NET_PEER_PORT);
+            expect(attributes[SemanticAttributes.DB_NAME]).toBe(DB_NAME);
+            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('INSERT');
+            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
                 'INSERT INTO "Users" ("id","firstName","createdAt","updatedAt") VALUES (DEFAULT,$1,$2,$3) RETURNING *;'
             );
         });
@@ -80,8 +80,8 @@ describe('instrumentation-sequelize', () => {
             const attributes = spans[0].attributes;
 
             expect(attributes['component']).toBe('sequelize');
-            expect(attributes[DatabaseAttribute.DB_OPERATION]).toBe('SELECT');
-            expect(attributes[DatabaseAttribute.DB_STATEMENT]).toBe(
+            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('SELECT');
+            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
                 'SELECT "id", "firstName", "createdAt", "updatedAt" FROM "Users" AS "User";'
             );
         });
@@ -93,8 +93,8 @@ describe('instrumentation-sequelize', () => {
             const attributes = spans[0].attributes;
 
             expect(attributes['component']).toBe('sequelize');
-            expect(attributes[DatabaseAttribute.DB_OPERATION]).toBe('BULKDELETE');
-            expect(attributes[DatabaseAttribute.DB_STATEMENT]).toBe('TRUNCATE "Users"');
+            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('BULKDELETE');
+            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe('TRUNCATE "Users"');
         });
 
         it('count is instrumented', async () => {
@@ -104,8 +104,8 @@ describe('instrumentation-sequelize', () => {
             const attributes = spans[0].attributes;
 
             expect(attributes['component']).toBe('sequelize');
-            expect(attributes[DatabaseAttribute.DB_OPERATION]).toBe('SELECT');
-            expect(attributes[DatabaseAttribute.DB_STATEMENT]).toBe(
+            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('SELECT');
+            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
                 'SELECT count(*) AS "count" FROM "Users" AS "User";'
             );
         });
@@ -132,8 +132,8 @@ describe('instrumentation-sequelize', () => {
             const attributes = spans[0].attributes;
 
             expect(attributes['component']).toBe('sequelize');
-            expect(attributes[DatabaseAttribute.DB_OPERATION]).toBe('SELECT');
-            expect(attributes[DatabaseAttribute.DB_STATEMENT]).toBe(
+            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('SELECT');
+            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
                 `SELECT "id", "username" FROM "Users" AS "User" WHERE "User"."username" = 'Shlomi' AND ("User"."rank" < 1000 OR "User"."rank" IS NULL) ORDER BY "User"."username" DESC LIMIT 10 OFFSET 5;`
             );
         });
@@ -162,13 +162,13 @@ describe('instrumentation-sequelize', () => {
             const attributes = spans[0].attributes;
 
             expect(attributes['component']).toBe('sequelize');
-            expect(attributes[DatabaseAttribute.DB_SYSTEM]).toBe(DB_SYSTEM);
-            expect(attributes[DatabaseAttribute.DB_USER]).toBe(DB_USER);
-            expect(attributes[GeneralAttribute.NET_PEER_NAME]).toBe(NET_PEER_NAME);
-            expect(attributes[GeneralAttribute.NET_PEER_PORT]).toBe(NET_PEER_PORT);
-            expect(attributes[DatabaseAttribute.DB_NAME]).toBe(DB_NAME);
-            expect(attributes[DatabaseAttribute.DB_OPERATION]).toBe('INSERT');
-            expect(attributes[DatabaseAttribute.DB_STATEMENT]).toBe(
+            expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(DB_SYSTEM);
+            expect(attributes[SemanticAttributes.DB_USER]).toBe(DB_USER);
+            expect(attributes[SemanticAttributes.NET_PEER_NAME]).toBe(NET_PEER_NAME);
+            expect(attributes[SemanticAttributes.NET_PEER_PORT]).toBe(NET_PEER_PORT);
+            expect(attributes[SemanticAttributes.DB_NAME]).toBe(DB_NAME);
+            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('INSERT');
+            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
                 'INSERT INTO `Users` (`id`,`firstName`,`createdAt`,`updatedAt`) VALUES (DEFAULT,$1,$2,$3);'
             );
         });
@@ -180,8 +180,8 @@ describe('instrumentation-sequelize', () => {
             const attributes = spans[0].attributes;
 
             expect(attributes['component']).toBe('sequelize');
-            expect(attributes[DatabaseAttribute.DB_OPERATION]).toBe('SELECT');
-            expect(attributes[DatabaseAttribute.DB_STATEMENT]).toBe(
+            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('SELECT');
+            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
                 'SELECT `id`, `firstName`, `createdAt`, `updatedAt` FROM `Users` AS `User`;'
             );
         });

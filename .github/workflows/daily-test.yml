@@ -1,19 +1,11 @@
-name: Build and Test
+name: Run Tests Daily
 
 on:
-  pull_request:
-    branches: [master]
+  schedule:
+    # this is 5:17 UTC every day (israel morning)
+    - cron:  '17 5 * * *'
 
 jobs:
-
-  prettier:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Prettier Check
-        run: yarn prettier:check
 
   test:
     runs-on: ubuntu-latest
@@ -53,4 +45,11 @@ jobs:
         run: yarn build:ci
 
       - name: Test
-        run: yarn test:ci:changed
+        run: yarn test:ci:all
+
+      - name: Slack Notification on Failure
+        if: ${{ failure() }}
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.DAILY_TESTS_FAILURE_SLACK_WEBHOOK }}
+
