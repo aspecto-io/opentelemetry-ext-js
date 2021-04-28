@@ -66,7 +66,7 @@ describe('instrumentation-aws-sdk-v2', () => {
                 instrumentation.enable();
             });
 
-            it('adds proper number of spans with correct attributes1', async () => {
+            it('adds proper number of spans with correct attributes', async () => {
                 const s3 = new AWS.S3();
                 const bucketName = 'aws-test-bucket';
                 const keyName = 'aws-test-object.txt';
