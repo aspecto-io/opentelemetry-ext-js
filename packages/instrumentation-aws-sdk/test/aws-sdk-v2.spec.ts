@@ -10,8 +10,8 @@ import expect from 'expect';
 
 const instrumentation = new AwsInstrumentation();
 instrumentation.enable();
-instrumentation.disable();
 import AWS from 'aws-sdk';
+instrumentation.disable();
 
 describe('instrumentation-aws-sdk-v2', () => {
     const provider = new NodeTracerProvider();
@@ -48,6 +48,7 @@ describe('instrumentation-aws-sdk-v2', () => {
     beforeEach(() => {
         contextManager = new AsyncHooksContextManager();
         context.setGlobalContextManager(contextManager.enable());
+        instrumentation.disable();
         instrumentation.enable();
     });
 

@@ -18,7 +18,7 @@ import {
     diag,
     SpanStatusCode,
 } from '@opentelemetry/api';
-import AWS from 'aws-sdk';
+import type AWS from 'aws-sdk';
 import { AttributeNames } from './enums';
 import { ServicesExtensions } from './services';
 import { AwsSdkInstrumentationConfig, NormalizedRequest, NormalizedResponse } from './types';
@@ -88,12 +88,21 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
             this.unpatchV3SmithyClient.bind(this)
         );
 
-        const v2Module = new InstrumentationNodeModuleDefinition<typeof AWS>(
-            AwsInstrumentation.component,
+        const v2Request = new InstrumentationNodeModuleFile<typeof AWS.Request>(
+            'aws-sdk/lib/core.js',
             ['^2.17.0'],
             this.patchV2.bind(this),
             this.unpatchV2.bind(this)
         );
+
+        const v2Module = new InstrumentationNodeModuleDefinition<typeof AWS>(
+            'aws-sdk',
+            ['^2.17.0'],
+            undefined,
+            undefined,
+            [v2Request]
+        );
+
         return [v2Module, v3MiddlewareStack, v3SmithyClient];
     }
 
@@ -229,7 +238,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
                 if (!v2Request[self.REQUEST_SPAN_KEY]) {
                     return;
                 }
-                v2Request[self.REQUEST_SPAN_KEY] = undefined;
+                delete v2Request[self.REQUEST_SPAN_KEY];
 
                 const normalizedResponse: NormalizedResponse = {
                     data: response.data,

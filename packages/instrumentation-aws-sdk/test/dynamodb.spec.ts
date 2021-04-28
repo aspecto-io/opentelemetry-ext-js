@@ -9,7 +9,9 @@ import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import expect from 'expect';
 
 const instrumentation = new AwsInstrumentation();
+instrumentation.enable();
 import AWS, { AWSError } from 'aws-sdk';
+instrumentation.disable();
 
 const provider = new NodeTracerProvider();
 const memoryExporter = new InMemorySpanExporter();
@@ -47,6 +49,7 @@ describe('dynamodb', () => {
     afterEach(() => {
         memoryExporter.reset();
         contextManager.disable();
+        instrumentation.disable();
     });
 
     describe('receive context', () => {
