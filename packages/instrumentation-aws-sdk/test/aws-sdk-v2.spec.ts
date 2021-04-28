@@ -10,8 +10,8 @@ import expect from 'expect';
 
 const instrumentation = new AwsInstrumentation();
 instrumentation.enable();
-instrumentation.disable();
 import AWS from 'aws-sdk';
+instrumentation.disable();
 
 describe('instrumentation-aws-sdk-v2', () => {
     const provider = new NodeTracerProvider();
@@ -32,7 +32,6 @@ describe('instrumentation-aws-sdk-v2', () => {
     };
 
     const getAwsSpans = (): ReadableSpan[] => {
-        console.log('for assert', memoryExporter.getFinishedSpans().length);
         return memoryExporter.getFinishedSpans().filter((s) => s.instrumentationLibrary.name.includes('aws-sdk'));
     };
 
@@ -74,7 +73,6 @@ describe('instrumentation-aws-sdk-v2', () => {
                 await new Promise((resolve) => {
                     // span 1
                     s3.createBucket({ Bucket: bucketName }, async function (err, data) {
-                        console.log('here');
                         const params = {
                             Bucket: bucketName,
                             Key: keyName,

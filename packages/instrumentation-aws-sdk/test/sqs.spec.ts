@@ -1,6 +1,7 @@
 import 'mocha';
 import { AwsInstrumentation } from '../src';
 import { NodeTracerProvider } from '@opentelemetry/node';
+import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { context, SpanKind, SpanStatusCode, ContextManager } from '@opentelemetry/api';
 import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan, Span } from '@opentelemetry/tracing';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
@@ -11,7 +12,7 @@ import expect from 'expect';
 const instrumentation = new AwsInstrumentation();
 instrumentation.enable();
 import AWS, { AWSError } from 'aws-sdk';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+instrumentation.disable();
 
 const provider = new NodeTracerProvider();
 const memoryExporter = new InMemorySpanExporter();

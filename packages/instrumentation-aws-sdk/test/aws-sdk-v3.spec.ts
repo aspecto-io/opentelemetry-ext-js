@@ -20,10 +20,11 @@ import * as fs from 'fs';
 const region = 'us-east-1';
 
 const instrumentation = new AwsInstrumentation();
-instrumentation.disable();
 instrumentation.enable();
 import { PutObjectCommand, PutObjectCommandOutput, S3, S3Client } from '@aws-sdk/client-s3';
 import { SQS } from '@aws-sdk/client-sqs';
+instrumentation.disable();
+
 import nock from 'nock';
 
 describe('instrumentation-aws-sdk-v3', () => {
