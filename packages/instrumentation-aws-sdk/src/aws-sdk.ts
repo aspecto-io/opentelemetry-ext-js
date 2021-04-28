@@ -92,7 +92,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
             'aws-sdk/lib/core.js',
             ['^2.17.0'],
             this.patchV2.bind(this),
-            this.unpatchV2.bind(this),
+            this.unpatchV2.bind(this)
         );
 
         const v2Module = new InstrumentationNodeModuleDefinition<typeof AWS>(

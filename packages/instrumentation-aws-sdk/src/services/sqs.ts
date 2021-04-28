@@ -13,11 +13,7 @@ import {
 import { pubsubPropagation } from 'opentelemetry-propagation-utils';
 import { RequestMetadata, ServiceExtension } from './ServiceExtension';
 import type { SQS } from 'aws-sdk';
-import {
-    AwsSdkInstrumentationConfig,
-    NormalizedRequest,
-    NormalizedResponse,
-} from '../types';
+import { AwsSdkInstrumentationConfig, NormalizedRequest, NormalizedResponse } from '../types';
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 
 export const START_SPAN_FUNCTION = Symbol('opentelemetry.instrumentation.aws-sdk.sqs.start_span');
