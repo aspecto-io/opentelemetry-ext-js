@@ -3,7 +3,7 @@ import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan, Span } from '@
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { context, SpanStatusCode, ContextManager } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
-import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
+import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { TypeormInstrumentation } from '../src';
 import expect from 'expect';
 const instrumentation = new TypeormInstrumentation();
@@ -91,13 +91,13 @@ describe('instrumentation-typeorm', () => {
             const attributes = typeOrmSpans[0].attributes;
 
             expect(attributes['component']).toBe('typeorm');
-            expect(attributes[DatabaseAttribute.DB_SYSTEM]).toBe(options.type);
-            expect(attributes[DatabaseAttribute.DB_USER]).toBe(options.username);
-            expect(attributes[GeneralAttribute.NET_PEER_NAME]).toBe(options.host);
-            expect(attributes[GeneralAttribute.NET_PEER_PORT]).toBe(options.port);
-            expect(attributes[DatabaseAttribute.DB_NAME]).toBe(options.database);
-            expect(attributes[DatabaseAttribute.DB_OPERATION]).toBe('save');
-            expect(attributes[DatabaseAttribute.DB_STATEMENT]).toBe(JSON.stringify({ _argName: statement }));
+            expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(options.type);
+            expect(attributes[SemanticAttributes.DB_USER]).toBe(options.username);
+            expect(attributes[SemanticAttributes.NET_PEER_NAME]).toBe(options.host);
+            expect(attributes[SemanticAttributes.NET_PEER_PORT]).toBe(options.port);
+            expect(attributes[SemanticAttributes.DB_NAME]).toBe(options.database);
+            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('save');
+            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(JSON.stringify({ _argName: statement }));
         });
 
         it('Sets failure status when function throws', async () => {
@@ -132,8 +132,8 @@ describe('instrumentation-typeorm', () => {
 
             expect(attributes['test']).toBe(JSON.stringify({ foo: 'goo' }));
             expect(attributes['component']).toBe('typeorm');
-            expect(attributes[DatabaseAttribute.DB_OPERATION]).toBe('remove');
-            expect(attributes[DatabaseAttribute.DB_SYSTEM]).toBe(options.type);
+            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('remove');
+            expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(options.type);
         });
 
         it('moduleVersionAttributeName works', async () => {
@@ -184,20 +184,20 @@ describe('instrumentation-typeorm', () => {
             const mySqlSpan = spans[1];
 
             expect(postgresSpan.attributes['component']).toBe('typeorm');
-            expect(postgresSpan.attributes[DatabaseAttribute.DB_SYSTEM]).toBe(options1.type);
-            expect(postgresSpan.attributes[DatabaseAttribute.DB_USER]).toBe(options1.username);
-            expect(postgresSpan.attributes[GeneralAttribute.NET_PEER_NAME]).toBe(options1.host);
-            expect(postgresSpan.attributes[GeneralAttribute.NET_PEER_PORT]).toBe(options1.port);
-            expect(postgresSpan.attributes[DatabaseAttribute.DB_NAME]).toBe(options1.database);
-            expect(postgresSpan.attributes[DatabaseAttribute.DB_OPERATION]).toBe('save');
+            expect(postgresSpan.attributes[SemanticAttributes.DB_SYSTEM]).toBe(options1.type);
+            expect(postgresSpan.attributes[SemanticAttributes.DB_USER]).toBe(options1.username);
+            expect(postgresSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toBe(options1.host);
+            expect(postgresSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toBe(options1.port);
+            expect(postgresSpan.attributes[SemanticAttributes.DB_NAME]).toBe(options1.database);
+            expect(postgresSpan.attributes[SemanticAttributes.DB_OPERATION]).toBe('save');
 
             expect(mySqlSpan.attributes['component']).toBe('typeorm');
-            expect(mySqlSpan.attributes[DatabaseAttribute.DB_SYSTEM]).toBe(options2.type);
-            expect(mySqlSpan.attributes[DatabaseAttribute.DB_USER]).toBe(options2.username);
-            expect(mySqlSpan.attributes[GeneralAttribute.NET_PEER_NAME]).toBe(options2.host);
-            expect(mySqlSpan.attributes[GeneralAttribute.NET_PEER_PORT]).toBe(options2.port);
-            expect(mySqlSpan.attributes[DatabaseAttribute.DB_NAME]).toBe(options2.database);
-            expect(mySqlSpan.attributes[DatabaseAttribute.DB_OPERATION]).toBe('remove');
+            expect(mySqlSpan.attributes[SemanticAttributes.DB_SYSTEM]).toBe(options2.type);
+            expect(mySqlSpan.attributes[SemanticAttributes.DB_USER]).toBe(options2.username);
+            expect(mySqlSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toBe(options2.host);
+            expect(mySqlSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toBe(options2.port);
+            expect(mySqlSpan.attributes[SemanticAttributes.DB_NAME]).toBe(options2.database);
+            expect(mySqlSpan.attributes[SemanticAttributes.DB_OPERATION]).toBe('remove');
         });
     });
 });

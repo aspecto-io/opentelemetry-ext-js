@@ -3,7 +3,7 @@ import { stub, assert, spy } from 'sinon';
 import { expect } from 'chai';
 import * as Utils from '../src/utils';
 import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
-import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
+import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 
 describe('elasticsearch utils', () => {
     const spanMock = {
@@ -92,15 +92,15 @@ describe('elasticsearch utils', () => {
         const attributes = Utils.getNetAttributes(url);
 
         it('should get hostname from url', () => {
-            expect(attributes[GeneralAttribute.NET_PEER_NAME]).to.equal('localhost');
+            expect(attributes[SemanticAttributes.NET_PEER_NAME]).to.equal('localhost');
         });
 
         it('should get hostname from url', () => {
-            expect(attributes[GeneralAttribute.NET_PEER_PORT]).to.equal('9200');
+            expect(attributes[SemanticAttributes.NET_PEER_PORT]).to.equal('9200');
         });
 
         it('should set net.transport', () => {
-            expect(attributes[GeneralAttribute.NET_TRANSPORT]).to.equal('IP.TCP');
+            expect(attributes[SemanticAttributes.NET_TRANSPORT]).to.equal('IP.TCP');
         });
     });
 
@@ -189,7 +189,7 @@ describe('elasticsearch utils', () => {
 
             expect(operation).to.equal('elasticsearch.request');
             expect(options.kind).to.equal(SpanKind.CLIENT);
-            expect(options.attributes[DatabaseAttribute.DB_SYSTEM]).to.equal('elasticsearch');
+            expect(options.attributes[SemanticAttributes.DB_SYSTEM]).to.equal('elasticsearch');
             expect(options.attributes.testAttribute).to.equal('testValue');
         });
     });

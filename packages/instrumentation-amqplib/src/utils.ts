@@ -1,5 +1,5 @@
 import { diag, SpanAttributes, SpanAttributeValue } from '@opentelemetry/api';
-import { GeneralAttribute, MessagingAttribute } from '@opentelemetry/semantic-conventions';
+import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import type amqp from 'amqplib';
 
 export const MESSAGE_STORED_SPAN: unique symbol = Symbol('opentelemetry.amqplib.message.stored-span');
@@ -52,12 +52,12 @@ export const getConnectionAttributesFromUrl = (
     conn: amqp.Connection
 ): SpanAttributes => {
     const attributes: SpanAttributes = {
-        [MessagingAttribute.MESSAGING_PROTOCOL_VERSION]: '0.9.1', // this is the only protocol supported by the instrumented library
+        [SemanticAttributes.MESSAGING_PROTOCOL_VERSION]: '0.9.1', // this is the only protocol supported by the instrumented library
     };
 
     const product = conn?.['serverProperties']?.product?.toLowerCase?.();
     if (product) {
-        attributes[MessagingAttribute.MESSAGING_SYSTEM] = product;
+        attributes[SemanticAttributes.MESSAGING_SYSTEM] = product;
     }
 
     url = url || 'amqp://localhost';
@@ -66,38 +66,38 @@ export const getConnectionAttributesFromUrl = (
 
         const protocol = getProtocol(connectOptions.protocol);
         Object.assign(attributes, {
-            ...extractConnectionAttributeOrLog(url, MessagingAttribute.MESSAGING_PROTOCOL, protocol, 'protocol'),
+            ...extractConnectionAttributeOrLog(url, SemanticAttributes.MESSAGING_PROTOCOL, protocol, 'protocol'),
         });
 
         const hostname = getHostname(connectOptions?.hostname);
         Object.assign(attributes, {
-            ...extractConnectionAttributeOrLog(url, GeneralAttribute.NET_PEER_NAME, hostname, 'hostname'),
+            ...extractConnectionAttributeOrLog(url, SemanticAttributes.NET_PEER_NAME, hostname, 'hostname'),
         });
 
         const port = getPort(connectOptions.port, protocol);
         Object.assign(attributes, {
-            ...extractConnectionAttributeOrLog(url, GeneralAttribute.NET_PEER_PORT, port, 'port'),
+            ...extractConnectionAttributeOrLog(url, SemanticAttributes.NET_PEER_PORT, port, 'port'),
         });
 
-        attributes[GeneralAttribute.NET_PEER_PORT] = getPort(url.port, protocol);
+        attributes[SemanticAttributes.NET_PEER_PORT] = getPort(url.port, protocol);
     } else {
-        attributes[MessagingAttribute.MESSAGING_URL] = url;
+        attributes[SemanticAttributes.MESSAGING_URL] = url;
         try {
             const urlParts = new URL(url);
 
             const protocol = getProtocol(urlParts.protocol);
             Object.assign(attributes, {
-                ...extractConnectionAttributeOrLog(url, MessagingAttribute.MESSAGING_PROTOCOL, protocol, 'protocol'),
+                ...extractConnectionAttributeOrLog(url, SemanticAttributes.MESSAGING_PROTOCOL, protocol, 'protocol'),
             });
 
             const hostname = getHostname(urlParts.hostname);
             Object.assign(attributes, {
-                ...extractConnectionAttributeOrLog(url, GeneralAttribute.NET_PEER_NAME, hostname, 'hostname'),
+                ...extractConnectionAttributeOrLog(url, SemanticAttributes.NET_PEER_NAME, hostname, 'hostname'),
             });
 
             const port = getPort(parseInt(urlParts.port), protocol);
             Object.assign(attributes, {
-                ...extractConnectionAttributeOrLog(url, GeneralAttribute.NET_PEER_PORT, port, 'port'),
+                ...extractConnectionAttributeOrLog(url, SemanticAttributes.NET_PEER_PORT, port, 'port'),
             });
         } catch (err) {
             diag.error('amqplib instrumentation: error while extracting connection details from connection url', {

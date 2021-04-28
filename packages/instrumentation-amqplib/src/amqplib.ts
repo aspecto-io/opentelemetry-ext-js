@@ -7,7 +7,11 @@ import {
     isWrapped,
     safeExecuteInTheMiddle,
 } from '@opentelemetry/instrumentation';
-import { MessagingAttribute, MessagingOperationName } from '@opentelemetry/semantic-conventions';
+import {
+    SemanticAttributes,
+    MessagingOperationValues,
+    MessagingDestinationKindValues,
+} from '@opentelemetry/semantic-conventions';
 import type amqp from 'amqplib';
 import { AmqplibInstrumentationConfig, DEFAULT_CONFIG, EndOperation } from './types';
 import {
@@ -239,10 +243,10 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
                         kind: SpanKind.CONSUMER,
                         attributes: {
                             ...channel?.connection?.[CONNECTION_ATTRIBUTES],
-                            [MessagingAttribute.MESSAGING_DESTINATION]: exchange,
-                            [MessagingAttribute.MESSAGING_DESTINATION_KIND]: 'topic',
-                            [MessagingAttribute.MESSAGING_RABBITMQ_ROUTING_KEY]: msg?.fields?.routingKey,
-                            [MessagingAttribute.MESSAGING_OPERATION]: MessagingOperationName.PROCESS,
+                            [SemanticAttributes.MESSAGING_DESTINATION]: exchange,
+                            [SemanticAttributes.MESSAGING_DESTINATION_KIND]: MessagingDestinationKindValues.TOPIC,
+                            ['messaging.rabbitmq.routing_key']: msg?.fields?.routingKey,
+                            [SemanticAttributes.MESSAGING_OPERATION]: MessagingOperationValues.PROCESS,
                         },
                     },
                     parentContext
@@ -306,9 +310,9 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
                 kind: SpanKind.PRODUCER,
                 attributes: {
                     ...this.connection[CONNECTION_ATTRIBUTES],
-                    [MessagingAttribute.MESSAGING_DESTINATION]: exchange,
-                    [MessagingAttribute.MESSAGING_DESTINATION_KIND]: 'topic',
-                    [MessagingAttribute.MESSAGING_RABBITMQ_ROUTING_KEY]: routingKey,
+                    [SemanticAttributes.MESSAGING_DESTINATION]: exchange,
+                    [SemanticAttributes.MESSAGING_DESTINATION_KIND]: MessagingDestinationKindValues.TOPIC,
+                    ['messaging.rabbitmq.routing_key']: routingKey,
                 },
             });
 

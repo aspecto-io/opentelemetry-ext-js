@@ -1,7 +1,7 @@
 import { NormalizedRequest } from './types';
 import type { Request } from 'aws-sdk';
 import { Context, SpanAttributes, context } from '@opentelemetry/api';
-import { RpcAttribute } from '@opentelemetry/semantic-conventions';
+import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { AttributeNames } from './enums';
 
 const toCamelCase = (str: string): string =>
@@ -39,9 +39,9 @@ export const normalizeV3Request = (
 
 export const extractAttributesFromNormalizedRequest = (normalizedRequest: NormalizedRequest): SpanAttributes => {
     return {
-        [RpcAttribute.RPC_SYSTEM]: 'aws-api',
-        [RpcAttribute.RPC_METHOD]: normalizedRequest.commandName,
-        [RpcAttribute.RPC_SERVICE]: normalizedRequest.serviceName,
+        [SemanticAttributes.RPC_SYSTEM]: 'aws-api',
+        [SemanticAttributes.RPC_METHOD]: normalizedRequest.commandName,
+        [SemanticAttributes.RPC_SERVICE]: normalizedRequest.serviceName,
         [AttributeNames.AWS_REGION]: normalizedRequest.region,
     };
 };
