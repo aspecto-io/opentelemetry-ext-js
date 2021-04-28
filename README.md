@@ -47,8 +47,12 @@ The instrumentations in this repo are:
 For documentation using with the old [plugin](https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-core/src/trace/Plugin.ts) api, please go [here](https://github.com/aspecto-io/opentelemetry-ext-js/tree/4393fff108c477d05ecd02dd7d9552ea1d482853).
 
 **Tested and verified against otel v0.19.0**
-- Versions **0.4.x** of the instrumentations are compatible with otel version v0.19.0
-- Versions **0.3.x** of the instrumentations are compatible with otel version v0.18.0
-- Versions **0.2.x** of the instrumentations are compatible with otel version v0.17.0
-- Versions **0.1.x** of the instrumentations are compatible with otel version v0.16.0
-- Versions **0.0.x** of the instrumentations are compatible with otel version v0.15.0
+
+### Compatability Table
+| Instrumentations Version | OpenTelemetry Version |
+| --- | --- |
+| 0.4.x | 0.19.0 |
+| 0.3.x | 0.18.0 |
+| 0.2.x | 0.17.0 |
+| 0.1.x | 0.16.0 |
+| 0.0.x | 0.15.0 |
