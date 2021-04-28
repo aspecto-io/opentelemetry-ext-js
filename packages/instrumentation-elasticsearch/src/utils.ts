@@ -1,7 +1,7 @@
 import { Tracer, SpanAttributes, SpanStatusCode, diag, Span, SpanKind } from '@opentelemetry/api';
 import { DbStatementSerializer, ResponseHook } from './types';
 import { safeExecuteInTheMiddle } from '@opentelemetry/instrumentation';
-import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
+import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { ApiResponse } from '@elastic/elasticsearch/lib/Transport';
 
 interface StartSpanPayload {
@@ -27,7 +27,7 @@ export function startSpan({ tracer, attributes }: StartSpanPayload): Span {
     return tracer.startSpan('elasticsearch.request', {
         kind: SpanKind.CLIENT,
         attributes: {
-            [DatabaseAttribute.DB_SYSTEM]: 'elasticsearch',
+            [SemanticAttributes.DB_SYSTEM]: 'elasticsearch',
             ...attributes,
         },
     });
@@ -60,9 +60,9 @@ export function getNetAttributes(url: string): SpanAttributes {
     const { port, protocol, hostname } = new URL(url);
 
     return {
-        [GeneralAttribute.NET_TRANSPORT]: 'IP.TCP',
-        [GeneralAttribute.NET_PEER_NAME]: hostname,
-        [GeneralAttribute.NET_PEER_PORT]: getPort(port, protocol),
+        [SemanticAttributes.NET_TRANSPORT]: 'IP.TCP',
+        [SemanticAttributes.NET_PEER_NAME]: hostname,
+        [SemanticAttributes.NET_PEER_PORT]: getPort(port, protocol),
     };
 }
 

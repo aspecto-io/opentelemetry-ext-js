@@ -10,7 +10,7 @@ import expect from 'expect';
 
 const instrumentation = new AwsInstrumentation();
 import AWS, { AWSError } from 'aws-sdk';
-import { MessagingAttribute } from '@opentelemetry/semantic-conventions';
+import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 
 const provider = new NodeTracerProvider();
 const memoryExporter = new InMemorySpanExporter();
@@ -154,12 +154,12 @@ describe('sqs', () => {
 
         const expectReceiver2ProcessWithNChildrenEach = (spans: ReadableSpan[], numChildPerProcessSpan: number) => {
             const awsReceiveSpan = spans.filter(
-                (s) => s.attributes[MessagingAttribute.MESSAGING_OPERATION] === 'receive'
+                (s) => s.attributes[SemanticAttributes.MESSAGING_OPERATION] === 'receive'
             );
             expect(awsReceiveSpan.length).toBe(1);
 
             const processSpans = spans.filter(
-                (s) => s.attributes[MessagingAttribute.MESSAGING_OPERATION] === 'process'
+                (s) => s.attributes[SemanticAttributes.MESSAGING_OPERATION] === 'process'
             );
             expect(processSpans.length).toBe(2);
             expect(processSpans[0].parentSpanId).toStrictEqual(awsReceiveSpan[0].spanContext.spanId);
@@ -339,7 +339,7 @@ describe('sqs', () => {
 
             const processSpans = memoryExporter
                 .getFinishedSpans()
-                .filter((s) => s.attributes[MessagingAttribute.MESSAGING_OPERATION] === 'process');
+                .filter((s) => s.attributes[SemanticAttributes.MESSAGING_OPERATION] === 'process');
             expect(processSpans.length).toBe(2);
             expect(processSpans[0].attributes['attribute from sqs process hook']).toBe('msg 1 payload');
             expect(processSpans[1].attributes['attribute from sqs process hook']).toBe('msg 2 payload');
@@ -358,7 +358,7 @@ describe('sqs', () => {
             res.Messages.map((message) => 'some mapping to create child process spans');
             const processSpans = memoryExporter
                 .getFinishedSpans()
-                .filter((s) => s.attributes[MessagingAttribute.MESSAGING_OPERATION] === 'process');
+                .filter((s) => s.attributes[SemanticAttributes.MESSAGING_OPERATION] === 'process');
             expect(processSpans.length).toBe(2);
         });
 
@@ -382,7 +382,7 @@ describe('sqs', () => {
 
             const processSpans = memoryExporter
                 .getFinishedSpans()
-                .filter((s) => s.attributes[MessagingAttribute.MESSAGING_OPERATION] === 'process');
+                .filter((s) => s.attributes[SemanticAttributes.MESSAGING_OPERATION] === 'process');
             expect(processSpans.length).toBe(2);
             expect(processSpans[0].status.code).toStrictEqual(SpanStatusCode.UNSET);
             expect(processSpans[1].status.code).toStrictEqual(SpanStatusCode.UNSET);

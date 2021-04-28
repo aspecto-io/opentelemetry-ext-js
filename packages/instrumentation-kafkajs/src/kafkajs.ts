@@ -11,7 +11,11 @@ import {
     diag,
     ROOT_CONTEXT,
 } from '@opentelemetry/api';
-import { MessagingAttribute, MessagingOperationName } from '@opentelemetry/semantic-conventions';
+import {
+    SemanticAttributes,
+    MessagingOperationValues,
+    MessagingDestinationKindValues,
+} from '@opentelemetry/semantic-conventions';
 import * as kafkaJs from 'kafkajs';
 import {
     Producer,
@@ -143,7 +147,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
             const span = self._startConsumerSpan(
                 payload.topic,
                 payload.message,
-                MessagingOperationName.PROCESS,
+                MessagingOperationValues.PROCESS,
                 propagatedContext
             );
 
@@ -161,7 +165,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
             const receivingSpan = self._startConsumerSpan(
                 payload.batch.topic,
                 undefined,
-                MessagingOperationName.RECEIVE,
+                MessagingOperationValues.RECEIVE,
                 ROOT_CONTEXT
             );
             return context.with(setSpan(context.active(), receivingSpan), () => {
@@ -181,7 +185,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
                     return self._startConsumerSpan(
                         payload.batch.topic,
                         message,
-                        MessagingOperationName.PROCESS,
+                        MessagingOperationValues.PROCESS,
                         undefined,
                         origSpanLink
                     );
@@ -244,10 +248,10 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
             {
                 kind: SpanKind.CONSUMER,
                 attributes: {
-                    [MessagingAttribute.MESSAGING_SYSTEM]: 'kafka',
-                    [MessagingAttribute.MESSAGING_DESTINATION]: topic,
-                    [MessagingAttribute.MESSAGING_DESTINATION_KIND]: 'topic',
-                    [MessagingAttribute.MESSAGING_OPERATION]: operation,
+                    [SemanticAttributes.MESSAGING_SYSTEM]: 'kafka',
+                    [SemanticAttributes.MESSAGING_DESTINATION]: topic,
+                    [SemanticAttributes.MESSAGING_DESTINATION_KIND]: MessagingDestinationKindValues.TOPIC,
+                    [SemanticAttributes.MESSAGING_OPERATION]: operation,
                 },
                 links: link ? [link] : [],
             },
@@ -275,9 +279,9 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
         const span = this.tracer.startSpan(topic, {
             kind: SpanKind.PRODUCER,
             attributes: {
-                [MessagingAttribute.MESSAGING_SYSTEM]: 'kafka',
-                [MessagingAttribute.MESSAGING_DESTINATION]: topic,
-                [MessagingAttribute.MESSAGING_DESTINATION_KIND]: 'topic',
+                [SemanticAttributes.MESSAGING_SYSTEM]: 'kafka',
+                [SemanticAttributes.MESSAGING_DESTINATION]: topic,
+                [SemanticAttributes.MESSAGING_DESTINATION_KIND]: MessagingDestinationKindValues.TOPIC,
             },
         });
 

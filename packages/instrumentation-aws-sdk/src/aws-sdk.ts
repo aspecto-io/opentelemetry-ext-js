@@ -27,6 +27,7 @@ import {
     InstrumentationBase,
     InstrumentationModuleDefinition,
     InstrumentationNodeModuleDefinition,
+    InstrumentationNodeModuleFile,
     isWrapped,
     safeExecuteInTheMiddle,
 } from '@opentelemetry/instrumentation';
@@ -62,11 +63,22 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
     }
 
     protected init(): InstrumentationModuleDefinition<typeof AWS>[] {
-        const v3MiddlewareStack = new InstrumentationNodeModuleDefinition<typeof AWS>(
-            '@aws-sdk/middleware-stack',
+        const v3MiddlewareStackFile = new InstrumentationNodeModuleFile(
+            `@aws-sdk/middleware-stack/dist/cjs/MiddlewareStack.js`,
             ['^3.0.0'],
             this.patchV3ConstructStack.bind(this),
             this.unpatchV3ConstructStack.bind(this)
+        );
+
+        // as for aws-sdk v3.13.1, constructStack is exported from @aws-sdk/middleware-stack as
+        // getter instead of function, which fails shimmer.
+        // so we are patching the MiddlewareStack.js file directly to get around it.
+        const v3MiddlewareStack = new InstrumentationNodeModuleDefinition<typeof AWS>(
+            '@aws-sdk/middleware-stack',
+            ['^3.0.0'],
+            undefined,
+            undefined,
+            [v3MiddlewareStackFile]
         );
 
         const v3SmithyClient = new InstrumentationNodeModuleDefinition<typeof AWS>(
