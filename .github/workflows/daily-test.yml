@@ -46,3 +46,10 @@ jobs:
 
       - name: Test
         run: yarn test:ci:all
+
+      - name: Slack Notification on Failure
+        if: ${{ failure() }}
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.DAILY_TESTS_FAILURE_SLACK_WEBHOOK }}
+
