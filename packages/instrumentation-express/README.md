@@ -16,12 +16,8 @@ const { NodeTracerProvider } = require('@opentelemetry/node');
 const { registerInstrumentations } = require('@opentelemetry/instrumentation');
 const { ExpressInstrumentation } = require('@aspecto/opentelemetry-instrumentation-express');
 
-const traceProvider = new NodeTracerProvider({
-  // be sure to disable old plugin
-  plugins: {
-    express: { enabled: false, path: '@aspecto/opentelemetry-plugin-express' }
-  }
-});
+const traceProvider = new NodeTracerProvider();
+traceProvider.register();
 
 registerInstrumentations({
   traceProvider,
@@ -30,7 +26,6 @@ registerInstrumentations({
   ]
 });
 ```
-
 
 ### Express Instrumentation Options
 
