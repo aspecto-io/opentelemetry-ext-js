@@ -39,7 +39,7 @@ export class ExpressInstrumentation extends InstrumentationBase<typeof express> 
     protected _config: ExpressInstrumentationConfig;
 
     constructor(config: ExpressInstrumentationConfig = {}) {
-        super('@aspecto/opentelemetry-instrumentation-express', VERSION, Object.assign({}, config));
+        super('opentelemetry-instrumentation-express', VERSION, Object.assign({}, config));
     }
 
     setConfig(config: ExpressInstrumentationConfig = {}) {
