@@ -86,5 +86,10 @@ export interface ExpressRequestHookInformation {
 export type RequestHook = (span: Span, requestInfo: ExpressRequestHookInformation) => void;
 
 export interface ExpressInstrumentationConfig extends InstrumentationConfig {
+
+    /** Hook for adding custom attributes before express start handling the request */
     requestHook?: RequestHook;
+
+    /** It true, plugin will include semantic http attributes in each span */
+    includeHttpAttributes?: boolean;
 }

@@ -23,8 +23,8 @@ import {
 import type express from 'express';
 import {
     getRouteAttributes,
-    getSpanAttributeFromRes,
-    getSpanAttributesFromReq,
+    getHttpSpanAttributeFromRes,
+    getHttpSpanAttributesFromReq,
     getSpanInitialName,
     getSpanNameOnResEnd,
 } from './utils/attributes';
@@ -202,7 +202,7 @@ export class ExpressInstrumentation extends InstrumentationBase<typeof express> 
             const spanName = getSpanInitialName(req);
             const span = plugin.tracer.startSpan(spanName, {
                 kind: SpanKind.INTERNAL,
-                attributes: getSpanAttributesFromReq(req),
+                attributes: plugin._config.includeHttpAttributes ? getHttpSpanAttributesFromReq(req) : {},
             });
 
             if (plugin._config.requestHook) {
@@ -233,7 +233,9 @@ export class ExpressInstrumentation extends InstrumentationBase<typeof express> 
                 oldResEnd.apply(res, arguments);
 
                 span.setAttributes(routeAttributes);
-                span.setAttributes(getSpanAttributeFromRes(res));
+                if(plugin._config.includeHttpAttributes ) {
+                    span.setAttributes(getHttpSpanAttributeFromRes(res));
+                }
                 span.setStatus(parseResponseStatus(res.statusCode!));
 
                 const newSpanName = getSpanNameOnResEnd(req, routeState);

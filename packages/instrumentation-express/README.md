@@ -34,6 +34,7 @@ Express instrumentation has few options available to choose from. You can set th
 | Options | Type  | Description |
 | --- | --- | --- |
 | `requestHook` | `RequestHook` (function) | Hook for adding custom attributes before express start handling the request. Receives params: `span, { moduleVersion, req, res }` |
+| `includeHttpAttributes` | `boolean` | It true, plugin will include semantic http attributes in each span |
 
 ## Semantic Behavior
 Express auto instrumentation will create a single span per request with the following attributes.

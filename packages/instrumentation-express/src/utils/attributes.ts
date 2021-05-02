@@ -53,7 +53,7 @@ const getConfiguredRoute = (expressRoutState: ExpressConsumedRouteState): string
 export const getResolvedRoute = (expressRoutContext: ExpressConsumedRouteState): string =>
     expressRoutContext?.resolvedRoute;
 
-export const getSpanAttributeFromRes = (res: express.Response): SpanAttributes => {
+export const getHttpSpanAttributeFromRes = (res: express.Response): SpanAttributes => {
     return {
         [SemanticAttributes.HTTP_STATUS_CODE]: res.statusCode,
     };
@@ -81,7 +81,7 @@ export const createHostAttribute = (req: express.Request): string => {
     return hostname;
 };
 
-export const getSpanAttributesFromReq = (req: express.Request): SpanAttributes => {
+export const getHttpSpanAttributesFromReq = (req: express.Request): SpanAttributes => {
     return {
         [SemanticAttributes.HTTP_METHOD]: req.method.toUpperCase(),
         [SemanticAttributes.HTTP_TARGET]: req.originalUrl,

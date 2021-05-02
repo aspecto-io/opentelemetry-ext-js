@@ -56,7 +56,7 @@ describe('aspecto-opentelemetry-express', () => {
         context.disable();
     });
 
-    it('express span attributes with router', (done) => {
+    it('express attributes', (done) => {
         const router = express.Router();
         app.use('/toto', router);
         router.post('/:id', (req, res, next) => {
@@ -87,7 +87,61 @@ describe('aspecto-opentelemetry-express', () => {
             // Span name
             expect(span.name).toBe('POST /toto/:id');
 
-            // Common HTTP Attributes
+            // HTTP Attributes
+            expect(span.attributes[SemanticAttributes.HTTP_METHOD]).toBeUndefined();
+            expect(span.attributes[SemanticAttributes.HTTP_TARGET]).toBeUndefined();
+            expect(span.attributes[SemanticAttributes.HTTP_SCHEME]).toBeUndefined();
+            expect(span.attributes[SemanticAttributes.HTTP_STATUS_CODE]).toBeUndefined();
+            expect(span.attributes[SemanticAttributes.HTTP_HOST]).toBeUndefined();
+            expect(span.attributes[SemanticAttributes.HTTP_FLAVOR]).toBeUndefined();
+            expect(span.attributes[SemanticAttributes.NET_PEER_IP]).toBeUndefined();
+
+            // http span route
+            const [incomingHttpSpan] = memoryExporter
+                .getFinishedSpans()
+                .filter((s) => s.kind === SpanKind.SERVER && s.instrumentationLibrary.name.includes('http'));
+            expect(incomingHttpSpan.attributes[SemanticAttributes.HTTP_ROUTE]).toMatch('/toto/:id');
+
+            server.close();
+            done();
+        });
+    });
+
+    it('express with http attributes', (done) => {
+        instrumentation.disable();
+        instrumentation.setConfig({
+            includeHttpAttributes: true,
+        });
+        instrumentation.enable();
+
+        const router = express.Router();
+        app.use('/toto', router);
+        router.post('/:id', (req, res, next) => {
+            res.set('res-custom-header-key', 'res-custom-header-val');
+            return res.json({ hello: 'world' });
+        });
+
+        const server = http.createServer(app);
+        server.listen(0, async () => {
+            const port = (server.address() as AddressInfo).port;
+            const requestData = { 'req-data-key': 'req-data-val' };
+            try {
+                await axios.post(
+                    `http://localhost:${port}/toto/tata?req-query-param-key=req-query-param-val`,
+                    requestData,
+                    {
+                        headers: {
+                            'req-custom-header-key': 'req-custom-header-val',
+                        },
+                    }
+                );
+            } catch (err) {}
+
+            const expressSpans: ReadableSpan[] = getExpressSpans(memoryExporter);
+            expect(expressSpans.length).toBe(1);
+            const span: ReadableSpan = expressSpans[0];
+
+            // HTTP Attributes
             expect(span.attributes[SemanticAttributes.HTTP_METHOD]).toBe('POST');
             expect(span.attributes[SemanticAttributes.HTTP_TARGET]).toBe(
                 '/toto/tata?req-query-param-key=req-query-param-val'
@@ -96,15 +150,7 @@ describe('aspecto-opentelemetry-express', () => {
             expect(span.attributes[SemanticAttributes.HTTP_STATUS_CODE]).toBe(200);
             expect(span.attributes[SemanticAttributes.HTTP_HOST]).toBe(`localhost:${port}`);
             expect(span.attributes[SemanticAttributes.HTTP_FLAVOR]).toBe('1.1');
-
-            // Common Network Connection Attributes
             expect(span.attributes[SemanticAttributes.NET_PEER_IP]).toBe('::ffff:127.0.0.1');
-
-            // http span route
-            const [incomingHttpSpan] = memoryExporter
-                .getFinishedSpans()
-                .filter((s) => s.kind === SpanKind.SERVER && s.instrumentationLibrary.name.includes('http'));
-            expect(incomingHttpSpan.attributes[SemanticAttributes.HTTP_ROUTE]).toMatch('/toto/:id');
 
             server.close();
             done();
