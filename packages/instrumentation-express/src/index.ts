@@ -1,2 +1,7 @@
 export { ExpressInstrumentation } from './express';
-export { ExpressInstrumentationConfig, ExpressRequestHookInformation } from './types';
+export {
+    ExpressInstrumentationConfig,
+    ExpressRequestHookInformation,
+    ExpressInstrumentationAttributes,
+    RequestHook,
+} from './types';
