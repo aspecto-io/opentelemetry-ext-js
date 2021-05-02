@@ -89,6 +89,6 @@ export interface ExpressInstrumentationConfig extends InstrumentationConfig {
     /** Hook for adding custom attributes before express start handling the request */
     requestHook?: RequestHook;
 
-    /** It true, plugin will include semantic http attributes in each span */
+    /** If set to true, plugin will include semantic http attributes in each express span */
     includeHttpAttributes?: boolean;
 }
