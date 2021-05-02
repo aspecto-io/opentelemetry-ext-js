@@ -250,15 +250,6 @@ export class ExpressInstrumentation extends InstrumentationBase<typeof express> 
         });
     }
 
-    private _getApplicationInitPatch(moduleVersion: string, original) {
-        const self = this;
-        return function () {
-            const originalReturnValue = original.apply(this, arguments);
-
-            return originalReturnValue;
-        };
-    }
-
     private getApplicationLazyRouterPatch(moduleVersion: string, original: () => void) {
         const self = this;
         return function patchedLazyRouter() {
