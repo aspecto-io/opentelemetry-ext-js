@@ -1,7 +1,6 @@
 # `aspecto-opentelemetry-express`
 
 This module provide enhanced instrumentation for the `express` web framework.
-The instrumentation conforms to the [Semantic conventions for HTTP spans](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/http.md).
 
 ## Supported Versions
 This instrumentation supports `^4.9.0`:
@@ -34,7 +33,7 @@ Express instrumentation has few options available to choose from. You can set th
 | Options | Type  | Description |
 | --- | --- | --- |
 | `requestHook` | `RequestHook` (function) | Hook for adding custom attributes before express start handling the request. Receives params: `span, { moduleVersion, req, res }` |
-| `includeHttpAttributes` | `boolean` | It true, plugin will include semantic http attributes in each span |
+| `includeHttpAttributes` | `boolean` | If set to true, plugin will include semantic http attributes in each express span |
 
 ## Semantic Behavior
 Express auto instrumentation will create a single span per request with the following attributes.
@@ -73,6 +72,8 @@ In case of internal error in instrumentation, this attribute will contain the er
 * Set few alternatives for route attribute, each with different level of cardinality vs accuracy.
 * Allows to set `requestHook` for adding custom attributes to span, as well as ability to capture express version into user defined attribute.
 * Distinguish between handled requests (ended from user middleware), and unhandled (terminated from express built in 'finalhandler').
+* Option to conforms with the [Semantic conventions for HTTP spans](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/http.md).
+
 
 ---
 
