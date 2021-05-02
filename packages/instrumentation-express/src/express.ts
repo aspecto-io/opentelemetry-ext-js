@@ -233,7 +233,7 @@ export class ExpressInstrumentation extends InstrumentationBase<typeof express> 
                 oldResEnd.apply(res, arguments);
 
                 span.setAttributes(routeAttributes);
-                if(plugin._config.includeHttpAttributes ) {
+                if (plugin._config.includeHttpAttributes) {
                     span.setAttributes(getHttpSpanAttributeFromRes(res));
                 }
                 span.setStatus(parseResponseStatus(res.statusCode!));
