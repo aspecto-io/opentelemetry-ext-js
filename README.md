@@ -40,7 +40,9 @@ The instrumentations in this repo are:
 | [opentelemetry-instrumentation-mongoose](./packages/instrumentation-mongoose) | [`mongoose`](https://mongoosejs.com/) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-mongoose.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-mongoose) |
 | [opentelemetry-instrumentation-elasticsearch](./packages/instrumentation-elasticsearch) | [`@elastic/elasticsearch`](https://www.npmjs.com/package/@elastic/elasticsearch) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-elasticsearch.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-elasticsearch) |
 | [opentelemetry-instrumentation-neo4j](./packages/instrumentation-neo4j) | [`neo4j-driver`](https://github.com/neo4j/neo4j-javascript-driver/) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-neo4j.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-neo4j) |
-| [opentelemetry-instrumentation-amqplib](./packages/instrumentation-amqplib) | [`amqplib`](https://github.com/squaremo/amqp.node) (RabbitMQ) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-amqplib.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-amqplib) |
+| [opentelemetry-instrumentation-amqplib](./packages/instrumentation-amqplib) | [`amqplib`](https://github.com/squaremo/amqp.node) (RabbitMQ) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-amqplib.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-amqplib) | 
+| [opentelemetry-instrumentation-express](./packages/instrumentation-express) | [`express`](https://github.com/expressjs/express) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-express.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-express) |
+
 
 ## Compatibility with opentelemetry versions
 ### Instrumentations in this repo are using opentelemetry [Instrumentation API](https://github.com/open-telemetry/opentelemetry-js/tree/main/packages/opentelemetry-instrumentation).
