@@ -1,0 +1,4 @@
+'express':
+  versions: "^4.9.0"
+  commands:
+    - yarn test
