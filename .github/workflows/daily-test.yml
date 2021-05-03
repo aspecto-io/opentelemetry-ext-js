@@ -4,11 +4,18 @@ on:
   schedule:
     # this is 5:17 UTC every day (israel morning)
     - cron:  '17 5 * * *'
+    
+  workflow_dispatch:
 
 jobs:
 
   test:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [10.x, 12.x, 14.x, 16.x]
+
     services:
 
       mongo:
@@ -32,8 +39,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+
+      - name: Use Node.js ${{ matrix.node_version }}
+        uses: actions/setup-node@v1
         with:
-          fetch-depth: 0
+          node-version: ${{ matrix.node_version }}
 
       - name: Fetch all history for all tags and branches
         run: git fetch

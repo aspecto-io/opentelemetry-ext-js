@@ -35,4 +35,7 @@ export interface MongooseInstrumentationConfig extends InstrumentationConfig {
      * and value of the module version.
      */
     moduleVersionAttributeName?: string;
+
+    /** Set to true if you do not want to collect traces that start with mongoose */
+    requireParentSpan?: boolean;
 }
