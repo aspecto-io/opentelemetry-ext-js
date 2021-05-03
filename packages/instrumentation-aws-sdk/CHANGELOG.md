@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-aws-sdk@0.4.0...opentelemetry-instrumentation-aws-sdk@0.4.1) (2021-05-03)
+
+
+### Bug Fixes
+
+* **instrumentation-aws-sdk:** instrument when requiring single service in v2 ([#103](https://github.com/aspecto-io/opentelemetry-ext-js/issues/103)) ([002949c](https://github.com/aspecto-io/opentelemetry-ext-js/commit/002949cdb0bc3b8a3c343a3f59f5d17de1c21453))
+
+
+
+
+
 # [0.4.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-aws-sdk@0.3.1...opentelemetry-instrumentation-aws-sdk@0.4.0) (2021-04-28)
 
 **Note:** Version bump only for package opentelemetry-instrumentation-aws-sdk

@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-mongoose@0.4.0...opentelemetry-instrumentation-mongoose@0.4.1) (2021-05-03)
+
+
+### Features
+
+* **instrumentation-mongoose:** add requireParentSpan config option ([#108](https://github.com/aspecto-io/opentelemetry-ext-js/issues/108)) ([c26db49](https://github.com/aspecto-io/opentelemetry-ext-js/commit/c26db49bc9189009d42f5c5ad4336068b3a7e53e))
+
+
+
+
+
 # [0.4.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-mongoose@0.3.0...opentelemetry-instrumentation-mongoose@0.4.0) (2021-04-28)
 
 **Note:** Version bump only for package opentelemetry-instrumentation-mongoose
