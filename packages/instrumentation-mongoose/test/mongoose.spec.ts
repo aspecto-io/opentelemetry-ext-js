@@ -14,6 +14,7 @@ const instrumentation = new MongooseInstrumentation({
 import mongoose from 'mongoose';
 import User, { IUser, loadUsers } from './user';
 import { assertSpan, getStatement } from './asserts';
+import { describe } from 'mocha';
 
 // Please run mongodb in the background: docker run -d -p 27017:27017 -v ~/data:/data/db mongo
 describe('mongoose instrumentation', () => {
@@ -541,6 +542,45 @@ describe('mongoose instrumentation', () => {
             expect(spans.length).toBe(1);
             assertSpan(spans[0]);
             expect(spans[0].attributes[VERSION_ATTR]).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
+        });
+    });
+
+    describe('requireParentSpan', () => {
+        before(() => {
+            instrumentation.disable();
+            instrumentation.setConfig({
+                requireParentSpan: true,
+            });
+            instrumentation.enable();
+        });
+
+        it('should not start span on mongoose method', async () => {
+            const user: IUser = new User({
+                firstName: 'Test first name',
+                lastName: 'Test last name',
+                email: 'test@example.com',
+            });
+            await user.save();
+
+            const spans = getSpans();
+            expect(spans.length).toBe(0);
+        });
+
+        it('should not start span on find', async () => {
+            await User.find({ id: '_test' });
+
+            const spans = getSpans();
+            expect(spans.length).toBe(0);
+        });
+
+        it('should not start span on aggregate', async () => {
+            await User.aggregate([
+                { $match: { firstName: 'John' } },
+                { $group: { _id: 'John', total: { $sum: '$amount' } } },
+            ]);
+
+            const spans = getSpans();
+            expect(spans.length).toBe(0);
         });
     });
 });

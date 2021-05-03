@@ -95,6 +95,10 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
         diag.debug('mongoose instrumentation: patched mongoose Aggregate exec prototype');
         return (originalAggregate: Function) => {
             return function exec(this: any, callback?: Function) {
+                if (self._config.requireParentSpan && getSpan(context.active()) === undefined) {
+                    return originalAggregate.apply(this, arguments);
+                }
+
                 const parentSpan = this[_STORED_PARENT_SPAN];
                 const attributes = {
                     [SemanticAttributes.DB_STATEMENT]: self._config.dbStatementSerializer('aggregate', {
@@ -123,6 +127,10 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
         diag.debug('mongoose instrumentation: patched mongoose Query exec prototype');
         return (originalExec: Function) => {
             return function exec(this: any, callback?: Function) {
+                if (self._config.requireParentSpan && getSpan(context.active()) === undefined) {
+                    return originalExec.apply(this, arguments);
+                }
+
                 const parentSpan = this[_STORED_PARENT_SPAN];
                 const attributes = {
                     [SemanticAttributes.DB_STATEMENT]: self._config.dbStatementSerializer(this.op, {
@@ -151,6 +159,10 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
         diag.debug(`mongoose instrumentation: patched mongoose Model ${op} prototype`);
         return (originalOnModelFunction: Function) => {
             return function method(this: any, options?: any, callback?: Function) {
+                if (self._config.requireParentSpan && getSpan(context.active()) === undefined) {
+                    return originalOnModelFunction.apply(this, arguments);
+                }
+
                 const serializePayload: SerializerPayload = { document: this };
                 if (options && !(options instanceof Function)) {
                     serializePayload.options = options;

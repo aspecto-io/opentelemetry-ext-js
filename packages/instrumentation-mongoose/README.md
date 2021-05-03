@@ -38,6 +38,7 @@ Mongoose instrumentation has few options available to choose from. You can set t
 | `responseHook` | `MongooseResponseCustomAttributesFunction` | Hook called before response is returned, which allows to add custom attributes to span.      |
 | `dbStatementSerializer` | `DbStatementSerializer` | Mongoose instrumentation will serialize `db.statement` using the specified function.
 | `moduleVersionAttributeName` | `string` | If passed, a span attribute will be added to all spans with key of the provided `moduleVersionAttributeName` and value of the patched module version |
+| `requireParentSpan` | `boolean` | Set to true if you want not to collect traces that start with mongoose |
 
 ### Custom `db.statement` Serializer
 
