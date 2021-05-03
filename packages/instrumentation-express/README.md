@@ -1,7 +1,13 @@
-# `aspecto-opentelemetry-express`
+# OpenTelemetry express Instrumentation for Node.js
+[![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-express.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-express)
 
 This module provide enhanced instrumentation for the `express` web framework.
 
+## Installation
+
+```
+npm install --save opentelemetry-instrumentation-express
+```
 ## Supported Versions
 This instrumentation supports `^4.9.0`:
 
@@ -72,7 +78,7 @@ In case of internal error in instrumentation, this attribute will contain the er
 * Set few alternatives for route attribute, each with different level of cardinality vs accuracy.
 * Allows to set `requestHook` for adding custom attributes to span, as well as ability to capture express version into user defined attribute.
 * Distinguish between handled requests (ended from user middleware), and unhandled (terminated from express built in 'finalhandler').
-* Option to conforms with the [Semantic conventions for HTTP spans](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/http.md).
+* Option to conform with the [Semantic conventions for HTTP spans](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/http.md).
 
 
 ---
