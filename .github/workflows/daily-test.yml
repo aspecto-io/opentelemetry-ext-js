@@ -4,6 +4,8 @@ on:
   schedule:
     # this is 5:17 UTC every day (israel morning)
     - cron:  '17 5 * * *'
+    
+  workflow_dispatch:
 
 jobs:
 
