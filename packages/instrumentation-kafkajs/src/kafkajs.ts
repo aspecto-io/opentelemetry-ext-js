@@ -200,9 +200,11 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
     private _getProducerSendBatchPatch(original: (batch: ProducerBatch) => Promise<RecordMetadata[]>) {
         const self = this;
         return function (batch: ProducerBatch): Promise<RecordMetadata[]> {
-            const spans: Span[] = batch.topicMessages.flatMap((topicMessage) =>
-                topicMessage.messages.map((message) => self._startProducerSpan(topicMessage.topic, message))
-            );
+            const spans: Span[] = batch.topicMessages
+                .map((topicMessage) =>
+                    topicMessage.messages.map((message) => self._startProducerSpan(topicMessage.topic, message))
+                )
+                .reduce((acc, val) => acc.concat(val), []);
 
             const origSendResult: Promise<RecordMetadata[]> = original.apply(this, arguments);
             return self._endSpansOnPromise(spans, origSendResult);
