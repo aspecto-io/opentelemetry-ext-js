@@ -19,7 +19,7 @@ For further automatic instrumentation instruction see the [@opentelemetry/instru
 ```js
 const { NodeTracerProvider } = require('@opentelemetry/node');
 const { registerInstrumentations } = require('@opentelemetry/instrumentation');
-const { ExpressInstrumentation } = require('@aspecto/opentelemetry-instrumentation-express');
+const { ExpressInstrumentation } = require('opentelemetry-instrumentation-express');
 
 const traceProvider = new NodeTracerProvider();
 traceProvider.register();
