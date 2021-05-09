@@ -23,7 +23,8 @@
         "watch": "tsc -w",
         "version:update": "node ../../scripts/version-update.js",
         "version": "yarn run version:update",
-        "test-all-versions": "tav"
+        "test-all-versions": "tav",
+        "test:ci": "yarn test-all-versions"
     },
     "publishConfig": {
         "access": "public"
