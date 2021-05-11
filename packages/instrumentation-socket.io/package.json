@@ -1,0 +1,46 @@
+{
+    "name": "opentelemetry-instrumentation-socket.io",
+    "version": "0.0.1",
+    "description": "open telemetry instrumentation for the `socket.io` module",
+    "keywords": [
+        "socket.io",
+        "opentelemetry"
+    ],
+    "author": {
+        "name": "Aspecto",
+        "email": "support@aspecto.io",
+        "url": "https://aspecto.io"
+    },
+    "scripts": {
+        "build": "tsc",
+        "prepare": "yarn run build",
+        "test": "mocha",
+        "test:ci": "yarn test",
+        "watch": "tsc -w",
+        "version:update": "node ../../scripts/version-update.js",
+        "version": "yarn run version:update"
+    },
+    "homepage": "https://github.com/aspecto-io/opentelemetry-ext-js",
+    "license": "Apache-2.0",
+    "main": "dist/src/index.js",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/aspecto-io/opentelemetry-ext-js.git"
+    },
+    "bugs": {
+        "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
+    },
+    "dependencies": {
+        "@opentelemetry/api": "^0.18.1",
+        "@opentelemetry/instrumentation": "^0.19.0",
+        "@opentelemetry/semantic-conventions": "^0.19.0",
+        "socket.io": "^4.0.2"
+    },
+    "mocha": {
+        "extension": [
+            "ts"
+        ],
+        "spec": "test/**/*.spec.ts",
+        "require": "ts-node/register"
+    }
+}
