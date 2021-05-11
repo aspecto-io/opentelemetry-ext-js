@@ -83,7 +83,7 @@ describe('amqplib instrumentation promise model', function () {
             channel.close();
             // the 'close' event on the emitter might take some time to arrive after close promise ends,
             // we add small timeout to let it settle before going on to next
-            await new Promise((resolve) => setTimeout(resolve, 5));
+            await new Promise((resolve) => setTimeout(resolve, 10));
         } catch {}
         instrumentation.disable();
     });
@@ -206,8 +206,8 @@ describe('amqplib instrumentation promise model', function () {
             // @ts-ignore
             await asyncConsume(channel, queueName, [
                 null,
-                (msg) => channel.nack(msg, true),
-                (msg) => channel.nack(msg),
+                (msg) => channel.nack(msg, true, false),
+                (msg) => channel.nack(msg, false, false),
             ]);
             // assert all 3 messages are acked, including the first one which is acked by allUpTo
             expect(memoryExporter.getFinishedSpans().length).toBe(6);
@@ -247,7 +247,7 @@ describe('amqplib instrumentation promise model', function () {
             lodash.times(2, () => channel.sendToQueue(queueName, Buffer.from(msgPayload)));
 
             // @ts-ignore
-            await asyncConsume(channel, queueName, [null, () => channel.nackAll()]);
+            await asyncConsume(channel, queueName, [null, () => channel.nackAll(false)]);
             // assert all 2 span messages are ended by calling nackAll
             expect(memoryExporter.getFinishedSpans().length).toBe(4);
             lodash.range(2, 4).forEach((i) => {
