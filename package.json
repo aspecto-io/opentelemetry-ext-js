@@ -14,7 +14,7 @@
         "version:update": "lerna run version:update",
         "version": "git add packages/**/version.ts",
         "publish:ci": "lerna publish --yes --allow-branch master --create-release github --conventionalCommits",
-        "publish:ci:prerelease": "lerna publish --no-git-tag-version --no-push --no-changelog --dist-tag canary"
+        "publish:ci:prerelease": "lerna publish --yes --no-git-tag-version --no-push --no-changelog --dist-tag canary"
     },
     "devDependencies": {
         "lerna": "^3.22.1",
