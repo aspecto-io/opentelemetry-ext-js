@@ -369,7 +369,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         delete message[MESSAGE_STORED_SPAN];
     }
 
-    private endAllSpansOnChannel(channel: amqp.Channel[], isRejected: boolean, operation: EndOperation) {
+    private endAllSpansOnChannel(channel: amqp.Channel, isRejected: boolean, operation: EndOperation) {
         const spansNotEnded: { msg: amqp.Message }[] = channel[CHANNEL_SPANS_NOT_ENDED] ?? [];
         spansNotEnded.forEach((msgDetails) => {
             this.endConsumerSpan(msgDetails.msg, isRejected, operation, null);
