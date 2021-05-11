@@ -10,6 +10,7 @@ import {
 } from '@opentelemetry/api';
 import {
     InstrumentationBase,
+    InstrumentationNodeModuleFile,
     InstrumentationModuleDefinition,
     InstrumentationNodeModuleDefinition,
     isWrapped,
@@ -28,13 +29,42 @@ export class SocketIoInstrumentation extends InstrumentationBase<typeof io> {
         super('opentelemetry-instrumentation-socket.io', VERSION, Object.assign({}, config));
     }
     protected init(): InstrumentationModuleDefinition<typeof io> {
+        const strictEventEmitterInstrumentation = new InstrumentationNodeModuleFile<any>(
+            'socket.io/dist/typed-events.js',
+            ['*'],
+            this.patchStrictEventEmitter.bind(this),
+            this.unpatchStrictEventEmitter.bind(this)
+        );
+
         const module = new InstrumentationNodeModuleDefinition<typeof io>(
             SocketIoInstrumentation.component,
             ['*'],
             this.patch.bind(this),
-            this.unpatch.bind(this)
+            this.unpatch.bind(this),
+            [strictEventEmitterInstrumentation]
         );
         return module;
+    }
+
+    protected patchStrictEventEmitter(moduleExports: any) {
+        if (moduleExports === undefined || moduleExports === null) {
+            return moduleExports;
+        }
+        diag.debug(`applying patch to socket.io StrictEventEmitter`);
+        this.unpatchStrictEventEmitter(moduleExports);
+        this._wrap(moduleExports.StrictEventEmitter.prototype, 'emit', this._createEmitPatch.bind(this));
+        this._wrap(moduleExports.StrictEventEmitter.prototype, 'on', this._createOnPatch.bind(this));
+        return moduleExports;
+    }
+
+    protected unpatchStrictEventEmitter(moduleExports: any) {
+        if (isWrapped(moduleExports?.StrictEventEmitter?.prototype?.emit)) {
+            this._unwrap(moduleExports.StrictEventEmitter.prototype, 'emit');
+        }
+        if (isWrapped(moduleExports?.StrictEventEmitter?.prototype?.on)) {
+            this._unwrap(moduleExports.StrictEventEmitter.prototype, 'on');
+        }
+        return moduleExports;
     }
 
     protected patch(moduleExports: typeof io, moduleVersion: string) {
@@ -47,6 +77,8 @@ export class SocketIoInstrumentation extends InstrumentationBase<typeof io> {
         this._wrap(moduleExports.Server.prototype, 'emit', this._createEmitPatch.bind(this));
         this._wrap(moduleExports.Socket.prototype, 'emit', this._createEmitPatch.bind(this));
         this._wrap(moduleExports.Namespace.prototype, 'emit', this._createEmitPatch.bind(this));
+        moduleExports.Server.prototype.on;
+        moduleExports.Server.prototype.emit;
 
         return moduleExports;
     }
@@ -55,12 +87,33 @@ export class SocketIoInstrumentation extends InstrumentationBase<typeof io> {
         if (isWrapped(moduleExports.Server.prototype.emit)) {
             this._unwrap(moduleExports.Server.prototype, 'emit');
         }
-        if (isWrapped(moduleExports.Socket.prototype.emit)) {
-            this._unwrap(moduleExports.Socket.prototype, 'emit');
-        }
-        if (isWrapped(moduleExports.Namespace.prototype.emit)) {
-            this._unwrap(moduleExports.Namespace.prototype, 'emit');
-        }
+    }
+
+    private _createOnPatch(original: Function) {
+        const self = this;
+        return function (ev: any, originalListener: Function) {
+            const wrappedListener = function () {
+                const operation = `on ${ev}`;
+                const attributes = {
+                    [SemanticAttributes.MESSAGING_SYSTEM]: 'socket.io',
+                    [SemanticAttributes.MESSAGING_DESTINATION]: 'string',
+                    [SemanticAttributes.MESSAGING_DESTINATION_KIND]: 'topic',
+                    [SemanticAttributes.MESSAGING_OPERATION]: operation,
+                    component: 'socket.io',
+                };
+                const newSpan: Span = self.tracer.startSpan(`socket.io ${operation}`, {
+                    kind: SpanKind.PRODUCER,
+                    attributes,
+                });
+                const result = context.with(setSpan(context.active(), newSpan), () =>
+                    originalListener.apply(this, arguments)
+                );
+                newSpan.end();
+                return result;
+            };
+
+            return original.apply(this, [ev, wrappedListener]);
+        };
     }
 
     private _createEmitPatch(original: Function) {
@@ -69,8 +122,8 @@ export class SocketIoInstrumentation extends InstrumentationBase<typeof io> {
             const operation = `emit ${ev}`;
             const attributes = {
                 [SemanticAttributes.MESSAGING_SYSTEM]: 'socket.io',
-                [SemanticAttributes.MESSAGING_DESTINATION]: "string",
-                [SemanticAttributes.MESSAGING_DESTINATION_KIND]: "topic",
+                [SemanticAttributes.MESSAGING_DESTINATION]: 'string',
+                [SemanticAttributes.MESSAGING_DESTINATION_KIND]: 'topic',
                 [SemanticAttributes.MESSAGING_OPERATION]: operation,
                 component: 'socket.io',
             };

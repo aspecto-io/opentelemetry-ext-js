@@ -37,9 +37,13 @@ describe('socket.io instrumentation', () => {
     describe('Server', () => {
         it('emit is instrumented', () => {
             const io = new Server();
-            io.emit('test');
+            io.on('connection', (socket) => {
+                socket.emit("test");
+                socket.on("test", () => {
+                })
+            });
             const spans = getSocketIoSpans();
-            expect(spans).toHaveLength(1);
+            expect(spans).toHaveLength(3);
         });
     });
 });
