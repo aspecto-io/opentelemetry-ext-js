@@ -19,6 +19,10 @@ import { asyncConsume } from './utils';
 const msgPayload = 'payload from test';
 const queueName = 'queue-name-from-unittest';
 
+// signal that the channel is closed in test, thus it should not be closed again in afterEach.
+// could not find a way to get this from amqplib directly.
+const CHANNEL_CLOSED_IN_TEST = Symbol('opentelemetry.amqplib.unittest.channel_closed_in_test');
+
 describe('amqplib instrumentation promise model', function () {
     const provider = new NodeTracerProvider();
     const memoryExporter = new InMemorySpanExporter();
@@ -79,12 +83,14 @@ describe('amqplib instrumentation promise model', function () {
         channel.on('error', (err) => {});
     });
     afterEach(async () => {
-        try {
-            channel.close();
-            // the 'close' event on the emitter might take some time to arrive after close promise ends,
-            // we add small timeout to let it settle before going on to next
-            await new Promise((resolve) => setTimeout(resolve, 5));
-        } catch {}
+        if (!channel[CHANNEL_CLOSED_IN_TEST]) {
+            try {
+                await new Promise<void>((resolve) => {
+                    channel.on('close', resolve);
+                    channel.close();
+                });
+            } catch {}
+        }
         instrumentation.disable();
     });
 
@@ -206,8 +212,8 @@ describe('amqplib instrumentation promise model', function () {
             // @ts-ignore
             await asyncConsume(channel, queueName, [
                 null,
-                (msg) => channel.nack(msg, true),
-                (msg) => channel.nack(msg),
+                (msg) => channel.nack(msg, true, false),
+                (msg) => channel.nack(msg, false, false),
             ]);
             // assert all 3 messages are acked, including the first one which is acked by allUpTo
             expect(memoryExporter.getFinishedSpans().length).toBe(6);
@@ -247,7 +253,7 @@ describe('amqplib instrumentation promise model', function () {
             lodash.times(2, () => channel.sendToQueue(queueName, Buffer.from(msgPayload)));
 
             // @ts-ignore
-            await asyncConsume(channel, queueName, [null, () => channel.nackAll()]);
+            await asyncConsume(channel, queueName, [null, () => channel.nackAll(false)]);
             // assert all 2 span messages are ended by calling nackAll
             expect(memoryExporter.getFinishedSpans().length).toBe(4);
             lodash.range(2, 4).forEach((i) => {
@@ -300,6 +306,7 @@ describe('amqplib instrumentation promise model', function () {
                     async (msg) => {
                         await channel.close();
                         resolve();
+                        channel[CHANNEL_CLOSED_IN_TEST] = true;
                     },
                 ])
             );
@@ -328,6 +335,7 @@ describe('amqplib instrumentation promise model', function () {
                 (msg) => {
                     try {
                         channel.ack(msg);
+                        channel[CHANNEL_CLOSED_IN_TEST] = true;
                         // ack the same msg again, this is not valid and should close the channel
                         channel.ack(msg);
                     } catch {}
