@@ -43,5 +43,8 @@
         ],
         "spec": "test/**/*.spec.ts",
         "require": "ts-node/register"
+    },
+    "devDependencies": {
+        "socket.io-client": "^4.1.1"
     }
 }

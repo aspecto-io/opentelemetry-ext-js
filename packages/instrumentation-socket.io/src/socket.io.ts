@@ -77,9 +77,6 @@ export class SocketIoInstrumentation extends InstrumentationBase<typeof io> {
         this._wrap(moduleExports.Server.prototype, 'emit', this._createEmitPatch.bind(this));
         this._wrap(moduleExports.Socket.prototype, 'emit', this._createEmitPatch.bind(this));
         this._wrap(moduleExports.Namespace.prototype, 'emit', this._createEmitPatch.bind(this));
-        moduleExports.Server.prototype.on;
-        moduleExports.Server.prototype.emit;
-
         return moduleExports;
     }
 
@@ -96,9 +93,9 @@ export class SocketIoInstrumentation extends InstrumentationBase<typeof io> {
                 const operation = `on ${ev}`;
                 const attributes = {
                     [SemanticAttributes.MESSAGING_SYSTEM]: 'socket.io',
-                    [SemanticAttributes.MESSAGING_DESTINATION]: 'string',
-                    [SemanticAttributes.MESSAGING_DESTINATION_KIND]: 'topic',
+                    [SemanticAttributes.MESSAGING_DESTINATION]: originalListener.name,
                     [SemanticAttributes.MESSAGING_OPERATION]: operation,
+                    [SemanticAttributes.MESSAGING_OPERATION]: 'receive',
                     component: 'socket.io',
                 };
                 const newSpan: Span = self.tracer.startSpan(`socket.io ${operation}`, {
@@ -118,7 +115,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<typeof io> {
 
     private _createEmitPatch(original: Function) {
         const self = this;
-        return function (ev: any, args: any) {
+        return function (ev: any, ...args: any[]): boolean {
             const operation = `emit ${ev}`;
             const attributes = {
                 [SemanticAttributes.MESSAGING_SYSTEM]: 'socket.io',

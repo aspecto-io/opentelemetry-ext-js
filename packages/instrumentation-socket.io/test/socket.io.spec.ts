@@ -1,4 +1,5 @@
 import 'mocha';
+import { createServer } from 'http';
 import { SocketIoInstrumentation } from '../src';
 import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan, Span } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';
@@ -9,6 +10,18 @@ import expect from 'expect';
 
 const instrumentation = new SocketIoInstrumentation();
 import { Server, Socket, Namespace } from 'socket.io';
+import { io as ioc, Socket as ClientSocket } from 'socket.io-client';
+
+const client = (srv, nsp?: string | object, opts?: object): ClientSocket => {
+    if ('object' == typeof nsp) {
+        opts = nsp;
+        nsp = undefined;
+    }
+    let addr = srv.address();
+    if (!addr) addr = srv.listen().address();
+    const url = 'ws://localhost:' + addr.port + (nsp || '');
+    return ioc(url, opts);
+};
 
 describe('socket.io instrumentation', () => {
     const provider = new NodeTracerProvider();
@@ -37,13 +50,29 @@ describe('socket.io instrumentation', () => {
     describe('Server', () => {
         it('emit is instrumented', () => {
             const io = new Server();
-            io.on('connection', (socket) => {
-                socket.emit("test");
-                socket.on("test", () => {
-                })
-            });
+            io.emit('test');
             const spans = getSocketIoSpans();
-            expect(spans).toHaveLength(3);
+            expect(spans).toHaveLength(1);
+            const span = spans[0];
+            expect(span.name).toEqual('socket.io emit test');
+        });
+
+        it('on is instrumented', (done) => {
+            const srv = createServer();
+            const sio = new Server(srv);
+            const executeTest = () => {
+                const spans = getSocketIoSpans();
+                expect(spans).toHaveLength(1);
+                const span = spans[0];
+                expect(span.name).toEqual('socket.io on connection');
+                done();
+            };
+            srv.listen(() => {
+                const socket = client(srv); 
+                sio.on('connection', (socket: Socket) => {
+                    setTimeout(executeTest);
+                });
+            });
         });
     });
 });
