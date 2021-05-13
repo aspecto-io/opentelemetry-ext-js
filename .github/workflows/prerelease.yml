@@ -33,4 +33,4 @@ jobs:
 
       - name: Publish package
         run: |
-          yarn publish:ci:prerelease --preid $(echo ${GITHUB_REF##*/}) patch
+          yarn publish:ci:prerelease 0.0.0-$(date +"%Y-%m-%d--%H-%M")
