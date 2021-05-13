@@ -10,18 +10,7 @@ import expect from 'expect';
 
 const instrumentation = new SocketIoInstrumentation();
 import { Server, Socket, Namespace } from 'socket.io';
-import { io as ioc, Socket as ClientSocket } from 'socket.io-client';
-
-const client = (srv, nsp?: string | object, opts?: object): ClientSocket => {
-    if ('object' == typeof nsp) {
-        opts = nsp;
-        nsp = undefined;
-    }
-    let addr = srv.address();
-    if (!addr) addr = srv.listen().address();
-    const url = 'ws://localhost:' + addr.port + (nsp || '');
-    return ioc(url, opts);
-};
+import { io } from 'socket.io-client';
 
 describe('socket.io instrumentation', () => {
     const provider = new NodeTracerProvider();
@@ -47,80 +36,48 @@ describe('socket.io instrumentation', () => {
         instrumentation.disable();
     });
 
+    const expectSpan = (spanName: string) => {
+        const spans = getSocketIoSpans();
+        expect(spans.length).toBeGreaterThan(0);
+        const span = spans.find((s) => s.name === spanName);
+        expect(span).not.toBeNull();
+        expect(span).toBeDefined();
+    };
+
     describe('Server', () => {
         it('emit is instrumented', () => {
             const io = new Server();
             io.emit('test');
-            const spans = getSocketIoSpans();
-            expect(spans.length).toBeGreaterThan(0);
-            const span = spans.find((s) => s.name === 'socket.io emit test');
-            expect(span).not.toBeNull();
+            expectSpan('socket.io emit test');
         });
 
         it('on is instrumented', (done) => {
-            const srv = createServer();
-            const sio = new Server(srv);
-            const executeTest = () => {
-                const spans = getSocketIoSpans();
-                expect(spans.length).toBeGreaterThan(0);
-                const span = spans.find((s) => s.name === 'socket.io on connection');
-                expect(span).not.toBeNull();
-                srv.close();
+            const sio = new Server();
+            const client = io('http://localhost:3000');
+            sio.on('connection', (socket: Socket) => {
+                client.close();
                 sio.close();
-                done();
-            };
-            srv.listen(() => {
-                const socket = client(srv);
-                sio.on('connection', (socket: Socket) => {
-                    setTimeout(executeTest);
+                //trace is created after the listener method is completed
+                setTimeout(() => {
+                    expectSpan('socket.io on connection');
+                    done();
                 });
             });
+            sio.listen(3000);
         });
 
-        it('broadcast is instrumented', (done) => {
-            const srv = createServer();
-            const sio = new Server(srv);
-
-            const onEvent = (data: any) => {
-                console.log({ data });
-            };
-
-            const end = () => {
-                sio.to('room').emit('broadcast', '1234');
-                const spans = getSocketIoSpans();
-                expect(spans.length).toBeGreaterThan(1);
-                const span = spans.find((s) => s.name === 'socket.io emit broadcast');
-                expect(span).not.toBeNull();
-                expect(span).toBeDefined();
-                sio.close();
-                srv.close();
-                done();
-            };
-            srv.listen(() => {
-                const client1 = client(srv);
-                client1.on('test', onEvent);
-                const client2 = client(srv);
-                client2.on('test', onEvent);
-
-                sio.on('connection', (socket: Socket) => {
-                    console.log(socket.id);
-                    socket.join('room');
-                });
-                setTimeout(end, 100);
-            });
+        it('broadcast is instrumented', () => {
+            const sio = new Server();
+            sio.to('room').emit('broadcast', '1234');
+            expectSpan('socket.io emit broadcast');
         });
     });
 
     describe('Namespace', () => {
         it('emit is instrumented', () => {
             const io = new Server();
-            const namespace = io.of('/testing');
-            namespace.emit('namespace');
-            const spans = getSocketIoSpans();
-            expect(spans.length).toBeGreaterThan(0);
-            const span = spans.find((s) => s.name === 'socket.io emit namespace');
-            expect(span).not.toBeNull();
-            expect(span).toBeDefined();
+            io.of('/testing').emit('namespace');
+            expectSpan('socket.io emit namespace');
         });
     });
 });
