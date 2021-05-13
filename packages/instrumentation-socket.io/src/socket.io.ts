@@ -36,12 +36,19 @@ export class SocketIoInstrumentation extends InstrumentationBase<typeof io> {
             this.unpatchStrictEventEmitter.bind(this)
         );
 
+        const broadcastOperatorInstrumentation = new InstrumentationNodeModuleFile<any>(
+            'socket.io/dist/broadcast-operator.js',
+            ['*'],
+            this.patchBroadcastOperator.bind(this),
+            this.unpatchBroadcastOperator.bind(this)
+        );
+
         const module = new InstrumentationNodeModuleDefinition<typeof io>(
             SocketIoInstrumentation.component,
             ['*'],
             this.patch.bind(this),
             this.unpatch.bind(this),
-            [strictEventEmitterInstrumentation]
+            [strictEventEmitterInstrumentation, broadcastOperatorInstrumentation]
         );
         return module;
     }
@@ -52,17 +59,30 @@ export class SocketIoInstrumentation extends InstrumentationBase<typeof io> {
         }
         diag.debug(`applying patch to socket.io StrictEventEmitter`);
         this.unpatchStrictEventEmitter(moduleExports);
-        this._wrap(moduleExports.StrictEventEmitter.prototype, 'emit', this._createEmitPatch.bind(this));
         this._wrap(moduleExports.StrictEventEmitter.prototype, 'on', this._createOnPatch.bind(this));
         return moduleExports;
     }
 
     protected unpatchStrictEventEmitter(moduleExports: any) {
-        if (isWrapped(moduleExports?.StrictEventEmitter?.prototype?.emit)) {
-            this._unwrap(moduleExports.StrictEventEmitter.prototype, 'emit');
-        }
         if (isWrapped(moduleExports?.StrictEventEmitter?.prototype?.on)) {
             this._unwrap(moduleExports.StrictEventEmitter.prototype, 'on');
+        }
+        return moduleExports;
+    }
+
+    protected patchBroadcastOperator(moduleExports: any) {
+        if (moduleExports === undefined || moduleExports === null) {
+            return moduleExports;
+        }
+        diag.debug(`applying patch to socket.io StrictEventEmitter`);
+        this.unpatchBroadcastOperator(moduleExports);
+        this._wrap(moduleExports.BroadcastOperator.prototype, 'emit', this._createEmitPatch.bind(this));
+        return moduleExports;
+    }
+
+    protected unpatchBroadcastOperator(moduleExports: any) {
+        if (isWrapped(moduleExports?.BroadcastOperator?.prototype?.emit)) {
+            this._unwrap(moduleExports.BroadcastOperator.prototype, 'emit');
         }
         return moduleExports;
     }
@@ -83,6 +103,12 @@ export class SocketIoInstrumentation extends InstrumentationBase<typeof io> {
     protected unpatch(moduleExports: typeof io): void {
         if (isWrapped(moduleExports.Server.prototype.emit)) {
             this._unwrap(moduleExports.Server.prototype, 'emit');
+        }
+        if (isWrapped(moduleExports.Socket.prototype.emit)) {
+            this._unwrap(moduleExports.Socket.prototype, 'emit');
+        }
+        if (isWrapped(moduleExports.Namespace.prototype.emit)) {
+            this._unwrap(moduleExports.Namespace.prototype, 'emit');
         }
     }
 
