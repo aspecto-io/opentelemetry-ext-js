@@ -44,13 +44,9 @@ The instrumentations in this repo are:
 | [opentelemetry-instrumentation-express](./packages/instrumentation-express) | [`express`](https://github.com/expressjs/express) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-express.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-express) |
 
 
-## Compatibility with opentelemetry versions
-### Instrumentations in this repo are using opentelemetry [Instrumentation API](https://github.com/open-telemetry/opentelemetry-js/tree/main/packages/opentelemetry-instrumentation).
-For documentation using with the old [plugin](https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-core/src/trace/Plugin.ts) api, please go [here](https://github.com/aspecto-io/opentelemetry-ext-js/tree/4393fff108c477d05ecd02dd7d9552ea1d482853).
-
+## Compatability Table
 **Tested and verified against otel v0.19.0**
 
-### Compatability Table
 | Instrumentations Version | OpenTelemetry Version |
 | --- | --- |
 | 0.4.x | 0.19.0 |
