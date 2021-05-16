@@ -1,15 +1,14 @@
 import 'mocha';
-import { createServer } from 'http';
 import { SocketIoInstrumentation } from '../src';
-import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan, Span } from '@opentelemetry/tracing';
-import { NodeTracerProvider } from '@opentelemetry/node';
-import { context, diag, SpanStatusCode, ContextManager, DiagConsoleLogger } from '@opentelemetry/api';
-import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan } from '@opentelemetry/tracing';
+import { NodeTracerProvider } from '@opentelemetry/node';
+import { context, ContextManager } from '@opentelemetry/api';
+import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import expect from 'expect';
 
 const instrumentation = new SocketIoInstrumentation();
-import { Server, Socket, Namespace } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { io } from 'socket.io-client';
 
 describe('socket.io instrumentation', () => {
@@ -20,9 +19,10 @@ describe('socket.io instrumentation', () => {
     instrumentation.setTracerProvider(provider);
     let contextManager: ContextManager;
 
-    const getSocketIoSpans = (): ReadableSpan[] => {
-        return memoryExporter.getFinishedSpans().filter((s) => s.attributes['component'] === 'socket.io');
-    };
+    const getSocketIoSpans = (): ReadableSpan[] =>
+        memoryExporter
+            .getFinishedSpans()
+            .filter((s) => s.attributes[SemanticAttributes.MESSAGING_SYSTEM] === 'socket.io');
 
     beforeEach(() => {
         contextManager = new AsyncHooksContextManager();
@@ -42,6 +42,7 @@ describe('socket.io instrumentation', () => {
         const span = spans.find((s) => s.name === spanName);
         expect(span).not.toBeNull();
         expect(span).toBeDefined();
+        return span;
     };
 
     describe('Server', () => {
@@ -69,15 +70,24 @@ describe('socket.io instrumentation', () => {
         it('broadcast is instrumented', () => {
             const sio = new Server();
             sio.to('room').emit('broadcast', '1234');
-            expectSpan('socket.io emit broadcast');
+            const span = expectSpan('socket.io emit broadcast');
+            expect(span.attributes['rooms']).toEqual(['room'].join());
+        });
+
+        it('broadcast to multiple rooms', () => {
+            const sio = new Server();
+            sio.to('room1').to('room2').emit('broadcast', '1234');
+            const span = expectSpan('socket.io emit broadcast');
+            expect(span.attributes['rooms']).toEqual(['room1', 'room2'].join());
         });
     });
 
     describe('Namespace', () => {
         it('emit is instrumented', () => {
             const io = new Server();
-            io.of('/testing').emit('namespace');
-            expectSpan('socket.io emit namespace');
+            const namespace = io.of('/testing');
+            namespace.emit('namespace');
+            const span = expectSpan('socket.io emit namespace');
         });
     });
 });

@@ -37,14 +37,14 @@
         "express": "^4.17.1",
         "socket.io": "^4.0.2"
     },
+    "devDependencies": {
+        "socket.io-client": "^4.1.1"
+    },
     "mocha": {
         "extension": [
             "ts"
         ],
         "spec": "test/**/*.spec.ts",
         "require": "ts-node/register"
-    },
-    "devDependencies": {
-        "socket.io-client": "^4.1.1"
     }
 }

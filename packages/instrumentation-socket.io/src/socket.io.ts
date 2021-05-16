@@ -116,15 +116,15 @@ export class SocketIoInstrumentation extends InstrumentationBase<typeof io> {
         const self = this;
         return function (ev: any, originalListener: Function) {
             const wrappedListener = function () {
-                const operation = `on ${ev}`;
+                const operation = 'on';
+                const messageName = ev;
+
                 const attributes = {
                     [SemanticAttributes.MESSAGING_SYSTEM]: 'socket.io',
                     [SemanticAttributes.MESSAGING_DESTINATION]: originalListener.name,
                     [SemanticAttributes.MESSAGING_OPERATION]: operation,
-                    [SemanticAttributes.MESSAGING_OPERATION]: 'receive',
-                    component: 'socket.io',
                 };
-                const newSpan: Span = self.tracer.startSpan(`socket.io ${operation}`, {
+                const newSpan: Span = self.tracer.startSpan(`socket.io ${operation} ${messageName}`, {
                     kind: SpanKind.PRODUCER,
                     attributes,
                 });
@@ -142,16 +142,24 @@ export class SocketIoInstrumentation extends InstrumentationBase<typeof io> {
     private _createEmitPatch(original: Function) {
         const self = this;
         return function (ev: any, ...args: any[]): boolean {
-            const operation = `emit ${ev}`;
+            const operation = 'emit';
+            const messageName = ev;
             const attributes = {
                 [SemanticAttributes.MESSAGING_SYSTEM]: 'socket.io',
-                [SemanticAttributes.MESSAGING_DESTINATION]: 'string',
                 [SemanticAttributes.MESSAGING_DESTINATION_KIND]: 'topic',
                 [SemanticAttributes.MESSAGING_OPERATION]: operation,
-                component: 'socket.io',
             };
 
-            const newSpan: Span = self.tracer.startSpan(`socket.io ${operation}`, {
+            if (this.rooms && this.rooms.size > 0) {
+                const rooms = Array.from<string>(this.rooms);
+                attributes['rooms'] = rooms.join();
+            }
+
+            if (this.name) {
+                attributes['namespace'] = this.name;
+            }
+
+            const newSpan: Span = self.tracer.startSpan(`socket.io ${operation} ${messageName}`, {
                 kind: SpanKind.PRODUCER,
                 attributes,
             });
