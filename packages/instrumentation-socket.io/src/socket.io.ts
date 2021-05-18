@@ -6,7 +6,11 @@ import {
     isWrapped,
     safeExecuteInTheMiddle,
 } from '@opentelemetry/instrumentation';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import {
+    SemanticAttributes,
+    MessagingOperationValues,
+    MessagingDestinationKindValues,
+} from '@opentelemetry/semantic-conventions';
 import { SocketIoInstrumentationConfig, Io } from './types';
 import { VERSION } from './version';
 
@@ -118,21 +122,20 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                     const operation = 'on';
                     const messageName = ev;
 
-                    const attributes = {
-                        [SemanticAttributes.MESSAGING_SYSTEM]: 'socket.io',
-                        [SemanticAttributes.MESSAGING_DESTINATION]: originalListener.name,
-                        [SemanticAttributes.MESSAGING_OPERATION]: operation,
-                    };
                     const span: Span = self.tracer.startSpan(`socket.io ${operation} ${messageName}`, {
-                        kind: SpanKind.PRODUCER,
-                        attributes,
+                        kind: SpanKind.CONSUMER,
+                        attributes: {
+                            [SemanticAttributes.MESSAGING_SYSTEM]: 'socket.io',
+                            [SemanticAttributes.MESSAGING_DESTINATION]: originalListener.name,
+                            [SemanticAttributes.MESSAGING_OPERATION]: MessagingOperationValues.PROCESS,
+                        },
                     });
 
                     if (self._config.onHook) {
                         safeExecuteInTheMiddle(
                             () => self._config.onHook(span, arguments),
                             (e) => {
-                                if (e) diag.error(`opentelemetry.socket.io instrumentation: OnHook error`, e);
+                                if (e) diag.error(`socket.io instrumentation: onHook error`, e);
                             },
                             true
                         );
@@ -167,11 +170,11 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
 
                 if (this.rooms && this.rooms.size > 0) {
                     const rooms = Array.from<string>(this.rooms);
-                    attributes['rooms'] = rooms.join();
+                    attributes['socket.io.rooms'] = rooms.join();
                 }
 
                 if (this.name) {
-                    attributes['namespace'] = this.name;
+                    attributes['socket.io.namespace'] = this.name;
                 }
 
                 const span = self.tracer.startSpan(`socket.io ${operation} ${messageName}`, {
@@ -183,7 +186,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                     safeExecuteInTheMiddle(
                         () => self._config.emitHook(span, args),
                         (e) => {
-                            if (e) diag.error(`opentelemetry.socket.io instrumentation: emitHook error`, e);
+                            if (e) diag.error(`socket.io instrumentation: emitHook error`, e);
                         },
                         true
                     );
