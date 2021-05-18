@@ -1,34 +1,30 @@
-import {
-    context,
-    setSpan,
-    Span,
-    SpanKind,
-    SpanStatusCode,
-    getSpan,
-    diag,
-    suppressInstrumentation,
-} from '@opentelemetry/api';
+import { context, setSpan, Span, SpanKind, SpanStatusCode, diag } from '@opentelemetry/api';
 import {
     InstrumentationBase,
     InstrumentationNodeModuleFile,
-    InstrumentationModuleDefinition,
     InstrumentationNodeModuleDefinition,
     isWrapped,
+    safeExecuteInTheMiddle,
 } from '@opentelemetry/instrumentation';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import io from 'socket.io';
-import { SocketIoInstrumentationConfig } from './types';
+import { SocketIoInstrumentationConfig, io } from './types';
 import { VERSION } from './version';
 
-export class SocketIoInstrumentation extends InstrumentationBase<typeof io> {
-    static readonly component = 'socket.io';
+const reservedEvents = ['connect', 'connect_error', 'disconnect', 'disconnecting', 'newListener', 'removeListener'];
+
+export class SocketIoInstrumentation extends InstrumentationBase<io> {
     protected _config!: SocketIoInstrumentationConfig;
-    private moduleVersion: string;
 
     constructor(config: SocketIoInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-socket.io', VERSION, Object.assign({}, config));
+        //WIP waiting for https://github.com/open-telemetry/opentelemetry-js/pull/2201 / https://github.com/open-telemetry/opentelemetry-js/issues/2174
+        // if (config.filterTransport) {
+        //     const httpInstrumentationConfig = config.filterTransport.httpInstrumentation.getConfig();
+        //     httpInstrumentationConfig.ignoreIncomingPaths.push(config.filterTransport.socketPath);
+        //     config.filterTransport.httpInstrumentation.setConfig(httpInstrumentationConfig);
+        // }
     }
-    protected init(): InstrumentationModuleDefinition<typeof io> {
+    protected init() {
         const strictEventEmitterInstrumentation = new InstrumentationNodeModuleFile<any>(
             'socket.io/dist/typed-events.js',
             ['*'],
@@ -43,8 +39,8 @@ export class SocketIoInstrumentation extends InstrumentationBase<typeof io> {
             this.unpatchBroadcastOperator.bind(this)
         );
 
-        const module = new InstrumentationNodeModuleDefinition<typeof io>(
-            SocketIoInstrumentation.component,
+        const module = new InstrumentationNodeModuleDefinition<io>(
+            'socket.io',
             ['*'],
             this.patch.bind(this),
             this.unpatch.bind(this),
@@ -87,8 +83,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<typeof io> {
         return moduleExports;
     }
 
-    protected patch(moduleExports: typeof io, moduleVersion: string) {
-        this.moduleVersion = moduleVersion;
+    protected patch(moduleExports: io, moduleVersion: string) {
         if (moduleExports === undefined || moduleExports === null) {
             return moduleExports;
         }
@@ -100,7 +95,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<typeof io> {
         return moduleExports;
     }
 
-    protected unpatch(moduleExports: typeof io): void {
+    protected unpatch(moduleExports: io): void {
         if (isWrapped(moduleExports.Server.prototype.emit)) {
             this._unwrap(moduleExports.Server.prototype, 'emit');
         }
@@ -115,6 +110,9 @@ export class SocketIoInstrumentation extends InstrumentationBase<typeof io> {
     private _createOnPatch(original: Function) {
         const self = this;
         return function (ev: any, originalListener: Function) {
+            if (!self._config.traceReserved && reservedEvents.includes(ev)) {
+                return original.apply(this, arguments);
+            }
             const wrappedListener = function () {
                 const operation = 'on';
                 const messageName = ev;
@@ -124,14 +122,25 @@ export class SocketIoInstrumentation extends InstrumentationBase<typeof io> {
                     [SemanticAttributes.MESSAGING_DESTINATION]: originalListener.name,
                     [SemanticAttributes.MESSAGING_OPERATION]: operation,
                 };
-                const newSpan: Span = self.tracer.startSpan(`socket.io ${operation} ${messageName}`, {
+                const span: Span = self.tracer.startSpan(`socket.io ${operation} ${messageName}`, {
                     kind: SpanKind.PRODUCER,
                     attributes,
                 });
-                const result = context.with(setSpan(context.active(), newSpan), () =>
+
+                if (self._config.onHook) {
+                    safeExecuteInTheMiddle(
+                        () => self._config.onHook(span, arguments),
+                        (e) => {
+                            if (e) diag.error(`opentelemetry.socket.io instrumentation: OnHook error`, e);
+                        },
+                        true
+                    );
+                }
+
+                const result = context.with(setSpan(context.active(), span), () =>
                     originalListener.apply(this, arguments)
                 );
-                newSpan.end();
+                span.end();
                 return result;
             };
 
@@ -142,6 +151,9 @@ export class SocketIoInstrumentation extends InstrumentationBase<typeof io> {
     private _createEmitPatch(original: Function) {
         const self = this;
         return function (ev: any, ...args: any[]): boolean {
+            if (!self._config.traceReserved && reservedEvents.includes(ev)) {
+                return original.apply(this, arguments);
+            }
             const operation = 'emit';
             const messageName = ev;
             const attributes = {
@@ -159,19 +171,28 @@ export class SocketIoInstrumentation extends InstrumentationBase<typeof io> {
                 attributes['namespace'] = this.name;
             }
 
-            const newSpan: Span = self.tracer.startSpan(`socket.io ${operation} ${messageName}`, {
+            const span = self.tracer.startSpan(`socket.io ${operation} ${messageName}`, {
                 kind: SpanKind.PRODUCER,
                 attributes,
             });
 
-            const succuss = context.with(setSpan(context.active(), newSpan), () => original.apply(this, arguments));
+            if (self._config.emitHook) {
+                safeExecuteInTheMiddle(
+                    () => self._config.emitHook(span, args),
+                    (e) => {
+                        if (e) diag.error(`opentelemetry.socket.io instrumentation: emitHook error`, e);
+                    },
+                    true
+                );
+            }
+            const succuss = context.with(setSpan(context.active(), span), () => original.apply(this, arguments));
             if (!succuss) {
-                newSpan.setStatus({
+                span.setStatus({
                     code: SpanStatusCode.ERROR,
                     message: '',
                 });
             }
-            newSpan.end();
+            span.end();
             return succuss;
         };
     }
