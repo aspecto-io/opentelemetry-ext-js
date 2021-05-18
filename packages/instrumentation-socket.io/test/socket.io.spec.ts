@@ -56,13 +56,19 @@ describe('socket.io instrumentation', () => {
             const sio = new Server();
             const client = io('http://localhost:3000');
             sio.on('connection', (socket: Socket) => {
-                client.close();
-                sio.close();
-                //trace is created after the listener method is completed
-                setTimeout(() => {
-                    expectSpan('socket.io on connection');
-                    done();
+                socket.emit('ping');
+                socket.on('pong', () => {
+                    client.close();
+                    sio.close();
+                    //trace is created after the listener method is completed
+                    setTimeout(() => {
+                        expectSpan('socket.io on pong');
+                        done();
+                    });
                 });
+            });
+            client.on('ping', () => {
+                client.emit('pong');
             });
             sio.listen(3000);
         });
@@ -71,14 +77,14 @@ describe('socket.io instrumentation', () => {
             const sio = new Server();
             sio.to('room').emit('broadcast', '1234');
             const span = expectSpan('socket.io emit broadcast');
-            expect(span.attributes['rooms']).toEqual(['room'].join());
+            expect(span.attributes['socket.io.rooms']).toEqual(['room'].join());
         });
 
         it('broadcast to multiple rooms', () => {
             const sio = new Server();
             sio.to('room1').to('room2').emit('broadcast', '1234');
             const span = expectSpan('socket.io emit broadcast');
-            expect(span.attributes['rooms']).toEqual(['room1', 'room2'].join());
+            expect(span.attributes['socket.io.rooms']).toEqual(['room1', 'room2'].join());
         });
     });
 
