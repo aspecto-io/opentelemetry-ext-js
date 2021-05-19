@@ -91,7 +91,7 @@ export class ExpressInstrumentation extends InstrumentationBase<typeof express> 
         if (moduleExports === undefined || moduleExports === null) {
             return moduleExports;
         }
-        const origLayerConstructor = (moduleExports as unknown) as Function;
+        const origLayerConstructor = moduleExports as unknown as Function;
         const LayerPrototype = moduleExports.prototype;
 
         diag.debug('opentelemetry.express instrumentation: patching Express Layer handle_request and handle_error');

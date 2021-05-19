@@ -95,7 +95,6 @@ export const getHttpSpanAttributesFromReq = (req: express.Request): SpanAttribut
 // from @opentelemetry/instrumentation-http
 // https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-instrumentation-http/src/utils.ts#L70
 export const parseResponseStatus = (statusCode: number): Omit<SpanStatus, 'message'> => {
-
     // 1xx, 2xx, 3xx are OK
     if (statusCode >= 100 && statusCode < 400) {
         return { code: SpanStatusCode.OK };
