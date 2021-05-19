@@ -1,4 +1,4 @@
-import { SpanAttributes } from '@opentelemetry/api';
+import { SpanAttributes, SpanStatus, SpanStatusCode } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { ExpressConsumedRouteState, ExpressInstrumentationAttributes } from '../types';
 import type express from 'express';
@@ -90,4 +90,17 @@ export const getHttpSpanAttributesFromReq = (req: express.Request): SpanAttribut
         [SemanticAttributes.HTTP_SCHEME]: req.protocol,
         [SemanticAttributes.NET_PEER_IP]: req.ip,
     };
+};
+
+// from @opentelemetry/instrumentation-http
+// https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-instrumentation-http/src/utils.ts#L70
+export const parseResponseStatus = (statusCode: number): Omit<SpanStatus, 'message'> => {
+
+    // 1xx, 2xx, 3xx are OK
+    if (statusCode >= 100 && statusCode < 400) {
+        return { code: SpanStatusCode.OK };
+    }
+
+    // All other codes are error
+    return { code: SpanStatusCode.ERROR };
 };
