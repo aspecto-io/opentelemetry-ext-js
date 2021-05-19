@@ -46,9 +46,9 @@
     "devDependencies": {
         "@opentelemetry/node": "^0.19.0",
         "@opentelemetry/tracing": "^0.19.0",
-        "@types/mocha": "^8.2.0",
+        "@types/mocha": "^8.2.2",
         "expect": "^26.6.2",
-        "mocha": "^8.3.0",
+        "mocha": "^8.4.0",
         "mongodb": "^3.6.4",
         "mongoose": "5.11.15",
         "ts-node": "^9.1.1",
