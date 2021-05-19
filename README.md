@@ -27,9 +27,10 @@ js extensions for the [open-telemetry](https://opentelemetry.io/) project, from 
 The instrumentations in this repo are:
 - vendor neutral
 - strictly complies with [open telemetry semantic conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions)
-- up to date with latest SDK version
+- up to date with latest SDK and API versions
 
-**Compatible with [SDK v0.19.0](https://github.com/open-telemetry/opentelemetry-js/releases/tag/v0.19.0)**
+**Compatible with [SDK v0.19.0](https://github.com/open-telemetry/opentelemetry-js/releases/tag/v0.19.0)** and [API v1.0.0-rc.0](https://github.com/open-telemetry/opentelemetry-js-api/releases/tag/v1.0.0-rc0)
+
 ## Instrumentations
 | Instrumentation Package | Instrumented Lib | NPM |
 | --- | --- | --- |
@@ -45,12 +46,12 @@ The instrumentations in this repo are:
 
 
 ## Compatability Table
-**Tested and verified against otel v0.19.0**
+**Tested and verified against otel SDK v0.19.0 and api v1.0.0-rc.0**
 
-| Instrumentations Version | OpenTelemetry Version |
-| --- | --- |
-| 0.4.x | 0.19.0 |
-| 0.3.x | 0.18.0 |
-| 0.2.x | 0.17.0 |
-| 0.1.x | 0.16.0 |
-| 0.0.x | 0.15.0 |
+| Instrumentations Version | OpenTelemetry SDK Version | OpenTelemetry api Version |
+| --- | --- | --- |
+| 0.4.x | 0.19.0 | 1.0.0-rc.0 |
+| 0.3.x | 0.18.0 | 0.18.1 |
+| 0.2.x | 0.17.0 | 0.17.0 |
+| 0.1.x | 0.16.0 | 0.16.0 |
+| 0.0.x | 0.15.0 | 0.15.0 |
