@@ -40,5 +40,3 @@ socket.io instrumentation has few options available to choose from. You can set 
 ---
 
 This extension (and many others) was developed by [Aspecto](https://www.aspecto.io/) with ❤️
-
-## Implementation Issues

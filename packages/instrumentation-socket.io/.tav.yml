@@ -1,4 +1,4 @@
 'socket.io':
-  versions: "*"
+  versions: ">=3"
   commands:
     - yarn test
