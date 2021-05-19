@@ -1,11 +1,25 @@
 {
     "name": "opentelemetry-instrumentation-socket.io",
     "version": "0.4.0",
-    "description": "open telemetry instrumentation for the `socket.io` module",
+    "description": "open telemetry instrumentation for the `socket.io` package",
     "keywords": [
         "socket.io",
-        "opentelemetry"
+        "opentelemetry",
+        "websocket"
     ],
+    "homepage": "https://github.com/aspecto-io/opentelemetry-ext-js",
+    "license": "Apache-2.0",
+    "main": "dist/src/index.js",
+    "files": [
+        "dist/src/**/*.js",
+        "dist/src/**/*.d.ts",
+        "LICENSE",
+        "README.md"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/aspecto-io/opentelemetry-ext-js.git"
+    },
     "author": {
         "name": "Aspecto",
         "email": "support@aspecto.io",
@@ -15,18 +29,11 @@
         "build": "tsc",
         "prepare": "yarn run build",
         "test": "mocha",
-        "test:ci": "yarn test",
+        "test:ci": "yarn test-all-versions",
         "watch": "tsc -w",
         "test-all-versions": "tav",
         "version:update": "node ../../scripts/version-update.js",
         "version": "yarn run version:update"
-    },
-    "homepage": "https://github.com/aspecto-io/opentelemetry-ext-js",
-    "license": "Apache-2.0",
-    "main": "dist/src/index.js",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/aspecto-io/opentelemetry-ext-js.git"
     },
     "bugs": {
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
@@ -37,7 +44,7 @@
         "@opentelemetry/semantic-conventions": "^0.19.0"
     },
     "devDependencies": {
-        "socket.io": "3.1.2",
+        "socket.io": "^4.1.2",
         "socket.io-client": "^4.1.1",
         "test-all-versions": "^5.0.1"
     },

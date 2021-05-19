@@ -7,9 +7,8 @@ export type TransportInstrumentationConfig = {
     socketPath: string;
 };
 export interface SocketIoHookInfo {
-    args: any[];
+    args: any;
 }
-
 export interface SocketIoHookFunction {
     (span: Span, hookInfo: SocketIoHookInfo): void;
 }

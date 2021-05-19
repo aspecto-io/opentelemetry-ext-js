@@ -144,7 +144,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
 
                     if (self._config.onHook) {
                         safeExecuteInTheMiddle(
-                            () => self._config.onHook(span, arguments),
+                            () => self._config.onHook(span, { args: arguments }),
                             (e) => {
                                 if (e) diag.error(`socket.io instrumentation: onHook error`, e);
                             },
@@ -195,7 +195,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
 
                 if (self._config.emitHook) {
                     safeExecuteInTheMiddle(
-                        () => self._config.emitHook(span, args),
+                        () => self._config.emitHook(span, { args }),
                         (e) => {
                             if (e) diag.error(`socket.io instrumentation: emitHook error`, e);
                         },
