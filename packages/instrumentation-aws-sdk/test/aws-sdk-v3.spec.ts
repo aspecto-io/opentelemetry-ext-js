@@ -263,7 +263,7 @@ describe('instrumentation-aws-sdk-v3', () => {
 
                     const receiveCallbackSpan = getSpan(context.active());
                     expect(receiveCallbackSpan).toBeDefined();
-                    const attributes = ((receiveCallbackSpan as unknown) as ReadableSpan).attributes;
+                    const attributes = (receiveCallbackSpan as unknown as ReadableSpan).attributes;
                     expect(attributes[SemanticAttributes.MESSAGING_OPERATION]).toMatch(
                         MessagingOperationValues.RECEIVE
                     );

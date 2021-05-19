@@ -62,7 +62,7 @@ describe('aspecto-opentelemetry-express-layers', () => {
 
     before(() => {
         contextManager = new AsyncHooksContextManager();
-        context.setGlobalContextManager((contextManager.enable() as unknown) as ContextManager);
+        context.setGlobalContextManager(contextManager.enable() as unknown as ContextManager);
         instrumentation.enable();
     });
 

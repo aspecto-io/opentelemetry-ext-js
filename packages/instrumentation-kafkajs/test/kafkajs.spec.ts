@@ -95,19 +95,17 @@ describe('instrumentation-kafkajs', () => {
 
         describe('successful send', () => {
             beforeEach(async () => {
-                patchProducerSend(
-                    async (): Promise<RecordMetadata[]> => {
-                        return [
-                            {
-                                topicName: 'topic-name-1',
-                                partition: 0,
-                                errorCode: 123,
-                                offset: '18',
-                                timestamp: '123456',
-                            },
-                        ];
-                    }
-                );
+                patchProducerSend(async (): Promise<RecordMetadata[]> => {
+                    return [
+                        {
+                            topicName: 'topic-name-1',
+                            partition: 0,
+                            errorCode: 123,
+                            offset: '18',
+                            timestamp: '123456',
+                        },
+                    ];
+                });
                 instrumentation.disable();
                 instrumentation.enable();
                 producer = kafka.producer();
@@ -205,11 +203,9 @@ describe('instrumentation-kafkajs', () => {
 
         describe('failed send', () => {
             beforeEach(async () => {
-                patchProducerSend(
-                    (): Promise<RecordMetadata[]> => {
-                        return Promise.reject(new Error('error thrown from kafka client send'));
-                    }
-                );
+                patchProducerSend((): Promise<RecordMetadata[]> => {
+                    return Promise.reject(new Error('error thrown from kafka client send'));
+                });
                 instrumentation.disable();
                 instrumentation.enable();
                 producer = kafka.producer();
