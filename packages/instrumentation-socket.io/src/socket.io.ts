@@ -197,12 +197,14 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                         true
                     );
                 }
-                const succuss = context.with(setSpan(context.active(), span), () => original.apply(this, arguments));
-                if (!succuss) {
-                    span.setStatus({ code: SpanStatusCode.ERROR });
+                try {
+                    return context.with(setSpan(context.active(), span), () => original.apply(this, arguments));
+                } catch (error) {
+                    span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
+                    throw error;
+                } finally {
+                    span.end();
                 }
-                span.end();
-                return succuss;
             };
         };
     }

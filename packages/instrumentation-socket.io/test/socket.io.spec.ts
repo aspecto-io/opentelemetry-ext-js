@@ -2,7 +2,7 @@ import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemet
 import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan } from '@opentelemetry/tracing';
 import { SocketIoInstrumentation, SocketIoInstrumentationAttributes } from '../src';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
-import { context, ContextManager, SpanKind } from '@opentelemetry/api';
+import { context, ContextManager, SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { AddressInfo } from 'net';
 import expect from 'expect';
@@ -65,6 +65,20 @@ describe('socket.io instrumentation', () => {
                 expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toEqual(
                     MessagingDestinationKindValues.TOPIC
                 );
+            });
+        });
+
+        it('emit reserved events error is instrumented', () => {
+            instrumentation.setConfig({
+                traceReserved: true,
+            });
+            const io = new Server();
+            try {
+                io.emit('connect');
+            } catch (error) {}
+            expectSpan('socket.io emit connect', (span) => {
+                expect(span.status.code).toEqual(SpanStatusCode.ERROR);
+                expect(span.status.message).toEqual('"connect" is a reserved event name');
             });
         });
 
