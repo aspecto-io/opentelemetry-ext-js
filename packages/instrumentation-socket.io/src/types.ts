@@ -3,8 +3,8 @@ import { InstrumentationConfig } from '@opentelemetry/instrumentation';
 import type * as io from 'socket.io';
 
 export const SocketIoInstrumentationAttributes = {
-    SOCKET_IO_ROOMS: 'socket.io.rooms',
-    SOCKET_IO_NAMESPACE: 'socket.io.namespace',
+    SOCKET_IO_ROOMS: 'messaging.socket.io.rooms',
+    SOCKET_IO_NAMESPACE: 'messaging.socket.io.namespace',
 };
 export interface SocketIoHookInfo {
     moduleVersion?: string;

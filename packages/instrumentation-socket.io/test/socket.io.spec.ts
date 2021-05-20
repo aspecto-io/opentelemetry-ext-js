@@ -133,6 +133,7 @@ describe('socket.io instrumentation', () => {
             };
             createServer((sio, port) => {
                 const client = io(`http://localhost:${port}`);
+                client.on('ping', () => client.emit('pong', data));
                 sio.on('connection', (socket: Socket) => {
                     socket.emit('ping');
                     socket.on('pong', (data) => {
@@ -153,7 +154,6 @@ describe('socket.io instrumentation', () => {
                         });
                     });
                 });
-                client.on('ping', () => client.emit('pong', data));
             });
         });
 
@@ -181,6 +181,7 @@ describe('socket.io instrumentation', () => {
         it('on is instrumented', (done) => {
             createServer((sio, port) => {
                 const client = io(`http://localhost:${port}`);
+                client.on('ping', () => client.emit('pong'));
                 sio.on('connection', (socket: Socket) => {
                     socket.emit('ping');
                     socket.on('pong', () => {
@@ -200,7 +201,6 @@ describe('socket.io instrumentation', () => {
                         });
                     });
                 });
-                client.on('ping', () => client.emit('pong'));
             });
         });
 
@@ -208,7 +208,7 @@ describe('socket.io instrumentation', () => {
             const roomName = 'room';
             const sio = new Server();
             sio.to(roomName).emit('broadcast', '1234');
-            expectSpan('/ send', (span) => {
+            expectSpan('/[room] send', (span) => {
                 expect(span.attributes[SocketIoInstrumentationAttributes.SOCKET_IO_ROOMS]).toEqual([roomName]);
             });
         });
@@ -216,7 +216,7 @@ describe('socket.io instrumentation', () => {
         it('broadcast to multiple rooms', () => {
             const sio = new Server();
             sio.to('room1').to('room2').emit('broadcast', '1234');
-            expectSpan('/ send', (span) => {
+            expectSpan('/[room1,room2] send', (span) => {
                 expect(span.attributes[SocketIoInstrumentationAttributes.SOCKET_IO_ROOMS]).toEqual(['room1', 'room2']);
             });
         });
@@ -229,6 +229,52 @@ describe('socket.io instrumentation', () => {
             namespace.emit('namespace');
             expectSpan('/testing send', (span) => {
                 expect(span.attributes[SocketIoInstrumentationAttributes.SOCKET_IO_NAMESPACE]).toEqual('/testing');
+            });
+        });
+
+        it('broadcast is instrumented', () => {
+            const roomName = 'room';
+            const io = new Server();
+            const namespace = io.of('/testing');
+            namespace.to(roomName).emit('broadcast', '1234');
+            expectSpan('/testing[room] send', (span) => {
+                expect(span.attributes[SocketIoInstrumentationAttributes.SOCKET_IO_ROOMS]).toEqual([roomName]);
+            });
+        });
+
+        it('broadcast to multiple rooms', () => {
+            const io = new Server();
+            const namespace = io.of('/testing');
+            namespace.to('room1').to('room2').emit('broadcast', '1234');
+            expectSpan('/testing[room1,room2] send', (span) => {
+                expect(span.attributes[SocketIoInstrumentationAttributes.SOCKET_IO_NAMESPACE]).toEqual('/testing');
+                expect(span.attributes[SocketIoInstrumentationAttributes.SOCKET_IO_ROOMS]).toEqual(['room1', 'room2']);
+            });
+        });
+
+        it('on is instrumented', (done) => {
+            createServer((sio, port) => {
+                const namespace = sio.of('/testing');
+                const client = io(`http://localhost:${port}/testing`);
+                client.on('ping', () => client.emit('pong'));
+                namespace.on('connection', (socket: Socket) => {
+                    socket.emit('ping');
+                    socket.on('pong', () => {
+                        client.close();
+                        sio.close();
+                        //trace is created after the listener method is completed
+                        setTimeout(() => {
+                            expectSpan('/testing pong receive', (span) => {
+                                expect(span.kind).toEqual(SpanKind.CONSUMER);
+                                expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
+                                expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual(
+                                    '/testing pong'
+                                );
+                                done();
+                            });
+                        });
+                    });
+                });
             });
         });
     });

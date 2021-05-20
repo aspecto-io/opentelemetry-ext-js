@@ -122,11 +122,13 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                 }
                 const wrappedListener = function (...args: any[]) {
                     const eventName = ev;
-                    const span: Span = self.tracer.startSpan(`${eventName} ${MessagingOperationValues.RECEIVE}`, {
+                    const namespace = this.name || this.adapter?.nsp?.name;
+                    const destination = namespace === '/' ? eventName : `${namespace} ${eventName}`;
+                    const span: Span = self.tracer.startSpan(`${destination} ${MessagingOperationValues.RECEIVE}`, {
                         kind: SpanKind.CONSUMER,
                         attributes: {
                             [SemanticAttributes.MESSAGING_SYSTEM]: 'socket.io',
-                            [SemanticAttributes.MESSAGING_DESTINATION]: eventName,
+                            [SemanticAttributes.MESSAGING_DESTINATION]: destination,
                             [SemanticAttributes.MESSAGING_OPERATION]: MessagingOperationValues.RECEIVE,
                         },
                     });
@@ -155,7 +157,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
             };
         };
     }
-    
+
     private _patchEmit(moduleVersion: string) {
         const self = this;
         return (original: Function) => {
@@ -169,17 +171,18 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                     [SemanticAttributes.MESSAGING_DESTINATION_KIND]: MessagingDestinationKindValues.TOPIC,
                 };
 
-                const rooms = this.rooms || this._rooms || this.sockets?._rooms;
-                if (rooms && rooms.size > 0) {
-                    attributes[SocketIoInstrumentationAttributes.SOCKET_IO_ROOMS] = Array.from<string>(rooms);
+                let rooms = this.rooms || this._rooms || this.sockets?._rooms;
+                if (rooms?.size) {
+                    attributes[SocketIoInstrumentationAttributes.SOCKET_IO_ROOMS] = rooms = Array.from<string>(rooms);
                 }
 
                 const namespace = this.name || this.adapter?.nsp?.name;
                 if (namespace) {
                     attributes[SocketIoInstrumentationAttributes.SOCKET_IO_NAMESPACE] = namespace;
-                    attributes[SemanticAttributes.MESSAGING_DESTINATION] = namespace;
                 }
-                const span = self.tracer.startSpan(`${namespace} send`, {
+                const spanRooms = rooms.length ? `[${rooms.join()}]` : '';
+                const destination = (attributes[SemanticAttributes.MESSAGING_DESTINATION] = `${namespace}${spanRooms}`);
+                const span = self.tracer.startSpan(`${destination} send`, {
                     kind: SpanKind.PRODUCER,
                     attributes,
                 });
