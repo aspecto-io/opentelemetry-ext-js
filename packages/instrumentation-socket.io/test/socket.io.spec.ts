@@ -239,6 +239,7 @@ describe('socket.io instrumentation', () => {
             namespace.to(roomName).emit('broadcast', '1234');
             expectSpan('/testing[room] send', (span) => {
                 expect(span.attributes[SocketIoInstrumentationAttributes.SOCKET_IO_ROOMS]).toEqual([roomName]);
+                expect(span.attributes[SocketIoInstrumentationAttributes.SOCKET_IO_NAMESPACE]).toEqual('/testing');
             });
         });
 
