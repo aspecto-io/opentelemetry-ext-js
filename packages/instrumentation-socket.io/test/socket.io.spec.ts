@@ -59,7 +59,7 @@ describe('socket.io instrumentation', () => {
         it('emit is instrumented', () => {
             const io = new Server();
             io.emit('test');
-            expectSpan('socket.io emit test', (span) => {
+            expectSpan('/ send', (span) => {
                 expect(span.kind).toEqual(SpanKind.PRODUCER);
                 expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
                 expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toEqual(
@@ -76,7 +76,7 @@ describe('socket.io instrumentation', () => {
             try {
                 io.emit('connect');
             } catch (error) {}
-            expectSpan('socket.io emit connect', (span) => {
+            expectSpan('/ send', (span) => {
                 expect(span.status.code).toEqual(SpanStatusCode.ERROR);
                 expect(span.status.message).toEqual('"connect" is a reserved event name');
             });
@@ -85,7 +85,7 @@ describe('socket.io instrumentation', () => {
         it('send is instrumented', () => {
             const io = new Server();
             io.send('test');
-            expectSpan('socket.io emit message', (span) => {
+            expectSpan('/ send', (span) => {
                 expect(span.kind).toEqual(SpanKind.PRODUCER);
                 expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
                 expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toEqual(
@@ -103,7 +103,7 @@ describe('socket.io instrumentation', () => {
             });
             const io = new Server();
             io.emit('test', 1234);
-            expectSpan('socket.io emit test', (span) => {
+            expectSpan('/ send', (span) => {
                 expect(span.attributes['payload']).toEqual(JSON.stringify([1234]));
             });
         });
@@ -141,7 +141,7 @@ describe('socket.io instrumentation', () => {
                         //trace is created after the listener method is completed
                         setTimeout(() => {
                             expectSpan(
-                                'socket.io on pong',
+                                'pong receive',
                                 (span) => {
                                     expect(span.kind).toEqual(SpanKind.CONSUMER);
                                     expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
@@ -168,7 +168,7 @@ describe('socket.io instrumentation', () => {
                     sio.close();
                     //trace is created after the listener method is completed
                     setTimeout(() => {
-                        expectSpan('socket.io on connection', (span) => {
+                        expectSpan('connection receive', (span) => {
                             expect(span.kind).toEqual(SpanKind.CONSUMER);
                             expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
                             done();
@@ -189,7 +189,7 @@ describe('socket.io instrumentation', () => {
                         //trace is created after the listener method is completed
                         setTimeout(() => {
                             expectSpan(
-                                'socket.io on pong',
+                                'pong receive',
                                 (span) => {
                                     expect(span.kind).toEqual(SpanKind.CONSUMER);
                                     expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
@@ -208,7 +208,7 @@ describe('socket.io instrumentation', () => {
             const roomName = 'room';
             const sio = new Server();
             sio.to(roomName).emit('broadcast', '1234');
-            expectSpan('socket.io emit broadcast', (span) => {
+            expectSpan('/ send', (span) => {
                 expect(span.attributes[SocketIoInstrumentationAttributes.SOCKET_IO_ROOMS]).toEqual([roomName]);
             });
         });
@@ -216,7 +216,7 @@ describe('socket.io instrumentation', () => {
         it('broadcast to multiple rooms', () => {
             const sio = new Server();
             sio.to('room1').to('room2').emit('broadcast', '1234');
-            expectSpan('socket.io emit broadcast', (span) => {
+            expectSpan('/ send', (span) => {
                 expect(span.attributes[SocketIoInstrumentationAttributes.SOCKET_IO_ROOMS]).toEqual(['room1', 'room2']);
             });
         });
@@ -227,7 +227,7 @@ describe('socket.io instrumentation', () => {
             const io = new Server();
             const namespace = io.of('/testing');
             namespace.emit('namespace');
-            expectSpan('socket.io emit namespace', (span) => {
+            expectSpan('/testing send', (span) => {
                 expect(span.attributes[SocketIoInstrumentationAttributes.SOCKET_IO_NAMESPACE]).toEqual('/testing');
             });
         });

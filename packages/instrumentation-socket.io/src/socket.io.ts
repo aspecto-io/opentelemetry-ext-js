@@ -121,15 +121,13 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                     return original.apply(this, arguments);
                 }
                 const wrappedListener = function (...args: any[]) {
-                    const operation = 'on';
                     const eventName = ev;
-
-                    const span: Span = self.tracer.startSpan(`socket.io ${operation} ${eventName}`, {
+                    const span: Span = self.tracer.startSpan(`${eventName} ${MessagingOperationValues.RECEIVE}`, {
                         kind: SpanKind.CONSUMER,
                         attributes: {
                             [SemanticAttributes.MESSAGING_SYSTEM]: 'socket.io',
-                            [SemanticAttributes.MESSAGING_DESTINATION]: originalListener.name,
-                            [SemanticAttributes.MESSAGING_OPERATION]: MessagingOperationValues.PROCESS,
+                            [SemanticAttributes.MESSAGING_DESTINATION]: eventName,
+                            [SemanticAttributes.MESSAGING_OPERATION]: MessagingOperationValues.RECEIVE,
                         },
                     });
 
@@ -157,7 +155,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
             };
         };
     }
-
+    
     private _patchEmit(moduleVersion: string) {
         const self = this;
         return (original: Function) => {
@@ -166,8 +164,6 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                     return original.apply(this, arguments);
                 }
                 const messagingSystem = 'socket.io';
-                const operation = 'emit';
-                const eventName = ev;
                 const attributes: any = {
                     [SemanticAttributes.MESSAGING_SYSTEM]: messagingSystem,
                     [SemanticAttributes.MESSAGING_DESTINATION_KIND]: MessagingDestinationKindValues.TOPIC,
@@ -181,9 +177,9 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                 const namespace = this.name || this.adapter?.nsp?.name;
                 if (namespace) {
                     attributes[SocketIoInstrumentationAttributes.SOCKET_IO_NAMESPACE] = namespace;
+                    attributes[SemanticAttributes.MESSAGING_DESTINATION] = namespace;
                 }
-
-                const span = self.tracer.startSpan(`${messagingSystem} ${operation} ${eventName}`, {
+                const span = self.tracer.startSpan(`${namespace} send`, {
                     kind: SpanKind.PRODUCER,
                     attributes,
                 });
