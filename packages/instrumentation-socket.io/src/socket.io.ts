@@ -96,24 +96,18 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                 if (moduleExports === undefined || moduleExports === null) {
                     return moduleExports;
                 }
-                diag.debug(`applying patch to socket.io`);
-                if (isWrapped(moduleExports.Server.prototype.emit)) {
-                    this._unwrap(moduleExports.Server.prototype, 'emit');
-                }
-                this._wrap(moduleExports.Server.prototype, 'emit', this._patchEmit(moduleVersion));
-                if (isWrapped(moduleExports.Server.prototype.on)) {
+                diag.debug(`applying patch to socket.io Server`);
+                if (isWrapped(moduleExports?.Server?.prototype?.on)) {
                     this._unwrap(moduleExports.Server.prototype, 'on');
                 }
                 this._wrap(moduleExports.Server.prototype, 'on', this._patchOn(moduleVersion));
                 return moduleExports;
             },
-            (moduleExports) => {
-                if (isWrapped(moduleExports.Server.prototype.emit)) {
-                    this._unwrap(moduleExports.Server.prototype, 'emit');
-                }
-                if (isWrapped(moduleExports.Server.prototype.on)) {
+            (moduleExports, moduleVersion) => {
+                if (isWrapped(moduleExports?.Server?.prototype?.on)) {
                     this._unwrap(moduleExports.Server.prototype, 'on');
                 }
+                return moduleExports;
             },
             [broadcastOperatorInstrumentation, namespaceInstrumentation, socketInstrumentation]
         );

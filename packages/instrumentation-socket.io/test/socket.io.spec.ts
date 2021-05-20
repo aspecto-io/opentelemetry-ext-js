@@ -38,9 +38,9 @@ describe('socket.io instrumentation', () => {
         instrumentation.disable();
     });
 
-    const expectSpan = (spanName: string, callback?: (span: ReadableSpan) => void) => {
+    const expectSpan = (spanName: string, callback?: (span: ReadableSpan) => void, spanCount?: number) => {
         const spans = getSocketIoSpans();
-        expect(spans.length).toEqual(1);
+        expect(spans.length).toEqual(spanCount || 1);
         const span = spans.find((s) => s.name === spanName);
         expect(span).toBeDefined();
         callback(span);
@@ -126,12 +126,16 @@ describe('socket.io instrumentation', () => {
                         sio.close();
                         //trace is created after the listener method is completed
                         setTimeout(() => {
-                            expectSpan('socket.io on pong', (span) => {
-                                expect(span.kind).toEqual(SpanKind.CONSUMER);
-                                expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
-                                expect(span.attributes['payload']).toEqual(JSON.stringify([data]));
-                                done();
-                            });
+                            expectSpan(
+                                'socket.io on pong',
+                                (span) => {
+                                    expect(span.kind).toEqual(SpanKind.CONSUMER);
+                                    expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
+                                    expect(span.attributes['payload']).toEqual(JSON.stringify([data]));
+                                    done();
+                                },
+                                2
+                            );
                         });
                     });
                 });
@@ -170,11 +174,15 @@ describe('socket.io instrumentation', () => {
                         sio.close();
                         //trace is created after the listener method is completed
                         setTimeout(() => {
-                            expectSpan('socket.io on pong', (span) => {
-                                expect(span.kind).toEqual(SpanKind.CONSUMER);
-                                expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
-                                done();
-                            });
+                            expectSpan(
+                                'socket.io on pong',
+                                (span) => {
+                                    expect(span.kind).toEqual(SpanKind.CONSUMER);
+                                    expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
+                                    done();
+                                },
+                                2
+                            );
                         });
                     });
                 });
