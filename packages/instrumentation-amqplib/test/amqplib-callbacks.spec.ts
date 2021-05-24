@@ -45,17 +45,26 @@ describe('amqplib instrumentation callback model', function () {
     beforeEach((done) => {
         memoryExporter.reset();
         instrumentation.enable();
-        conn.createChannel(context.bind((err, c) => {
-            channel = c;
-            // install an error handler, otherwise when we have tests that create error on the channel,
-            // it throws and crash process
-            channel.on('error', () => {});
-            channel.assertQueue(queueName, { durable: false }, context.bind((err, ok) => {
-                channel.purgeQueue(queueName, context.bind((err, ok) => {
-                    done();
-                }));
-            }));
-        }));
+        conn.createChannel(
+            context.bind((err, c) => {
+                channel = c;
+                // install an error handler, otherwise when we have tests that create error on the channel,
+                // it throws and crash process
+                channel.on('error', () => {});
+                channel.assertQueue(
+                    queueName,
+                    { durable: false },
+                    context.bind((err, ok) => {
+                        channel.purgeQueue(
+                            queueName,
+                            context.bind((err, ok) => {
+                                done();
+                            })
+                        );
+                    })
+                );
+            })
+        );
     });
 
     afterEach((done) => {
