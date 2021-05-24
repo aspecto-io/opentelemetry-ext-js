@@ -2,14 +2,14 @@ import 'mocha';
 import expect from 'expect';
 import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';
-import { context, setSpan, SpanStatusCode } from '@opentelemetry/api';
+import { context, setSpan } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { Neo4jInstrumentation } from '../src';
 import { assertSpan } from './assert';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { normalizeResponse } from './test-utils';
 import { map, mergeMap } from 'rxjs/operators';
 import { concat } from 'rxjs';
+import { MalabiSpan } from 'malabi-extract';
 
 const instrumentation = new Neo4jInstrumentation();
 instrumentation.enable();
@@ -37,7 +37,7 @@ describe('neo4j instrumentation', function () {
     const getSingleSpan = () => {
         const spans = getSpans();
         expect(spans.length).toBe(1);
-        return spans[0];
+        return new MalabiSpan(spans[0]);
     };
 
     before(async () => {
@@ -88,8 +88,8 @@ describe('neo4j instrumentation', function () {
             const span = getSingleSpan();
             assertSpan(span);
             expect(span.name).toBe('CREATE neo4j');
-            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('CREATE');
-            expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe('CREATE (n:MyLabel) RETURN n');
+            expect(span.dbOperation).toBe('CREATE');
+            expect(span.dbStatement).toBe('CREATE (n:MyLabel) RETURN n');
         });
 
         it('instruments "run" with subscribe', (done) => {
@@ -100,8 +100,8 @@ describe('neo4j instrumentation', function () {
                     onCompleted: () => {
                         const span = getSingleSpan();
                         assertSpan(span);
-                        expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('CREATE');
-                        expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe('CREATE (n:MyLabel) RETURN n');
+                        expect(span.dbOperation).toBe('CREATE');
+                        expect(span.dbStatement).toBe('CREATE (n:MyLabel) RETURN n');
                         done();
                     },
                 });
@@ -112,8 +112,8 @@ describe('neo4j instrumentation', function () {
                 await driver.session().run('NOT_EXISTS_OPERATION');
             } catch (err) {
                 const span = getSingleSpan();
-                expect(span.status.code).toBe(SpanStatusCode.ERROR);
-                expect(span.status.message).toBe(err.message);
+                expect(span.hasError).toBeTruthy();
+                expect(span.errorMessage).toBe(err.message);
                 return;
             }
             throw Error('should not be here');
@@ -126,8 +126,8 @@ describe('neo4j instrumentation', function () {
                 .subscribe({
                     onError: (err) => {
                         const span = getSingleSpan();
-                        expect(span.status.code).toBe(SpanStatusCode.ERROR);
-                        expect(span.status.message).toBe(err.message);
+                        expect(span.hasError).toBeTruthy();
+                        expect(span.errorMessage).toBe(err.message);
                         done();
                     },
                 });
@@ -163,7 +163,7 @@ describe('neo4j instrumentation', function () {
                     onCompleted: () => {
                         const span = getSingleSpan();
                         assertSpan(span);
-                        expect(span.attributes['test']).toBe('cool');
+                        expect(span.attr('test')).toBe('cool');
                         done();
                     },
                 });
@@ -177,16 +177,16 @@ describe('neo4j instrumentation', function () {
             ]);
             const spans = getSpans();
             expect(spans.length).toBe(3);
-            for (let span of spans) {
+            for (let span of spans.map(s => new MalabiSpan(s))) {
                 assertSpan(span);
-                expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('MATCH');
+                expect(span.dbOperation).toBe('MATCH');
             }
         });
 
         it('captures operation with trailing white spaces', async () => {
             await driver.session().run('  MATCH (k) RETURN k ');
             const span = getSingleSpan();
-            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('MATCH');
+            expect(span.dbOperation).toBe('MATCH');
         });
 
         it('set module versions when config is set', async () => {
@@ -196,7 +196,7 @@ describe('neo4j instrumentation', function () {
             await driver.session().run('CREATE (n:MyLabel) RETURN n');
 
             const span = getSingleSpan();
-            expect(span.attributes['module.version']).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
+            expect(span.attr('module.version')).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
         });
 
         it('does not capture any span when ignoreOrphanedSpans is set to true', async () => {
@@ -238,7 +238,7 @@ describe('neo4j instrumentation', function () {
 
             const span = getSingleSpan();
             assertSpan(span);
-            expect(JSON.parse(span.attributes['db.response'] as string)).toEqual([
+            expect(JSON.parse(span.dbResponse)).toEqual([
                 {
                     b: { labels: ['Meeseeks'], properties: { purpose: 'help' } },
                     c: { labels: ['Morty'], properties: {} },
@@ -263,7 +263,7 @@ describe('neo4j instrumentation', function () {
                     onCompleted: () => {
                         const span = getSingleSpan();
                         assertSpan(span);
-                        expect(JSON.parse(span.attributes['db.response'] as string)).toEqual([
+                        expect(JSON.parse(span.dbResponse)).toEqual([
                             {
                                 b: { labels: ['Meeseeks'], properties: { purpose: 'help' } },
                                 c: { labels: ['Morty'], properties: {} },
@@ -296,8 +296,8 @@ describe('neo4j instrumentation', function () {
             });
             const span = getSingleSpan();
             assertSpan(span);
-            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('MATCH');
-            expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe(
+            expect(span.dbOperation).toBe('MATCH');
+            expect(span.dbStatement).toBe(
                 'MATCH (person:Person) RETURN person.name AS name'
             );
         });
@@ -308,8 +308,8 @@ describe('neo4j instrumentation', function () {
             });
             const span = getSingleSpan();
             assertSpan(span);
-            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('MATCH');
-            expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe(
+            expect(span.dbOperation).toBe('MATCH');
+            expect(span.dbStatement).toBe(
                 'MATCH (person:Person) RETURN person.name AS name'
             );
         });
@@ -353,7 +353,7 @@ describe('neo4j instrumentation', function () {
                     complete: () => {
                         const span = getSingleSpan();
                         assertSpan(span);
-                        expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe(
+                        expect(span.dbStatement).toBe(
                             'MERGE (james:Person {name: $nameParam}) RETURN james.name AS name'
                         );
                         done();
@@ -379,7 +379,7 @@ describe('neo4j instrumentation', function () {
                     complete: () => {
                         const span = getSingleSpan();
                         assertSpan(span);
-                        expect(span.attributes['db.response']).toBe(`[{"n":{"labels":["MyLabel"],"properties":{}}}]`);
+                        expect(span.dbResponse).toBe(`[{"n":{"labels":["MyLabel"],"properties":{}}}]`);
                         done();
                     },
                 });
@@ -401,7 +401,7 @@ describe('neo4j instrumentation', function () {
                     complete: () => {
                         const span = getSingleSpan();
                         assertSpan(span);
-                        expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe(
+                        expect(span.dbStatement).toBe(
                             'MATCH (person:Person) RETURN person.name AS name'
                         );
                         done();
@@ -424,7 +424,7 @@ describe('neo4j instrumentation', function () {
                     complete: () => {
                         const span = getSingleSpan();
                         assertSpan(span);
-                        expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe(
+                        expect(span.dbStatement).toBe(
                             'MATCH (person:Person) RETURN person.name AS name'
                         );
                         done();
