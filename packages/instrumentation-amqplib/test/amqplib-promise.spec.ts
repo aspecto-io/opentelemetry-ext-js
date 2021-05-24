@@ -3,8 +3,8 @@ import expect from 'expect';
 import sinon from 'sinon';
 import lodash from 'lodash';
 import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/tracing';
+import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { NodeTracerProvider } from '@opentelemetry/node';
-import { HttpTraceContext } from '@opentelemetry/core';
 import { AmqplibInstrumentation, EndOperation, PublishParams } from '../src';
 
 const instrumentation = new AmqplibInstrumentation();
@@ -13,8 +13,9 @@ instrumentation.disable();
 
 import amqp from 'amqplib';
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { propagation, Span, SpanKind, SpanStatusCode } from '@opentelemetry/api';
+import { Span, SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import { asyncConsume } from './utils';
+import { TEST_RABBITMQ_HOST, TEST_RABBITMQ_PORT } from './config';
 
 const msgPayload = 'payload from test';
 const queueName = 'queue-name-from-unittest';
@@ -27,11 +28,15 @@ describe('amqplib instrumentation promise model', function () {
     const provider = new NodeTracerProvider();
     const memoryExporter = new InMemorySpanExporter();
     const spanProcessor = new SimpleSpanProcessor(memoryExporter);
-    propagation.setGlobalPropagator(new HttpTraceContext());
     provider.addSpanProcessor(spanProcessor);
+    if (process.env.OTEL_EXPORTER_JAEGER_AGENT_HOST) {
+        provider.addSpanProcessor(
+            new SimpleSpanProcessor(new JaegerExporter({ serviceName: 'instrumentation-amqplib' }))
+        );
+    }
     instrumentation.setTracerProvider(provider);
 
-    const url = 'amqp://localhost:22221';
+    const url = `amqp://${TEST_RABBITMQ_HOST}:${TEST_RABBITMQ_PORT}`;
     let conn: amqp.Connection;
     before(async () => {
         instrumentation.enable();
@@ -114,8 +119,8 @@ describe('amqplib instrumentation promise model', function () {
         expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
         expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
         expect(publishSpan.attributes[SemanticAttributes.MESSAGING_URL]).toEqual(url);
-        expect(publishSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual('localhost');
-        expect(publishSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(22221);
+        expect(publishSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual(TEST_RABBITMQ_HOST);
+        expect(publishSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(TEST_RABBITMQ_PORT);
 
         // assert consume span
         expect(consumeSpan.kind).toEqual(SpanKind.CONSUMER);
@@ -128,8 +133,8 @@ describe('amqplib instrumentation promise model', function () {
         expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
         expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
         expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_URL]).toEqual(url);
-        expect(consumeSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual('localhost');
-        expect(consumeSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(22221);
+        expect(consumeSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual(TEST_RABBITMQ_HOST);
+        expect(consumeSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(TEST_RABBITMQ_PORT);
 
         // assert context propagation
         expect(consumeSpan.spanContext.traceId).toEqual(publishSpan.spanContext.traceId);
@@ -501,7 +506,7 @@ describe('amqplib instrumentation promise model', function () {
 
     describe('connection properties', () => {
         it('connect by url object', async () => {
-            const objConnection = await amqp.connect({ port: 22221 });
+            const objConnection = await amqp.connect({ port: TEST_RABBITMQ_PORT });
             const channel = await objConnection.createChannel();
             channel.sendToQueue(queueName, Buffer.from(msgPayload));
             await asyncConsume(channel, queueName, [null], {
@@ -512,8 +517,8 @@ describe('amqplib instrumentation promise model', function () {
 
             expect(memoryExporter.getFinishedSpans().length).toBe(2);
             memoryExporter.getFinishedSpans().forEach((s) => {
-                expect(s.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual('localhost');
-                expect(s.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(22221);
+                expect(s.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual(TEST_RABBITMQ_HOST);
+                expect(s.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(TEST_RABBITMQ_PORT);
             });
         });
 
