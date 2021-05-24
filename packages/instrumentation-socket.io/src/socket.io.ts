@@ -1,4 +1,4 @@
-import { context, setSpan, Span, SpanKind, SpanStatusCode, diag } from '@opentelemetry/api';
+import { context, setSpan, Span, SpanKind, SpanStatusCode, diag, getSpan } from '@opentelemetry/api';
 import {
     InstrumentationBase,
     InstrumentationNodeModuleFile,
@@ -13,6 +13,7 @@ import {
 } from '@opentelemetry/semantic-conventions';
 import { SocketIoInstrumentationConfig, Io, SocketIoInstrumentationAttributes } from './types';
 import { VERSION } from './version';
+import isPromise from 'is-promise';
 
 const reservedEvents = ['connect', 'connect_error', 'disconnect', 'disconnecting', 'newListener', 'removeListener'];
 
@@ -142,20 +143,42 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                             true
                         );
                     }
-                    try {
-                        return context.with(setSpan(context.active(), span), () =>
-                            originalListener.apply(this, arguments)
-                        );
-                    } catch (error: any) {
-                        span.setStatus({ message: error.message, code: SpanStatusCode.ERROR });
-                        throw error;
-                    } finally {
-                        span.end();
-                    }
+                    return context.with(setSpan(context.active(), span), () =>
+                        self.endSpan(() => originalListener.apply(this, arguments), span)
+                    );
                 };
                 return original.apply(this, [ev, wrappedListener]);
             };
         };
+    }
+
+    private endSpan(traced: () => any | Promise<any>, span: Span) {
+        try {
+            const result = traced();
+            if (isPromise(result)) {
+                return Promise.resolve(result)
+                    .catch((err) => {
+                        if (err) {
+                            if (typeof err === 'string') {
+                                span.setStatus({ code: SpanStatusCode.ERROR, message: err });
+                            } else {
+                                span.recordException(err);
+                                span.setStatus({ code: SpanStatusCode.ERROR, message: err?.message });
+                            }
+                        }
+                        throw err;
+                    })
+                    .finally(() => span.end());
+            } else {
+                span.end();
+                return result;
+            }
+        } catch (error: any) {
+            span.recordException(error);
+            span.setStatus({ code: SpanStatusCode.ERROR, message: error?.message });
+            span.end();
+            throw error;
+        }
     }
 
     private _patchEmit(moduleVersion: string) {
@@ -166,9 +189,11 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                     return original.apply(this, arguments);
                 }
                 const messagingSystem = 'socket.io';
+                const eventName = ev;
                 const attributes: any = {
                     [SemanticAttributes.MESSAGING_SYSTEM]: messagingSystem,
                     [SemanticAttributes.MESSAGING_DESTINATION_KIND]: MessagingDestinationKindValues.TOPIC,
+                    [SocketIoInstrumentationAttributes.SOCKET_IO_EVENT_NAME]: eventName,
                 };
 
                 let rooms = this.rooms || this._rooms || this.sockets?._rooms;
