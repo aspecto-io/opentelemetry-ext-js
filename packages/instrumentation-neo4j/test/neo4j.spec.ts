@@ -9,7 +9,7 @@ import { assertSpan } from './assert';
 import { normalizeResponse } from './test-utils';
 import { map, mergeMap } from 'rxjs/operators';
 import { concat } from 'rxjs';
-import { MalabiSpan } from 'malabi-extract';
+import { MalabiSpan, extract } from 'malabi-extract';
 
 const instrumentation = new Neo4jInstrumentation();
 instrumentation.enable();
@@ -35,9 +35,9 @@ describe('neo4j instrumentation', function () {
 
     const getSpans = () => memoryExporter.getFinishedSpans();
     const getSingleSpan = () => {
-        const spans = getSpans();
-        expect(spans.length).toBe(1);
-        return new MalabiSpan(spans[0]);
+        const malabiExtract = extract(getSpans());
+        expect(malabiExtract.length).toBe(1);
+        return malabiExtract.neo4j().first;
     };
 
     before(async () => {
