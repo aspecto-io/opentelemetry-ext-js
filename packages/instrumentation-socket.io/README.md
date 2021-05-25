@@ -36,7 +36,6 @@ socket.io instrumentation has few options available to choose from. You can set 
 | `emitHook` | `SocketIoHookFunction` | hook for adding custom attributes before socket.io emits the event |
 | `onHook` | `SocketIoHookFunction` | hook for adding custom attributes before the event listener (callback) is invoked |
 | `traceReserved` | `boolean` | set to true if you want to trace socket.io reserved events (see https://socket.io/docs/v4/emit-cheatsheet/#Reserved-events) |
-| `filterTransport` | `TransportInstrumentationConfig` | WIP set to TransportInstrumentationConfig if you want to filter out socket.io HTTP transport |
 ---
 
 This extension (and many others) was developed by [Aspecto](https://www.aspecto.io/) with ❤️
