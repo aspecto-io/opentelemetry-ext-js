@@ -209,6 +209,7 @@ describe('socket.io instrumentation', () => {
             const sio = new Server();
             sio.to(roomName).emit('broadcast', '1234');
             expectSpan('/[room] send', (span) => {
+                expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual('/');
                 expect(span.attributes[SocketIoInstrumentationAttributes.SOCKET_IO_ROOMS]).toEqual([roomName]);
             });
         });
@@ -217,6 +218,7 @@ describe('socket.io instrumentation', () => {
             const sio = new Server();
             sio.to('room1').to('room2').emit('broadcast', '1234');
             expectSpan('/[room1,room2] send', (span) => {
+                expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual('/');
                 expect(span.attributes[SocketIoInstrumentationAttributes.SOCKET_IO_ROOMS]).toEqual(['room1', 'room2']);
             });
         });
@@ -228,6 +230,7 @@ describe('socket.io instrumentation', () => {
             const namespace = io.of('/testing');
             namespace.emit('namespace');
             expectSpan('/testing send', (span) => {
+                expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual('/testing');
                 expect(span.attributes[SocketIoInstrumentationAttributes.SOCKET_IO_NAMESPACE]).toEqual('/testing');
             });
         });
@@ -238,6 +241,7 @@ describe('socket.io instrumentation', () => {
             const namespace = io.of('/testing');
             namespace.to(roomName).emit('broadcast', '1234');
             expectSpan('/testing[room] send', (span) => {
+                expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual('/testing');
                 expect(span.attributes[SocketIoInstrumentationAttributes.SOCKET_IO_ROOMS]).toEqual([roomName]);
                 expect(span.attributes[SocketIoInstrumentationAttributes.SOCKET_IO_NAMESPACE]).toEqual('/testing');
             });
@@ -248,6 +252,7 @@ describe('socket.io instrumentation', () => {
             const namespace = io.of('/testing');
             namespace.to('room1').to('room2').emit('broadcast', '1234');
             expectSpan('/testing[room1,room2] send', (span) => {
+                expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual('/testing');
                 expect(span.attributes[SocketIoInstrumentationAttributes.SOCKET_IO_NAMESPACE]).toEqual('/testing');
                 expect(span.attributes[SocketIoInstrumentationAttributes.SOCKET_IO_ROOMS]).toEqual(['room1', 'room2']);
             });

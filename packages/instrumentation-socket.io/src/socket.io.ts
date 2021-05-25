@@ -205,10 +205,10 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                 const namespace = this.name || this.adapter?.nsp?.name;
                 if (namespace) {
                     attributes[SocketIoInstrumentationAttributes.SOCKET_IO_NAMESPACE] = namespace;
+                    attributes[SemanticAttributes.MESSAGING_DESTINATION] = namespace;
                 }
                 const spanRooms = rooms.length ? `[${rooms.join()}]` : '';
-                const destination = (attributes[SemanticAttributes.MESSAGING_DESTINATION] = `${namespace}${spanRooms}`);
-                const span = self.tracer.startSpan(`${destination} send`, {
+                const span = self.tracer.startSpan(`${namespace}${spanRooms} send`, {
                     kind: SpanKind.PRODUCER,
                     attributes,
                 });
