@@ -269,7 +269,7 @@ describe('socket.io instrumentation', () => {
                                 expect(span.kind).toEqual(SpanKind.CONSUMER);
                                 expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
                                 expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual(
-                                    '/testing pong'
+                                    '/testing'
                                 );
                                 done();
                             });

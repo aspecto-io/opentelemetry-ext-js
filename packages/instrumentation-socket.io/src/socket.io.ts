@@ -123,14 +123,16 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                 }
                 const wrappedListener = function (...args: any[]) {
                     const eventName = ev;
+                    const defaultNamespace = '/';
                     const namespace = this.name || this.adapter?.nsp?.name;
-                    const destination = namespace === '/' ? eventName : `${namespace} ${eventName}`;
+                    const destination = namespace === defaultNamespace ? eventName : `${namespace} ${eventName}`;
                     const span: Span = self.tracer.startSpan(`${destination} ${MessagingOperationValues.RECEIVE}`, {
                         kind: SpanKind.CONSUMER,
                         attributes: {
                             [SemanticAttributes.MESSAGING_SYSTEM]: 'socket.io',
-                            [SemanticAttributes.MESSAGING_DESTINATION]: destination,
+                            [SemanticAttributes.MESSAGING_DESTINATION]: namespace,
                             [SemanticAttributes.MESSAGING_OPERATION]: MessagingOperationValues.RECEIVE,
+                            [SocketIoInstrumentationAttributes.SOCKET_IO_EVENT_NAME]: eventName,
                         },
                     });
 
@@ -200,7 +202,6 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                 if (rooms?.size) {
                     attributes[SocketIoInstrumentationAttributes.SOCKET_IO_ROOMS] = rooms = Array.from<string>(rooms);
                 }
-
                 const namespace = this.name || this.adapter?.nsp?.name;
                 if (namespace) {
                     attributes[SocketIoInstrumentationAttributes.SOCKET_IO_NAMESPACE] = namespace;
