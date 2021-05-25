@@ -177,7 +177,7 @@ describe('neo4j instrumentation', function () {
             ]);
             const spans = getSpans();
             expect(spans.length).toBe(3);
-            for (let span of spans.map(s => new MalabiSpan(s))) {
+            for (let span of spans.map((s) => new MalabiSpan(s))) {
                 assertSpan(span);
                 expect(span.dbOperation).toBe('MATCH');
             }
@@ -297,9 +297,7 @@ describe('neo4j instrumentation', function () {
             const span = getSingleSpan();
             assertSpan(span);
             expect(span.dbOperation).toBe('MATCH');
-            expect(span.dbStatement).toBe(
-                'MATCH (person:Person) RETURN person.name AS name'
-            );
+            expect(span.dbStatement).toBe('MATCH (person:Person) RETURN person.name AS name');
         });
 
         it('instruments session writeTransaction', async () => {
@@ -309,9 +307,7 @@ describe('neo4j instrumentation', function () {
             const span = getSingleSpan();
             assertSpan(span);
             expect(span.dbOperation).toBe('MATCH');
-            expect(span.dbStatement).toBe(
-                'MATCH (person:Person) RETURN person.name AS name'
-            );
+            expect(span.dbStatement).toBe('MATCH (person:Person) RETURN person.name AS name');
         });
 
         it('instruments explicit transactions', async () => {
@@ -401,9 +397,7 @@ describe('neo4j instrumentation', function () {
                     complete: () => {
                         const span = getSingleSpan();
                         assertSpan(span);
-                        expect(span.dbStatement).toBe(
-                            'MATCH (person:Person) RETURN person.name AS name'
-                        );
+                        expect(span.dbStatement).toBe('MATCH (person:Person) RETURN person.name AS name');
                         done();
                     },
                     error: () => {},
@@ -424,9 +418,7 @@ describe('neo4j instrumentation', function () {
                     complete: () => {
                         const span = getSingleSpan();
                         assertSpan(span);
-                        expect(span.dbStatement).toBe(
-                            'MATCH (person:Person) RETURN person.name AS name'
-                        );
+                        expect(span.dbStatement).toBe('MATCH (person:Person) RETURN person.name AS name');
                         done();
                     },
                     error: () => {},
