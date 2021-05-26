@@ -39,11 +39,18 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                     this._unwrap(moduleExports.Socket.prototype, 'on');
                 }
                 this._wrap(moduleExports.Socket.prototype, 'on', this._patchOn(moduleVersion));
+                if (isWrapped(moduleExports?.Socket?.prototype?.emit)) {
+                    this._unwrap(moduleExports.Socket.prototype, 'emit');
+                }
+                this._wrap(moduleExports.Socket.prototype, 'emit', this._patchEmit(moduleVersion));
                 return moduleExports;
             },
             (moduleExports) => {
                 if (isWrapped(moduleExports?.Socket?.prototype?.on)) {
                     this._unwrap(moduleExports.Socket.prototype, 'on');
+                }
+                if (isWrapped(moduleExports?.Socket?.prototype?.emit)) {
+                    this._unwrap(moduleExports.Socket.prototype, 'emit');
                 }
                 return moduleExports;
             }

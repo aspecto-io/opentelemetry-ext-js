@@ -149,7 +149,7 @@ describe('socket.io instrumentation', () => {
                                     expect(span.attributes['payload']).toEqual(JSON.stringify([data]));
                                     done();
                                 },
-                                2
+                                3
                             );
                         });
                     });
@@ -196,7 +196,7 @@ describe('socket.io instrumentation', () => {
                                     expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
                                     done();
                                 },
-                                2
+                                3
                             );
                         });
                     });
@@ -270,13 +270,37 @@ describe('socket.io instrumentation', () => {
                         sio.close();
                         //trace is created after the listener method is completed
                         setTimeout(() => {
-                            expectSpan('/testing pong receive', (span) => {
-                                expect(span.kind).toEqual(SpanKind.CONSUMER);
-                                expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
-                                expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual('/testing');
-                                done();
-                            });
+                            expectSpan(
+                                '/testing pong receive',
+                                (span) => {
+                                    expect(span.kind).toEqual(SpanKind.CONSUMER);
+                                    expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
+                                    expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual(
+                                        '/testing'
+                                    );
+                                    done();
+                                },
+                                2
+                            );
                         });
+                    });
+                });
+            });
+        });
+    });
+
+    describe('Socket', () => {
+        it('emit is instrumented', (done) => {
+            createServer((sio, port) => {
+                const client = io(`http://localhost:${port}`);
+                sio.on('connection', (socket: Socket) => {
+                    socket.emit('ping');
+                    client.close();
+                    sio.close();
+                    expectSpan(`/[${socket.id}] send`, (span) => {
+                        expect(span.kind).toEqual(SpanKind.PRODUCER);
+                        expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
+                        done();
                     });
                 });
             });
