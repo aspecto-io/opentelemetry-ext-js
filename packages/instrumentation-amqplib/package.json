@@ -55,6 +55,7 @@
         "lodash": "^4.17.21",
         "mocha": "^8.4.0",
         "opentelemetry-instrumentation-mocha": "^0.0.1-rc.0",
+        "opentelemetry-instrumentation-testing-utils": "^0.4.0",
         "sinon": "^9.2.4",
         "test-all-versions": "^5.0.1",
         "ts-node": "^9.1.1",
@@ -67,6 +68,7 @@
         "spec": "test/**/*.spec.ts",
         "require": [
             "ts-node/register",
+            "opentelemetryinstrumentation-testing-utils",
             "opentelemetry-instrumentation-mocha"
         ]
     }

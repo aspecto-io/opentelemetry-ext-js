@@ -4,10 +4,8 @@ process.env.AWS_SECRET_ACCESS_KEY = 'testing';
 
 import 'mocha';
 import { AwsInstrumentation, NormalizedRequest, NormalizedResponse } from '../src';
-import { InMemorySpanExporter, ReadableSpan, SimpleSpanProcessor, Span } from '@opentelemetry/tracing';
-import { context, SpanStatusCode, ContextManager, getSpan } from '@opentelemetry/api';
-import { NodeTracerProvider } from '@opentelemetry/node';
-import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
+import { ReadableSpan, Span } from '@opentelemetry/tracing';
+import { context, SpanStatusCode, ContextManager, getSpan, trace } from '@opentelemetry/api';
 import {
     MessagingDestinationKindValues,
     MessagingOperationValues,
@@ -16,6 +14,7 @@ import {
 import { AttributeNames } from '../src/enums';
 import expect from 'expect';
 import * as fs from 'fs';
+import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
 const region = 'us-east-1';
 
@@ -28,24 +27,13 @@ instrumentation.disable();
 import nock from 'nock';
 
 describe('instrumentation-aws-sdk-v3', () => {
-    const provider = new NodeTracerProvider();
-    const memoryExporter = new InMemorySpanExporter();
-    const spanProcessor = new SimpleSpanProcessor(memoryExporter);
-    provider.addSpanProcessor(spanProcessor);
-    instrumentation.setTracerProvider(provider);
-    let contextManager: ContextManager;
-
+    instrumentation.setTracerProvider(trace.getTracerProvider());
     const s3Client = new S3({ region });
-
     beforeEach(() => {
-        contextManager = new AsyncHooksContextManager();
-        context.setGlobalContextManager(contextManager.enable());
         instrumentation.enable();
     });
 
     afterEach(() => {
-        memoryExporter.reset();
-        contextManager.disable();
         instrumentation.disable();
     });
 
@@ -57,8 +45,8 @@ describe('instrumentation-aws-sdk-v3', () => {
 
             const params = { Bucket: 'ot-demo-test', Key: 'aws-ot-s3-test-object.txt' };
             const awsRes = await s3Client.putObject(params);
-            expect(memoryExporter.getFinishedSpans().length).toBe(1);
-            const [span] = memoryExporter.getFinishedSpans();
+            expect(getTestSpans().length).toBe(1);
+            const [span] = getTestSpans();
             expect(span.attributes[SemanticAttributes.RPC_SYSTEM]).toEqual('aws-api');
             expect(span.attributes[SemanticAttributes.RPC_METHOD]).toEqual('putObject');
             expect(span.attributes[SemanticAttributes.RPC_SERVICE]).toEqual('s3');
@@ -73,8 +61,8 @@ describe('instrumentation-aws-sdk-v3', () => {
 
             const params = { Bucket: 'ot-demo-test', Key: 'aws-ot-s3-test-object.txt' };
             s3Client.putObject(params, (err: any, data?: PutObjectCommandOutput) => {
-                expect(memoryExporter.getFinishedSpans().length).toBe(1);
-                const [span] = memoryExporter.getFinishedSpans();
+                expect(getTestSpans().length).toBe(1);
+                const [span] = getTestSpans();
                 expect(span.attributes[SemanticAttributes.RPC_SYSTEM]).toEqual('aws-api');
                 expect(span.attributes[SemanticAttributes.RPC_METHOD]).toEqual('putObject');
                 expect(span.attributes[SemanticAttributes.RPC_SERVICE]).toEqual('s3');
@@ -92,8 +80,8 @@ describe('instrumentation-aws-sdk-v3', () => {
             const params = { Bucket: 'ot-demo-test', Key: 'aws-ot-s3-test-object.txt' };
             const client = new S3Client({ region });
             await client.send(new PutObjectCommand(params));
-            expect(memoryExporter.getFinishedSpans().length).toBe(1);
-            const [span] = memoryExporter.getFinishedSpans();
+            expect(getTestSpans().length).toBe(1);
+            const [span] = getTestSpans();
             expect(span.attributes[SemanticAttributes.RPC_SYSTEM]).toEqual('aws-api');
             expect(span.attributes[SemanticAttributes.RPC_METHOD]).toEqual('putObject');
             expect(span.attributes[SemanticAttributes.RPC_SERVICE]).toEqual('s3');
@@ -111,8 +99,8 @@ describe('instrumentation-aws-sdk-v3', () => {
             try {
                 await s3Client.putObject(params);
             } catch {
-                expect(memoryExporter.getFinishedSpans().length).toBe(1);
-                const [span] = memoryExporter.getFinishedSpans();
+                expect(getTestSpans().length).toBe(1);
+                const [span] = getTestSpans();
 
                 // expect error attributes
                 expect(span.status.code).toEqual(SpanStatusCode.ERROR);
@@ -153,8 +141,8 @@ describe('instrumentation-aws-sdk-v3', () => {
 
                 const params = { Bucket: 'ot-demo-test', Key: 'aws-ot-s3-test-object.txt' };
                 const awsRes = await s3Client.putObject(params);
-                expect(memoryExporter.getFinishedSpans().length).toBe(1);
-                const [span] = memoryExporter.getFinishedSpans();
+                expect(getTestSpans().length).toBe(1);
+                const [span] = getTestSpans();
                 expect(span.attributes['attribute.from.request.hook']).toEqual(params.Bucket);
                 expect(span.attributes['attribute.from.response.hook']).toEqual('data from response hook');
             });
@@ -181,8 +169,8 @@ describe('instrumentation-aws-sdk-v3', () => {
 
                 const params = { Bucket: 'ot-demo-test', Key: 'aws-ot-s3-test-object.txt' };
                 const awsRes = await s3Client.putObject(params);
-                expect(memoryExporter.getFinishedSpans().length).toBe(1);
-                const [span] = memoryExporter.getFinishedSpans();
+                expect(getTestSpans().length).toBe(1);
+                const [span] = getTestSpans();
                 expect(span.attributes['attribute.from.request.hook']).toEqual(params.Bucket);
             });
         });
@@ -202,8 +190,8 @@ describe('instrumentation-aws-sdk-v3', () => {
 
                 const params = { Bucket: 'ot-demo-test', Key: 'aws-ot-s3-test-object.txt' };
                 const awsRes = await s3Client.putObject(params);
-                expect(memoryExporter.getFinishedSpans().length).toBe(1);
-                const [span] = memoryExporter.getFinishedSpans();
+                expect(getTestSpans().length).toBe(1);
+                const [span] = getTestSpans();
 
                 expect(span.attributes['module.version']).toMatch(/3.\d{1,4}\.\d{1,5}.*/);
             });
@@ -224,8 +212,8 @@ describe('instrumentation-aws-sdk-v3', () => {
                     MessageBody: 'payload example from v3 without batch',
                 };
                 const awsRes = await sqsClient.sendMessage(params);
-                expect(memoryExporter.getFinishedSpans().length).toBe(1);
-                const [span] = memoryExporter.getFinishedSpans();
+                expect(getTestSpans().length).toBe(1);
+                const [span] = getTestSpans();
 
                 // make sure we have the general aws attributes:
                 expect(span.attributes[SemanticAttributes.RPC_SYSTEM]).toEqual('aws-api');
@@ -252,8 +240,8 @@ describe('instrumentation-aws-sdk-v3', () => {
                     MaxNumberOfMessages: 3,
                 };
                 sqsClient.receiveMessage(params).then((res) => {
-                    expect(memoryExporter.getFinishedSpans().length).toBe(1);
-                    const [span] = memoryExporter.getFinishedSpans();
+                    expect(getTestSpans().length).toBe(1);
+                    const [span] = getTestSpans();
 
                     // make sure we have the general aws attributes:
                     expect(span.attributes[SemanticAttributes.RPC_SYSTEM]).toEqual('aws-api');

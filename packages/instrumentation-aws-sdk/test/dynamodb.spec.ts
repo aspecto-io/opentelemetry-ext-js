@@ -1,23 +1,16 @@
 import 'mocha';
 import { AwsInstrumentation } from '../src';
-import { NodeTracerProvider } from '@opentelemetry/node';
-import { context, ContextManager } from '@opentelemetry/api';
-import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/tracing';
-import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
+import { trace } from '@opentelemetry/api';
 import { mockAwsSend } from './testing-utils';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import expect from 'expect';
+import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
 const instrumentation = new AwsInstrumentation();
+instrumentation.setTracerProvider(trace.getTracerProvider());
 instrumentation.enable();
 import AWS, { AWSError } from 'aws-sdk';
 instrumentation.disable();
-
-const provider = new NodeTracerProvider();
-const memoryExporter = new InMemorySpanExporter();
-provider.addSpanProcessor(new SimpleSpanProcessor(memoryExporter));
-instrumentation.setTracerProvider(provider);
-let contextManager: ContextManager;
 
 const responseMockSuccess = {
     requestId: '0000000000000',
@@ -36,9 +29,6 @@ describe('dynamodb', () => {
     });
 
     beforeEach(() => {
-        contextManager = new AsyncHooksContextManager();
-        context.setGlobalContextManager(contextManager.enable());
-
         mockAwsSend(responseMockSuccess, {
             Items: [{ key1: 'val1' }, { key2: 'val2' }],
             Count: 2,
@@ -47,8 +37,6 @@ describe('dynamodb', () => {
     });
 
     afterEach(() => {
-        memoryExporter.reset();
-        contextManager.disable();
         instrumentation.disable();
     });
 
@@ -71,7 +59,7 @@ describe('dynamodb', () => {
                 },
             };
             dynamodb.query(params, (err: AWSError, data: AWS.DynamoDB.DocumentClient.QueryOutput) => {
-                const spans = memoryExporter.getFinishedSpans();
+                const spans = getTestSpans();
                 expect(spans.length).toStrictEqual(1);
                 const attrs = spans[0].attributes;
                 expect(attrs[SemanticAttributes.DB_SYSTEM]).toStrictEqual('dynamodb');

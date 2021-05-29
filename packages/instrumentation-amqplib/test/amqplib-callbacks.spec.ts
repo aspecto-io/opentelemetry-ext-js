@@ -1,32 +1,21 @@
 import 'mocha';
 import expect from 'expect';
-import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/tracing';
-import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
-import { NodeTracerProvider } from '@opentelemetry/node';
 import { AmqplibInstrumentation } from '../src';
 
 const instrumentation = new AmqplibInstrumentation();
 instrumentation.enable();
 import amqpCallback from 'amqplib/callback_api';
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { SpanKind, context } from '@opentelemetry/api';
+import { SpanKind, context, trace } from '@opentelemetry/api';
 import { asyncConsume } from './utils';
 import { TEST_RABBITMQ_HOST, TEST_RABBITMQ_PORT } from './config';
+import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
 const msgPayload = 'payload from test';
 const queueName = 'queue-name-from-unittest';
 
 describe('amqplib instrumentation callback model', function () {
-    const provider = new NodeTracerProvider({});
-    const memoryExporter = new InMemorySpanExporter();
-    provider.addSpanProcessor(new SimpleSpanProcessor(memoryExporter));
-    if (process.env.OTEL_EXPORTER_JAEGER_AGENT_HOST) {
-        provider.addSpanProcessor(
-            new SimpleSpanProcessor(new JaegerExporter({ serviceName: 'instrumentation-amqplib' }))
-        );
-    }
-    instrumentation.setTracerProvider(provider);
-    provider.register();
+    instrumentation.setTracerProvider(trace.getTracerProvider());
 
     const url = `amqp://${TEST_RABBITMQ_HOST}:${TEST_RABBITMQ_PORT}`;
     let conn: amqpCallback.Connection;
@@ -43,7 +32,6 @@ describe('amqplib instrumentation callback model', function () {
 
     let channel: amqpCallback.Channel;
     beforeEach((done) => {
-        memoryExporter.reset();
         instrumentation.enable();
         conn.createChannel(
             context.bind((err, c) => {
@@ -83,7 +71,7 @@ describe('amqplib instrumentation callback model', function () {
         asyncConsume(channel, queueName, [(msg) => expect(msg.content.toString()).toEqual(msgPayload)], {
             noAck: true,
         }).then(() => {
-            const [publishSpan, consumeSpan] = memoryExporter.getFinishedSpans();
+            const [publishSpan, consumeSpan] = getTestSpans();
 
             // assert publish span
             expect(publishSpan.kind).toEqual(SpanKind.PRODUCER);
@@ -126,7 +114,7 @@ describe('amqplib instrumentation callback model', function () {
 
         asyncConsume(channel, queueName, [(msg) => channel.ack(msg)]).then(() => {
             // assert consumed message span has ended
-            expect(memoryExporter.getFinishedSpans().length).toBe(2);
+            expect(getTestSpans().length).toBe(2);
             done();
         });
     });
@@ -138,9 +126,10 @@ describe('amqplib instrumentation callback model', function () {
             (msg) =>
                 setTimeout(() => {
                     channel.ack(msg);
-                    expect(memoryExporter.getFinishedSpans().length).toBe(2);
+                    expect(getTestSpans().length).toBe(2);
                     done();
                 }, 1),
         ]);
     });
 });
+
