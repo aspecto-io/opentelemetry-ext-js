@@ -24,9 +24,8 @@
     "scripts": {
         "build": "tsc",
         "prepare": "yarn run build",
-        "test": "mocha",
-        "test:jaeger": "OTEL_EXPORTER_JAEGER_AGENT_HOST=localhost mocha --require opentelemetry-instrumentation-testing",
-        "test:aspecto": "OTEL_EXPORTER_JAEGER_AGENT_HOST=localhost mocha --require @aspecto/instrumentation-testing-sdk",
+        "test": "mocha --require opentelemetry-instrumentation-testing-utils",
+        "test:jaeger": "OTEL_EXPORTER_JAEGER_AGENT_HOST=localhost mocha --require opentelemetry-instrumentation-testing-utils",
         "watch": "tsc -w",
         "version:update": "node ../../scripts/version-update.js",
         "test-all-versions": "tav",
