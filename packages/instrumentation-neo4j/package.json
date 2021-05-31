@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-neo4j",
-    "version": "0.4.2",
+    "version": "0.4.3",
     "description": "open telemetry instrumentation for the `neo4j` javascript driver",
     "keywords": [
         "neo4j",
