@@ -33,7 +33,8 @@
         "test:ci": "tav",
         "watch": "tsc -w",
         "version:update": "node ../../scripts/version-update.js",
-        "version": "yarn run version:update"
+        "version": "yarn run version:update",
+        "test:docker:run": "docker run -d -p7474:7474 -p11011:7687 -e NEO4J_AUTH=neo4j/test neo4j:4.2.3"
     },
     "bugs": {
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
