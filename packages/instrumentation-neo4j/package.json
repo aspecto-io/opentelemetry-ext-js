@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-neo4j",
-    "version": "0.4.2",
+    "version": "0.4.3",
     "description": "open telemetry instrumentation for the `neo4j` javascript driver",
     "keywords": [
         "neo4j",
@@ -31,6 +31,7 @@
         "prepare": "yarn run build",
         "test": "mocha",
         "test:ci": "tav",
+        "test:docker:run": "docker run -d -p7474:7474 -p11011:7687 -e NEO4J_AUTH=neo4j/test neo4j:4.2.3",
         "watch": "tsc -w",
         "version:update": "node ../../scripts/version-update.js",
         "version": "yarn run version:update"

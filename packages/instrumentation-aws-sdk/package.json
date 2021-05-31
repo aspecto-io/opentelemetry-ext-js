@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-aws-sdk",
-    "version": "0.4.3",
+    "version": "0.4.4",
     "description": "open telemetry instrumentation for the `aws-sdk` package",
     "keywords": [
         "aws",
