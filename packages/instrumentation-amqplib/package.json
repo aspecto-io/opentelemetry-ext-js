@@ -1,5 +1,5 @@
 {
-    "name": "opentelemetry-instrumentation-amqplib",
+"name": "opentelemetry-instrumentation-amqplib",
     "version": "0.4.2",
     "description": "open telemetry instrumentation for the `amqplib` package",
     "keywords": [
@@ -25,12 +25,13 @@
         "build": "tsc",
         "prepare": "yarn run build",
         "test": "mocha",
-        "test:jaeger": "OTEL_EXPORTER_JAEGER_AGENT_HOST=localhost mocha",
+        "test:jaeger": "OTEL_EXPORTER_JAEGER_AGENT_HOST=localhost mocha --require opentelemetry-instrumentation-testing",
+        "test:aspecto": "OTEL_EXPORTER_JAEGER_AGENT_HOST=localhost mocha --require @aspecto/instrumentation-testing-sdk",
         "watch": "tsc -w",
         "version:update": "node ../../scripts/version-update.js",
-        "version": "yarn run version:update",
         "test-all-versions": "tav",
         "test:ci": "yarn test-all-versions",
+        "version": "yarn run version:update",
         "test:docker:run": "docker run -d --hostname demo-amqplib-rabbit --name amqplib-unittests -p 22221:5672 rabbitmq:3"
     },
     "bugs": {
@@ -68,7 +69,6 @@
         "spec": "test/**/*.spec.ts",
         "require": [
             "ts-node/register",
-            "opentelemetryinstrumentation-testing-utils",
             "opentelemetry-instrumentation-mocha"
         ]
     }

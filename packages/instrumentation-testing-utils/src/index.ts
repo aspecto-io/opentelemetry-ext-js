@@ -2,6 +2,7 @@ import { registerInstrumentationTestingProvider } from './otel-default-provider'
 import { resetMemoryExporter } from './otel-provider-api';
 
 export * from './otel-provider-api';
+export * from './otel-default-provider';
 
 export const mochaHooks = {
     beforeEach(done) {
