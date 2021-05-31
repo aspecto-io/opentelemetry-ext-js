@@ -1,15 +1,14 @@
 import expect from 'expect';
-import { ReadableSpan } from '@opentelemetry/tracing';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
+import { SpanKind } from '@opentelemetry/api';
+import { MalabiSpan } from 'malabi-extract';
 
-export const assertSpan = (span: ReadableSpan) => {
+export const assertSpan = (span: MalabiSpan) => {
     expect(span.kind).toBe(SpanKind.CLIENT);
-    expect(span.status.code).toBe(SpanStatusCode.UNSET);
-    expect(span.attributes[SemanticAttributes.DB_SYSTEM]).toEqual('neo4j');
-    expect(span.attributes[SemanticAttributes.DB_NAME]).toEqual('neo4j');
-    expect(span.attributes[SemanticAttributes.DB_USER]).toEqual('neo4j');
-    expect(span.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual('localhost');
-    expect(span.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(11011);
-    expect(span.attributes[SemanticAttributes.NET_TRANSPORT]).toEqual('IP.TCP');
+    expect(span.hasError).toBeFalsy();
+    expect(span.dbSystem).toEqual('neo4j');
+    expect(span.dbName).toEqual('neo4j');
+    expect(span.dbUser).toEqual('neo4j');
+    expect(span.netPeerName).toEqual('localhost');
+    expect(span.netPeerPort).toEqual(11011);
+    expect(span.netTransport).toEqual('IP.TCP');
 };
