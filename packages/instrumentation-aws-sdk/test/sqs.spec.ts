@@ -47,7 +47,10 @@ describe('sqs', () => {
         });
 
         const createReceiveChildSpan = () => {
-            const childSpan = trace.getTracerProvider().getTracer('default').startSpan('child span of sqs.receiveMessage');
+            const childSpan = trace
+                .getTracerProvider()
+                .getTracer('default')
+                .startSpan('child span of sqs.receiveMessage');
             childSpan.end();
         };
 
@@ -138,7 +141,8 @@ describe('sqs', () => {
         let receivedMessages: Message[];
 
         const createProcessChildSpan = (msgContext: any) => {
-            const processChildSpan = trace.getTracerProvider()
+            const processChildSpan = trace
+                .getTracerProvider()
                 .getTracer('default')
                 .startSpan(`child span of sqs processing span of msg ${msgContext}`);
             processChildSpan.end();
@@ -329,8 +333,9 @@ describe('sqs', () => {
                 .promise();
             res.Messages.map((message) => 'some mapping to create child process spans');
 
-            const processSpans = getTestSpans()
-                .filter((s) => s.attributes[SemanticAttributes.MESSAGING_OPERATION] === 'process');
+            const processSpans = getTestSpans().filter(
+                (s) => s.attributes[SemanticAttributes.MESSAGING_OPERATION] === 'process'
+            );
             expect(processSpans.length).toBe(2);
             expect(processSpans[0].attributes['attribute from sqs process hook']).toBe('msg 1 payload');
             expect(processSpans[1].attributes['attribute from sqs process hook']).toBe('msg 2 payload');
@@ -347,8 +352,9 @@ describe('sqs', () => {
                 })
                 .promise();
             res.Messages.map((message) => 'some mapping to create child process spans');
-            const processSpans = getTestSpans()
-                .filter((s) => s.attributes[SemanticAttributes.MESSAGING_OPERATION] === 'process');
+            const processSpans = getTestSpans().filter(
+                (s) => s.attributes[SemanticAttributes.MESSAGING_OPERATION] === 'process'
+            );
             expect(processSpans.length).toBe(2);
         });
 
@@ -370,8 +376,9 @@ describe('sqs', () => {
                 .promise();
             res.Messages.map((message) => 'some mapping to create child process spans');
 
-            const processSpans = getTestSpans()
-                .filter((s) => s.attributes[SemanticAttributes.MESSAGING_OPERATION] === 'process');
+            const processSpans = getTestSpans().filter(
+                (s) => s.attributes[SemanticAttributes.MESSAGING_OPERATION] === 'process'
+            );
             expect(processSpans.length).toBe(2);
             expect(processSpans[0].status.code).toStrictEqual(SpanStatusCode.UNSET);
             expect(processSpans[1].status.code).toStrictEqual(SpanStatusCode.UNSET);

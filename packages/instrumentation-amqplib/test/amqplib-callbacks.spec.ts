@@ -132,4 +132,3 @@ describe('amqplib instrumentation callback model', function () {
         ]);
     });
 });
-
