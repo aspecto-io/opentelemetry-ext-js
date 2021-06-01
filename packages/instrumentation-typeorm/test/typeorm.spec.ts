@@ -1,11 +1,10 @@
 import 'mocha';
-import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan, Span } from '@opentelemetry/tracing';
-import { NodeTracerProvider } from '@opentelemetry/node';
-import { context, SpanStatusCode, ContextManager } from '@opentelemetry/api';
-import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
+import expect from 'expect';
+import { ReadableSpan, Span } from '@opentelemetry/tracing';
+import { trace, SpanStatusCode } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { TypeormInstrumentation } from '../src';
-import expect from 'expect';
+import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 const instrumentation = new TypeormInstrumentation();
 
 import * as typeorm from 'typeorm';
@@ -38,27 +37,18 @@ const setMocks = () => {
 };
 
 describe('instrumentation-typeorm', () => {
-    const provider = new NodeTracerProvider();
-    const memoryExporter = new InMemorySpanExporter();
-    const spanProcessor = new SimpleSpanProcessor(memoryExporter);
-    provider.addSpanProcessor(spanProcessor);
-    instrumentation.setTracerProvider(provider);
-    let contextManager: ContextManager;
+    instrumentation.setTracerProvider(trace.getTracerProvider());
 
     const getTypeormSpans = (): ReadableSpan[] => {
-        return memoryExporter.getFinishedSpans().filter((s) => s.attributes['component'] === 'typeorm');
+        return getTestSpans().filter((s) => s.attributes['component'] === 'typeorm');
     };
 
     beforeEach(() => {
-        contextManager = new AsyncHooksContextManager();
-        context.setGlobalContextManager(contextManager.enable());
         setMocks();
         instrumentation.enable();
     });
 
     afterEach(() => {
-        memoryExporter.reset();
-        contextManager.disable();
         instrumentation.disable();
     });
 
