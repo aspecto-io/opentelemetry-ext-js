@@ -1,15 +1,13 @@
 import 'mocha';
 import expect from 'expect';
-import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/tracing';
-import { NodeTracerProvider } from '@opentelemetry/node';
-import { context, setSpan, SpanStatusCode } from '@opentelemetry/api';
-import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
+import { context, ROOT_CONTEXT, setSpan, SpanStatusCode, trace } from '@opentelemetry/api';
 import { Neo4jInstrumentation } from '../src';
 import { assertSpan } from './assert';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { normalizeResponse } from './test-utils';
 import { map, mergeMap } from 'rxjs/operators';
 import { concat } from 'rxjs';
+import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
 const instrumentation = new Neo4jInstrumentation();
 instrumentation.enable();
@@ -26,16 +24,11 @@ import neo4j, { Driver } from 'neo4j-driver';
 
 describe('neo4j instrumentation', function () {
     this.timeout(10000);
-    const provider = new NodeTracerProvider();
-    const memoryExporter = new InMemorySpanExporter();
-    const spanProcessor = new SimpleSpanProcessor(memoryExporter);
-    provider.addSpanProcessor(spanProcessor);
-    instrumentation.setTracerProvider(provider);
+    instrumentation.setTracerProvider(trace.getTracerProvider());
     let driver: Driver;
 
-    const getSpans = () => memoryExporter.getFinishedSpans();
     const getSingleSpan = () => {
-        const spans = getSpans();
+        const spans = getTestSpans();
         expect(spans.length).toBe(1);
         return spans[0];
     };
@@ -67,13 +60,10 @@ describe('neo4j instrumentation', function () {
 
     beforeEach(async () => {
         await driver.session().run('MATCH (n) DETACH DELETE n');
-        context.setGlobalContextManager(new AsyncHooksContextManager().enable());
         instrumentation.enable();
     });
 
     afterEach(async () => {
-        memoryExporter.reset();
-        context.disable();
         instrumentation.disable();
         instrumentation.setConfig({});
     });
@@ -157,7 +147,7 @@ describe('neo4j instrumentation', function () {
                 .run('MATCH (n) RETURN n')
                 .subscribe({
                     onKeys: () => {
-                        const spans = getSpans();
+                        const spans = getTestSpans();
                         expect(spans.length).toBe(0);
                     },
                     onCompleted: () => {
@@ -175,7 +165,7 @@ describe('neo4j instrumentation', function () {
                 driver.session().run('MATCH (k) RETURN k'),
                 driver.session().run('MATCH (d) RETURN d'),
             ]);
-            const spans = getSpans();
+            const spans = getTestSpans();
             expect(spans.length).toBe(3);
             for (let span of spans) {
                 assertSpan(span);
@@ -203,9 +193,11 @@ describe('neo4j instrumentation', function () {
             instrumentation.disable();
             instrumentation.setConfig({ ignoreOrphanedSpans: true });
             instrumentation.enable();
-            await driver.session().run('CREATE (n:MyLabel) RETURN n');
+            await context.with(ROOT_CONTEXT, async () => {
+                await driver.session().run('CREATE (n:MyLabel) RETURN n');
+            });
 
-            const spans = getSpans();
+            const spans = getTestSpans();
             expect(spans.length).toBe(0);
         });
 
@@ -213,12 +205,12 @@ describe('neo4j instrumentation', function () {
             instrumentation.disable();
             instrumentation.setConfig({ ignoreOrphanedSpans: true });
             instrumentation.enable();
-            const parent = provider.getTracer('test-tracer').startSpan('main');
+            const parent = trace.getTracerProvider().getTracer('test-tracer').startSpan('main');
             await context.with(setSpan(context.active(), parent), () =>
                 driver.session().run('CREATE (n:MyLabel) RETURN n')
             );
 
-            const spans = getSpans();
+            const spans = getTestSpans();
             expect(spans.length).toBe(1);
         });
 
@@ -320,7 +312,7 @@ describe('neo4j instrumentation', function () {
             await txc.run('MERGE (adam:Person {name: "Adam"}) RETURN adam.name AS name');
             await txc.commit();
 
-            const spans = getSpans();
+            const spans = getTestSpans();
             expect(spans.length).toBe(2);
         });
     });
@@ -459,7 +451,7 @@ describe('neo4j instrumentation', function () {
                 .subscribe({
                     next: () => {},
                     complete: () => {
-                        const spans = getSpans();
+                        const spans = getTestSpans();
                         expect(spans.length).toBe(2);
                         done();
                     },
