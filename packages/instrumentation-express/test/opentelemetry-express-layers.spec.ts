@@ -1,18 +1,12 @@
 import 'mocha';
 import expect from 'expect';
-// initialize the provider before importing the instrumented package
-import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
-import { NodeTracerProvider } from '@opentelemetry/node';
-import { context, ContextManager, trace } from '@opentelemetry/api';
-const provider = new NodeTracerProvider();
+import { trace } from '@opentelemetry/api';
 
 import { ExpressInstrumentation } from '../src';
 import { AddressInfo } from 'net';
 import { ReadableSpan } from '@opentelemetry/tracing';
-import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 
 const instrumentation = new ExpressInstrumentation();
-instrumentation.setTracerProvider(provider);
 
 import axios from 'axios';
 import express from 'express';
