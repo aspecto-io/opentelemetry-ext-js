@@ -23,7 +23,7 @@ import { getExpressSpans } from './utils';
 import { ExpressRequestHookInformation } from '../src/types';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
-describe('aspecto-opentelemetry-express', () => {
+describe('opentelemetry-express', () => {
     instrumentation.setTracerProvider(trace.getTracerProvider());
     httpInstrumentation.setTracerProvider(trace.getTracerProvider());
 

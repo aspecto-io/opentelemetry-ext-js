@@ -30,7 +30,7 @@ import {
 } from './utils';
 import { describe } from 'mocha';
 
-describe('aspecto-opentelemetry-express-layers', () => {
+describe('opentelemetry-express-layers', () => {
     instrumentation.setTracerProvider(trace.getTracerProvider());
     let app: express.Application;
 
