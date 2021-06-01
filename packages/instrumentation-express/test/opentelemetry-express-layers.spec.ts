@@ -1,13 +1,14 @@
 import 'mocha';
 import expect from 'expect';
 // initialize the provider before importing the instrumented package
+import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 import { NodeTracerProvider } from '@opentelemetry/node';
-import { context, ContextManager } from '@opentelemetry/api';
+import { context, ContextManager, trace } from '@opentelemetry/api';
 const provider = new NodeTracerProvider();
 
 import { ExpressInstrumentation } from '../src';
 import { AddressInfo } from 'net';
-import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan } from '@opentelemetry/tracing';
+import { ReadableSpan } from '@opentelemetry/tracing';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 
 const instrumentation = new ExpressInstrumentation();
@@ -16,7 +17,6 @@ instrumentation.setTracerProvider(provider);
 import axios from 'axios';
 import express from 'express';
 import * as http from 'http';
-import { ExpressInstrumentationAttributes } from '../src/types';
 import {
     errorMiddleware,
     expectRouteAttributes,
@@ -31,10 +31,7 @@ import {
 import { describe } from 'mocha';
 
 describe('aspecto-opentelemetry-express-layers', () => {
-    const memoryExporter = new InMemorySpanExporter();
-    const spanProcessor = new SimpleSpanProcessor(memoryExporter);
-    provider.addSpanProcessor(spanProcessor);
-    let contextManager: AsyncHooksContextManager;
+    instrumentation.setTracerProvider(trace.getTracerProvider());
     let app: express.Application;
 
     const sendRequest = async (urlPath: string): Promise<ReadableSpan> => {
@@ -52,7 +49,7 @@ describe('aspecto-opentelemetry-express-layers', () => {
                     }
 
                     server.close();
-                    resolve(getExpressSpans(memoryExporter)[0]);
+                    resolve(getExpressSpans()[0]);
                 } catch (err) {
                     console.log(err);
                 }
@@ -61,17 +58,11 @@ describe('aspecto-opentelemetry-express-layers', () => {
     };
 
     before(() => {
-        contextManager = new AsyncHooksContextManager();
-        context.setGlobalContextManager(contextManager.enable() as unknown as ContextManager);
         instrumentation.enable();
     });
 
     beforeEach(() => {
         app = express();
-    });
-
-    afterEach(() => {
-        memoryExporter.reset();
     });
 
     it('no routes registered', async () => {
