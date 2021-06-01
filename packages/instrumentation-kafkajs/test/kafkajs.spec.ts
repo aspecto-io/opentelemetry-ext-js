@@ -1,11 +1,10 @@
 import 'mocha';
-import { KafkaJsInstrumentation, KafkaJsInstrumentationConfig } from '../src';
-import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan } from '@opentelemetry/tracing';
-import { NodeTracerProvider } from '@opentelemetry/node';
-import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
-import { context, propagation, SpanKind, SpanStatusCode, Span, ContextManager } from '@opentelemetry/api';
-import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import expect from 'expect';
+import { KafkaJsInstrumentation, KafkaJsInstrumentationConfig } from '../src';
+import { ReadableSpan } from '@opentelemetry/tracing';
+import { trace, propagation, SpanKind, SpanStatusCode, Span } from '@opentelemetry/api';
+import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
 const instrumentation = new KafkaJsInstrumentation();
 
@@ -26,13 +25,9 @@ import {
 import { DummyPropagation } from './DummyPropagation';
 
 describe('instrumentation-kafkajs', () => {
-    const provider = new NodeTracerProvider();
-    const memoryExporter = new InMemorySpanExporter();
-    const spanProcessor = new SimpleSpanProcessor(memoryExporter);
+    instrumentation.setTracerProvider(trace.getTracerProvider());
+
     propagation.setGlobalPropagator(new DummyPropagation());
-    provider.addSpanProcessor(spanProcessor);
-    instrumentation.setTracerProvider(provider);
-    let contextManager: ContextManager;
 
     const kafka = new Kafka({
         clientId: 'unit-tests',
@@ -78,13 +73,6 @@ describe('instrumentation-kafkajs', () => {
 
     beforeEach(() => {
         messagesSent = [];
-        contextManager = new AsyncHooksContextManager().enable();
-        context.setGlobalContextManager(contextManager);
-    });
-
-    afterEach(() => {
-        memoryExporter.reset();
-        contextManager.disable();
     });
 
     describe('producer', () => {
@@ -124,7 +112,7 @@ describe('instrumentation-kafkajs', () => {
                 expect(res.length).toBe(1);
                 expect(res[0].topicName).toStrictEqual('topic-name-1');
 
-                const spans = memoryExporter.getFinishedSpans();
+                const spans = getTestSpans();
                 expect(spans.length).toBe(1);
                 const span = spans[0];
                 expect(span.kind).toStrictEqual(SpanKind.PRODUCER);
@@ -153,7 +141,7 @@ describe('instrumentation-kafkajs', () => {
                     ],
                 });
 
-                const spans = memoryExporter.getFinishedSpans();
+                const spans = getTestSpans();
                 expect(spans.length).toBe(2);
                 expect(spans[0].name).toStrictEqual('topic-name-1');
                 expect(spans[1].name).toStrictEqual('topic-name-1');
@@ -188,7 +176,7 @@ describe('instrumentation-kafkajs', () => {
                     ],
                 });
 
-                const spans = memoryExporter.getFinishedSpans();
+                const spans = getTestSpans();
                 expect(spans.length).toBe(3);
                 expect(spans[0].name).toStrictEqual('topic-name-1');
                 expect(spans[1].name).toStrictEqual('topic-name-1');
@@ -223,7 +211,7 @@ describe('instrumentation-kafkajs', () => {
                     });
                 } catch (err) {}
 
-                const spans = memoryExporter.getFinishedSpans();
+                const spans = getTestSpans();
                 expect(spans.length).toBe(1);
                 const span = spans[0];
                 expect(span.status.code).toStrictEqual(SpanStatusCode.ERROR);
@@ -245,7 +233,7 @@ describe('instrumentation-kafkajs', () => {
                     });
                 } catch (err) {}
 
-                const spans = memoryExporter.getFinishedSpans();
+                const spans = getTestSpans();
                 expect(spans.length).toBe(2);
                 spans.forEach((span) => {
                     expect(span.status.code).toStrictEqual(SpanStatusCode.ERROR);
@@ -280,7 +268,7 @@ describe('instrumentation-kafkajs', () => {
                     });
                 } catch (err) {}
 
-                const spans = memoryExporter.getFinishedSpans();
+                const spans = getTestSpans();
                 expect(spans.length).toBe(3);
                 spans.forEach((span) => {
                     expect(span.status.code).toStrictEqual(SpanStatusCode.ERROR);
@@ -314,7 +302,7 @@ describe('instrumentation-kafkajs', () => {
                     ],
                 });
 
-                const spans = memoryExporter.getFinishedSpans();
+                const spans = getTestSpans();
                 expect(spans.length).toBe(1);
                 const span = spans[0];
                 expect(span.attributes['attribute-from-hook']).toStrictEqual('testing message content');
@@ -346,7 +334,7 @@ describe('instrumentation-kafkajs', () => {
                     ],
                 });
 
-                const spans = memoryExporter.getFinishedSpans();
+                const spans = getTestSpans();
                 expect(spans.length).toBe(1);
                 const span = spans[0];
                 expect(span.status.code).toStrictEqual(SpanStatusCode.UNSET);
@@ -370,7 +358,7 @@ describe('instrumentation-kafkajs', () => {
                     messages: [{ value: 'testing message content' }],
                 });
 
-                const spans = memoryExporter.getFinishedSpans();
+                const spans = getTestSpans();
                 expect(spans.length).toBe(1);
                 const span = spans[0];
                 expect(span.attributes['module.version']).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
@@ -429,7 +417,7 @@ describe('instrumentation-kafkajs', () => {
                 const payload: EachMessagePayload = createEachMessagePayload();
                 await runConfig.eachMessage(payload);
 
-                const spans = memoryExporter.getFinishedSpans();
+                const spans = getTestSpans();
                 expect(spans.length).toBe(1);
                 const span = spans[0];
                 expect(span.name).toStrictEqual('topic-name-1');
@@ -455,7 +443,7 @@ describe('instrumentation-kafkajs', () => {
                 const payload: EachMessagePayload = createEachMessagePayload();
                 await runConfig.eachMessage(payload);
 
-                const spans = memoryExporter.getFinishedSpans();
+                const spans = getTestSpans();
                 expect(spans.length).toBe(1);
             });
         });
@@ -482,7 +470,7 @@ describe('instrumentation-kafkajs', () => {
                 const payload: EachMessagePayload = createEachMessagePayload();
                 await runConfig.eachMessage(payload);
 
-                const spans = memoryExporter.getFinishedSpans();
+                const spans = getTestSpans();
                 expect(spans.length).toBe(1);
                 const span = spans[0];
                 expect(span.attributes['attribute key from hook']).toStrictEqual(payload.message.value.toString());
@@ -511,7 +499,7 @@ describe('instrumentation-kafkajs', () => {
                 const payload: EachMessagePayload = createEachMessagePayload();
                 await runConfig.eachMessage(payload);
 
-                const spans = memoryExporter.getFinishedSpans();
+                const spans = getTestSpans();
                 // span should still be created
                 expect(spans.length).toBe(1);
             });
@@ -543,7 +531,7 @@ describe('instrumentation-kafkajs', () => {
                 }
                 expect(exception).toEqual(errorToThrow);
 
-                const spans = memoryExporter.getFinishedSpans();
+                const spans = getTestSpans();
                 expect(spans.length).toBe(1);
                 const span = spans[0];
                 expect(span.status.code).toStrictEqual(SpanStatusCode.ERROR);
@@ -569,7 +557,7 @@ describe('instrumentation-kafkajs', () => {
                 }
                 expect(exception).toEqual(objectToThrow);
 
-                const spans = memoryExporter.getFinishedSpans();
+                const spans = getTestSpans();
                 expect(spans.length).toBe(1);
                 const span = spans[0];
                 expect(span.status.code).toStrictEqual(SpanStatusCode.ERROR);
@@ -592,7 +580,7 @@ describe('instrumentation-kafkajs', () => {
                 }
                 expect(exception).toBeUndefined();
 
-                const spans = memoryExporter.getFinishedSpans();
+                const spans = getTestSpans();
                 expect(spans.length).toBe(1);
                 const span = spans[0];
                 expect(span.status.code).toStrictEqual(SpanStatusCode.ERROR);
@@ -616,7 +604,7 @@ describe('instrumentation-kafkajs', () => {
                 const payload: EachBatchPayload = createEachBatchPayload();
                 await runConfig.eachBatch(payload);
 
-                const spans = memoryExporter.getFinishedSpans();
+                const spans = getTestSpans();
                 expect(spans.length).toBe(3);
                 spans.forEach((span) => {
                     expect(span.name).toStrictEqual('topic-name-1');
@@ -653,7 +641,7 @@ describe('instrumentation-kafkajs', () => {
                 const payload: EachBatchPayload = createEachBatchPayload();
                 await runConfig.eachBatch(payload);
 
-                const spans = memoryExporter.getFinishedSpans();
+                const spans = getTestSpans();
                 expect(spans.length).toBe(3);
             });
         });
@@ -678,7 +666,7 @@ describe('instrumentation-kafkajs', () => {
                 const payload: EachMessagePayload = createEachMessagePayload();
                 await runConfig.eachMessage(payload);
 
-                const spans = memoryExporter.getFinishedSpans();
+                const spans = getTestSpans();
                 expect(spans.length).toBe(1);
                 const span = spans[0];
                 expect(span.attributes['module.version']).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
@@ -726,7 +714,7 @@ describe('instrumentation-kafkajs', () => {
             };
             await runConfig.eachMessage(consumerPayload);
 
-            const spans = memoryExporter.getFinishedSpans();
+            const spans = getTestSpans();
             expect(spans.length).toBe(2);
             const [producerSpan, consumerSpan] = spans;
             expect(consumerSpan.spanContext.traceId).toStrictEqual(producerSpan.spanContext.traceId);
@@ -768,7 +756,7 @@ describe('instrumentation-kafkajs', () => {
             } as EachBatchPayload;
             await runConfig.eachBatch(consumerPayload);
 
-            const spans = memoryExporter.getFinishedSpans();
+            const spans = getTestSpans();
             expect(spans.length).toBe(3);
             const [producerSpan, receivingSpan, processingSpan] = spans;
 
