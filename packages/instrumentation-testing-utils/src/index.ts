@@ -16,12 +16,12 @@ export async function mochaGlobalSetup() {
     // ${root instrumentation package path}/node_modules/.bin/mocha
     // this is not very robust, might need to refactor in the future
     let serviceName = 'unknown_instrumentation';
-    if(process.env.OTEL_SERVICE_NAME) {
+    if (process.env.OTEL_SERVICE_NAME) {
         serviceName = process.env.OTEL_SERVICE_NAME;
     } else {
-        try { 
+        try {
             serviceName = require(process.argv[1] + '/../../../package.json').name;
-        } catch {}    
+        } catch {}
     }
     registerInstrumentationTestingProvider(serviceName);
 }

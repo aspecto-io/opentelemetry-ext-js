@@ -13,7 +13,6 @@ const instrumentation = new SequelizeInstrumentation();
 import * as sequelize from 'sequelize';
 
 describe('instrumentation-sequelize', () => {
-
     const getSequelizeSpans = (): ReadableSpan[] => {
         return getTestSpans().filter((s) => s.attributes['component'] === 'sequelize');
     };

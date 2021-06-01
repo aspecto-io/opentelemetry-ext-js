@@ -25,7 +25,6 @@ import {
 import { DummyPropagation } from './DummyPropagation';
 
 describe('instrumentation-kafkajs', () => {
-
     propagation.setGlobalPropagator(new DummyPropagation());
 
     const kafka = new Kafka({

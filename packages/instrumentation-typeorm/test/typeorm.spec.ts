@@ -37,7 +37,6 @@ const setMocks = () => {
 };
 
 describe('instrumentation-typeorm', () => {
-
     const getTypeormSpans = (): ReadableSpan[] => {
         return getTestSpans().filter((s) => s.attributes['component'] === 'typeorm');
     };

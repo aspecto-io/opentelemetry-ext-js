@@ -13,7 +13,6 @@ import AWS from 'aws-sdk';
 instrumentation.disable();
 
 describe('instrumentation-aws-sdk-v2', () => {
-
     const responseMockSuccess = {
         requestId: '0000000000000',
         error: null,

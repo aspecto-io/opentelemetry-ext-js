@@ -12,7 +12,6 @@ const esNock = nock(esMockUrl);
 const client = new Client({ node: esMockUrl });
 
 describe('elasticsearch instrumentation', () => {
-
     before(() => {
         instrumentation.enable();
     });

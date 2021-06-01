@@ -15,7 +15,6 @@ import { assertSpan, getStatement } from './asserts';
 
 // Please run mongodb in the background: docker run -d -p 27017:27017 -v ~/data:/data/db mongo
 describe('mongoose instrumentation', () => {
-
     before(async () => {
         await mongoose.connect('mongodb://localhost:27017', {
             useNewUrlParser: true,
