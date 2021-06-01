@@ -1,11 +1,9 @@
 import 'mocha';
 import expect from 'expect';
-import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/tracing';
-import { NodeTracerProvider } from '@opentelemetry/node';
-import { context } from '@opentelemetry/api';
-import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
+import { trace, context, ROOT_CONTEXT } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { MongooseInstrumentation } from '../src';
+import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
 const instrumentation = new MongooseInstrumentation({
     dbStatementSerializer: (_operation: string, payload) => JSON.stringify(payload),
@@ -14,17 +12,10 @@ const instrumentation = new MongooseInstrumentation({
 import mongoose from 'mongoose';
 import User, { IUser, loadUsers } from './user';
 import { assertSpan, getStatement } from './asserts';
-import { describe } from 'mocha';
 
 // Please run mongodb in the background: docker run -d -p 27017:27017 -v ~/data:/data/db mongo
 describe('mongoose instrumentation', () => {
-    const provider = new NodeTracerProvider();
-    const memoryExporter = new InMemorySpanExporter();
-    const spanProcessor = new SimpleSpanProcessor(memoryExporter);
-    provider.addSpanProcessor(spanProcessor);
-    instrumentation.setTracerProvider(provider);
-
-    const getSpans = () => memoryExporter.getFinishedSpans();
+    instrumentation.setTracerProvider(trace.getTracerProvider());
 
     before(async () => {
         await mongoose.connect('mongodb://localhost:27017', {
@@ -40,15 +31,12 @@ describe('mongoose instrumentation', () => {
     });
 
     beforeEach(async () => {
-        context.setGlobalContextManager(new AsyncHooksContextManager().enable());
         instrumentation.enable();
         await loadUsers();
         await User.createIndexes();
     });
 
     afterEach(async () => {
-        memoryExporter.reset();
-        context.disable();
         instrumentation.disable();
         await User.collection.drop().catch();
     });
@@ -63,7 +51,7 @@ describe('mongoose instrumentation', () => {
 
         await user.save();
 
-        const spans = getSpans();
+        const spans = getTestSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('save');
@@ -80,7 +68,7 @@ describe('mongoose instrumentation', () => {
         const user: IUser = new User(document);
 
         user.save(function () {
-            const spans = getSpans();
+            const spans = getTestSpans();
 
             expect(spans.length).toBe(1);
             assertSpan(spans[0]);
@@ -94,7 +82,7 @@ describe('mongoose instrumentation', () => {
     it('instrumenting find operation', async () => {
         await User.find({ id: '_test' });
 
-        const spans = getSpans();
+        const spans = getTestSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('find');
@@ -105,7 +93,7 @@ describe('mongoose instrumentation', () => {
     it('instrumenting multiple find operations', async () => {
         await Promise.all([User.find({ id: '_test1' }), User.find({ id: '_test2' })]);
 
-        const spans = getSpans();
+        const spans = getTestSpans();
         expect(spans.length).toBe(2);
         assertSpan(spans[0]);
         assertSpan(spans[1]);
@@ -118,7 +106,7 @@ describe('mongoose instrumentation', () => {
     it('instrumenting find operation with chaining structures', async () => {
         await User.find({ id: '_test' }).skip(1).limit(2).sort({ email: 'asc' });
 
-        const spans = getSpans();
+        const spans = getTestSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('find');
@@ -131,7 +119,7 @@ describe('mongoose instrumentation', () => {
         const user = await User.findOne({ email: 'john.doe@example.com' });
         await user!.remove();
 
-        const spans = getSpans();
+        const spans = getTestSpans();
         expect(spans.length).toBe(2);
         assertSpan(spans[1]);
         expect(spans[1].attributes[SemanticAttributes.DB_OPERATION]).toBe('remove');
@@ -140,7 +128,7 @@ describe('mongoose instrumentation', () => {
     it('instrumenting remove operation with callbacks [deprecated]', (done) => {
         User.findOne({ email: 'john.doe@example.com' }).then((user) =>
             user!.remove({ overwrite: true }, () => {
-                const spans = getSpans();
+                const spans = getTestSpans();
                 expect(spans.length).toBe(2);
                 assertSpan(spans[1]);
                 expect(spans[1].attributes[SemanticAttributes.DB_OPERATION]).toBe('remove');
@@ -153,7 +141,7 @@ describe('mongoose instrumentation', () => {
     it('instrumenting deleteOne operation', async () => {
         await User.deleteOne({ email: 'john.doe@example.com' });
 
-        const spans = getSpans();
+        const spans = getTestSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('deleteOne');
@@ -163,7 +151,7 @@ describe('mongoose instrumentation', () => {
         const user = await User.findOne({ email: 'john.doe@example.com' });
         await user!.updateOne({ $inc: { age: 1 } }, { skip: 0 });
 
-        const spans = getSpans();
+        const spans = getTestSpans();
         expect(spans.length).toBe(2);
         assertSpan(spans[1]);
         expect(spans[1].attributes[SemanticAttributes.DB_OPERATION]).toBe('updateOne');
@@ -177,7 +165,7 @@ describe('mongoose instrumentation', () => {
     it('instrumenting updateOne operation', async () => {
         await User.updateOne({ email: 'john.doe@example.com' }, { $inc: { age: 1 } }, { skip: 0 });
 
-        const spans = getSpans();
+        const spans = getTestSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('updateOne');
@@ -191,7 +179,7 @@ describe('mongoose instrumentation', () => {
     it('instrumenting count operation [deprecated]', async () => {
         await User.count({});
 
-        const spans = getSpans();
+        const spans = getTestSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('count');
@@ -203,7 +191,7 @@ describe('mongoose instrumentation', () => {
     it('instrumenting countDocuments operation', async () => {
         await User.countDocuments({ email: 'john.doe@example.com' });
 
-        const spans = getSpans();
+        const spans = getTestSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('countDocuments');
@@ -215,7 +203,7 @@ describe('mongoose instrumentation', () => {
     it('instrumenting estimatedDocumentCount operation', async () => {
         await User.estimatedDocumentCount();
 
-        const spans = getSpans();
+        const spans = getTestSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('estimatedDocumentCount');
@@ -227,7 +215,7 @@ describe('mongoose instrumentation', () => {
     it('instrumenting deleteMany operation', async () => {
         await User.deleteMany();
 
-        const spans = getSpans();
+        const spans = getTestSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('deleteMany');
@@ -239,7 +227,7 @@ describe('mongoose instrumentation', () => {
     it('instrumenting findOne operation', async () => {
         await User.findOne({ email: 'john.doe@example.com' });
 
-        const spans = getSpans();
+        const spans = getTestSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('findOne');
@@ -251,7 +239,7 @@ describe('mongoose instrumentation', () => {
     it('instrumenting update operation [deprecated]', async () => {
         await User.update({ email: 'john.doe@example.com' }, { email: 'john.doe2@example.com' });
 
-        const spans = getSpans();
+        const spans = getTestSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('update');
@@ -264,7 +252,7 @@ describe('mongoose instrumentation', () => {
     it('instrumenting updateOne operation', async () => {
         await User.updateOne({ email: 'john.doe@example.com' }, { age: 55 });
 
-        const spans = getSpans();
+        const spans = getTestSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('updateOne');
@@ -277,7 +265,7 @@ describe('mongoose instrumentation', () => {
     it('instrumenting updateMany operation', async () => {
         await User.updateMany({ age: 18 }, { isDeleted: true });
 
-        const spans = getSpans();
+        const spans = getTestSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('updateMany');
@@ -290,7 +278,7 @@ describe('mongoose instrumentation', () => {
     it('instrumenting findOneAndDelete operation', async () => {
         await User.findOneAndDelete({ email: 'john.doe@example.com' });
 
-        const spans = getSpans();
+        const spans = getTestSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('findOneAndDelete');
@@ -302,7 +290,7 @@ describe('mongoose instrumentation', () => {
     it('instrumenting findOneAndUpdate operation', async () => {
         await User.findOneAndUpdate({ email: 'john.doe@example.com' }, { isUpdated: true });
 
-        const spans = getSpans();
+        const spans = getTestSpans();
         expect(spans.length).toBe(2);
         assertSpan(spans[0]);
         assertSpan(spans[1]);
@@ -317,7 +305,7 @@ describe('mongoose instrumentation', () => {
     it('instrumenting findOneAndRemove operation', async () => {
         await User.findOneAndRemove({ email: 'john.doe@example.com' });
 
-        const spans = getSpans();
+        const spans = getTestSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('findOneAndRemove');
@@ -330,7 +318,7 @@ describe('mongoose instrumentation', () => {
         const document = { firstName: 'John', lastName: 'Doe', email: 'john.doe+1@example.com' };
         await User.create(document);
 
-        const spans = getSpans();
+        const spans = getTestSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('save');
@@ -345,7 +333,7 @@ describe('mongoose instrumentation', () => {
             { $group: { _id: 'John', total: { $sum: '$amount' } } },
         ]);
 
-        const spans = getSpans();
+        const spans = getTestSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('aggregate');
@@ -360,7 +348,7 @@ describe('mongoose instrumentation', () => {
         User.aggregate(
             [{ $match: { firstName: 'John' } }, { $group: { _id: 'John', total: { $sum: '$amount' } } }],
             () => {
-                const spans = getSpans();
+                const spans = getTestSpans();
                 expect(spans.length).toBe(1);
                 assertSpan(spans[0]);
                 expect(spans[0].attributes[SemanticAttributes.DB_OPERATION]).toBe('aggregate');
@@ -377,7 +365,7 @@ describe('mongoose instrumentation', () => {
     it('instrumenting combined operation with async/await', async () => {
         await User.find({ id: '_test' }).skip(1).limit(2).sort({ email: 'asc' });
 
-        const spans = getSpans();
+        const spans = getTestSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         const statement = getStatement(spans[0]);
@@ -391,7 +379,7 @@ describe('mongoose instrumentation', () => {
         instrumentation.enable();
         await User.find({ id: '_test' });
 
-        const spans = getSpans();
+        const spans = getTestSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
         expect(spans[0].attributes[SemanticAttributes.DB_STATEMENT]).toBe(undefined);
@@ -409,7 +397,7 @@ describe('mongoose instrumentation', () => {
 
         it('responseHook works with async/await in exec patch', async () => {
             await User.deleteOne({ email: 'john.doe@example.com' });
-            const spans = getSpans();
+            const spans = getTestSpans();
             expect(spans.length).toBe(1);
             assertSpan(spans[0]);
             expect(JSON.parse(spans[0].attributes[RESPONSE] as string)).toEqual({ n: 1, ok: 1, deletedCount: 1 });
@@ -417,7 +405,7 @@ describe('mongoose instrumentation', () => {
 
         it('responseHook works with callback in exec patch', (done) => {
             User.deleteOne({ email: 'john.doe@example.com' }, { lean: 1 }, () => {
-                const spans = getSpans();
+                const spans = getTestSpans();
                 expect(spans.length).toBe(1);
                 assertSpan(spans[0]);
                 expect(JSON.parse(spans[0].attributes[RESPONSE] as string)).toEqual({
@@ -437,7 +425,7 @@ describe('mongoose instrumentation', () => {
             };
             const user: IUser = new User(document);
             const createdUser = await user.save();
-            const spans = getSpans();
+            const spans = getTestSpans();
             expect(spans.length).toBe(1);
             assertSpan(spans[0]);
             expect(spans[0].attributes[RESPONSE]).toEqual(JSON.stringify(createdUser));
@@ -451,7 +439,7 @@ describe('mongoose instrumentation', () => {
             };
             const user: IUser = new User(document);
             user.save((_err, createdUser) => {
-                const spans = getSpans();
+                const spans = getTestSpans();
                 expect(spans.length).toBe(1);
                 assertSpan(spans[0]);
                 expect(spans[0].attributes[RESPONSE]).toEqual(JSON.stringify(createdUser));
@@ -465,7 +453,7 @@ describe('mongoose instrumentation', () => {
                 { $group: { _id: 'John', total: { $sum: '$amount' } } },
             ]);
 
-            const spans = getSpans();
+            const spans = getTestSpans();
             expect(spans.length).toBe(1);
             assertSpan(spans[0]);
             expect(JSON.parse(spans[0].attributes[RESPONSE] as string)).toEqual([{ _id: 'John', total: 0 }]);
@@ -475,7 +463,7 @@ describe('mongoose instrumentation', () => {
             User.aggregate(
                 [{ $match: { firstName: 'John' } }, { $group: { _id: 'John', total: { $sum: '$amount' } } }],
                 () => {
-                    const spans = getSpans();
+                    const spans = getTestSpans();
                     expect(spans.length).toBe(1);
                     assertSpan(spans[0]);
                     expect(JSON.parse(spans[0].attributes[RESPONSE] as string)).toEqual([{ _id: 'John', total: 0 }]);
@@ -493,7 +481,7 @@ describe('mongoose instrumentation', () => {
             });
             instrumentation.enable();
             await User.deleteOne({ email: 'john.doe@example.com' });
-            const spans = getSpans();
+            const spans = getTestSpans();
             expect(spans.length).toBe(1);
             assertSpan(spans[0]);
             expect(spans[0].attributes[RESPONSE]).toBe(undefined);
@@ -512,7 +500,7 @@ describe('mongoose instrumentation', () => {
 
         it('moduleVersionAttributeName works with exec patch', async () => {
             await User.deleteOne({ email: 'john.doe@example.com' });
-            const spans = getSpans();
+            const spans = getTestSpans();
             expect(spans.length).toBe(1);
             assertSpan(spans[0]);
             expect(spans[0].attributes[VERSION_ATTR]).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
@@ -526,7 +514,7 @@ describe('mongoose instrumentation', () => {
             };
             const user: IUser = new User(document);
             await user.save();
-            const spans = getSpans();
+            const spans = getTestSpans();
             expect(spans.length).toBe(1);
             assertSpan(spans[0]);
             expect(spans[0].attributes[VERSION_ATTR]).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
@@ -538,7 +526,7 @@ describe('mongoose instrumentation', () => {
                 { $group: { _id: 'John', total: { $sum: '$amount' } } },
             ]);
 
-            const spans = getSpans();
+            const spans = getTestSpans();
             expect(spans.length).toBe(1);
             assertSpan(spans[0]);
             expect(spans[0].attributes[VERSION_ATTR]).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
@@ -555,31 +543,37 @@ describe('mongoose instrumentation', () => {
         });
 
         it('should not start span on mongoose method', async () => {
-            const user: IUser = new User({
-                firstName: 'Test first name',
-                lastName: 'Test last name',
-                email: 'test@example.com',
+            await context.with(ROOT_CONTEXT, async () => {
+                const user: IUser = new User({
+                    firstName: 'Test first name',
+                    lastName: 'Test last name',
+                    email: 'test@example.com',
+                });
+                await user.save();
             });
-            await user.save();
 
-            const spans = getSpans();
+            const spans = getTestSpans();
             expect(spans.length).toBe(0);
         });
 
         it('should not start span on find', async () => {
-            await User.find({ id: '_test' });
+            await context.with(ROOT_CONTEXT, async () => {
+                await User.find({ id: '_test' });
+            });
 
-            const spans = getSpans();
+            const spans = getTestSpans();
             expect(spans.length).toBe(0);
         });
 
         it('should not start span on aggregate', async () => {
-            await User.aggregate([
-                { $match: { firstName: 'John' } },
-                { $group: { _id: 'John', total: { $sum: '$amount' } } },
-            ]);
+            await context.with(ROOT_CONTEXT, async () => {
+                await User.aggregate([
+                    { $match: { firstName: 'John' } },
+                    { $group: { _id: 'John', total: { $sum: '$amount' } } },
+                ]);
+            });
 
-            const spans = getSpans();
+            const spans = getTestSpans();
             expect(spans.length).toBe(0);
         });
     });
