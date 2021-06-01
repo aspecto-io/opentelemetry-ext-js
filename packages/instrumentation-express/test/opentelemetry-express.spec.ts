@@ -82,8 +82,9 @@ describe('aspecto-opentelemetry-express', () => {
             expect(span.attributes[SemanticAttributes.NET_PEER_IP]).toBeUndefined();
 
             // http span route
-            const [incomingHttpSpan] = getTestSpans()
-                .filter((s) => s.kind === SpanKind.SERVER && s.instrumentationLibrary.name.includes('http'));
+            const [incomingHttpSpan] = getTestSpans().filter(
+                (s) => s.kind === SpanKind.SERVER && s.instrumentationLibrary.name.includes('http')
+            );
             expect(incomingHttpSpan.attributes[SemanticAttributes.HTTP_ROUTE]).toMatch('/toto/:id');
 
             server.close();
