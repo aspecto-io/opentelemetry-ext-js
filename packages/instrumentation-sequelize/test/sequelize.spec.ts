@@ -1,11 +1,10 @@
 import 'mocha';
-import { SequelizeInstrumentation } from '../src';
-import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan, Span } from '@opentelemetry/tracing';
-import { NodeTracerProvider } from '@opentelemetry/node';
-import { context, diag, SpanStatusCode, ContextManager, DiagConsoleLogger } from '@opentelemetry/api';
-import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import expect from 'expect';
+import { SequelizeInstrumentation } from '../src';
+import { ReadableSpan, Span } from '@opentelemetry/tracing';
+import { context, diag, SpanStatusCode, DiagConsoleLogger, ROOT_CONTEXT } from '@opentelemetry/api';
+import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
 // should be available in node_modules from sequelize installation
 const Promise = require('bluebird');
@@ -14,26 +13,15 @@ const instrumentation = new SequelizeInstrumentation();
 import * as sequelize from 'sequelize';
 
 describe('instrumentation-sequelize', () => {
-    const provider = new NodeTracerProvider();
-    const memoryExporter = new InMemorySpanExporter();
-    const spanProcessor = new SimpleSpanProcessor(memoryExporter);
-    provider.addSpanProcessor(spanProcessor);
-    instrumentation.setTracerProvider(provider);
-    let contextManager: ContextManager;
-
     const getSequelizeSpans = (): ReadableSpan[] => {
-        return memoryExporter.getFinishedSpans().filter((s) => s.attributes['component'] === 'sequelize');
+        return getTestSpans().filter((s) => s.attributes['component'] === 'sequelize');
     };
 
     beforeEach(() => {
-        contextManager = new AsyncHooksContextManager();
-        context.setGlobalContextManager(contextManager.enable());
         instrumentation.enable();
     });
 
     afterEach(() => {
-        memoryExporter.reset();
-        contextManager.disable();
         instrumentation.disable();
     });
 
@@ -262,7 +250,9 @@ describe('instrumentation-sequelize', () => {
             instrumentation.enable();
 
             try {
-                await instance.models.User.create({ firstName: 'Nir' });
+                await context.with(ROOT_CONTEXT, async () => {
+                    await instance.models.User.create({ firstName: 'Nir' });
+                });
             } catch {}
 
             const spans = getSequelizeSpans();

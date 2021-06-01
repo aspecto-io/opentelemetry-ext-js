@@ -1,8 +1,9 @@
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import type { InMemorySpanExporter, ReadableSpan } from '@opentelemetry/tracing';
+import type { ReadableSpan } from '@opentelemetry/tracing';
 import expect from 'expect';
 import { ExpressInstrumentationAttributes } from '../src/types';
 import type express from 'express';
+import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
 export interface expectRouteAttributesAdvancedOptions {
     expectedParams?: Record<string, string>;
@@ -72,6 +73,6 @@ export const errorMiddleware = (_req: express.Request, res: express.Response, ne
     next('error from express unittests');
 };
 
-export const getExpressSpans = (memoryExporter: InMemorySpanExporter): ReadableSpan[] => {
-    return memoryExporter.getFinishedSpans().filter((s) => s.instrumentationLibrary.name?.endsWith('express'));
+export const getExpressSpans = (): ReadableSpan[] => {
+    return getTestSpans().filter((s) => s.instrumentationLibrary.name?.endsWith('express'));
 };

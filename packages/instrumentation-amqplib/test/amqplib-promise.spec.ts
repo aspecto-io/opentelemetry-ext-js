@@ -2,9 +2,6 @@ import 'mocha';
 import expect from 'expect';
 import sinon from 'sinon';
 import lodash from 'lodash';
-import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/tracing';
-import { NodeTracerProvider } from '@opentelemetry/node';
-import { HttpTraceContext } from '@opentelemetry/core';
 import { AmqplibInstrumentation, EndOperation, PublishParams } from '../src';
 
 const instrumentation = new AmqplibInstrumentation();
@@ -13,8 +10,10 @@ instrumentation.disable();
 
 import amqp from 'amqplib';
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { propagation, Span, SpanKind, SpanStatusCode } from '@opentelemetry/api';
+import { Span, SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import { asyncConsume } from './utils';
+import { TEST_RABBITMQ_HOST, TEST_RABBITMQ_PORT } from './config';
+import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
 const msgPayload = 'payload from test';
 const queueName = 'queue-name-from-unittest';
@@ -24,14 +23,7 @@ const queueName = 'queue-name-from-unittest';
 const CHANNEL_CLOSED_IN_TEST = Symbol('opentelemetry.amqplib.unittest.channel_closed_in_test');
 
 describe('amqplib instrumentation promise model', function () {
-    const provider = new NodeTracerProvider();
-    const memoryExporter = new InMemorySpanExporter();
-    const spanProcessor = new SimpleSpanProcessor(memoryExporter);
-    propagation.setGlobalPropagator(new HttpTraceContext());
-    provider.addSpanProcessor(spanProcessor);
-    instrumentation.setTracerProvider(provider);
-
-    const url = 'amqp://localhost:22221';
+    const url = `amqp://${TEST_RABBITMQ_HOST}:${TEST_RABBITMQ_PORT}`;
     let conn: amqp.Connection;
     before(async () => {
         instrumentation.enable();
@@ -67,8 +59,6 @@ describe('amqplib instrumentation promise model', function () {
 
     let channel: amqp.Channel;
     beforeEach(async () => {
-        memoryExporter.reset();
-
         endHookSpy = sinon.spy();
         instrumentation.setConfig({
             consumeEndHook: endHookSpy,
@@ -101,7 +91,7 @@ describe('amqplib instrumentation promise model', function () {
         await asyncConsume(channel, queueName, [(msg) => expect(msg.content.toString()).toEqual(msgPayload)], {
             noAck: true,
         });
-        const [publishSpan, consumeSpan] = memoryExporter.getFinishedSpans();
+        const [publishSpan, consumeSpan] = getTestSpans();
 
         // assert publish span
         expect(publishSpan.kind).toEqual(SpanKind.PRODUCER);
@@ -114,8 +104,8 @@ describe('amqplib instrumentation promise model', function () {
         expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
         expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
         expect(publishSpan.attributes[SemanticAttributes.MESSAGING_URL]).toEqual(url);
-        expect(publishSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual('localhost');
-        expect(publishSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(22221);
+        expect(publishSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual(TEST_RABBITMQ_HOST);
+        expect(publishSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(TEST_RABBITMQ_PORT);
 
         // assert consume span
         expect(consumeSpan.kind).toEqual(SpanKind.CONSUMER);
@@ -128,8 +118,8 @@ describe('amqplib instrumentation promise model', function () {
         expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
         expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
         expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_URL]).toEqual(url);
-        expect(consumeSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual('localhost');
-        expect(consumeSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(22221);
+        expect(consumeSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual(TEST_RABBITMQ_HOST);
+        expect(consumeSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(TEST_RABBITMQ_PORT);
 
         // assert context propagation
         expect(consumeSpan.spanContext.traceId).toEqual(publishSpan.spanContext.traceId);
@@ -144,7 +134,7 @@ describe('amqplib instrumentation promise model', function () {
 
             await asyncConsume(channel, queueName, [(msg) => channel.ack(msg)]);
             // assert consumed message span has ended
-            expect(memoryExporter.getFinishedSpans().length).toBe(2);
+            expect(getTestSpans().length).toBe(2);
             expectConsumeEndSpyStatus([EndOperation.Ack]);
         });
 
@@ -162,7 +152,7 @@ describe('amqplib instrumentation promise model', function () {
                 ]);
             });
             // assert consumed message span has ended
-            expect(memoryExporter.getFinishedSpans().length).toBe(2);
+            expect(getTestSpans().length).toBe(2);
             expectConsumeEndSpyStatus([EndOperation.Ack]);
         });
 
@@ -172,8 +162,8 @@ describe('amqplib instrumentation promise model', function () {
             await asyncConsume(channel, queueName, [(msg) => channel.nack(msg, false, false)]);
             await new Promise((resolve) => setTimeout(resolve, 20)); // just make sure we don't get it again
             // assert consumed message span has ended
-            expect(memoryExporter.getFinishedSpans().length).toBe(2);
-            const [_, consumerSpan] = memoryExporter.getFinishedSpans();
+            expect(getTestSpans().length).toBe(2);
+            const [_, consumerSpan] = getTestSpans();
             expect(consumerSpan.status.code).toEqual(SpanStatusCode.ERROR);
             expect(consumerSpan.status.message).toEqual('nack called on message without requeue');
             expectConsumeEndSpyStatus([EndOperation.Nack]);
@@ -188,8 +178,8 @@ describe('amqplib instrumentation promise model', function () {
                 (msg: amqp.Message) => channel.ack(msg),
             ]);
             // assert we have the requeued message sent again
-            expect(memoryExporter.getFinishedSpans().length).toBe(3);
-            const [_, rejectedConsumerSpan, successConsumerSpan] = memoryExporter.getFinishedSpans();
+            expect(getTestSpans().length).toBe(3);
+            const [_, rejectedConsumerSpan, successConsumerSpan] = getTestSpans();
             expect(rejectedConsumerSpan.status.code).toEqual(SpanStatusCode.ERROR);
             expect(rejectedConsumerSpan.status.message).toEqual('nack called on message with requeue');
             expect(successConsumerSpan.status.code).toEqual(SpanStatusCode.UNSET);
@@ -202,7 +192,7 @@ describe('amqplib instrumentation promise model', function () {
             // @ts-ignore
             await asyncConsume(channel, queueName, [null, (msg) => channel.ack(msg, true), (msg) => channel.ack(msg)]);
             // assert all 3 messages are acked, including the first one which is acked by allUpTo
-            expect(memoryExporter.getFinishedSpans().length).toBe(6);
+            expect(getTestSpans().length).toBe(6);
             expectConsumeEndSpyStatus([EndOperation.Ack, EndOperation.Ack, EndOperation.Ack]);
         });
 
@@ -216,12 +206,10 @@ describe('amqplib instrumentation promise model', function () {
                 (msg) => channel.nack(msg, false, false),
             ]);
             // assert all 3 messages are acked, including the first one which is acked by allUpTo
-            expect(memoryExporter.getFinishedSpans().length).toBe(6);
+            expect(getTestSpans().length).toBe(6);
             lodash.range(3, 6).forEach((i) => {
-                expect(memoryExporter.getFinishedSpans()[i].status.code).toEqual(SpanStatusCode.ERROR);
-                expect(memoryExporter.getFinishedSpans()[i].status.message).toEqual(
-                    'nack called on message without requeue'
-                );
+                expect(getTestSpans()[i].status.code).toEqual(SpanStatusCode.ERROR);
+                expect(getTestSpans()[i].status.message).toEqual('nack called on message without requeue');
             });
             expectConsumeEndSpyStatus([EndOperation.Nack, EndOperation.Nack, EndOperation.Nack]);
         });
@@ -235,7 +223,7 @@ describe('amqplib instrumentation promise model', function () {
             channel.ack(msgs[2]);
             channel.ack(msgs[0]);
             // assert all 3 span messages are ended
-            expect(memoryExporter.getFinishedSpans().length).toBe(6);
+            expect(getTestSpans().length).toBe(6);
             expectConsumeEndSpyStatus([EndOperation.Ack, EndOperation.Ack, EndOperation.Ack]);
         });
 
@@ -245,7 +233,7 @@ describe('amqplib instrumentation promise model', function () {
             // @ts-ignore
             await asyncConsume(channel, queueName, [null, () => channel.ackAll()]);
             // assert all 2 span messages are ended by call to ackAll
-            expect(memoryExporter.getFinishedSpans().length).toBe(4);
+            expect(getTestSpans().length).toBe(4);
             expectConsumeEndSpyStatus([EndOperation.AckAll, EndOperation.AckAll]);
         });
 
@@ -255,12 +243,10 @@ describe('amqplib instrumentation promise model', function () {
             // @ts-ignore
             await asyncConsume(channel, queueName, [null, () => channel.nackAll(false)]);
             // assert all 2 span messages are ended by calling nackAll
-            expect(memoryExporter.getFinishedSpans().length).toBe(4);
+            expect(getTestSpans().length).toBe(4);
             lodash.range(2, 4).forEach((i) => {
-                expect(memoryExporter.getFinishedSpans()[i].status.code).toEqual(SpanStatusCode.ERROR);
-                expect(memoryExporter.getFinishedSpans()[i].status.message).toEqual(
-                    'nackAll called on message without requeue'
-                );
+                expect(getTestSpans()[i].status.code).toEqual(SpanStatusCode.ERROR);
+                expect(getTestSpans()[i].status.message).toEqual('nackAll called on message without requeue');
             });
             expectConsumeEndSpyStatus([EndOperation.NackAll, EndOperation.NackAll]);
         });
@@ -270,11 +256,9 @@ describe('amqplib instrumentation promise model', function () {
 
             // @ts-ignore
             await asyncConsume(channel, queueName, [(msg) => channel.reject(msg, false)]);
-            expect(memoryExporter.getFinishedSpans().length).toBe(2);
-            expect(memoryExporter.getFinishedSpans()[1].status.code).toEqual(SpanStatusCode.ERROR);
-            expect(memoryExporter.getFinishedSpans()[1].status.message).toEqual(
-                'reject called on message without requeue'
-            );
+            expect(getTestSpans().length).toBe(2);
+            expect(getTestSpans()[1].status.code).toEqual(SpanStatusCode.ERROR);
+            expect(getTestSpans()[1].status.message).toEqual('reject called on message without requeue');
             expectConsumeEndSpyStatus([EndOperation.Reject]);
         });
 
@@ -286,15 +270,11 @@ describe('amqplib instrumentation promise model', function () {
                 (msg) => channel.reject(msg, true),
                 (msg) => channel.reject(msg, false),
             ]);
-            expect(memoryExporter.getFinishedSpans().length).toBe(3);
-            expect(memoryExporter.getFinishedSpans()[1].status.code).toEqual(SpanStatusCode.ERROR);
-            expect(memoryExporter.getFinishedSpans()[1].status.message).toEqual(
-                'reject called on message with requeue'
-            );
-            expect(memoryExporter.getFinishedSpans()[2].status.code).toEqual(SpanStatusCode.ERROR);
-            expect(memoryExporter.getFinishedSpans()[2].status.message).toEqual(
-                'reject called on message without requeue'
-            );
+            expect(getTestSpans().length).toBe(3);
+            expect(getTestSpans()[1].status.code).toEqual(SpanStatusCode.ERROR);
+            expect(getTestSpans()[1].status.message).toEqual('reject called on message with requeue');
+            expect(getTestSpans()[2].status.code).toEqual(SpanStatusCode.ERROR);
+            expect(getTestSpans()[2].status.message).toEqual('reject called on message without requeue');
             expectConsumeEndSpyStatus([EndOperation.Reject, EndOperation.Reject]);
         });
 
@@ -311,9 +291,9 @@ describe('amqplib instrumentation promise model', function () {
                 ])
             );
 
-            expect(memoryExporter.getFinishedSpans().length).toBe(2);
-            expect(memoryExporter.getFinishedSpans()[1].status.code).toEqual(SpanStatusCode.ERROR);
-            expect(memoryExporter.getFinishedSpans()[1].status.message).toEqual('channel closed');
+            expect(getTestSpans().length).toBe(2);
+            expect(getTestSpans()[1].status.code).toEqual(SpanStatusCode.ERROR);
+            expect(getTestSpans()[1].status.message).toEqual('channel closed');
             expectConsumeEndSpyStatus([EndOperation.ChannelClosed]);
         });
 
@@ -321,12 +301,12 @@ describe('amqplib instrumentation promise model', function () {
             lodash.times(2, () => channel.sendToQueue(queueName, Buffer.from(msgPayload)));
 
             channel.on('close', () => {
-                expect(memoryExporter.getFinishedSpans().length).toBe(4);
+                expect(getTestSpans().length).toBe(4);
                 // second consume ended with valid ack, previous message not acked when channel is errored.
                 // since we first ack the second message, it appear first in the finished spans array
-                expect(memoryExporter.getFinishedSpans()[2].status.code).toEqual(SpanStatusCode.UNSET);
-                expect(memoryExporter.getFinishedSpans()[3].status.code).toEqual(SpanStatusCode.ERROR);
-                expect(memoryExporter.getFinishedSpans()[3].status.message).toEqual('channel error');
+                expect(getTestSpans()[2].status.code).toEqual(SpanStatusCode.UNSET);
+                expect(getTestSpans()[3].status.code).toEqual(SpanStatusCode.ERROR);
+                expect(getTestSpans()[3].status.message).toEqual('channel error');
                 expectConsumeEndSpyStatus([EndOperation.Ack, EndOperation.ChannelError]);
                 done();
             });
@@ -358,7 +338,7 @@ describe('amqplib instrumentation promise model', function () {
             // we have timeout of 1 ms, so we wait more than that and check span indeed ended
             await new Promise((resolve) => setTimeout(resolve, 10));
 
-            expect(memoryExporter.getFinishedSpans().length).toBe(2);
+            expect(getTestSpans().length).toBe(2);
             expectConsumeEndSpyStatus([EndOperation.InstrumentationTimeout]);
         });
     });
@@ -379,7 +359,7 @@ describe('amqplib instrumentation promise model', function () {
             channel.publish(exchangeName, routingKey, Buffer.from(msgPayload));
             await consumerPromise;
 
-            const [publishSpan, consumeSpan] = memoryExporter.getFinishedSpans();
+            const [publishSpan, consumeSpan] = getTestSpans();
 
             // assert publish span
             expect(publishSpan.kind).toEqual(SpanKind.PRODUCER);
@@ -422,10 +402,8 @@ describe('amqplib instrumentation promise model', function () {
         await asyncConsume(channel, queueName, [(msg) => expect(msg.content.toString()).toEqual(msgPayload)], {
             noAck: true,
         });
-        expect(memoryExporter.getFinishedSpans().length).toBe(2);
-        memoryExporter
-            .getFinishedSpans()
-            .forEach((s) => expect(s.attributes[VERSION_ATTR]).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/));
+        expect(getTestSpans().length).toBe(2);
+        getTestSpans().forEach((s) => expect(s.attributes[VERSION_ATTR]).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/));
     });
 
     describe('hooks', () => {
@@ -463,12 +441,10 @@ describe('amqplib instrumentation promise model', function () {
             await asyncConsume(channel, queueName, [null], {
                 noAck: true,
             });
-            expect(memoryExporter.getFinishedSpans().length).toBe(2);
-            expect(memoryExporter.getFinishedSpans()[0].attributes[attributeNameFromHook]).toEqual(hookAttributeValue);
-            expect(memoryExporter.getFinishedSpans()[1].attributes[attributeNameFromHook]).toEqual(hookAttributeValue);
-            expect(memoryExporter.getFinishedSpans()[1].attributes[attributeNameFromEndHook]).toEqual(
-                endHookAttributeValue
-            );
+            expect(getTestSpans().length).toBe(2);
+            expect(getTestSpans()[0].attributes[attributeNameFromHook]).toEqual(hookAttributeValue);
+            expect(getTestSpans()[1].attributes[attributeNameFromHook]).toEqual(hookAttributeValue);
+            expect(getTestSpans()[1].attributes[attributeNameFromEndHook]).toEqual(endHookAttributeValue);
         });
 
         it('hooks throw should not affect user flow or span creation', async () => {
@@ -492,16 +468,14 @@ describe('amqplib instrumentation promise model', function () {
             await asyncConsume(channel, queueName, [null], {
                 noAck: true,
             });
-            expect(memoryExporter.getFinishedSpans().length).toBe(2);
-            memoryExporter
-                .getFinishedSpans()
-                .forEach((s) => expect(s.attributes[attributeNameFromHook]).toEqual(hookAttributeValue));
+            expect(getTestSpans().length).toBe(2);
+            getTestSpans().forEach((s) => expect(s.attributes[attributeNameFromHook]).toEqual(hookAttributeValue));
         });
     });
 
     describe('connection properties', () => {
         it('connect by url object', async () => {
-            const objConnection = await amqp.connect({ port: 22221 });
+            const objConnection = await amqp.connect({ port: TEST_RABBITMQ_PORT });
             const channel = await objConnection.createChannel();
             channel.sendToQueue(queueName, Buffer.from(msgPayload));
             await asyncConsume(channel, queueName, [null], {
@@ -510,10 +484,10 @@ describe('amqplib instrumentation promise model', function () {
 
             objConnection.close();
 
-            expect(memoryExporter.getFinishedSpans().length).toBe(2);
-            memoryExporter.getFinishedSpans().forEach((s) => {
-                expect(s.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual('localhost');
-                expect(s.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(22221);
+            expect(getTestSpans().length).toBe(2);
+            getTestSpans().forEach((s) => {
+                expect(s.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual(TEST_RABBITMQ_HOST);
+                expect(s.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(TEST_RABBITMQ_PORT);
             });
         });
 

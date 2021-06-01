@@ -1,11 +1,9 @@
 import 'mocha';
 import expect from 'expect';
-import { NodeTracerProvider } from '@opentelemetry/node';
-import { context, SpanKind } from '@opentelemetry/api';
+import { SpanKind } from '@opentelemetry/api';
 import { ExpressInstrumentation } from '../src';
 import { AddressInfo } from 'net';
-import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan } from '@opentelemetry/tracing';
-import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
+import { ReadableSpan } from '@opentelemetry/tracing';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import * as bodyParser from 'body-parser';
@@ -23,19 +21,12 @@ import express from 'express';
 import * as http from 'http';
 import { getExpressSpans } from './utils';
 import { ExpressRequestHookInformation } from '../src/types';
+import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
-const memoryExporter = new InMemorySpanExporter();
-
-describe('aspecto-opentelemetry-express', () => {
-    const spanProcessor = new SimpleSpanProcessor(memoryExporter);
-    const provider = new NodeTracerProvider();
-    provider.addSpanProcessor(spanProcessor);
-    instrumentation.setTracerProvider(provider);
-    httpInstrumentation.setTracerProvider(provider);
+describe('opentelemetry-express', () => {
     let app: express.Application;
 
     before(() => {
-        memoryExporter.reset();
         instrumentation.enable();
         httpInstrumentation.enable();
         app = express();
@@ -45,15 +36,6 @@ describe('aspecto-opentelemetry-express', () => {
     after(() => {
         instrumentation.disable();
         httpInstrumentation.disable();
-    });
-
-    beforeEach(() => {
-        context.setGlobalContextManager(new AsyncHooksContextManager().enable());
-    });
-
-    afterEach(() => {
-        memoryExporter.reset();
-        context.disable();
     });
 
     it('express attributes', (done) => {
@@ -80,7 +62,7 @@ describe('aspecto-opentelemetry-express', () => {
                 );
             } catch (err) {}
 
-            const expressSpans: ReadableSpan[] = getExpressSpans(memoryExporter);
+            const expressSpans: ReadableSpan[] = getExpressSpans();
             expect(expressSpans.length).toBe(1);
             const span: ReadableSpan = expressSpans[0];
 
@@ -97,9 +79,9 @@ describe('aspecto-opentelemetry-express', () => {
             expect(span.attributes[SemanticAttributes.NET_PEER_IP]).toBeUndefined();
 
             // http span route
-            const [incomingHttpSpan] = memoryExporter
-                .getFinishedSpans()
-                .filter((s) => s.kind === SpanKind.SERVER && s.instrumentationLibrary.name.includes('http'));
+            const [incomingHttpSpan] = getTestSpans().filter(
+                (s) => s.kind === SpanKind.SERVER && s.instrumentationLibrary.name.includes('http')
+            );
             expect(incomingHttpSpan.attributes[SemanticAttributes.HTTP_ROUTE]).toMatch('/toto/:id');
 
             server.close();
@@ -137,7 +119,7 @@ describe('aspecto-opentelemetry-express', () => {
                 );
             } catch (err) {}
 
-            const expressSpans: ReadableSpan[] = getExpressSpans(memoryExporter);
+            const expressSpans: ReadableSpan[] = getExpressSpans();
             expect(expressSpans.length).toBe(1);
             const span: ReadableSpan = expressSpans[0];
 
@@ -168,7 +150,7 @@ describe('aspecto-opentelemetry-express', () => {
             try {
                 await axios.get(`http://localhost:${port}/toto`);
             } catch (err) {}
-            const expressSpans: ReadableSpan[] = getExpressSpans(memoryExporter);
+            const expressSpans: ReadableSpan[] = getExpressSpans();
             expect(expressSpans.length).toBe(1);
             server.close();
             done();
@@ -186,7 +168,7 @@ describe('aspecto-opentelemetry-express', () => {
             try {
                 await axios.get(`http://localhost:${port}/top-level-app/sub-app`);
             } catch (err) {}
-            const expressSpans: ReadableSpan[] = getExpressSpans(memoryExporter);
+            const expressSpans: ReadableSpan[] = getExpressSpans();
             expect(expressSpans.length).toBe(1);
 
             server.close();
@@ -207,7 +189,7 @@ describe('aspecto-opentelemetry-express', () => {
         } catch (err) {
             // we expect 500
         }
-        const expressSpans: ReadableSpan[] = getExpressSpans(memoryExporter);
+        const expressSpans: ReadableSpan[] = getExpressSpans();
         expect(expressSpans.length).toBe(1);
         const span: ReadableSpan = expressSpans[0];
 
@@ -240,7 +222,7 @@ describe('aspecto-opentelemetry-express', () => {
         } catch (err) {
             // we expect 500
         }
-        const expressSpans: ReadableSpan[] = getExpressSpans(memoryExporter);
+        const expressSpans: ReadableSpan[] = getExpressSpans();
         expect(expressSpans.length).toBe(1);
         const span: ReadableSpan = expressSpans[0];
 
@@ -282,7 +264,7 @@ describe('aspecto-opentelemetry-express', () => {
 
         await axios.post(`http://localhost:${port}/request-hook`, { rick: 'morty' });
 
-        const expressSpans: ReadableSpan[] = getExpressSpans(memoryExporter);
+        const expressSpans: ReadableSpan[] = getExpressSpans();
         expect(expressSpans.length).toBe(1);
         const span: ReadableSpan = expressSpans[0];
         expect(span.attributes['content_type']).toBe('application/json;charset=utf-8');

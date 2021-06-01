@@ -1,11 +1,10 @@
 import 'mocha';
 import { AwsInstrumentation } from '../src';
-import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan, Span } from '@opentelemetry/tracing';
-import { context, SpanStatusCode, ContextManager } from '@opentelemetry/api';
-import { NodeTracerProvider } from '@opentelemetry/node';
-import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
+import { ReadableSpan, Span } from '@opentelemetry/tracing';
+import { SpanStatusCode } from '@opentelemetry/api';
 import { AttributeNames } from '../src/enums';
 import { mockAwsSend } from './testing-utils';
+import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 import expect from 'expect';
 
 const instrumentation = new AwsInstrumentation();
@@ -14,13 +13,6 @@ import AWS from 'aws-sdk';
 instrumentation.disable();
 
 describe('instrumentation-aws-sdk-v2', () => {
-    const provider = new NodeTracerProvider();
-    const memoryExporter = new InMemorySpanExporter();
-    const spanProcessor = new SimpleSpanProcessor(memoryExporter);
-    provider.addSpanProcessor(spanProcessor);
-    instrumentation.setTracerProvider(provider);
-    let contextManager: ContextManager;
-
     const responseMockSuccess = {
         requestId: '0000000000000',
         error: null,
@@ -32,7 +24,7 @@ describe('instrumentation-aws-sdk-v2', () => {
     };
 
     const getAwsSpans = (): ReadableSpan[] => {
-        return memoryExporter.getFinishedSpans().filter((s) => s.instrumentationLibrary.name.includes('aws-sdk'));
+        return getTestSpans().filter((s) => s.instrumentationLibrary.name.includes('aws-sdk'));
     };
 
     before(() => {
@@ -46,15 +38,11 @@ describe('instrumentation-aws-sdk-v2', () => {
     });
 
     beforeEach(() => {
-        contextManager = new AsyncHooksContextManager();
-        context.setGlobalContextManager(contextManager.enable());
         instrumentation.disable();
         instrumentation.enable();
     });
 
     afterEach(() => {
-        memoryExporter.reset();
-        contextManager.disable();
         instrumentation.disable();
     });
 
