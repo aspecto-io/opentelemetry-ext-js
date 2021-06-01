@@ -9,7 +9,6 @@ import expect from 'expect';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
 const instrumentation = new AwsInstrumentation();
-instrumentation.setTracerProvider(trace.getTracerProvider());
 instrumentation.enable();
 import AWS, { AWSError } from 'aws-sdk';
 instrumentation.disable();

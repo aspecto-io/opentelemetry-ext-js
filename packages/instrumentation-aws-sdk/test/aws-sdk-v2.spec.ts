@@ -1,7 +1,7 @@
 import 'mocha';
 import { AwsInstrumentation } from '../src';
 import { ReadableSpan, Span } from '@opentelemetry/tracing';
-import { SpanStatusCode, trace } from '@opentelemetry/api';
+import { SpanStatusCode } from '@opentelemetry/api';
 import { AttributeNames } from '../src/enums';
 import { mockAwsSend } from './testing-utils';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
@@ -13,7 +13,6 @@ import AWS from 'aws-sdk';
 instrumentation.disable();
 
 describe('instrumentation-aws-sdk-v2', () => {
-    instrumentation.setTracerProvider(trace.getTracerProvider());
 
     const responseMockSuccess = {
         requestId: '0000000000000',

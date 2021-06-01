@@ -1,6 +1,6 @@
 import 'mocha';
 import expect from 'expect';
-import { trace, SpanKind } from '@opentelemetry/api';
+import { SpanKind } from '@opentelemetry/api';
 import { ExpressInstrumentation } from '../src';
 import { AddressInfo } from 'net';
 import { ReadableSpan } from '@opentelemetry/tracing';
@@ -24,9 +24,6 @@ import { ExpressRequestHookInformation } from '../src/types';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
 describe('opentelemetry-express', () => {
-    instrumentation.setTracerProvider(trace.getTracerProvider());
-    httpInstrumentation.setTracerProvider(trace.getTracerProvider());
-
     let app: express.Application;
 
     before(() => {

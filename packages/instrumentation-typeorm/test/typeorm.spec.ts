@@ -1,7 +1,7 @@
 import 'mocha';
 import expect from 'expect';
 import { ReadableSpan, Span } from '@opentelemetry/tracing';
-import { trace, SpanStatusCode } from '@opentelemetry/api';
+import { SpanStatusCode } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { TypeormInstrumentation } from '../src';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
@@ -37,7 +37,6 @@ const setMocks = () => {
 };
 
 describe('instrumentation-typeorm', () => {
-    instrumentation.setTracerProvider(trace.getTracerProvider());
 
     const getTypeormSpans = (): ReadableSpan[] => {
         return getTestSpans().filter((s) => s.attributes['component'] === 'typeorm');

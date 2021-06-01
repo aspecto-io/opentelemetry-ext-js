@@ -6,7 +6,7 @@ const instrumentation = new AmqplibInstrumentation();
 instrumentation.enable();
 import amqpCallback from 'amqplib/callback_api';
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { SpanKind, context, trace } from '@opentelemetry/api';
+import { SpanKind, context } from '@opentelemetry/api';
 import { asyncConsume } from './utils';
 import { TEST_RABBITMQ_HOST, TEST_RABBITMQ_PORT } from './config';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
@@ -15,8 +15,6 @@ const msgPayload = 'payload from test';
 const queueName = 'queue-name-from-unittest';
 
 describe('amqplib instrumentation callback model', function () {
-    instrumentation.setTracerProvider(trace.getTracerProvider());
-
     const url = `amqp://${TEST_RABBITMQ_HOST}:${TEST_RABBITMQ_PORT}`;
     let conn: amqpCallback.Connection;
     before((done) => {

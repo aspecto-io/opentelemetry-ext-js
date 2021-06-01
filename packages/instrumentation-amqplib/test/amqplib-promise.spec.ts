@@ -10,7 +10,7 @@ instrumentation.disable();
 
 import amqp from 'amqplib';
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { Span, SpanKind, SpanStatusCode, trace } from '@opentelemetry/api';
+import { Span, SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import { asyncConsume } from './utils';
 import { TEST_RABBITMQ_HOST, TEST_RABBITMQ_PORT } from './config';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
@@ -23,8 +23,6 @@ const queueName = 'queue-name-from-unittest';
 const CHANNEL_CLOSED_IN_TEST = Symbol('opentelemetry.amqplib.unittest.channel_closed_in_test');
 
 describe('amqplib instrumentation promise model', function () {
-    instrumentation.setTracerProvider(trace.getTracerProvider());
-
     const url = `amqp://${TEST_RABBITMQ_HOST}:${TEST_RABBITMQ_PORT}`;
     let conn: amqp.Connection;
     before(async () => {

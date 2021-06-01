@@ -1,6 +1,6 @@
 import 'mocha';
 import expect from 'expect';
-import { trace, context, ROOT_CONTEXT } from '@opentelemetry/api';
+import { context, ROOT_CONTEXT } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { MongooseInstrumentation } from '../src';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
@@ -15,7 +15,6 @@ import { assertSpan, getStatement } from './asserts';
 
 // Please run mongodb in the background: docker run -d -p 27017:27017 -v ~/data:/data/db mongo
 describe('mongoose instrumentation', () => {
-    instrumentation.setTracerProvider(trace.getTracerProvider());
 
     before(async () => {
         await mongoose.connect('mongodb://localhost:27017', {

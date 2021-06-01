@@ -1,7 +1,6 @@
 import 'mocha';
 import nock from 'nock';
 import { expect } from 'chai';
-import { trace } from '@opentelemetry/api';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 import { ElasticsearchInstrumentation } from '../src/elasticsearch';
 
@@ -13,7 +12,6 @@ const esNock = nock(esMockUrl);
 const client = new Client({ node: esMockUrl });
 
 describe('elasticsearch instrumentation', () => {
-    instrumentation.setTracerProvider(trace.getTracerProvider());
 
     before(() => {
         instrumentation.enable();

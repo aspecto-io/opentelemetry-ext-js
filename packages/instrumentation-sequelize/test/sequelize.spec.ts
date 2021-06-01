@@ -2,7 +2,7 @@ import 'mocha';
 import expect from 'expect';
 import { SequelizeInstrumentation } from '../src';
 import { ReadableSpan, Span } from '@opentelemetry/tracing';
-import { context, diag, SpanStatusCode, DiagConsoleLogger, trace, ROOT_CONTEXT } from '@opentelemetry/api';
+import { context, diag, SpanStatusCode, DiagConsoleLogger, ROOT_CONTEXT } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
@@ -13,7 +13,6 @@ const instrumentation = new SequelizeInstrumentation();
 import * as sequelize from 'sequelize';
 
 describe('instrumentation-sequelize', () => {
-    instrumentation.setTracerProvider(trace.getTracerProvider());
 
     const getSequelizeSpans = (): ReadableSpan[] => {
         return getTestSpans().filter((s) => s.attributes['component'] === 'sequelize');

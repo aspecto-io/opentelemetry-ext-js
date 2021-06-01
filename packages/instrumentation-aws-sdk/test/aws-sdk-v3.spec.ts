@@ -5,7 +5,7 @@ process.env.AWS_SECRET_ACCESS_KEY = 'testing';
 import 'mocha';
 import { AwsInstrumentation, NormalizedRequest, NormalizedResponse } from '../src';
 import { ReadableSpan, Span } from '@opentelemetry/tracing';
-import { context, SpanStatusCode, ContextManager, getSpan, trace } from '@opentelemetry/api';
+import { context, SpanStatusCode, getSpan } from '@opentelemetry/api';
 import {
     MessagingDestinationKindValues,
     MessagingOperationValues,
@@ -27,7 +27,7 @@ instrumentation.disable();
 import nock from 'nock';
 
 describe('instrumentation-aws-sdk-v3', () => {
-    instrumentation.setTracerProvider(trace.getTracerProvider());
+
     const s3Client = new S3({ region });
     beforeEach(() => {
         instrumentation.enable();

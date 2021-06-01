@@ -1,6 +1,5 @@
 import 'mocha';
 import expect from 'expect';
-import { trace } from '@opentelemetry/api';
 
 import { ExpressInstrumentation } from '../src';
 import { AddressInfo } from 'net';
@@ -25,7 +24,6 @@ import {
 import { describe } from 'mocha';
 
 describe('opentelemetry-express-layers', () => {
-    instrumentation.setTracerProvider(trace.getTracerProvider());
     let app: express.Application;
 
     const sendRequest = async (urlPath: string): Promise<ReadableSpan> => {

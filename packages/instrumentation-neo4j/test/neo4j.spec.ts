@@ -24,7 +24,6 @@ import neo4j, { Driver } from 'neo4j-driver';
 
 describe('neo4j instrumentation', function () {
     this.timeout(10000);
-    instrumentation.setTracerProvider(trace.getTracerProvider());
     let driver: Driver;
 
     const getSingleSpan = () => {

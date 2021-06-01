@@ -2,7 +2,7 @@ import 'mocha';
 import expect from 'expect';
 import { KafkaJsInstrumentation, KafkaJsInstrumentationConfig } from '../src';
 import { ReadableSpan } from '@opentelemetry/tracing';
-import { trace, propagation, SpanKind, SpanStatusCode, Span } from '@opentelemetry/api';
+import { propagation, SpanKind, SpanStatusCode, Span } from '@opentelemetry/api';
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
@@ -25,7 +25,6 @@ import {
 import { DummyPropagation } from './DummyPropagation';
 
 describe('instrumentation-kafkajs', () => {
-    instrumentation.setTracerProvider(trace.getTracerProvider());
 
     propagation.setGlobalPropagator(new DummyPropagation());
 
