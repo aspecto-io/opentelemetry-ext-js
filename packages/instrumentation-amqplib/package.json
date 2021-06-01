@@ -43,7 +43,6 @@
     },
     "devDependencies": {
         "@opentelemetry/core": "^0.19.0",
-        "@opentelemetry/exporter-jaeger": "^0.19.0",
         "@types/amqplib": "^0.5.17",
         "@types/lodash": "^4.14.168",
         "@types/mocha": "^8.2.2",
