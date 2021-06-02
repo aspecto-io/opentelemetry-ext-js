@@ -1,0 +1,69 @@
+{
+    "name": "opentelemetry-instrumentation-socket.io",
+    "version": "0.4.0",
+    "description": "open telemetry instrumentation for the `socket.io` package",
+    "keywords": [
+        "socket.io",
+        "opentelemetry",
+        "websocket"
+    ],
+    "homepage": "https://github.com/aspecto-io/opentelemetry-ext-js",
+    "license": "Apache-2.0",
+    "main": "dist/src/index.js",
+    "files": [
+        "dist/src/**/*.js",
+        "dist/src/**/*.d.ts",
+        "LICENSE",
+        "README.md"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/aspecto-io/opentelemetry-ext-js.git"
+    },
+    "author": {
+        "name": "Aspecto",
+        "email": "support@aspecto.io",
+        "url": "https://aspecto.io"
+    },
+    "scripts": {
+        "build": "tsc",
+        "prepare": "yarn run build",
+        "test:ci": "yarn test-all-versions",
+        "test": "mocha --require opentelemetry-instrumentation-testing-utils",
+        "test:jaeger": "OTEL_EXPORTER_JAEGER_AGENT_HOST=localhost mocha --require opentelemetry-instrumentation-testing-utils",
+        "watch": "tsc -w",
+        "test-all-versions": "tav",
+        "version:update": "node ../../scripts/version-update.js",
+        "version": "yarn run version:update"
+    },
+    "bugs": {
+        "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
+    },
+    "dependencies": {
+        "@opentelemetry/api": "^1.0.0-rc.0",
+        "@opentelemetry/instrumentation": "^0.19.0",
+        "@opentelemetry/semantic-conventions": "^0.19.0",
+        "is-promise": "^4.0.0"
+    },
+    "devDependencies": {
+        "@opentelemetry/tracing": "^0.19.0",
+        "expect": "^26.6.2",
+        "mocha": "^8.4.0",
+        "opentelemetry-instrumentation-mocha": "^0.0.1-rc.0",
+        "opentelemetry-instrumentation-testing-utils": "^0.4.0",
+        "socket.io": "^4.1.2",
+        "socket.io-client": "^4.1.1",
+        "test-all-versions": "^5.0.1",
+        "typescript": "^4.2.4"
+    },
+    "mocha": {
+        "extension": [
+            "ts"
+        ],
+        "spec": "test/**/*.spec.ts",
+        "require": [
+            "ts-node/register",
+            "opentelemetry-instrumentation-mocha"
+        ]
+    }
+}
