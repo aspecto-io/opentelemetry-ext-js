@@ -1,9 +1,8 @@
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { InMemorySpanExporter, SimpleSpanProcessor, ReadableSpan } from '@opentelemetry/tracing';
+import { ReadableSpan } from '@opentelemetry/tracing';
 import { SocketIoInstrumentation, SocketIoInstrumentationAttributes } from '../src';
-import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
-import { context, ContextManager, SpanKind, SpanStatusCode } from '@opentelemetry/api';
-import { NodeTracerProvider } from '@opentelemetry/node';
+import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
+import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 import { AddressInfo } from 'net';
 import expect from 'expect';
 import http from 'http';
@@ -14,27 +13,14 @@ import { Server, Socket } from 'socket.io';
 import { io } from 'socket.io-client';
 
 describe('socket.io instrumentation', () => {
-    const provider = new NodeTracerProvider();
-    const memoryExporter = new InMemorySpanExporter();
-    const spanProcessor = new SimpleSpanProcessor(memoryExporter);
-    provider.addSpanProcessor(spanProcessor);
-    instrumentation.setTracerProvider(provider);
-    let contextManager: ContextManager;
-
     const getSocketIoSpans = (): ReadableSpan[] =>
-        memoryExporter
-            .getFinishedSpans()
-            .filter((s) => s.attributes[SemanticAttributes.MESSAGING_SYSTEM] === 'socket.io');
+        getTestSpans().filter((s) => s.attributes[SemanticAttributes.MESSAGING_SYSTEM] === 'socket.io');
 
     beforeEach(() => {
-        contextManager = new AsyncHooksContextManager();
-        context.setGlobalContextManager(contextManager.enable());
         instrumentation.enable();
     });
 
     afterEach(() => {
-        memoryExporter.reset();
-        contextManager.disable();
         instrumentation.disable();
     });
 
