@@ -1,5 +1,4 @@
-import { SpanKind, diag, Context, context } from '@opentelemetry/api';
-import { parseResponseStatus } from '@opentelemetry/instrumentation-http';
+import { SpanKind, diag, context } from '@opentelemetry/api';
 import {
     LayerPath,
     ExpressLayer,
@@ -27,6 +26,7 @@ import {
     getHttpSpanAttributesFromReq,
     getSpanInitialName,
     getSpanNameOnResEnd,
+    parseResponseStatus,
 } from './utils/attributes';
 import { consumeLayerPathAndUpdateState, createInitialRouteState } from './utils/route-context';
 import { getLayerPathFromFirstArg } from './utils/layer-path';
@@ -91,7 +91,7 @@ export class ExpressInstrumentation extends InstrumentationBase<typeof express> 
         if (moduleExports === undefined || moduleExports === null) {
             return moduleExports;
         }
-        const origLayerConstructor = (moduleExports as unknown) as Function;
+        const origLayerConstructor = moduleExports as unknown as Function;
         const LayerPrototype = moduleExports.prototype;
 
         diag.debug('opentelemetry.express instrumentation: patching Express Layer handle_request and handle_error');

@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-neo4j",
-    "version": "0.4.0",
+    "version": "0.4.3",
     "description": "open telemetry instrumentation for the `neo4j` javascript driver",
     "keywords": [
         "neo4j",
@@ -29,8 +29,10 @@
     "scripts": {
         "build": "tsc",
         "prepare": "yarn run build",
-        "test": "mocha",
+        "test": "mocha --require opentelemetry-instrumentation-testing-utils",
+        "test:jaeger": "OTEL_EXPORTER_JAEGER_AGENT_HOST=localhost mocha --require opentelemetry-instrumentation-testing-utils",
         "test:ci": "tav",
+        "test:docker:run": "docker run -d -p7474:7474 -p11011:7687 -e NEO4J_AUTH=neo4j/test neo4j:4.2.3",
         "watch": "tsc -w",
         "version:update": "node ../../scripts/version-update.js",
         "version": "yarn run version:update"
@@ -44,11 +46,12 @@
         "@opentelemetry/semantic-conventions": "^0.19.0"
     },
     "devDependencies": {
-        "@opentelemetry/node": "^0.19.0",
         "@opentelemetry/tracing": "^0.19.0",
-        "@types/mocha": "^8.2.0",
+        "@types/mocha": "^8.2.2",
         "expect": "^26.6.2",
-        "mocha": "^8.3.0",
+        "mocha": "^8.4.0",
+        "opentelemetry-instrumentation-mocha": "^0.0.1-rc.0",
+        "opentelemetry-instrumentation-testing-utils": "^0.4.0",
         "neo4j-driver": "^4.2.2",
         "test-all-versions": "^5.0.1",
         "ts-node": "^9.1.1",
@@ -59,6 +62,9 @@
             "ts"
         ],
         "spec": "test/**/*.spec.ts",
-        "require": "ts-node/register"
+        "require": [
+            "ts-node/register",
+            "opentelemetry-instrumentation-mocha"
+        ]
     }
 }

@@ -3,6 +3,33 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.4.3](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-neo4j@0.4.2...opentelemetry-instrumentation-neo4j@0.4.3) (2021-05-31)
+
+
+### Bug Fixes
+
+* **instrumentation-neo4j:** support neo4j driver >=4.3.0 ([#125](https://github.com/aspecto-io/opentelemetry-ext-js/issues/125)) ([7d36bf2](https://github.com/aspecto-io/opentelemetry-ext-js/commit/7d36bf2df9a284f87bbec9be3cdc7d79ad087afd))
+
+
+
+
+
+## [0.4.2](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-neo4j@0.4.1...opentelemetry-instrumentation-neo4j@0.4.2) (2021-05-19)
+
+**Note:** Version bump only for package opentelemetry-instrumentation-neo4j
+
+
+
+
+
+## [0.4.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-neo4j@0.4.0...opentelemetry-instrumentation-neo4j@0.4.1) (2021-05-19)
+
+**Note:** Version bump only for package opentelemetry-instrumentation-neo4j
+
+
+
+
+
 # [0.4.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-neo4j@0.3.0...opentelemetry-instrumentation-neo4j@0.4.0) (2021-04-28)
 
 **Note:** Version bump only for package opentelemetry-instrumentation-neo4j

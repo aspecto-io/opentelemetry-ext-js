@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-mongoose",
-    "version": "0.4.1",
+    "version": "0.4.4",
     "description": "open telemetry instrumentation for the `mongoose` module",
     "keywords": [
         "mongoose",
@@ -29,8 +29,10 @@
     "scripts": {
         "build": "tsc",
         "prepare": "yarn run build",
-        "test": "mocha",
+        "test": "mocha --require opentelemetry-instrumentation-testing-utils",
+        "test:jaeger": "OTEL_EXPORTER_JAEGER_AGENT_HOST=localhost mocha --require opentelemetry-instrumentation-testing-utils",
         "test:ci": "yarn test",
+        "test:docker:run": "docker run -d --name mongoose-unittests -p 27017:27017 mongo",
         "watch": "tsc -w",
         "version:update": "node ../../scripts/version-update.js",
         "version": "yarn run version:update"
@@ -44,11 +46,12 @@
         "@opentelemetry/semantic-conventions": "^0.19.0"
     },
     "devDependencies": {
-        "@opentelemetry/node": "^0.19.0",
         "@opentelemetry/tracing": "^0.19.0",
-        "@types/mocha": "^8.2.0",
+        "@types/mocha": "^8.2.2",
         "expect": "^26.6.2",
-        "mocha": "^8.3.0",
+        "mocha": "^8.4.0",
+        "opentelemetry-instrumentation-mocha": "^0.0.1-rc.0",
+        "opentelemetry-instrumentation-testing-utils": "^0.4.0",
         "mongodb": "^3.6.4",
         "mongoose": "5.11.15",
         "ts-node": "^9.1.1",
@@ -59,6 +62,9 @@
             "ts"
         ],
         "spec": "test/**/*.spec.ts",
-        "require": "ts-node/register"
+        "require": [
+            "ts-node/register",
+            "opentelemetry-instrumentation-mocha"
+        ]
     }
 }

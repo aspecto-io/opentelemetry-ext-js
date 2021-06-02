@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-express",
-    "version": "0.4.2",
+    "version": "0.4.5",
     "description": "enhanced open telemetry instrumentation for the `express` web framework",
     "author": "Aspecto.io",
     "license": "Apache-2.0",
@@ -14,12 +14,13 @@
     ],
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/aspecto-io/aspecto-opentelemetry-js.git"
+        "url": "git+https://github.com/aspecto-io/opentelemetry-ext-js.git"
     },
     "scripts": {
         "build": "tsc",
         "prepare": "yarn run build",
-        "test": "mocha",
+        "test": "mocha --require opentelemetry-instrumentation-testing-utils",
+        "test:jaeger": "OTEL_EXPORTER_JAEGER_AGENT_HOST=localhost mocha --require opentelemetry-instrumentation-testing-utils",
         "watch": "tsc -w",
         "version:update": "node ../../scripts/version-update.js",
         "version": "yarn run version:update",
@@ -43,7 +44,9 @@
         "body-parser": "^1.19.0",
         "expect": "^26.6.2",
         "express": "4.17.1",
-        "mocha": "^8.3.2",
+        "mocha": "^8.4.0",
+        "opentelemetry-instrumentation-mocha": "^0.0.1-rc.0",
+        "opentelemetry-instrumentation-testing-utils": "^0.4.0",
         "test-all-versions": "^5.0.1"
     },
     "mocha": {
@@ -51,6 +54,9 @@
             "ts"
         ],
         "spec": "test/**/*.spec.ts",
-        "require": "ts-node/register"
+        "require": [
+            "ts-node/register",
+            "opentelemetry-instrumentation-mocha"
+        ]
     }
 }

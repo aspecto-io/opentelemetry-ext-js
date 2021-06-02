@@ -94,9 +94,8 @@ export class SqsServiceExtension implements ServiceExtension {
                 {
                     const origMessageAttributes = request.commandInput['MessageAttributes'] ?? {};
                     if (origMessageAttributes) {
-                        request.commandInput['MessageAttributes'] = this.InjectPropagationContext(
-                            origMessageAttributes
-                        );
+                        request.commandInput['MessageAttributes'] =
+                            this.InjectPropagationContext(origMessageAttributes);
                     }
                 }
                 break;

@@ -1,29 +1,21 @@
 import 'mocha';
 import expect from 'expect';
-import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/tracing';
-import { NodeTracerProvider } from '@opentelemetry/node';
-import { HttpTraceContext } from '@opentelemetry/core';
 import { AmqplibInstrumentation } from '../src';
 
 const instrumentation = new AmqplibInstrumentation();
 instrumentation.enable();
 import amqpCallback from 'amqplib/callback_api';
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { propagation, SpanKind } from '@opentelemetry/api';
+import { SpanKind, context } from '@opentelemetry/api';
 import { asyncConsume } from './utils';
+import { TEST_RABBITMQ_HOST, TEST_RABBITMQ_PORT } from './config';
+import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
 const msgPayload = 'payload from test';
 const queueName = 'queue-name-from-unittest';
 
 describe('amqplib instrumentation callback model', function () {
-    const provider = new NodeTracerProvider();
-    const memoryExporter = new InMemorySpanExporter();
-    const spanProcessor = new SimpleSpanProcessor(memoryExporter);
-    propagation.setGlobalPropagator(new HttpTraceContext());
-    provider.addSpanProcessor(spanProcessor);
-    instrumentation.setTracerProvider(provider);
-
-    const url = 'amqp://localhost:22221';
+    const url = `amqp://${TEST_RABBITMQ_HOST}:${TEST_RABBITMQ_PORT}`;
     let conn: amqpCallback.Connection;
     before((done) => {
         amqpCallback.connect(url, (err, connection) => {
@@ -38,19 +30,27 @@ describe('amqplib instrumentation callback model', function () {
 
     let channel: amqpCallback.Channel;
     beforeEach((done) => {
-        memoryExporter.reset();
         instrumentation.enable();
-        conn.createChannel((err, c) => {
-            channel = c;
-            // install an error handler, otherwise when we have tests that create error on the channel,
-            // it throws and crash process
-            channel.on('error', () => {});
-            channel.assertQueue(queueName, { durable: false }, (err, ok) => {
-                channel.purgeQueue(queueName, (err, ok) => {
-                    done();
-                });
-            });
-        });
+        conn.createChannel(
+            context.bind((err, c) => {
+                channel = c;
+                // install an error handler, otherwise when we have tests that create error on the channel,
+                // it throws and crash process
+                channel.on('error', () => {});
+                channel.assertQueue(
+                    queueName,
+                    { durable: false },
+                    context.bind((err, ok) => {
+                        channel.purgeQueue(
+                            queueName,
+                            context.bind((err, ok) => {
+                                done();
+                            })
+                        );
+                    })
+                );
+            })
+        );
     });
 
     afterEach((done) => {
@@ -69,7 +69,7 @@ describe('amqplib instrumentation callback model', function () {
         asyncConsume(channel, queueName, [(msg) => expect(msg.content.toString()).toEqual(msgPayload)], {
             noAck: true,
         }).then(() => {
-            const [publishSpan, consumeSpan] = memoryExporter.getFinishedSpans();
+            const [publishSpan, consumeSpan] = getTestSpans();
 
             // assert publish span
             expect(publishSpan.kind).toEqual(SpanKind.PRODUCER);
@@ -82,8 +82,8 @@ describe('amqplib instrumentation callback model', function () {
             expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
             expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
             expect(publishSpan.attributes[SemanticAttributes.MESSAGING_URL]).toEqual(url);
-            expect(publishSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual('localhost');
-            expect(publishSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(22221);
+            expect(publishSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual(TEST_RABBITMQ_HOST);
+            expect(publishSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(TEST_RABBITMQ_PORT);
 
             // assert consume span
             expect(consumeSpan.kind).toEqual(SpanKind.CONSUMER);
@@ -96,8 +96,8 @@ describe('amqplib instrumentation callback model', function () {
             expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
             expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
             expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_URL]).toEqual(url);
-            expect(consumeSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual('localhost');
-            expect(consumeSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(22221);
+            expect(consumeSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual(TEST_RABBITMQ_HOST);
+            expect(consumeSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(TEST_RABBITMQ_PORT);
 
             // assert context propagation
             expect(consumeSpan.spanContext.traceId).toEqual(publishSpan.spanContext.traceId);
@@ -112,7 +112,7 @@ describe('amqplib instrumentation callback model', function () {
 
         asyncConsume(channel, queueName, [(msg) => channel.ack(msg)]).then(() => {
             // assert consumed message span has ended
-            expect(memoryExporter.getFinishedSpans().length).toBe(2);
+            expect(getTestSpans().length).toBe(2);
             done();
         });
     });
@@ -124,7 +124,7 @@ describe('amqplib instrumentation callback model', function () {
             (msg) =>
                 setTimeout(() => {
                     channel.ack(msg);
-                    expect(memoryExporter.getFinishedSpans().length).toBe(2);
+                    expect(getTestSpans().length).toBe(2);
                     done();
                 }, 1),
         ]);
