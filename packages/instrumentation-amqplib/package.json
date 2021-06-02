@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-amqplib",
-    "version": "0.4.3",
+    "version": "0.4.4",
     "description": "open telemetry instrumentation for the `amqplib` package",
     "keywords": [
         "amqplib",
@@ -52,7 +52,7 @@
         "lodash": "^4.17.21",
         "mocha": "^8.4.0",
         "opentelemetry-instrumentation-mocha": "^0.0.1-rc.0",
-        "opentelemetry-instrumentation-testing-utils": "^0.4.0",
+        "opentelemetry-instrumentation-testing-utils": "^0.4.1",
         "sinon": "^9.2.4",
         "test-all-versions": "^5.0.1",
         "ts-node": "^9.1.1",
