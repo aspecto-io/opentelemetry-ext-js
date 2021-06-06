@@ -1,4 +1,4 @@
-import { defaultSocketIoPath, SocketIoInstrumentation, SocketIoInstrumentationAttributes } from '../src';
+import { defaultSocketIoPath, SocketIoInstrumentation } from '../src';
 import { HttpInstrumentation, HttpInstrumentationConfig } from '@opentelemetry/instrumentation-http';
 import expect from 'expect';
 

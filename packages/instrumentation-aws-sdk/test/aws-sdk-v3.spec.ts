@@ -5,7 +5,7 @@ process.env.AWS_SECRET_ACCESS_KEY = 'testing';
 import 'mocha';
 import { AwsInstrumentation, NormalizedRequest, NormalizedResponse } from '../src';
 import { ReadableSpan, Span } from '@opentelemetry/tracing';
-import { context, SpanStatusCode, getSpan } from '@opentelemetry/api';
+import { context, SpanStatusCode, trace } from '@opentelemetry/api';
 import {
     MessagingDestinationKindValues,
     MessagingOperationValues,
@@ -248,7 +248,7 @@ describe('instrumentation-aws-sdk-v3', () => {
                     expect(span.attributes[SemanticAttributes.RPC_SERVICE]).toEqual('sqs');
                     expect(span.attributes[AttributeNames.AWS_REGION]).toEqual(region);
 
-                    const receiveCallbackSpan = getSpan(context.active());
+                    const receiveCallbackSpan = trace.getSpan(context.active());
                     expect(receiveCallbackSpan).toBeDefined();
                     const attributes = (receiveCallbackSpan as unknown as ReadableSpan).attributes;
                     expect(attributes[SemanticAttributes.MESSAGING_OPERATION]).toMatch(

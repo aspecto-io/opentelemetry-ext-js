@@ -13,7 +13,7 @@ export const registerInstrumentationTestingProvider = (
     otelTestingProvider.addSpanProcessor(new SimpleSpanProcessor(getTestMemoryExporter()));
 
     if (process.env.OTEL_EXPORTER_JAEGER_AGENT_HOST) {
-        otelTestingProvider.addSpanProcessor(new SimpleSpanProcessor(new JaegerExporter({ serviceName })));
+        otelTestingProvider.addSpanProcessor(new SimpleSpanProcessor(new JaegerExporter()));
     }
 
     otelTestingProvider.register();

@@ -6,7 +6,7 @@ import {
     diag,
     TextMapGetter,
     TextMapSetter,
-    setSpan,
+    trace,
     context,
     ROOT_CONTEXT,
 } from '@opentelemetry/api';
@@ -120,7 +120,7 @@ export class SqsServiceExtension implements ServiceExtension {
 
             pubsubPropagation.patchMessagesArrayToStartProcessSpans<SQS.Message>({
                 messages,
-                parentContext: setSpan(context.active(), span),
+                parentContext: trace.setSpan(context.active(), span),
                 tracer,
                 messageToSpanDetails: (message: SQS.Message) => ({
                     name: queueName,

@@ -1,4 +1,4 @@
-import { Tracer, SpanAttributes, SpanStatusCode, context, setSpan, diag, Span, SpanKind } from '@opentelemetry/api';
+import { Tracer, SpanAttributes, SpanStatusCode, context, trace, diag, Span, SpanKind } from '@opentelemetry/api';
 import type { Collection } from 'mongoose';
 import { MongooseResponseCustomAttributesFunction } from './types';
 import { safeExecuteInTheMiddle } from '@opentelemetry/instrumentation';
@@ -45,7 +45,7 @@ export function startSpan({
                 [SemanticAttributes.DB_SYSTEM]: 'mongodb',
             },
         },
-        parentSpan ? setSpan(context.active(), parentSpan) : undefined
+        parentSpan ? trace.setSpan(context.active(), parentSpan) : undefined
     );
 }
 

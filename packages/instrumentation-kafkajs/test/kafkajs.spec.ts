@@ -75,8 +75,8 @@ describe('instrumentation-kafkajs', () => {
 
     describe('producer', () => {
         const expectKafkaHeadersToMatchSpanContext = (kafkaMessage: Message, span: ReadableSpan) => {
-            expect(kafkaMessage.headers[DummyPropagation.TRACE_CONTEXT_KEY]).toStrictEqual(span.spanContext.traceId);
-            expect(kafkaMessage.headers[DummyPropagation.SPAN_CONTEXT_KEY]).toStrictEqual(span.spanContext.spanId);
+            expect(kafkaMessage.headers[DummyPropagation.TRACE_CONTEXT_KEY]).toStrictEqual(span.spanContext().traceId);
+            expect(kafkaMessage.headers[DummyPropagation.SPAN_CONTEXT_KEY]).toStrictEqual(span.spanContext().spanId);
         };
 
         describe('successful send', () => {
@@ -619,10 +619,10 @@ describe('instrumentation-kafkajs', () => {
                 expect(recvSpan.parentSpanId).toBeUndefined();
                 expect(recvSpan.attributes[SemanticAttributes.MESSAGING_OPERATION]).toStrictEqual('receive');
 
-                expect(msg1Span.parentSpanId).toStrictEqual(recvSpan.spanContext.spanId);
+                expect(msg1Span.parentSpanId).toStrictEqual(recvSpan.spanContext().spanId);
                 expect(msg1Span.attributes[SemanticAttributes.MESSAGING_OPERATION]).toStrictEqual('process');
 
-                expect(msg2Span.parentSpanId).toStrictEqual(recvSpan.spanContext.spanId);
+                expect(msg2Span.parentSpanId).toStrictEqual(recvSpan.spanContext().spanId);
                 expect(msg2Span.attributes[SemanticAttributes.MESSAGING_OPERATION]).toStrictEqual('process');
             });
 
@@ -715,8 +715,8 @@ describe('instrumentation-kafkajs', () => {
             const spans = getTestSpans();
             expect(spans.length).toBe(2);
             const [producerSpan, consumerSpan] = spans;
-            expect(consumerSpan.spanContext.traceId).toStrictEqual(producerSpan.spanContext.traceId);
-            expect(consumerSpan.parentSpanId).toStrictEqual(producerSpan.spanContext.spanId);
+            expect(consumerSpan.spanContext().traceId).toStrictEqual(producerSpan.spanContext().traceId);
+            expect(consumerSpan.parentSpanId).toStrictEqual(producerSpan.spanContext().spanId);
         });
 
         it('context injected in producer is extracted as links in batch consumer', async () => {
@@ -759,15 +759,15 @@ describe('instrumentation-kafkajs', () => {
             const [producerSpan, receivingSpan, processingSpan] = spans;
 
             // processing span should be the child of receiving span and link to relevant producer
-            expect(processingSpan.spanContext.traceId).toStrictEqual(receivingSpan.spanContext.traceId);
-            expect(processingSpan.parentSpanId).toStrictEqual(receivingSpan.spanContext.spanId);
+            expect(processingSpan.spanContext().traceId).toStrictEqual(receivingSpan.spanContext().traceId);
+            expect(processingSpan.parentSpanId).toStrictEqual(receivingSpan.spanContext().spanId);
             expect(processingSpan.links.length).toBe(1);
-            expect(processingSpan.links[0].context.traceId).toStrictEqual(producerSpan.spanContext.traceId);
-            expect(processingSpan.links[0].context.spanId).toStrictEqual(producerSpan.spanContext.spanId);
+            expect(processingSpan.links[0].context.traceId).toStrictEqual(producerSpan.spanContext().traceId);
+            expect(processingSpan.links[0].context.spanId).toStrictEqual(producerSpan.spanContext().spanId);
 
             // receiving span should start a new trace
             expect(receivingSpan.parentSpanId).toBeUndefined();
-            expect(receivingSpan.spanContext.traceId).not.toStrictEqual(producerSpan.spanContext.traceId);
+            expect(receivingSpan.spanContext().traceId).not.toStrictEqual(producerSpan.spanContext().traceId);
         });
     });
 });

@@ -31,13 +31,13 @@
         "access": "public"
     },
     "dependencies": {
-        "@opentelemetry/api": "^1.0.0-rc.0",
+        "@opentelemetry/api": "^0.20.0",
         "@opentelemetry/instrumentation": "^0.20.0",
         "@opentelemetry/semantic-conventions": "^0.20.0"
     },
     "devDependencies": {
-        "@opentelemetry/instrumentation-http": "^0.19.0",
-        "@opentelemetry/tracing": "^0.19.0",
+        "@opentelemetry/instrumentation-http": "^0.20.0",
+        "@opentelemetry/tracing": "^0.20.0",
         "@types/express": "4.17.8",
         "@types/mocha": "^8.2.2",
         "axios": "0.21.1",

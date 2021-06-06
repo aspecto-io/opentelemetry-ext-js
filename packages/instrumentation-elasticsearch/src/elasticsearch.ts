@@ -1,4 +1,5 @@
-import { diag, context, suppressInstrumentation, setSpan, Span } from '@opentelemetry/api';
+import { diag, context, trace, Span } from '@opentelemetry/api';
+import { suppressTracing } from '@opentelemetry/core';
 import type elasticsearch from '@elastic/elasticsearch';
 import { ElasticsearchInstrumentationConfig } from './types';
 import {
@@ -162,9 +163,9 @@ export class ElasticsearchInstrumentation extends InstrumentationBase<typeof ela
 
     private _callOriginalFunction<T>(span: Span, originalFunction: (...args: any[]) => T): T {
         if (this._config?.suppressInternalInstrumentation) {
-            return context.with(suppressInstrumentation(context.active()), originalFunction);
+            return context.with(suppressTracing(context.active()), originalFunction);
         } else {
-            const activeContextWithSpan = setSpan(context.active(), span);
+            const activeContextWithSpan = trace.setSpan(context.active(), span);
             return context.with(activeContextWithSpan, originalFunction);
         }
     }

@@ -1,4 +1,4 @@
-import { context, setSpan, Span, SpanKind, SpanStatusCode, diag } from '@opentelemetry/api';
+import { context, trace, Span, SpanKind, SpanStatusCode, diag } from '@opentelemetry/api';
 import {
     InstrumentationBase,
     InstrumentationNodeModuleFile,
@@ -28,7 +28,6 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
 
     constructor(config: SocketIoInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-socket.io', VERSION, Object.assign({}, config));
-
         if (config.filterHttpTransport) {
             const httpInstrumentationConfig =
                 config.filterHttpTransport.httpInstrumentation.getConfig() as HttpInstrumentationConfig;
@@ -167,7 +166,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                             true
                         );
                     }
-                    return context.with(setSpan(context.active(), span), () =>
+                    return context.with(trace.setSpan(context.active(), span), () =>
                         self.endSpan(() => originalListener.apply(this, arguments), span)
                     );
                 };
@@ -245,7 +244,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                     );
                 }
                 try {
-                    return context.with(setSpan(context.active(), span), () => original.apply(this, arguments));
+                    return context.with(trace.setSpan(context.active(), span), () => original.apply(this, arguments));
                 } catch (error) {
                     span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
                     throw error;
