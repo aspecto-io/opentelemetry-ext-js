@@ -1,4 +1,4 @@
-import { context, setSpan, Span, SpanKind, SpanStatusCode, diag, getSpan } from '@opentelemetry/api';
+import { context, setSpan, Span, SpanKind, SpanStatusCode, diag } from '@opentelemetry/api';
 import {
     InstrumentationBase,
     InstrumentationNodeModuleFile,
@@ -11,7 +11,13 @@ import {
     MessagingOperationValues,
     MessagingDestinationKindValues,
 } from '@opentelemetry/semantic-conventions';
-import { SocketIoInstrumentationConfig, Io, SocketIoInstrumentationAttributes } from './types';
+import {
+    SocketIoInstrumentationConfig,
+    Io,
+    SocketIoInstrumentationAttributes,
+    defaultSocketIoPath,
+    HttpInstrumentationConfig,
+} from './types';
 import { VERSION } from './version';
 import isPromise from 'is-promise';
 
@@ -22,6 +28,18 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
 
     constructor(config: SocketIoInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-socket.io', VERSION, Object.assign({}, config));
+
+        if (config.filterHttpTransport) {
+            const httpInstrumentationConfig =
+                config.filterHttpTransport.httpInstrumentation.getConfig() as HttpInstrumentationConfig;
+            if (!Array.isArray(httpInstrumentationConfig.ignoreIncomingPaths)) {
+                httpInstrumentationConfig.ignoreIncomingPaths = [];
+            }
+            httpInstrumentationConfig.ignoreIncomingPaths.push(
+                config.filterHttpTransport.socketPath ?? defaultSocketIoPath
+            );
+            config.filterHttpTransport.httpInstrumentation.setConfig(httpInstrumentationConfig);
+        }
     }
     setConfig(config: SocketIoInstrumentationConfig) {
         this._config = Object.assign({}, this._config, config);

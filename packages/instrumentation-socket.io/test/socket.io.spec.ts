@@ -12,7 +12,7 @@ const instrumentation = new SocketIoInstrumentation();
 import { Server, Socket } from 'socket.io';
 import { io } from 'socket.io-client';
 
-describe('socket.io instrumentation', () => {
+describe('SocketIoInstrumentation', () => {
     const getSocketIoSpans = (): ReadableSpan[] =>
         getTestSpans().filter((s) => s.attributes[SemanticAttributes.MESSAGING_SYSTEM] === 'socket.io');
 
