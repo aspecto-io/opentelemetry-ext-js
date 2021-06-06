@@ -41,9 +41,6 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
             config.filterHttpTransport.httpInstrumentation.setConfig(httpInstrumentationConfig);
         }
     }
-    setConfig(config: SocketIoInstrumentationConfig) {
-        this._config = Object.assign({}, this._config, config);
-    }
     protected init() {
         const socketInstrumentation = new InstrumentationNodeModuleFile<any>(
             'socket.io/dist/socket.js',
