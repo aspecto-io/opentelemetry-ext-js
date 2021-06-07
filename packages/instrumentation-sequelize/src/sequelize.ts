@@ -1,11 +1,4 @@
-import {
-    context,
-    Span,
-    SpanKind,
-    SpanStatusCode,
-    trace,
-    diag,
-} from '@opentelemetry/api';
+import { context, Span, SpanKind, SpanStatusCode, trace, diag } from '@opentelemetry/api';
 import { suppressTracing } from '@opentelemetry/core';
 import { NetTransportValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import * as sequelize from 'sequelize';

@@ -10,7 +10,7 @@ describe('elasticsearch utils', () => {
         recordException: (err) => {},
         setStatus: (obj) => {},
         end: () => {},
-        setAttributes: (obj) => {}
+        setAttributes: (obj) => {},
     };
 
     context('defaultDbStatementSerializer', () => {
@@ -174,7 +174,7 @@ describe('elasticsearch utils', () => {
     context('startSpan', () => {
         const tracerMock = {
             startSpan: (name, options?, context?): any => {},
-            startActiveSpan: () => {}
+            startActiveSpan: () => {},
         };
         it('should start span with client kind', () => {
             const startSpanStub = stub(tracerMock, 'startSpan');
