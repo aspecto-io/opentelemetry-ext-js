@@ -3,10 +3,7 @@ import { NodeTracerProvider, NodeTracerConfig } from '@opentelemetry/node';
 import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/tracing';
 import { getTestMemoryExporter, setTestMemoryExporter } from './otel-provider-api';
 
-export const registerInstrumentationTestingProvider = (
-    serviceName: string,
-    config?: NodeTracerConfig
-): NodeTracerProvider => {
+export const registerInstrumentationTestingProvider = (config?: NodeTracerConfig): NodeTracerProvider => {
     const otelTestingProvider = new NodeTracerProvider(config);
 
     setTestMemoryExporter(new InMemorySpanExporter());
