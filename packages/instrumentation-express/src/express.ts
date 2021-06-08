@@ -1,3 +1,4 @@
+import { getRPCMetadata } from '@opentelemetry/core';
 import { SpanKind, diag, context } from '@opentelemetry/api';
 import {
     LayerPath,
@@ -227,7 +228,8 @@ export class ExpressInstrumentation extends InstrumentationBase<typeof express> 
                 const routeAttributes = getRouteAttributes(routeState);
                 const route = routeAttributes[SemanticAttributes.HTTP_ROUTE] as string;
                 if (route) {
-                    req.__ot_middlewares = [route];
+                    const rpcMetadata = getRPCMetadata(context.active());
+                    rpcMetadata.route = route;
                 }
 
                 oldResEnd.apply(res, arguments);
