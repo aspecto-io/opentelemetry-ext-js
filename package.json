@@ -22,5 +22,6 @@
     },
     "workspaces": [
         "packages/*"
-    ]
+    ],
+    "version": "0.50.0"
 }
