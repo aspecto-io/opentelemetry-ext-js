@@ -21,11 +21,8 @@
     "scripts": {
         "build": "tsc",
         "prepare": "yarn run build",
-        "test": "mocha",
-        "test:jaeger": "OTEL_EXPORTER_JAEGER_AGENT_HOST=localhost mocha",
         "watch": "tsc -w",
         "version:update": "node ../../scripts/version-update.js",
-        "test:ci": "yarn test",
         "version": "yarn run version:update"
     },
     "bugs": {
@@ -36,21 +33,7 @@
         "@opentelemetry/resources": "^0.20.0"
     },
     "devDependencies": {
-        "@types/mocha": "^8.2.2",
-        "expect": "^26.6.2",
-        "mocha": "^8.4.0",
-        "opentelemetry-instrumentation-mocha": "^0.0.1-rc.1",
         "ts-node": "^9.1.1",
         "typescript": "^4.0.5"
-    },
-    "mocha": {
-        "extension": [
-            "ts"
-        ],
-        "spec": "test/**/*.spec.ts",
-        "require": [
-            "ts-node/register",
-            "opentelemetry-instrumentation-mocha"
-        ]
     }
 }
