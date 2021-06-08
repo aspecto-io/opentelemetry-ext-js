@@ -11,13 +11,8 @@ import {
     MessagingOperationValues,
     MessagingDestinationKindValues,
 } from '@opentelemetry/semantic-conventions';
-import {
-    SocketIoInstrumentationConfig,
-    Io,
-    SocketIoInstrumentationAttributes,
-    defaultSocketIoPath,
-    HttpInstrumentationConfig,
-} from './types';
+import type { HttpInstrumentationConfig } from '@opentelemetry/instrumentation-http';
+import { SocketIoInstrumentationConfig, Io, SocketIoInstrumentationAttributes, defaultSocketIoPath } from './types';
 import { VERSION } from './version';
 import isPromise from 'is-promise';
 

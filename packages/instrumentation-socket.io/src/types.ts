@@ -35,4 +35,3 @@ export interface SocketIoInstrumentationConfig extends InstrumentationConfig {
     filterHttpTransport?: HttpTransportInstrumentationConfig;
 }
 export type Io = typeof io;
-export type { HttpInstrumentationConfig } from '@opentelemetry/instrumentation-http';
