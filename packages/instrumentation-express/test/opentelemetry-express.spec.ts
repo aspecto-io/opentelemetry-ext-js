@@ -61,31 +61,34 @@ describe('opentelemetry-express', () => {
                     }
                 );
             } catch (err) {}
+            try {
+                const expressSpans: ReadableSpan[] = getExpressSpans();
 
-            const expressSpans: ReadableSpan[] = getExpressSpans();
-            expect(expressSpans.length).toBe(1);
-            const span: ReadableSpan = expressSpans[0];
+                // http span route
+                const [incomingHttpSpan] = getTestSpans().filter(
+                    (s) => s.kind === SpanKind.SERVER && s.instrumentationLibrary.name.includes('http')
+                );
+                expect(expressSpans.length).toBe(1);
+                const span: ReadableSpan = expressSpans[0];
 
-            // Span name
-            expect(span.name).toBe('POST /toto/:id');
+                // Span name
+                expect(span.name).toBe('POST /toto/:id');
 
-            // HTTP Attributes
-            expect(span.attributes[SemanticAttributes.HTTP_METHOD]).toBeUndefined();
-            expect(span.attributes[SemanticAttributes.HTTP_TARGET]).toBeUndefined();
-            expect(span.attributes[SemanticAttributes.HTTP_SCHEME]).toBeUndefined();
-            expect(span.attributes[SemanticAttributes.HTTP_STATUS_CODE]).toBeUndefined();
-            expect(span.attributes[SemanticAttributes.HTTP_HOST]).toBeUndefined();
-            expect(span.attributes[SemanticAttributes.HTTP_FLAVOR]).toBeUndefined();
-            expect(span.attributes[SemanticAttributes.NET_PEER_IP]).toBeUndefined();
-
-            // http span route
-            const [incomingHttpSpan] = getTestSpans().filter(
-                (s) => s.kind === SpanKind.SERVER && s.instrumentationLibrary.name.includes('http')
-            );
-            expect(incomingHttpSpan.attributes[SemanticAttributes.HTTP_ROUTE]).toMatch('/toto/:id');
-
-            server.close();
-            done();
+                // HTTP Attributes
+                expect(span.attributes[SemanticAttributes.HTTP_METHOD]).toBeUndefined();
+                expect(span.attributes[SemanticAttributes.HTTP_TARGET]).toBeUndefined();
+                expect(span.attributes[SemanticAttributes.HTTP_SCHEME]).toBeUndefined();
+                expect(span.attributes[SemanticAttributes.HTTP_STATUS_CODE]).toBeUndefined();
+                expect(span.attributes[SemanticAttributes.HTTP_HOST]).toBeUndefined();
+                expect(span.attributes[SemanticAttributes.HTTP_FLAVOR]).toBeUndefined();
+                expect(span.attributes[SemanticAttributes.NET_PEER_IP]).toBeUndefined();
+                expect(incomingHttpSpan.attributes[SemanticAttributes.HTTP_ROUTE]).toMatch('/toto/:id');
+                done();
+            } catch (error) {
+                done(error);
+            } finally {
+                server.close();
+            }
         });
     });
 
