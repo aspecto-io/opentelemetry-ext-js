@@ -1,15 +1,16 @@
 import 'mocha';
 import expect from 'expect';
 import { serviceDetector, serviceSyncDetector } from '../src';
-import { ResourceAttributes } from "@opentelemetry/semantic-conventions";
+import { ResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 describe('service detector', () => {
-
     it('read service from package json', () => {
         const resource = serviceSyncDetector.detect();
         expect(resource.attributes[ResourceAttributes.SERVICE_NAME]).toMatch('opentelemetry-resource-detector-service');
         expect(resource.attributes[ResourceAttributes.SERVICE_VERSION]).toMatch(/\d+.\d+.\d+/);
-        expect(resource.attributes[ResourceAttributes.SERVICE_INSTANCE_ID]).toMatch(/[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}/);
+        expect(resource.attributes[ResourceAttributes.SERVICE_INSTANCE_ID]).toMatch(
+            /[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}/
+        );
     });
 
     it('read service from env variable', () => {
@@ -29,7 +30,8 @@ describe('service detector', () => {
         const resource = await serviceDetector.detect();
         expect(resource.attributes[ResourceAttributes.SERVICE_NAME]).toMatch('opentelemetry-resource-detector-service');
         expect(resource.attributes[ResourceAttributes.SERVICE_VERSION]).toMatch(/\d+.\d+.\d+/);
-        expect(resource.attributes[ResourceAttributes.SERVICE_INSTANCE_ID]).toMatch(/[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}/);
+        expect(resource.attributes[ResourceAttributes.SERVICE_INSTANCE_ID]).toMatch(
+            /[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}/
+        );
     });
-
 });

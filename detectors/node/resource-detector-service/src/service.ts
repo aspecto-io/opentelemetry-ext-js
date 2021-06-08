@@ -1,5 +1,5 @@
-import { ResourceAttributes as ResourceAttributesKeys } from "@opentelemetry/semantic-conventions";
-import { Resource, defaultServiceName, ResourceAttributes } from "@opentelemetry/resources";
+import { ResourceAttributes as ResourceAttributesKeys } from '@opentelemetry/semantic-conventions';
+import { Resource, defaultServiceName, ResourceAttributes } from '@opentelemetry/resources';
 import { SyncDetector, SyncDetectorToDetector } from 'opentelemetry-resource-detector-sync-api';
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
@@ -9,15 +9,14 @@ import * as fs from 'fs';
 const instanceId = uuidv4();
 
 class ServiceSyncDetector implements SyncDetector {
-
     detect(): Resource {
         const packageJson = this.loadJsonFile('package.json');
         const attributes: ResourceAttributes = {
             [ResourceAttributesKeys.SERVICE_INSTANCE_ID]: instanceId,
             [ResourceAttributesKeys.SERVICE_NAME]: this.getServiceName(packageJson),
-        }
+        };
         const serviceVersion = packageJson?.version;
-        if(serviceVersion) {
+        if (serviceVersion) {
             attributes[ResourceAttributesKeys.SERVICE_VERSION] = serviceVersion;
         }
         return new Resource(attributes);
@@ -25,10 +24,10 @@ class ServiceSyncDetector implements SyncDetector {
 
     getServiceName(packageJson: any): string {
         const fromEnv = process.env.OTEL_SERVICE_NAME;
-        if(fromEnv) return fromEnv;
+        if (fromEnv) return fromEnv;
 
         const fromPackageJson = packageJson?.name;
-        if(fromPackageJson) return fromPackageJson;
+        if (fromPackageJson) return fromPackageJson;
 
         return defaultServiceName();
     }
@@ -39,7 +38,7 @@ class ServiceSyncDetector implements SyncDetector {
         } catch (err) {
             return null;
         }
-    };    
+    }
 }
 
 export const serviceSyncDetector = new ServiceSyncDetector();
