@@ -229,7 +229,9 @@ export class ExpressInstrumentation extends InstrumentationBase<typeof express> 
                 const route = routeAttributes[SemanticAttributes.HTTP_ROUTE] as string;
                 if (route) {
                     const rpcMetadata = getRPCMetadata(context.active());
-                    rpcMetadata.route = route;
+                    if(rpcMetadata){
+                        rpcMetadata.route = route;
+                    }
                 }
 
                 oldResEnd.apply(res, arguments);

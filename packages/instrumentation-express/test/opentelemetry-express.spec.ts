@@ -5,14 +5,14 @@ import { ExpressInstrumentation } from '../src';
 import { AddressInfo } from 'net';
 import { ReadableSpan } from '@opentelemetry/tracing';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
+//import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import * as bodyParser from 'body-parser';
 
 const instrumentation = new ExpressInstrumentation();
 // add http instrumentation so we can test proper assignment of route attribute.
-const httpInstrumentation = new HttpInstrumentation();
-httpInstrumentation.enable();
-httpInstrumentation.disable();
+// const httpInstrumentation = new HttpInstrumentation();
+// httpInstrumentation.enable();
+// httpInstrumentation.disable();
 instrumentation.enable();
 instrumentation.disable();
 
@@ -28,14 +28,14 @@ describe('opentelemetry-express', () => {
 
     before(() => {
         instrumentation.enable();
-        httpInstrumentation.enable();
+        //httpInstrumentation.enable();
         app = express();
         app.use(bodyParser.json());
     });
 
     after(() => {
         instrumentation.disable();
-        httpInstrumentation.disable();
+        //httpInstrumentation.disable();
     });
 
     it('express attributes', (done) => {
