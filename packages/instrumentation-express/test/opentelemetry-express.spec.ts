@@ -62,10 +62,7 @@ describe('opentelemetry-express', () => {
                 );
             } catch (err) {}
             try {
-                 // http span route
-                 const [incomingHttpSpan] = getTestSpans().filter(
-                    (s) => s.kind === SpanKind.SERVER && s.instrumentationLibrary.name.includes('http')
-                );
+                
                 const expressSpans: ReadableSpan[] = getExpressSpans();
                 expect(expressSpans.length).toBe(1);
                 const span: ReadableSpan = expressSpans[0];
@@ -81,6 +78,11 @@ describe('opentelemetry-express', () => {
                 expect(span.attributes[SemanticAttributes.HTTP_HOST]).toBeUndefined();
                 expect(span.attributes[SemanticAttributes.HTTP_FLAVOR]).toBeUndefined();
                 expect(span.attributes[SemanticAttributes.NET_PEER_IP]).toBeUndefined();
+
+                 // http span route
+                 const [incomingHttpSpan] = getTestSpans().filter(
+                    (s) => s.kind === SpanKind.SERVER && s.instrumentationLibrary.name.includes('http')
+                );
                 expect(incomingHttpSpan.attributes[SemanticAttributes.HTTP_ROUTE]).toMatch('/toto/:id');
                 done();
             } catch (error) {
