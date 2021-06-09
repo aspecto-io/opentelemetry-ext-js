@@ -5,8 +5,7 @@ import {
     Context,
     propagation,
     Link,
-    getSpan,
-    setSpan,
+    trace,
     context,
     diag,
     ROOT_CONTEXT,
@@ -151,7 +150,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
                 propagatedContext
             );
 
-            const eachMessagePromise = context.with(setSpan(context.active(), span), () => {
+            const eachMessagePromise = context.with(trace.setSpan(context.active(), span), () => {
                 return original.apply(this, arguments);
             });
             return self._endSpansOnPromise([span], eachMessagePromise);
@@ -168,14 +167,14 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
                 MessagingOperationValues.RECEIVE,
                 ROOT_CONTEXT
             );
-            return context.with(setSpan(context.active(), receivingSpan), () => {
+            return context.with(trace.setSpan(context.active(), receivingSpan), () => {
                 const spans = payload.batch.messages.map((message: KafkaMessage) => {
                     const propagatedContext: Context = propagation.extract(
                         ROOT_CONTEXT,
                         message.headers,
                         bufferTextMapGetter
                     );
-                    const spanContext = getSpan(propagatedContext)?.context();
+                    const spanContext = trace.getSpan(propagatedContext)?.spanContext();
                     let origSpanLink: Link;
                     if (spanContext) {
                         origSpanLink = {
@@ -292,7 +291,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
         }
 
         message.headers = message.headers ?? {};
-        propagation.inject(setSpan(context.active(), span), message.headers);
+        propagation.inject(trace.setSpan(context.active(), span), message.headers);
 
         if (this._config?.producerHook) {
             safeExecuteInTheMiddle(

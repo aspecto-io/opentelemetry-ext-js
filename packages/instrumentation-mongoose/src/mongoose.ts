@@ -1,4 +1,5 @@
-import { getSpan, context, suppressInstrumentation, Span, diag } from '@opentelemetry/api';
+import { context, Span, trace, diag } from '@opentelemetry/api';
+import { suppressTracing } from '@opentelemetry/core';
 import type mongoose from 'mongoose';
 import { MongooseInstrumentationConfig, SerializerPayload } from './types';
 import { startSpan, handleCallbackResponse, handlePromiseResponse } from './utils';
@@ -95,7 +96,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
         diag.debug('mongoose instrumentation: patched mongoose Aggregate exec prototype');
         return (originalAggregate: Function) => {
             return function exec(this: any, callback?: Function) {
-                if (self._config.requireParentSpan && getSpan(context.active()) === undefined) {
+                if (self._config.requireParentSpan && trace.getSpan(context.active()) === undefined) {
                     return originalAggregate.apply(this, arguments);
                 }
 
@@ -127,7 +128,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
         diag.debug('mongoose instrumentation: patched mongoose Query exec prototype');
         return (originalExec: Function) => {
             return function exec(this: any, callback?: Function) {
-                if (self._config.requireParentSpan && getSpan(context.active()) === undefined) {
+                if (self._config.requireParentSpan && trace.getSpan(context.active()) === undefined) {
                     return originalExec.apply(this, arguments);
                 }
 
@@ -159,7 +160,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
         diag.debug(`mongoose instrumentation: patched mongoose Model ${op} prototype`);
         return (originalOnModelFunction: Function) => {
             return function method(this: any, options?: any, callback?: Function) {
-                if (self._config.requireParentSpan && getSpan(context.active()) === undefined) {
+                if (self._config.requireParentSpan && trace.getSpan(context.active()) === undefined) {
                     return originalOnModelFunction.apply(this, arguments);
                 }
 
@@ -198,7 +199,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
         diag.debug(`mongoose instrumentation: patched mongoose model aggregate`);
         return (original: Function) => {
             return function captureSpanContext(this: any) {
-                const currentSpan = getSpan(context.active());
+                const currentSpan = trace.getSpan(context.active());
                 const aggregate = self._callOriginalFunction(() => original.apply(this, arguments));
                 if (aggregate) aggregate[_STORED_PARENT_SPAN] = currentSpan;
                 return aggregate;
@@ -211,7 +212,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
         diag.debug(`mongoose instrumentation: patched mongoose query ${funcName} prototype`);
         return (original: Function) => {
             return function captureSpanContext(this: any) {
-                this[_STORED_PARENT_SPAN] = getSpan(context.active());
+                this[_STORED_PARENT_SPAN] = trace.getSpan(context.active());
                 return self._callOriginalFunction(() => original.apply(this, arguments));
             };
         };
@@ -231,7 +232,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
 
     private _callOriginalFunction<T>(originalFunction: (...args: any[]) => T): T {
         if (this._config?.suppressInternalInstrumentation) {
-            return context.with(suppressInstrumentation(context.active()), originalFunction);
+            return context.with(suppressTracing(context.active()), originalFunction);
         } else {
             return originalFunction();
         }

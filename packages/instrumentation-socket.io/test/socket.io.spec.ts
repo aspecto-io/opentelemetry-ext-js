@@ -1,6 +1,6 @@
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { ReadableSpan } from '@opentelemetry/tracing';
-import { SocketIoInstrumentation, SocketIoInstrumentationAttributes } from '../src';
+import { SocketIoInstrumentation, SocketIoInstrumentationAttributes, SocketIoInstrumentationConfig } from '../src';
 import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 import { AddressInfo } from 'net';
@@ -12,7 +12,7 @@ const instrumentation = new SocketIoInstrumentation();
 import { Server, Socket } from 'socket.io';
 import { io } from 'socket.io-client';
 
-describe('socket.io instrumentation', () => {
+describe('SocketIoInstrumentation', () => {
     const getSocketIoSpans = (): ReadableSpan[] =>
         getTestSpans().filter((s) => s.attributes[SemanticAttributes.MESSAGING_SYSTEM] === 'socket.io');
 
@@ -55,9 +55,10 @@ describe('socket.io instrumentation', () => {
         });
 
         it('emit reserved events error is instrumented', () => {
-            instrumentation.setConfig({
+            const config: SocketIoInstrumentationConfig = {
                 traceReserved: true,
-            });
+            };
+            instrumentation.setConfig(config);
             const io = new Server();
             try {
                 io.emit('connect');
@@ -81,12 +82,14 @@ describe('socket.io instrumentation', () => {
         });
 
         it('emitHook is called', () => {
-            instrumentation.setConfig({
+            const config: SocketIoInstrumentationConfig = {
                 traceReserved: true,
                 emitHook: (span, hookInfo) => {
                     span.setAttribute('payload', JSON.stringify(hookInfo.payload));
                 },
-            });
+            };
+            instrumentation.setConfig(config);
+
             const io = new Server();
             io.emit('test', 1234);
             expectSpan('/ send', (span) => {
@@ -95,12 +98,12 @@ describe('socket.io instrumentation', () => {
         });
 
         it('emitHook error does not effect trace', () => {
-            instrumentation.setConfig({
+            const config: SocketIoInstrumentationConfig = {
                 emitHook: () => {
                     throw new Error('Throwing');
                 },
-            });
-
+            };
+            instrumentation.setConfig(config);
             const io = new Server();
             io.emit('test');
             const spans = getSocketIoSpans();
@@ -108,11 +111,12 @@ describe('socket.io instrumentation', () => {
         });
 
         it('onHook is called', (done) => {
-            instrumentation.setConfig({
+            const config: SocketIoInstrumentationConfig = {
                 onHook: (span, hookInfo) => {
                     span.setAttribute('payload', JSON.stringify(hookInfo.payload));
                 },
-            });
+            };
+            instrumentation.setConfig(config);
             const data = {
                 name: 'bob',
                 age: 28,
@@ -144,9 +148,10 @@ describe('socket.io instrumentation', () => {
         });
 
         it('traceReserved:true on is instrumented', (done) => {
-            instrumentation.setConfig({
+            const config: SocketIoInstrumentationConfig = {
                 traceReserved: true,
-            });
+            };
+            instrumentation.setConfig(config);
             createServer((sio, port) => {
                 const client = io(`http://localhost:${port}`);
                 sio.on('connection', () => {

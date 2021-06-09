@@ -36,6 +36,18 @@ socket.io instrumentation has few options available to choose from. You can set 
 | `emitHook` | `SocketIoHookFunction` | hook for adding custom attributes before socket.io emits the event |
 | `onHook` | `SocketIoHookFunction` | hook for adding custom attributes before the event listener (callback) is invoked |
 | `traceReserved` | `boolean` | set to true if you want to trace socket.io reserved events (see https://socket.io/docs/v4/emit-cheatsheet/#Reserved-events) |
+| `filterHttpTransport`| `HttpTransportInstrumentationConfig` | set if you want to filter out the HTTP traces when using HTTP polling as the transport (see below)
+
+#### HttpTransportInstrumentationConfig
+If you use `opentelemetry-instrumentation-socket.io` alongside `instrumentation-http`, socket.io might use HTTP polling as the transport method. Therefore, you will see an HTTP span created as the parent of the socket.io span. 
+To filter out those spans; we use HttpTransportInstrumentationConfig.
+
+`HttpTransportInstrumentationConfig` has a few options available to choose from. You can set the following:
+
+| Options        | Type                                   | Description                                                                                     |
+| -------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `httpInstrumentation`| `HttpInstrumentation` | the instance of HttpInstrumentation you pass to `registerInstrumentations`|
+| `socketPath` | `string` | the socket.io endpoint path (defaults to `/socket.io/`) |
 ---
 
 This extension (and many others) was developed by [Aspecto](https://www.aspecto.io/) with ❤️

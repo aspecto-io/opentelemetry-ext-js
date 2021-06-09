@@ -29,7 +29,7 @@ The instrumentations in this repo are:
 - strictly complies with [open telemetry semantic conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions)
 - up to date with latest SDK version
 
-**Compatible with [SDK v0.19.0](https://github.com/open-telemetry/opentelemetry-js/releases/tag/v0.19.0)**
+**Compatible with [SDK v0.20.0](https://github.com/open-telemetry/opentelemetry-js/releases/tag/v0.20.0)**
 ## Instrumentations
 | Instrumentation Package | Instrumented Lib | NPM |
 | --- | --- | --- |
@@ -45,10 +45,11 @@ The instrumentations in this repo are:
 |[opentelemetry-instrumentation-socket.io](./packages/instrumentation-socket.io) | [socket.io](https://github.com/socketio/socket.io) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-socket.io.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-socket.io)
 
 ## Compatability Table
-**Tested and verified against otel v0.19.0**
+**Tested and verified against otel v0.20.0**
 
 | Instrumentations Version | OpenTelemetry Version |
 | --- | --- |
+| 0.5.x | 0.20.0 |
 | 0.4.x | 0.19.0 |
 | 0.3.x | 0.18.0 |
 | 0.2.x | 0.17.0 |

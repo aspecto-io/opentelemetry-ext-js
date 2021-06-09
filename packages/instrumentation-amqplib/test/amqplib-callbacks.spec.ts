@@ -100,8 +100,8 @@ describe('amqplib instrumentation callback model', function () {
             expect(consumeSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(TEST_RABBITMQ_PORT);
 
             // assert context propagation
-            expect(consumeSpan.spanContext.traceId).toEqual(publishSpan.spanContext.traceId);
-            expect(consumeSpan.parentSpanId).toEqual(publishSpan.spanContext.spanId);
+            expect(consumeSpan.spanContext().traceId).toEqual(publishSpan.spanContext().traceId);
+            expect(consumeSpan.parentSpanId).toEqual(publishSpan.spanContext().spanId);
 
             done();
         });

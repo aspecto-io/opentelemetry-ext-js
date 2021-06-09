@@ -1,3 +1,5 @@
+import { Resource } from '@opentelemetry/resources';
+import { ResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { registerInstrumentationTestingProvider } from './otel-default-provider';
 import { resetMemoryExporter } from './otel-provider-api';
 
@@ -23,5 +25,9 @@ export async function mochaGlobalSetup() {
             serviceName = require(process.argv[1] + '/../../../package.json').name;
         } catch {}
     }
-    registerInstrumentationTestingProvider(serviceName);
+    registerInstrumentationTestingProvider({
+        resource: new Resource({
+            [ResourceAttributes.SERVICE_NAME]: serviceName,
+        }),
+    });
 }

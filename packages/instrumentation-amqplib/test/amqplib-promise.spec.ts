@@ -122,8 +122,8 @@ describe('amqplib instrumentation promise model', function () {
         expect(consumeSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(TEST_RABBITMQ_PORT);
 
         // assert context propagation
-        expect(consumeSpan.spanContext.traceId).toEqual(publishSpan.spanContext.traceId);
-        expect(consumeSpan.parentSpanId).toEqual(publishSpan.spanContext.spanId);
+        expect(consumeSpan.spanContext().traceId).toEqual(publishSpan.spanContext().traceId);
+        expect(consumeSpan.parentSpanId).toEqual(publishSpan.spanContext().spanId);
 
         expectConsumeEndSpyStatus([EndOperation.AutoAck]);
     });
@@ -384,8 +384,8 @@ describe('amqplib instrumentation promise model', function () {
             expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
 
             // assert context propagation
-            expect(consumeSpan.spanContext.traceId).toEqual(publishSpan.spanContext.traceId);
-            expect(consumeSpan.parentSpanId).toEqual(publishSpan.spanContext.spanId);
+            expect(consumeSpan.spanContext().traceId).toEqual(publishSpan.spanContext().traceId);
+            expect(consumeSpan.parentSpanId).toEqual(publishSpan.spanContext().spanId);
         });
     });
 

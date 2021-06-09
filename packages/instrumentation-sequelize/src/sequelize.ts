@@ -1,13 +1,5 @@
-import {
-    context,
-    setSpan,
-    Span,
-    SpanKind,
-    SpanStatusCode,
-    getSpan,
-    diag,
-    suppressInstrumentation,
-} from '@opentelemetry/api';
+import { context, Span, SpanKind, SpanStatusCode, trace, diag } from '@opentelemetry/api';
+import { suppressTracing } from '@opentelemetry/core';
 import { NetTransportValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import * as sequelize from 'sequelize';
 import { SequelizeInstrumentationConfig } from './types';
@@ -88,18 +80,18 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
         }
     }
 
-    // run getConnection with suppressInstrumentation, as it might call internally to `databaseVersion` function
+    // run getConnection with suppressTracing, as it might call internally to `databaseVersion` function
     // which calls `query` and create internal span which we don't need to instrument
     private _getConnectionPatch(original: Function) {
         return function (...args: unknown[]) {
-            return context.with(suppressInstrumentation(context.active()), () => original.apply(this, args));
+            return context.with(suppressTracing(context.active()), () => original.apply(this, args));
         };
     }
 
     private _createQueryPatch(original: Function) {
         const self = this;
         return function (sql: any, option: any) {
-            if (self._config?.ignoreOrphanedSpans && !getSpan(context.active())) {
+            if (self._config?.ignoreOrphanedSpans && !trace.getSpan(context.active())) {
                 return original.apply(this, arguments);
             }
 
@@ -141,7 +133,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
             });
 
             return context
-                .with(setSpan(context.active(), newSpan), () => original.apply(this, arguments))
+                .with(trace.setSpan(context.active(), newSpan), () => original.apply(this, arguments))
                 .then((response: any) => {
                     if (self._config?.responseHook) {
                         safeExecuteInTheMiddle(

@@ -1,4 +1,4 @@
-import { Span, SpanKind, SpanStatusCode, setSpan, context, diag } from '@opentelemetry/api';
+import { Span, SpanKind, SpanStatusCode, trace, context, diag } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { TypeormInstrumentationConfig } from './types';
 import { getParamNames } from './utils';
@@ -123,7 +123,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                 });
 
                 try {
-                    const response: Promise<any> = context.with(setSpan(context.active(), newSpan), () =>
+                    const response: Promise<any> = context.with(trace.setSpan(context.active(), newSpan), () =>
                         original.apply(this, arguments)
                     );
                     const resolved = await response;
