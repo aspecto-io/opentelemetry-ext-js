@@ -27,7 +27,7 @@ const tracerProvider = new NodeTracerProvider({ resource });
 import { detectResources } from '@opentelemetry/resources';
 import { serviceDetector } from 'opentelemetry-resource-detector-service';
 
-const resource = detectSyncResources({
+const resource = detectResources({
     detectors: [serviceDetector, /* add other async detectors here */],
 });
 const tracerProvider = new NodeTracerProvider({ resource });
