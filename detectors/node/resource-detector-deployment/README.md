@@ -27,10 +27,15 @@ const tracerProvider = new NodeTracerProvider({ resource });
 import { detectResources } from '@opentelemetry/resources';
 import { deploymentDetector } from 'opentelemetry-resource-detector-deployment';
 
-const resource = detectResources({
-    detectors: [deploymentDetector, /* add other async detectors here */],
-});
-const tracerProvider = new NodeTracerProvider({ resource });
+( async () => {
+    const resource = await detectResources({
+        detectors: [deploymentDetector, /* add other async detectors here */],
+    });
+    const tracerProvider = new NodeTracerProvider({ resource });
+    // Initialize auto instrumentation plugins and register provider.
+    // Make sure you don't 'require' instrumented packages elsewhere 
+    // before they are registered here
+})();
 ```
 
 ## Attributes
