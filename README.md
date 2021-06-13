@@ -29,7 +29,7 @@ The instrumentations in this repo are:
 - strictly complies with [open telemetry semantic conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions)
 - up to date with latest SDK version
 
-**Compatible with [SDK v0.19.0](https://github.com/open-telemetry/opentelemetry-js/releases/tag/v0.19.0)**
+**Compatible with [SDK v0.20.0](https://github.com/open-telemetry/opentelemetry-js/releases/tag/v0.20.0)**
 ## Instrumentations
 | Instrumentation Package | Instrumented Lib | NPM |
 | --- | --- | --- |
@@ -42,13 +42,14 @@ The instrumentations in this repo are:
 | [opentelemetry-instrumentation-neo4j](./packages/instrumentation-neo4j) | [`neo4j-driver`](https://github.com/neo4j/neo4j-javascript-driver/) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-neo4j.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-neo4j) |
 | [opentelemetry-instrumentation-amqplib](./packages/instrumentation-amqplib) | [`amqplib`](https://github.com/squaremo/amqp.node) (RabbitMQ) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-amqplib.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-amqplib) | 
 | [opentelemetry-instrumentation-express](./packages/instrumentation-express) | [`express`](https://github.com/expressjs/express) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-express.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-express) |
-|[opentelemetry-instrumentation-socket.io](./packages/instrumentation-socket.io) | [socket.io](https://github.com/socketio/socket.io) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-socket.io.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-socket.io)
+|[opentelemetry-instrumentation-socket.io](./packages/instrumentation-socket.io) | [`socket.io`](https://github.com/socketio/socket.io) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-socket.io.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-socket.io)
 
 ## Compatability Table
-**Tested and verified against otel v0.19.0**
+**Tested and verified against otel v0.20.0**
 
 | Instrumentations Version | OpenTelemetry Version |
 | --- | --- |
+| 0.5.x | 0.20.0 |
 | 0.4.x | 0.19.0 |
 | 0.3.x | 0.18.0 |
 | 0.2.x | 0.17.0 |

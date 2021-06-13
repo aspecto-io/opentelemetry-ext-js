@@ -1,4 +1,4 @@
-import { SpanStatusCode, diag, getSpan, context, SpanKind } from '@opentelemetry/api';
+import { SpanStatusCode, diag, trace, context, SpanKind } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { VERSION } from './version';
 import type * as neo4j from 'neo4j-driver';
@@ -61,7 +61,7 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
         const self = this;
         this._wrap(fileExport.default.prototype, 'run', (originalRun: neo4j.Session['run']) => {
             return function (query: string) {
-                if (self._config?.ignoreOrphanedSpans && !getSpan(context.active())) {
+                if (self._config?.ignoreOrphanedSpans && !trace.getSpan(context.active())) {
                     return originalRun.apply(this, arguments);
                 }
 

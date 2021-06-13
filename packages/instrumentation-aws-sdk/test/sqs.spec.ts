@@ -58,7 +58,7 @@ describe('sqs', () => {
             expect(awsReceiveSpan.length).toBe(1);
             const internalSpan = spans.filter((s) => s.kind === SpanKind.INTERNAL);
             expect(internalSpan.length).toBe(1);
-            expect(internalSpan[0].parentSpanId).toStrictEqual(awsReceiveSpan[0].spanContext.spanId);
+            expect(internalSpan[0].parentSpanId).toStrictEqual(awsReceiveSpan[0].spanContext().spanId);
         };
 
         it('should set parent context in sqs receive callback', (done) => {
@@ -157,14 +157,14 @@ describe('sqs', () => {
                 (s) => s.attributes[SemanticAttributes.MESSAGING_OPERATION] === 'process'
             );
             expect(processSpans.length).toBe(2);
-            expect(processSpans[0].parentSpanId).toStrictEqual(awsReceiveSpan[0].spanContext.spanId);
-            expect(processSpans[1].parentSpanId).toStrictEqual(awsReceiveSpan[0].spanContext.spanId);
+            expect(processSpans[0].parentSpanId).toStrictEqual(awsReceiveSpan[0].spanContext().spanId);
+            expect(processSpans[1].parentSpanId).toStrictEqual(awsReceiveSpan[0].spanContext().spanId);
 
             const processChildSpans = spans.filter((s) => s.kind === SpanKind.INTERNAL);
             expect(processChildSpans.length).toBe(2 * numChildPerProcessSpan);
             for (let i = 0; i < numChildPerProcessSpan; i++) {
-                expect(processChildSpans[2 * i + 0].parentSpanId).toStrictEqual(processSpans[0].spanContext.spanId);
-                expect(processChildSpans[2 * i + 1].parentSpanId).toStrictEqual(processSpans[1].spanContext.spanId);
+                expect(processChildSpans[2 * i + 0].parentSpanId).toStrictEqual(processSpans[0].spanContext().spanId);
+                expect(processChildSpans[2 * i + 1].parentSpanId).toStrictEqual(processSpans[1].spanContext().spanId);
             }
         };
 

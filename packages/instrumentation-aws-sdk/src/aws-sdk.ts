@@ -8,16 +8,8 @@
     no callback |       0           |       1    
     callback    |       1           |       2   
  */
-import {
-    Span,
-    SpanKind,
-    context,
-    setSpan,
-    suppressInstrumentation,
-    Context,
-    diag,
-    SpanStatusCode,
-} from '@opentelemetry/api';
+import { Span, SpanKind, context, trace, Context, diag, SpanStatusCode } from '@opentelemetry/api';
+import { suppressTracing } from '@opentelemetry/core';
 import type AWS from 'aws-sdk';
 import { AttributeNames } from './enums';
 import { ServicesExtensions } from './services';
@@ -324,7 +316,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
                 const normalizedRequest = normalizeV3Request(serviceName, commandName, command.input, undefined);
                 const requestMetadata = self.servicesExtensions.requestPreSpanHook(normalizedRequest);
                 const span = self._startAwsV3Span(normalizedRequest, requestMetadata, moduleVersion);
-                const activeContextWithSpan = setSpan(context.active(), span);
+                const activeContextWithSpan = trace.setSpan(context.active(), span);
 
                 const handlerPromise = new Promise(async (resolve, reject) => {
                     try {
@@ -412,7 +404,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
             const requestMetadata = self.servicesExtensions.requestPreSpanHook(normalizedRequest);
             const span = self._startAwsV2Span(awsV2Request, requestMetadata, normalizedRequest, moduleVersion);
             awsV2Request[self.REQUEST_SPAN_KEY] = span;
-            const activeContextWithSpan = setSpan(context.active(), span);
+            const activeContextWithSpan = trace.setSpan(context.active(), span);
             const callbackWithContext = context.bind(callback, activeContextWithSpan);
 
             self._callUserPreRequestHook(span, normalizedRequest);
@@ -439,7 +431,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
             const span = self._startAwsV2Span(awsV2Request, requestMetadata, normalizedRequest, moduleVersion);
             awsV2Request[self.REQUEST_SPAN_KEY] = span;
 
-            const activeContextWithSpan = setSpan(context.active(), span);
+            const activeContextWithSpan = trace.setSpan(context.active(), span);
             self._callUserPreRequestHook(span, normalizedRequest);
             self._registerV2CompletedEvent(span, awsV2Request, normalizedRequest, activeContextWithSpan);
 
@@ -458,7 +450,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
 
     private _callOriginalFunction<T>(originalFunction: (...args: any[]) => T): T {
         if (this._config?.suppressInternalInstrumentation) {
-            return context.with(suppressInstrumentation(context.active()), originalFunction);
+            return context.with(suppressTracing(context.active()), originalFunction);
         } else {
             return originalFunction();
         }

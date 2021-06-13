@@ -1,6 +1,6 @@
 import 'mocha';
 import expect from 'expect';
-import { context, ROOT_CONTEXT, setSpan, SpanStatusCode, trace } from '@opentelemetry/api';
+import { context, ROOT_CONTEXT, SpanStatusCode, trace } from '@opentelemetry/api';
 import { Neo4jInstrumentation } from '../src';
 import { assertSpan } from './assert';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
@@ -205,7 +205,7 @@ describe('neo4j instrumentation', function () {
             instrumentation.setConfig({ ignoreOrphanedSpans: true });
             instrumentation.enable();
             const parent = trace.getTracerProvider().getTracer('test-tracer').startSpan('main');
-            await context.with(setSpan(context.active(), parent), () =>
+            await context.with(trace.setSpan(context.active(), parent), () =>
                 driver.session().run('CREATE (n:MyLabel) RETURN n')
             );
 

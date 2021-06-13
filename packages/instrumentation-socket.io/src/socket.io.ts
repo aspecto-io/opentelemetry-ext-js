@@ -1,4 +1,4 @@
-import { context, setSpan, Span, SpanKind, SpanStatusCode, diag, getSpan } from '@opentelemetry/api';
+import { context, trace, Span, SpanKind, SpanStatusCode, diag } from '@opentelemetry/api';
 import {
     InstrumentationBase,
     InstrumentationNodeModuleFile,
@@ -11,7 +11,8 @@ import {
     MessagingOperationValues,
     MessagingDestinationKindValues,
 } from '@opentelemetry/semantic-conventions';
-import { SocketIoInstrumentationConfig, Io, SocketIoInstrumentationAttributes } from './types';
+import type { HttpInstrumentationConfig } from '@opentelemetry/instrumentation-http';
+import { SocketIoInstrumentationConfig, Io, SocketIoInstrumentationAttributes, defaultSocketIoPath } from './types';
 import { VERSION } from './version';
 import isPromise from 'is-promise';
 
@@ -22,9 +23,17 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
 
     constructor(config: SocketIoInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-socket.io', VERSION, Object.assign({}, config));
-    }
-    setConfig(config: SocketIoInstrumentationConfig) {
-        this._config = Object.assign({}, this._config, config);
+        if (config.filterHttpTransport) {
+            const httpInstrumentationConfig =
+                config.filterHttpTransport.httpInstrumentation.getConfig() as HttpInstrumentationConfig;
+            if (!Array.isArray(httpInstrumentationConfig.ignoreIncomingPaths)) {
+                httpInstrumentationConfig.ignoreIncomingPaths = [];
+            }
+            httpInstrumentationConfig.ignoreIncomingPaths.push(
+                config.filterHttpTransport.socketPath ?? defaultSocketIoPath
+            );
+            config.filterHttpTransport.httpInstrumentation.setConfig(httpInstrumentationConfig);
+        }
     }
     protected init() {
         const socketInstrumentation = new InstrumentationNodeModuleFile<any>(
@@ -152,7 +161,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                             true
                         );
                     }
-                    return context.with(setSpan(context.active(), span), () =>
+                    return context.with(trace.setSpan(context.active(), span), () =>
                         self.endSpan(() => originalListener.apply(this, arguments), span)
                     );
                 };
@@ -230,7 +239,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                     );
                 }
                 try {
-                    return context.with(setSpan(context.active(), span), () => original.apply(this, arguments));
+                    return context.with(trace.setSpan(context.active(), span), () => original.apply(this, arguments));
                 } catch (error) {
                     span.setStatus({ code: SpanStatusCode.ERROR, message: error.message });
                     throw error;

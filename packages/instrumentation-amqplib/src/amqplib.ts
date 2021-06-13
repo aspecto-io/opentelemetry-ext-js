@@ -1,4 +1,4 @@
-import { context, diag, propagation, setSpan, Span, SpanKind, SpanStatusCode } from '@opentelemetry/api';
+import { context, diag, propagation, trace, Span, SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import {
     InstrumentationBase,
     InstrumentationModuleDefinition,
@@ -280,7 +280,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
                     });
                 }
 
-                context.with(setSpan(context.active(), span), () => {
+                context.with(trace.setSpan(context.active(), span), () => {
                     onMessage.call(this, msg);
                 });
 
@@ -322,7 +322,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
 
             const modifiedOptions = options ?? {};
             modifiedOptions.headers = modifiedOptions.headers ?? {};
-            propagation.inject(setSpan(context.active(), span), modifiedOptions.headers);
+            propagation.inject(trace.setSpan(context.active(), span), modifiedOptions.headers);
 
             if (self._config.publishHook) {
                 safeExecuteInTheMiddle(

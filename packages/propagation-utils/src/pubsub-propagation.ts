@@ -1,4 +1,4 @@
-import { Tracer, SpanKind, Span, Context, Link, getSpanContext, context, setSpan } from '@opentelemetry/api';
+import { Tracer, SpanKind, Span, Context, Link, context, trace } from '@opentelemetry/api';
 
 const START_SPAN_FUNCTION = Symbol('opentelemetry.pubsub-propagation.start_span');
 const END_SPAN_FUNCTION = Symbol('opentelemetry.pubsub-propagation.end_span');
@@ -24,7 +24,7 @@ const patchArrayFunction = (messages: any[], functionName: string, tracer: Trace
             const messageSpan = message?.[START_SPAN_FUNCTION]?.();
             if (!messageSpan) return callback.apply(this, arguments);
 
-            const res = context.with(setSpan(loopContext, messageSpan), () => {
+            const res = context.with(trace.setSpan(loopContext, messageSpan), () => {
                 try {
                     return callback.apply(this, arguments);
                 } catch (err) {
@@ -75,7 +75,7 @@ const startMessagingProcessSpan = <T>(
     processHook?: ProcessHook<T>
 ): Span => {
     const links: Link[] = [];
-    const spanContext = getSpanContext(propagatedContext);
+    const spanContext = trace.getSpanContext(propagatedContext);
     if (spanContext) {
         links.push({
             context: spanContext,

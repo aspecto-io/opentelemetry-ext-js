@@ -1,12 +1,4 @@
-import {
-    Context,
-    TraceFlags,
-    TextMapPropagator,
-    TextMapSetter,
-    TextMapGetter,
-    getSpanContext,
-    setSpanContext,
-} from '@opentelemetry/api';
+import { Context, TraceFlags, TextMapPropagator, TextMapSetter, TextMapGetter, trace } from '@opentelemetry/api';
 
 export class DummyPropagation implements TextMapPropagator {
     static TRACE_CONTEXT_KEY = 'x-dummy-trace-id';
@@ -21,11 +13,11 @@ export class DummyPropagation implements TextMapPropagator {
 
         if (!extractedSpanContext.traceId || !extractedSpanContext.spanId) return context;
 
-        return setSpanContext(context, extractedSpanContext);
+        return trace.setSpanContext(context, extractedSpanContext);
     }
 
     inject(context: Context, carrier: unknown, setter: TextMapSetter): void {
-        const spanContext = getSpanContext(context);
+        const spanContext = trace.getSpanContext(context);
         if (!spanContext) return;
 
         setter.set(carrier, DummyPropagation.TRACE_CONTEXT_KEY, spanContext.traceId);
