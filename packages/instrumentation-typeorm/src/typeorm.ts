@@ -8,6 +8,7 @@ import {
     InstrumentationBase,
     InstrumentationModuleDefinition,
     InstrumentationNodeModuleDefinition,
+    InstrumentationNodeModuleFile,
     isWrapped,
     safeExecuteInTheMiddle,
 } from '@opentelemetry/instrumentation';
@@ -26,11 +27,28 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
     }
 
     protected init(): InstrumentationModuleDefinition<typeof typeorm> {
+        const selectQueryBuilder = new InstrumentationNodeModuleFile<any>(
+            'typeorm/query-builder/SelectQueryBuilder.js',
+            ['*'],
+            (moduleExports, moduleVersion) => {
+                this._wrap(
+                    moduleExports.SelectQueryBuilder.prototype,
+                    'loadRawResults',
+                    this._patchQueryBuilder(moduleVersion)
+                );
+                return moduleExports;
+            },
+            (moduleExports) => {
+                return moduleExports;
+            }
+        );
+
         const module = new InstrumentationNodeModuleDefinition<typeof typeorm>(
             TypeormInstrumentation.component,
             ['*'],
             this.patch.bind(this),
-            this.unpatch.bind(this)
+            this.unpatch.bind(this),
+            [selectQueryBuilder]
         );
         return module;
     }
@@ -85,7 +103,6 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
 
             functionsUsingEntityPersistExecutor.forEach(patch);
             functionsUsingQueryBuilder.forEach(patch);
-
             return connection;
         };
     }
@@ -137,6 +154,57 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                         );
                     }
                     return resolved;
+                } catch (err) {
+                    newSpan.setStatus({
+                        code: SpanStatusCode.ERROR,
+                        message: err.message,
+                    });
+                    throw err;
+                } finally {
+                    newSpan.end();
+                }
+            };
+        };
+    }
+
+    private _patchQueryBuilder(moduleVersion: string) {
+        const self = this;
+        return (original: Function) => {
+            return async function () {
+                const [sql, parameters] = this.getQueryAndParameters();
+                const mainTableName = this.getMainTableName();
+                const operation = this.expressionMap.queryType;
+
+                const connectionOptions = this?.connection?.options ?? {};
+                const attributes = {
+                    [SemanticAttributes.DB_SYSTEM]: connectionOptions.type,
+                    [SemanticAttributes.DB_USER]: connectionOptions.username,
+                    [SemanticAttributes.NET_PEER_NAME]: connectionOptions.host,
+                    [SemanticAttributes.NET_PEER_PORT]: connectionOptions.port,
+                    [SemanticAttributes.DB_NAME]: connectionOptions.database,
+                    [SemanticAttributes.DB_OPERATION]: operation,
+                    [SemanticAttributes.DB_STATEMENT]: sql,
+                    component: 'typeorm',
+                };
+                const newSpan: Span = self.tracer.startSpan(`TypeORM ${operation} ${mainTableName}`, {
+                    kind: SpanKind.CLIENT,
+                    attributes,
+                });
+
+                try {
+                    const response = await (context.with(trace.setSpan(context.active(), newSpan), () =>
+                        original.apply(this, arguments)
+                    ) as Promise<any>);
+                    if (self._config?.responseHook) {
+                        safeExecuteInTheMiddle(
+                            () => self._config.responseHook(newSpan, response),
+                            (e: Error) => {
+                                if (e) diag.error('typeorm instrumentation: responseHook error', e);
+                            },
+                            true
+                        );
+                    }
+                    return response;
                 } catch (err) {
                     newSpan.setStatus({
                         code: SpanStatusCode.ERROR,

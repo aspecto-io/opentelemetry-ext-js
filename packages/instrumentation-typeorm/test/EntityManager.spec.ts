@@ -9,6 +9,8 @@ const instrumentation = new TypeormInstrumentation();
 
 import * as typeorm from 'typeorm';
 
+const originalCreate = typeorm.ConnectionManager.prototype.create;
+
 const setMocks = () => {
     const emptySuccessFunc = async (_argName: any) => {};
     const successFuncWithPayload = async () => ({ foo: 'goo' });
@@ -36,7 +38,11 @@ const setMocks = () => {
     }) as any;
 };
 
-describe('instrumentation-typeorm', () => {
+const removeMocks = () => {
+    typeorm.ConnectionManager.prototype.create = originalCreate;
+};
+
+describe('EntityManager', () => {
     const getTypeormSpans = (): ReadableSpan[] => {
         return getTestSpans().filter((s) => s.attributes['component'] === 'typeorm');
     };
@@ -47,6 +53,7 @@ describe('instrumentation-typeorm', () => {
     });
 
     afterEach(() => {
+        removeMocks();
         instrumentation.disable();
     });
 
