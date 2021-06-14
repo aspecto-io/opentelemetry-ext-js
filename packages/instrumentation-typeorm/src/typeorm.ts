@@ -218,19 +218,19 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                     attributes,
                 });
 
-                const resolved = await context.with(suppressTracing(context.active()), () =>
+                const response = await context.with(suppressTracing(context.active()), () =>
                     self.endSpan(() => original.apply(this, arguments), span)
                 );
                 if (self._config?.responseHook) {
                     safeExecuteInTheMiddle(
-                        () => self._config.responseHook(span, resolved),
+                        () => self._config.responseHook(span, response),
                         (e: Error) => {
                             if (e) diag.error('typeorm instrumentation: responseHook error', e);
                         },
                         true
                     );
                 }
-                return resolved;
+                return response;
             };
         };
     }
