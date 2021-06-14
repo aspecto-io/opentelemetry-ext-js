@@ -32,23 +32,24 @@ const getTypeormSpans = (): ReadableSpan[] => {
 };
 
 describe('QueryBuilder', () => {
+    beforeEach(() => {
+        instrumentation.enable();
+    });
+
+    afterEach(() => {
+        instrumentation.disable();
+    });
+
     it('Creates a basic typeorm span', async () => {
         const connection = await typeorm.createConnection(options);
-        const statement = new User();
-        statement.id = '1234';
-        statement.name = 'Bob';
-        await connection.manager.save(statement);
         const users = await connection
-            .getRepository(User)
-            .createQueryBuilder('user')
+            .createQueryBuilder(User, 'user')
             .where('user.id = :userId')
-            .setParameter('userId', '1234')
+            .setParameter('userId', '123')
             .getMany();
-        connection.close();
         expect(users.length).toBeGreaterThan(0);
         const typeOrmSpans = getTypeormSpans();
-
-        expect(typeOrmSpans.length).toBe(4);
+        expect(typeOrmSpans.length).toBe(1);
         expect(typeOrmSpans[0].status.code).toBe(SpanStatusCode.UNSET);
         const attributes = typeOrmSpans[0].attributes;
 
@@ -58,6 +59,10 @@ describe('QueryBuilder', () => {
         expect(attributes[SemanticAttributes.NET_PEER_NAME]).toBe(options.host);
         expect(attributes[SemanticAttributes.NET_PEER_PORT]).toBe(options.port);
         expect(attributes[SemanticAttributes.DB_NAME]).toBe(options.database);
-        expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(JSON.stringify({ targetOrEntity: { name: 'Bob' } }));
+        expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
+            'SELECT "user"."id" AS "user_id", "user"."name" AS "user_name" FROM "user" "user" WHERE "user"."id" = $1'
+        );
+
+        await connection.close();
     });
 });

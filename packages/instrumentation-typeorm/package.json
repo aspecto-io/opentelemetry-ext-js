@@ -35,8 +35,10 @@
     },
     "dependencies": {
         "@opentelemetry/api": "^0.20.0",
+        "@opentelemetry/core": "^0.20.0",
         "@opentelemetry/instrumentation": "^0.20.0",
-        "@opentelemetry/semantic-conventions": "^0.20.0"
+        "@opentelemetry/semantic-conventions": "^0.20.0",
+        "is-promise": "^4.0.0"
     },
     "devDependencies": {
         "@opentelemetry/tracing": "^0.20.0",

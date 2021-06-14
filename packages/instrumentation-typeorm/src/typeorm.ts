@@ -1,4 +1,5 @@
 import { Span, SpanKind, SpanStatusCode, trace, context, diag } from '@opentelemetry/api';
+import { suppressTracing } from '@opentelemetry/core';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { TypeormInstrumentationConfig } from './types';
 import { getParamNames } from './utils';
@@ -12,6 +13,20 @@ import {
     isWrapped,
     safeExecuteInTheMiddle,
 } from '@opentelemetry/instrumentation';
+import isPromise from 'is-promise';
+
+type SelectQueryBuilderMethods = keyof typeorm.SelectQueryBuilder<any>;
+const selectQueryBuilderExecuteMethods: SelectQueryBuilderMethods[] = [
+    'getRawOne',
+    'getCount',
+    'getManyAndCount',
+    'stream',
+    'getMany',
+    'getOneOrFail',
+    'getOne',
+    'getRawAndEntities',
+    'getRawMany',
+];
 
 export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> {
     static readonly component = 'typeorm';
@@ -27,18 +42,29 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
     }
 
     protected init(): InstrumentationModuleDefinition<typeof typeorm> {
-        const selectQueryBuilder = new InstrumentationNodeModuleFile<any>(
+        const selectQueryBuilder = new InstrumentationNodeModuleFile<typeof typeorm>(
             'typeorm/query-builder/SelectQueryBuilder.js',
             ['*'],
             (moduleExports, moduleVersion) => {
-                this._wrap(
-                    moduleExports.SelectQueryBuilder.prototype,
-                    'loadRawResults',
-                    this._patchQueryBuilder(moduleVersion)
-                );
+                selectQueryBuilderExecuteMethods.map((method) => {
+                    if (isWrapped(moduleExports.SelectQueryBuilder.prototype?.[method])) {
+                        this._unwrap(moduleExports.SelectQueryBuilder.prototype, method);
+                    }
+                    this._wrap(
+                        moduleExports.SelectQueryBuilder.prototype,
+                        method,
+                        this._patchQueryBuilder(moduleVersion)
+                    );
+                });
+
                 return moduleExports;
             },
-            (moduleExports) => {
+            (moduleExports: typeof typeorm) => {
+                // selectQueryBuilderExecuteMethods.map((method) => {
+                //     if (isWrapped(moduleExports.SelectQueryBuilder.prototype?.[method])) {
+                //         this._unwrap(moduleExports.SelectQueryBuilder.prototype, method);
+                //     }
+                // });
                 return moduleExports;
             }
         );
@@ -169,7 +195,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
 
     private _patchQueryBuilder(moduleVersion: string) {
         const self = this;
-        return (original: Function) => {
+        return (original: any) => {
             return async function () {
                 const [sql, parameters] = this.getQueryAndParameters();
                 const mainTableName = this.getMainTableName();
@@ -184,38 +210,58 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                     [SemanticAttributes.DB_NAME]: connectionOptions.database,
                     [SemanticAttributes.DB_OPERATION]: operation,
                     [SemanticAttributes.DB_STATEMENT]: sql,
+                    [SemanticAttributes.DB_SQL_TABLE]: mainTableName,
                     component: 'typeorm',
                 };
-                const newSpan: Span = self.tracer.startSpan(`TypeORM ${operation} ${mainTableName}`, {
+                const span: Span = self.tracer.startSpan(`TypeORM ${operation} ${mainTableName}`, {
                     kind: SpanKind.CLIENT,
                     attributes,
                 });
 
-                try {
-                    const response = await (context.with(trace.setSpan(context.active(), newSpan), () =>
-                        original.apply(this, arguments)
-                    ) as Promise<any>);
-                    if (self._config?.responseHook) {
-                        safeExecuteInTheMiddle(
-                            () => self._config.responseHook(newSpan, response),
-                            (e: Error) => {
-                                if (e) diag.error('typeorm instrumentation: responseHook error', e);
-                            },
-                            true
-                        );
-                    }
-                    return response;
-                } catch (err) {
-                    newSpan.setStatus({
-                        code: SpanStatusCode.ERROR,
-                        message: err.message,
-                    });
-                    throw err;
-                } finally {
-                    newSpan.end();
+                const resolved = await context.with(suppressTracing(context.active()), () =>
+                    self.endSpan(() => original.apply(this, arguments), span)
+                );
+                if (self._config?.responseHook) {
+                    safeExecuteInTheMiddle(
+                        () => self._config.responseHook(span, resolved),
+                        (e: Error) => {
+                            if (e) diag.error('typeorm instrumentation: responseHook error', e);
+                        },
+                        true
+                    );
                 }
+                return resolved;
             };
         };
+    }
+
+    private endSpan(traced: () => any | Promise<any>, span: Span) {
+        try {
+            const result = traced();
+            if (isPromise(result)) {
+                return Promise.resolve(result)
+                    .catch((err) => {
+                        if (err) {
+                            if (typeof err === 'string') {
+                                span.setStatus({ code: SpanStatusCode.ERROR, message: err });
+                            } else {
+                                span.recordException(err);
+                                span.setStatus({ code: SpanStatusCode.ERROR, message: err?.message });
+                            }
+                        }
+                        throw err;
+                    })
+                    .finally(() => span.end());
+            } else {
+                span.end();
+                return result;
+            }
+        } catch (error: any) {
+            span.recordException(error);
+            span.setStatus({ code: SpanStatusCode.ERROR, message: error?.message });
+            span.end();
+            throw error;
+        }
     }
 }
 
