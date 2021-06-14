@@ -1,0 +1,4 @@
+'typeorm':
+  versions: "*"
+  commands:
+    - yarn test
