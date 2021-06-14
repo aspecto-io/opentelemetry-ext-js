@@ -40,7 +40,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
         if (moduleExports === undefined || moduleExports === null) {
             return moduleExports;
         }
-        diag.debug(`applying patch to typeorm`);
+        diag.debug(`typeorm instrumentation: applying patch to typeorm`);
         this.unpatch(moduleExports);
         this._wrap(moduleExports.ConnectionManager.prototype, 'create', this._createConnectionManagerPatch.bind(this));
 
