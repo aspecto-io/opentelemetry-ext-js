@@ -48,7 +48,7 @@ The instrumentations in this repo are:
 
 | Instrumentations Version | OpenTelemetry Version |
 | --- | --- |
-| 0.6.x | 0.21.0 |
+| 0.21.x | 0.21.0 |
 | 0.5.x | 0.20.0 |
 | 0.4.x | 0.19.0 |
 | 0.3.x | 0.18.0 |
