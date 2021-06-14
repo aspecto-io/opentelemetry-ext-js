@@ -54,7 +54,7 @@
         "expect": "^26.6.2",
         "mocha": "^8.4.0",
         "neo4j-driver": "^4.2.2",
-        "opentelemetry-instrumentation-mocha": "^0.0.1-rc.1",
+        "opentelemetry-instrumentation-mocha": "^0.0.1-rc.2",
         "opentelemetry-instrumentation-testing-utils": "^0.5.0",
         "test-all-versions": "^5.0.1",
         "ts-node": "^9.1.1",
