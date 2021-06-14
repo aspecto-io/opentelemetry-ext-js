@@ -139,10 +139,8 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                 const attributes = {
                     [SemanticAttributes.DB_SYSTEM]: connectionOptions.type,
                     [SemanticAttributes.DB_USER]: connectionOptions.username,
-                    // [SemanticAttributes.NET_PEER_IP]: '?',
                     [SemanticAttributes.NET_PEER_NAME]: connectionOptions.host,
                     [SemanticAttributes.NET_PEER_PORT]: connectionOptions.port,
-                    // [SemanticAttributes.NET_TRANSPORT]: '?',
                     [SemanticAttributes.DB_NAME]: connectionOptions.database,
                     [SemanticAttributes.DB_OPERATION]: opName,
                     [SemanticAttributes.DB_STATEMENT]: JSON.stringify(buildStatement(original, args)),
