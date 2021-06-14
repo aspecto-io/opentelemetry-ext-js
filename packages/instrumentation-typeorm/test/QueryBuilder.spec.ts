@@ -33,10 +33,6 @@ const options: typeorm.ConnectionOptions = {
     entities: [User],
 };
 
-const getTypeormSpans = (): ReadableSpan[] => {
-    return getTestSpans().filter((s) => s.attributes['component'] === 'typeorm');
-};
-
 describe('QueryBuilder', () => {
     beforeEach(() => {
         instrumentation.enable();
@@ -54,7 +50,7 @@ describe('QueryBuilder', () => {
             .setParameter('userId', '123')
             .getMany();
         expect(users.length).toBeGreaterThan(0);
-        const typeOrmSpans = getTypeormSpans();
+        const typeOrmSpans = getTestSpans();
         expect(typeOrmSpans.length).toBe(1);
         expect(typeOrmSpans[0].status.code).toBe(SpanStatusCode.UNSET);
         const attributes = typeOrmSpans[0].attributes;

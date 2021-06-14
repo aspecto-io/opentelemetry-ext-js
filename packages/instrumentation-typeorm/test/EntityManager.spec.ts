@@ -43,10 +43,6 @@ const removeMocks = () => {
 };
 
 describe('EntityManager', () => {
-    const getTypeormSpans = (): ReadableSpan[] => {
-        return getTestSpans().filter((s) => s.attributes['component'] === 'typeorm');
-    };
-
     beforeEach(() => {
         setMocks();
         instrumentation.enable();
@@ -79,13 +75,11 @@ describe('EntityManager', () => {
             const connection = await typeorm.createConnection(options);
             const statement = { test: 123 };
             await connection.manager.save(statement);
-            const typeOrmSpans = getTypeormSpans();
+            const typeOrmSpans = getTestSpans();
 
             expect(typeOrmSpans.length).toBe(1);
             expect(typeOrmSpans[0].status.code).toBe(SpanStatusCode.UNSET);
             const attributes = typeOrmSpans[0].attributes;
-
-            expect(attributes['component']).toBe('typeorm');
             expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(options.type);
             expect(attributes[SemanticAttributes.DB_USER]).toBe(options.username);
             expect(attributes[SemanticAttributes.NET_PEER_NAME]).toBe(options.host);
@@ -101,7 +95,7 @@ describe('EntityManager', () => {
                 await connection.manager.find({} as any);
             } catch (err) {}
 
-            const typeOrmSpans = getTypeormSpans();
+            const typeOrmSpans = getTestSpans();
             expect(typeOrmSpans.length).toBe(1);
             expect(typeOrmSpans[0].status.code).toBe(SpanStatusCode.ERROR);
             expect(typeOrmSpans[0].status.message).toBe('some error');
@@ -121,13 +115,12 @@ describe('EntityManager', () => {
             const connection = await typeorm.createConnection(options);
             const statement = { test: 123 };
             await connection.manager.remove(statement);
-            const typeOrmSpans = getTypeormSpans();
+            const typeOrmSpans = getTestSpans();
 
             expect(typeOrmSpans.length).toBe(1);
             const attributes = typeOrmSpans[0].attributes;
 
             expect(attributes['test']).toBe(JSON.stringify({ foo: 'goo' }));
-            expect(attributes['component']).toBe('typeorm');
             expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('remove');
             expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(options.type);
         });
@@ -144,7 +137,7 @@ describe('EntityManager', () => {
             const connection = await typeorm.createConnection(options);
             const statement = { test: 123 };
             await connection.manager.remove(statement);
-            const typeOrmSpans = getTypeormSpans();
+            const typeOrmSpans = getTestSpans();
 
             expect(typeOrmSpans.length).toBe(1);
             const attributes = typeOrmSpans[0].attributes;
@@ -175,12 +168,11 @@ describe('EntityManager', () => {
             await postgres.manager.save({});
             await mysql.manager.remove({});
 
-            const spans = getTypeormSpans();
+            const spans = getTestSpans();
             expect(spans.length).toBe(2);
             const postgresSpan = spans[0];
             const mySqlSpan = spans[1];
 
-            expect(postgresSpan.attributes['component']).toBe('typeorm');
             expect(postgresSpan.attributes[SemanticAttributes.DB_SYSTEM]).toBe(options1.type);
             expect(postgresSpan.attributes[SemanticAttributes.DB_USER]).toBe(options1.username);
             expect(postgresSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toBe(options1.host);
@@ -188,7 +180,6 @@ describe('EntityManager', () => {
             expect(postgresSpan.attributes[SemanticAttributes.DB_NAME]).toBe(options1.database);
             expect(postgresSpan.attributes[SemanticAttributes.DB_OPERATION]).toBe('save');
 
-            expect(mySqlSpan.attributes['component']).toBe('typeorm');
             expect(mySqlSpan.attributes[SemanticAttributes.DB_SYSTEM]).toBe(options2.type);
             expect(mySqlSpan.attributes[SemanticAttributes.DB_USER]).toBe(options2.username);
             expect(mySqlSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toBe(options2.host);

@@ -146,7 +146,6 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                     [SemanticAttributes.DB_NAME]: connectionOptions.database,
                     [SemanticAttributes.DB_OPERATION]: opName,
                     [SemanticAttributes.DB_STATEMENT]: JSON.stringify(buildStatement(original, args)),
-                    component: 'typeorm',
                 };
 
                 if (self._config.moduleVersionAttributeName) {
@@ -207,8 +206,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                     [SemanticAttributes.DB_NAME]: connectionOptions.database,
                     [SemanticAttributes.DB_OPERATION]: operation,
                     [SemanticAttributes.DB_STATEMENT]: sql,
-                    [SemanticAttributes.DB_SQL_TABLE]: mainTableName,
-                    component: 'typeorm',
+                    [SemanticAttributes.DB_SQL_TABLE]: mainTableName
                 };
                 const span: Span = self.tracer.startSpan(`TypeORM ${operation} ${mainTableName}`, {
                     kind: SpanKind.CLIENT,
