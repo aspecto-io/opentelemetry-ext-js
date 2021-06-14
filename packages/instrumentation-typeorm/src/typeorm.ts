@@ -30,15 +30,11 @@ const selectQueryBuilderExecuteMethods: SelectQueryBuilderMethods[] = [
 
 export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> {
     static readonly component = 'typeorm';
-    protected _config!: TypeormInstrumentationConfig;
     private moduleVersion: string;
+    protected _config!: TypeormInstrumentationConfig;
 
     constructor(config: TypeormInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-typeorm', VERSION, Object.assign({}, config));
-    }
-
-    setConfig(config: TypeormInstrumentationConfig = {}) {
-        this._config = Object.assign({}, config);
     }
 
     protected init(): InstrumentationModuleDefinition<typeof typeorm> {
@@ -60,11 +56,11 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                 return moduleExports;
             },
             (moduleExports: typeof typeorm) => {
-                // selectQueryBuilderExecuteMethods.map((method) => {
-                //     if (isWrapped(moduleExports.SelectQueryBuilder.prototype?.[method])) {
-                //         this._unwrap(moduleExports.SelectQueryBuilder.prototype, method);
-                //     }
-                // });
+                selectQueryBuilderExecuteMethods.map((method) => {
+                    if (isWrapped(moduleExports.SelectQueryBuilder.prototype?.[method])) {
+                        this._unwrap(moduleExports.SelectQueryBuilder.prototype, method);
+                    }
+                });
                 return moduleExports;
             }
         );
@@ -166,7 +162,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                 });
 
                 try {
-                    const response: Promise<any> = context.with(trace.setSpan(context.active(), newSpan), () =>
+                    const response: Promise<any> = context.with(suppressTracing(context.active()), () =>
                         original.apply(this, arguments)
                     );
                     const resolved = await response;

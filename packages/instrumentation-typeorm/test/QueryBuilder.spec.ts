@@ -10,12 +10,18 @@ const instrumentation = new TypeormInstrumentation();
 import * as typeorm from 'typeorm';
 
 @typeorm.Entity()
-class User extends typeorm.BaseEntity {
-    @typeorm.PrimaryColumn()
-    id: string;
+export class User {
+    @typeorm.PrimaryGeneratedColumn()
+    id: number;
 
     @typeorm.Column()
-    name: string;
+    firstName: string;
+
+    @typeorm.Column()
+    lastName: string;
+
+    @typeorm.Column({ default: true })
+    isActive: boolean;
 }
 
 const options: typeorm.ConnectionOptions = {

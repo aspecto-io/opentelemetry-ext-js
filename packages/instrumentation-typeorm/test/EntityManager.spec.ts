@@ -3,7 +3,7 @@ import expect from 'expect';
 import { ReadableSpan, Span } from '@opentelemetry/tracing';
 import { SpanStatusCode } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { TypeormInstrumentation } from '../src';
+import { TypeormInstrumentation, TypeormInstrumentationConfig } from '../src';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 const instrumentation = new TypeormInstrumentation();
 
@@ -110,11 +110,12 @@ describe('EntityManager', () => {
         it('responseHook works', async () => {
             setMocks();
             instrumentation.disable();
-            instrumentation.setConfig({
+            const config: TypeormInstrumentationConfig = {
                 responseHook: (span: Span, response: any) => {
                     span.setAttribute('test', JSON.stringify(response));
                 },
-            });
+            };
+            instrumentation.setConfig(config);
             instrumentation.enable();
 
             const connection = await typeorm.createConnection(options);
@@ -134,9 +135,10 @@ describe('EntityManager', () => {
         it('moduleVersionAttributeName works', async () => {
             setMocks();
             instrumentation.disable();
-            instrumentation.setConfig({
+            const config: TypeormInstrumentationConfig = {
                 moduleVersionAttributeName: 'module.version',
-            });
+            };
+            instrumentation.setConfig(config);
             instrumentation.enable();
 
             const connection = await typeorm.createConnection(options);
