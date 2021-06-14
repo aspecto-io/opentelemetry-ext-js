@@ -11,6 +11,6 @@ export interface TypeormInstrumentationConfig extends InstrumentationConfig {
      * and value of the module version.
      */
     moduleVersionAttributeName?: string;
-    /** Some methods such as `getManyAndCount` execute multiple queries to instrument those set this to `true` */
+    /** Some methods such as `getManyAndCount` execute multiple queries. to instrument those set this to `true` */
     enableInternalInstrumentation?: boolean;
 }

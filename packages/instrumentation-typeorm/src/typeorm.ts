@@ -154,35 +154,31 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                     if (value === undefined) delete attributes[key];
                 });
 
-                const newSpan: Span = self.tracer.startSpan(`TypeORM ${opName}`, {
+                const span: Span = self.tracer.startSpan(`TypeORM ${opName}`, {
                     kind: SpanKind.CLIENT,
                     attributes,
                 });
 
-                try {
-                    const response: Promise<any> = context.with(suppressTracing(context.active()), () =>
-                        original.apply(this, arguments)
+                let response;
+                if (self._config?.enableInternalInstrumentation) {
+                    response = await context.with(context.active(), () =>
+                        endSpan(() => original.apply(this, arguments), span)
                     );
-                    const resolved = await response;
-                    if (self._config?.responseHook) {
-                        safeExecuteInTheMiddle(
-                            () => self._config.responseHook(newSpan, resolved),
-                            (e: Error) => {
-                                if (e) diag.error('typeorm instrumentation: responseHook error', e);
-                            },
-                            true
-                        );
-                    }
-                    return resolved;
-                } catch (err) {
-                    newSpan.setStatus({
-                        code: SpanStatusCode.ERROR,
-                        message: err.message,
-                    });
-                    throw err;
-                } finally {
-                    newSpan.end();
+                } else {
+                    response = await context.with(suppressTracing(context.active()), () =>
+                        endSpan(() => original.apply(this, arguments), span)
+                    );
                 }
+                if (self._config?.responseHook) {
+                    safeExecuteInTheMiddle(
+                        () => self._config.responseHook(span, response),
+                        (e: Error) => {
+                            if (e) diag.error('typeorm instrumentation: responseHook error', e);
+                        },
+                        true
+                    );
+                }
+                return response;
             };
         };
     }
@@ -204,16 +200,23 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                     [SemanticAttributes.DB_NAME]: connectionOptions.database,
                     [SemanticAttributes.DB_OPERATION]: operation,
                     [SemanticAttributes.DB_STATEMENT]: sql,
-                    [SemanticAttributes.DB_SQL_TABLE]: mainTableName
+                    [SemanticAttributes.DB_SQL_TABLE]: mainTableName,
                 };
                 const span: Span = self.tracer.startSpan(`TypeORM ${operation} ${mainTableName}`, {
                     kind: SpanKind.CLIENT,
                     attributes,
                 });
 
-                const response = await context.with(suppressTracing(context.active()), () =>
-                    self.endSpan(() => original.apply(this, arguments), span)
-                );
+                let response;
+                if (self._config?.enableInternalInstrumentation) {
+                    response = await context.with(context.active(), () =>
+                        endSpan(() => original.apply(this, arguments), span)
+                    );
+                } else {
+                    response = await context.with(suppressTracing(context.active()), () =>
+                        endSpan(() => original.apply(this, arguments), span)
+                    );
+                }
                 if (self._config?.responseHook) {
                     safeExecuteInTheMiddle(
                         () => self._config.responseHook(span, response),
@@ -227,36 +230,36 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
             };
         };
     }
-
-    private endSpan(traced: () => any | Promise<any>, span: Span) {
-        try {
-            const result = traced();
-            if (isPromise(result)) {
-                return Promise.resolve(result)
-                    .catch((err) => {
-                        if (err) {
-                            if (typeof err === 'string') {
-                                span.setStatus({ code: SpanStatusCode.ERROR, message: err });
-                            } else {
-                                span.recordException(err);
-                                span.setStatus({ code: SpanStatusCode.ERROR, message: err?.message });
-                            }
-                        }
-                        throw err;
-                    })
-                    .finally(() => span.end());
-            } else {
-                span.end();
-                return result;
-            }
-        } catch (error: any) {
-            span.recordException(error);
-            span.setStatus({ code: SpanStatusCode.ERROR, message: error?.message });
-            span.end();
-            throw error;
-        }
-    }
 }
+
+const endSpan = (traced: () => any | Promise<any>, span: Span) => {
+    try {
+        const result = traced();
+        if (isPromise(result)) {
+            return Promise.resolve(result)
+                .catch((err) => {
+                    if (err) {
+                        if (typeof err === 'string') {
+                            span.setStatus({ code: SpanStatusCode.ERROR, message: err });
+                        } else {
+                            span.recordException(err);
+                            span.setStatus({ code: SpanStatusCode.ERROR, message: err?.message });
+                        }
+                    }
+                    throw err;
+                })
+                .finally(() => span.end());
+        } else {
+            span.end();
+            return result;
+        }
+    } catch (error: any) {
+        span.recordException(error);
+        span.setStatus({ code: SpanStatusCode.ERROR, message: error?.message });
+        span.end();
+        throw error;
+    }
+};
 
 const buildStatement = (func: Function, args: any[]) => {
     const paramNames = getParamNames(func);
