@@ -140,11 +140,10 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
                 attributes,
             });
 
+            const activeContextWithSpan = trace.setSpan(context.active(), newSpan);
             const promise = self._config.suppressInternalInstrumentation
-                ? context.with(suppressTracing(trace.setSpan(context.active(), newSpan)), () =>
-                      original.apply(this, arguments)
-                  )
-                : context.with(trace.setSpan(context.active(), newSpan), () => original.apply(this, arguments));
+                ? context.with(suppressTracing(activeContextWithSpan), () => original.apply(this, arguments))
+                : context.with(activeContextWithSpan, () => original.apply(this, arguments));
 
             return promise
                 .then((response: any) => {

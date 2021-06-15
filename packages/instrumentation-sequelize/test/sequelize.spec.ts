@@ -340,6 +340,8 @@ describe('instrumentation-sequelize', () => {
             expect(
                 extractTableFromQuery('SELECT `id`, `firstName`, `createdAt`, `updatedAt` FROM `Users` AS `User`;')
             ).toBe('Users');
+            expect(extractTableFromQuery(null)).toBe(undefined);
+            expect(extractTableFromQuery(undefined)).toBe(undefined);
         });
     });
 });
