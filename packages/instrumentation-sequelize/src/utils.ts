@@ -10,6 +10,7 @@ export const extractTableFromQuery = (query: string) => {
                     .replace(/^"(.*)"$/, '$1')
                     .replace(/^`(.*)`$/, '$1')
             )
+            .sort()
             .join(',');
     } catch {
         return;

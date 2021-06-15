@@ -110,7 +110,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
             let tableName = option?.instance?.constructor?.tableName;
             if (!tableName) {
                 if (Array.isArray(option?.tableNames) && option.tableNames.length > 0)
-                    tableName = option?.tableNames.join(',');
+                    tableName = option?.tableNames.sort().join(',');
                 else tableName = extractTableFromQuery(statement);
             }
 

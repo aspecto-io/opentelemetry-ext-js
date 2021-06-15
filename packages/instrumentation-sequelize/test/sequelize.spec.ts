@@ -209,7 +209,7 @@ describe('instrumentation-sequelize', () => {
 
     describe('sqlite', () => {
         const instance = new sequelize.Sequelize('sqlite:memory', {
-            logging: false
+            logging: false,
         });
         instance.define('User', { firstName: { type: sequelize.DataTypes.STRING } });
 
@@ -334,7 +334,7 @@ describe('instrumentation-sequelize', () => {
 
     describe('misc', () => {
         it('extractTableFromQuery', async () => {
-            expect(extractTableFromQuery('FROM Users JOIN Dogs Where 1243')).toBe('Users,Dogs');
+            expect(extractTableFromQuery('FROM Users JOIN Dogs Where 1243')).toBe('Dogs,Users');
             expect(extractTableFromQuery('FROM "Users"')).toBe('Users');
             expect(extractTableFromQuery('SELECT count(*) AS "count" FROM "Users" AS "User";')).toBe('Users');
             expect(
