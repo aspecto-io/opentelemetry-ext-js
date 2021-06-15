@@ -1,4 +1,4 @@
-import { Span, SpanKind, SpanStatusCode, trace, context, diag } from '@opentelemetry/api';
+import { Span, SpanKind, SpanStatusCode, trace, context, diag, createContextKey, Context } from '@opentelemetry/api';
 import { suppressTracing } from '@opentelemetry/core';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { TypeormInstrumentationConfig } from './types';
@@ -159,15 +159,17 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                     attributes,
                 });
 
-                let response;
-                if (self._config?.enableInternalInstrumentation) {
-                    response = await context.with(context.active(), () =>
-                        endSpan(() => original.apply(this, arguments), span)
-                    );
-                } else {
-                    response = await context.with(suppressTracing(context.active()), () =>
-                        endSpan(() => original.apply(this, arguments), span)
-                    );
+                const traceContext = self._config.enableInternalInstrumentation
+                    ? trace.setSpan(context.active(), span)
+                    : suppressTypeormInternalTracing(trace.setSpan(context.active(), span));
+
+                const response = await (self._config?.suppressInternalInstrumentation
+                    ? context.with(traceContext, () => endSpan(() => original.apply(this, arguments), span))
+                    : context.with(suppressTracing(traceContext), () =>
+                          endSpan(() => original.apply(this, arguments), span)
+                      ));
+                if (isTypeormInternalTracingSuppressed(context.active())) {
+                    unsuppressTypeormInternalTracing(context.active());
                 }
                 if (self._config?.responseHook) {
                     safeExecuteInTheMiddle(
@@ -187,6 +189,9 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
         const self = this;
         return (original: any) => {
             return async function () {
+                if (isTypeormInternalTracingSuppressed(context.active())) {
+                    return original.apply(this, arguments);
+                }
                 const [sql, parameters] = this.getQueryAndParameters();
                 const mainTableName = this.getMainTableName();
                 const operation = this.expressionMap.queryType;
@@ -207,15 +212,17 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                     attributes,
                 });
 
-                let response;
-                if (self._config?.enableInternalInstrumentation) {
-                    response = await context.with(context.active(), () =>
-                        endSpan(() => original.apply(this, arguments), span)
-                    );
-                } else {
-                    response = await context.with(suppressTracing(context.active()), () =>
-                        endSpan(() => original.apply(this, arguments), span)
-                    );
+                const traceContext = self._config.enableInternalInstrumentation
+                    ? trace.setSpan(context.active(), span)
+                    : suppressTypeormInternalTracing(trace.setSpan(context.active(), span));
+
+                const response = await (self._config?.suppressInternalInstrumentation
+                    ? context.with(traceContext, () => endSpan(() => original.apply(this, arguments), span))
+                    : context.with(suppressTracing(traceContext), () =>
+                          endSpan(() => original.apply(this, arguments), span)
+                      ));
+                if (isTypeormInternalTracingSuppressed(context.active())) {
+                    unsuppressTypeormInternalTracing(context.active());
                 }
                 if (self._config?.responseHook) {
                     safeExecuteInTheMiddle(
@@ -285,3 +292,16 @@ const buildStatement = (func: Function, args: any[]) => {
     });
     return statement;
 };
+
+const SUPPRESS_TYPEORM_INTERNAL_TRACING_KEY = createContextKey(
+    'instrumentation-typeorm Context Key SUPPRESS_TYPEORM_INTERNAL_TRACING'
+);
+
+const suppressTypeormInternalTracing = (context: Context) =>
+    context.setValue(SUPPRESS_TYPEORM_INTERNAL_TRACING_KEY, true);
+
+const isTypeormInternalTracingSuppressed = (context: Context) =>
+    context.getValue(SUPPRESS_TYPEORM_INTERNAL_TRACING_KEY) === true;
+
+const unsuppressTypeormInternalTracing = (context: Context) =>
+    context.deleteValue(SUPPRESS_TYPEORM_INTERNAL_TRACING_KEY);
