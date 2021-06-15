@@ -37,11 +37,16 @@ describe('instrumentation-sequelize', () => {
             `${DB_SYSTEM}://${DB_USER}@${NET_PEER_NAME}:${NET_PEER_PORT}/${DB_NAME}`,
             { logging: false }
         );
-        const User = instance.define('User', { firstName: { type: sequelize.DataTypes.STRING } });
+        class User extends sequelize.Model {
+            firstName: string;
+        }
+
+        User.init({ firstName: { type: sequelize.DataTypes.STRING } }, { sequelize: instance });
+        // const User = instance.define('User', { firstName: { type: sequelize.DataTypes.STRING } });
 
         it('create is instrumented', async () => {
             try {
-                await instance.models.User.create({ firstName: 'Nir' });
+                await User.create({ firstName: 'Nir' });
             } catch {
                 // Error is thrown but we don't care
             }
@@ -63,7 +68,7 @@ describe('instrumentation-sequelize', () => {
         });
 
         it('findAll is instrumented', async () => {
-            await instance.models.User.findAll().catch(() => {});
+            await User.findAll().catch(() => {});
             const spans = getSequelizeSpans();
             expect(spans.length).toBe(1);
             const attributes = spans[0].attributes;
@@ -76,7 +81,7 @@ describe('instrumentation-sequelize', () => {
         });
 
         it('destroy is instrumented', async () => {
-            await instance.models.User.destroy({ where: {}, truncate: true }).catch(() => {});
+            await User.destroy({ where: {}, truncate: true }).catch(() => {});
             const spans = getSequelizeSpans();
             expect(spans.length).toBe(1);
             const attributes = spans[0].attributes;
@@ -87,7 +92,7 @@ describe('instrumentation-sequelize', () => {
         });
 
         it('count is instrumented', async () => {
-            await (User as any).count().catch(() => {});
+            await User.count().catch(() => {});
             const spans = getSequelizeSpans();
             expect(spans.length).toBe(1);
             const attributes = spans[0].attributes;
@@ -101,7 +106,7 @@ describe('instrumentation-sequelize', () => {
 
         it('handled complex query', async () => {
             const Op = sequelize.Op;
-            await instance.models.User.findOne({
+            await User.findOne({
                 where: {
                     username: 'Shlomi',
                     rank: {
@@ -128,15 +133,31 @@ describe('instrumentation-sequelize', () => {
             );
         });
 
-        it('handles JOIN queries', async () => {
-            instance.define('Dog', {
-                firstName: { type: sequelize.DataTypes.STRING },
-                owner: { type: sequelize.DataTypes.STRING },
-            });
-            instance.models.User.hasMany(instance.models.Dog, { foreignKey: 'firstName' });
-            instance.models.Dog.belongsTo(instance.models.User, { foreignKey: 'firstName' });
+        it('tableName is taken from init override', async () => {
+            class Planet extends sequelize.Model {};
+            const expectedTableName = 'solar-system';
+            Planet.init({}, { sequelize: instance, tableName: expectedTableName })
 
-            await instance.models.Dog.findOne({
+            await Planet.findAll().catch(() => {});
+            const spans = getSequelizeSpans();
+            expect(spans.length).toBe(1);
+            const attributes = spans[0].attributes;
+            expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe(expectedTableName);
+        })
+
+        it('handles JOIN queries', async () => {
+            class Dog extends sequelize.Model {
+                firstName: string;
+            }
+
+            Dog.init(
+                { firstName: { type: sequelize.DataTypes.STRING }, owner: { type: sequelize.DataTypes.STRING } },
+                { sequelize: instance }
+            );
+            Dog.belongsTo(User, { foreignKey: 'firstName' });
+            User.hasMany(Dog, { foreignKey: 'firstName' });
+
+            await Dog.findOne({
                 attributes: ['firstName', 'owner'],
                 include: [
                     {
