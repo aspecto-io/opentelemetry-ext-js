@@ -43,13 +43,16 @@ const removeMocks = () => {
 };
 
 describe('EntityManager', () => {
-    beforeEach(() => {
+    before(() => {
         setMocks();
+    });
+    after(() => {
+        removeMocks();
+    });
+    beforeEach(() => {
         instrumentation.enable();
     });
-
     afterEach(() => {
-        removeMocks();
         instrumentation.disable();
     });
 

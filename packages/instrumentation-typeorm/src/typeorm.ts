@@ -164,10 +164,11 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                     : suppressTypeormInternalTracing(trace.setSpan(context.active(), span));
 
                 const response = await (self._config?.suppressInternalInstrumentation
-                    ? context.with(traceContext, () => endSpan(() => original.apply(this, arguments), span))
-                    : context.with(suppressTracing(traceContext), () =>
+                    ? context.with(suppressTracing(traceContext), () =>
                           endSpan(() => original.apply(this, arguments), span)
-                      ));
+                      )
+                    : context.with(traceContext, () => endSpan(() => original.apply(this, arguments), span)));
+
                 if (isTypeormInternalTracingSuppressed(context.active())) {
                     unsuppressTypeormInternalTracing(context.active());
                 }
@@ -217,10 +218,10 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                     : suppressTypeormInternalTracing(trace.setSpan(context.active(), span));
 
                 const response = await (self._config?.suppressInternalInstrumentation
-                    ? context.with(traceContext, () => endSpan(() => original.apply(this, arguments), span))
-                    : context.with(suppressTracing(traceContext), () =>
+                    ? context.with(suppressTracing(traceContext), () =>
                           endSpan(() => original.apply(this, arguments), span)
-                      ));
+                      )
+                    : context.with(traceContext, () => endSpan(() => original.apply(this, arguments), span)));
                 if (isTypeormInternalTracingSuppressed(context.active())) {
                     unsuppressTypeormInternalTracing(context.active());
                 }

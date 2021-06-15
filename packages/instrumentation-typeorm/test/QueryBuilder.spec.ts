@@ -5,7 +5,7 @@ import { SpanStatusCode } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { TypeormInstrumentation } from '../src';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
-const instrumentation = new TypeormInstrumentation({ enableInternalInstrumentation: true });
+const instrumentation = new TypeormInstrumentation();
 
 import * as typeorm from 'typeorm';
 
@@ -42,28 +42,30 @@ describe('QueryBuilder', () => {
         instrumentation.disable();
     });
 
-    it('Query builder select', async () => {
+    it('getManyAndCount', async () => {
         const connection = await typeorm.createConnection(options);
-        const users = await connection
-            .createQueryBuilder(User, 'user')
-            .where('user.id = :userId')
-            .setParameter('userId', '123')
-            .getManyAndCount();
-        //expect(users.length).toBeGreaterThan(0);
-        const typeOrmSpans = getTestSpans();
-        expect(typeOrmSpans.length).toBe(1);
-        expect(typeOrmSpans[0].status.code).toBe(SpanStatusCode.UNSET);
-        const attributes = typeOrmSpans[0].attributes;
-        expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(options.type);
-        expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(options.type);
-        expect(attributes[SemanticAttributes.DB_USER]).toBe(options.username);
-        expect(attributes[SemanticAttributes.NET_PEER_NAME]).toBe(options.host);
-        expect(attributes[SemanticAttributes.NET_PEER_PORT]).toBe(options.port);
-        expect(attributes[SemanticAttributes.DB_NAME]).toBe(options.database);
-        expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
-            'SELECT "user"."id" AS "user_id", "user"."firstName" AS "user_firstName", "user"."lastName" AS "user_lastName", "user"."isActive" AS "user_isActive" FROM "user" "user" WHERE "user"."id" = $1'
-        );
-
-        await connection.close();
+        try {
+            const users = await connection
+                .createQueryBuilder(User, 'user')
+                .where('user.id = :userId')
+                .setParameter('userId', '1')
+                .getManyAndCount();
+            expect(users.length).toBeGreaterThan(0);
+            const typeOrmSpans = getTestSpans();
+            expect(typeOrmSpans.length).toBe(1);
+            expect(typeOrmSpans[0].status.code).toBe(SpanStatusCode.UNSET);
+            const attributes = typeOrmSpans[0].attributes;
+            expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(options.type);
+            expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(options.type);
+            expect(attributes[SemanticAttributes.DB_USER]).toBe(options.username);
+            expect(attributes[SemanticAttributes.NET_PEER_NAME]).toBe(options.host);
+            expect(attributes[SemanticAttributes.NET_PEER_PORT]).toBe(options.port);
+            expect(attributes[SemanticAttributes.DB_NAME]).toBe(options.database);
+            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
+                'SELECT "user"."id" AS "user_id", "user"."firstName" AS "user_firstName", "user"."lastName" AS "user_lastName", "user"."isActive" AS "user_isActive" FROM "user" "user" WHERE "user"."id" = $1'
+            );
+        } finally {
+            await connection.close();
+        }
     });
 });
