@@ -134,16 +134,16 @@ describe('instrumentation-sequelize', () => {
         });
 
         it('tableName is taken from init override', async () => {
-            class Planet extends sequelize.Model {};
+            class Planet extends sequelize.Model {}
             const expectedTableName = 'solar-system';
-            Planet.init({}, { sequelize: instance, tableName: expectedTableName })
+            Planet.init({}, { sequelize: instance, tableName: expectedTableName });
 
             await Planet.findAll().catch(() => {});
             const spans = getSequelizeSpans();
             expect(spans.length).toBe(1);
             const attributes = spans[0].attributes;
             expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe(expectedTableName);
-        })
+        });
 
         it('handles JOIN queries', async () => {
             class Dog extends sequelize.Model {
