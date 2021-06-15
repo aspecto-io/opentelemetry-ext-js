@@ -48,6 +48,7 @@ describe('EntityManager', () => {
     });
     after(() => {
         removeMocks();
+        instrumentation.enable();
     });
     beforeEach(() => {
         instrumentation.enable();

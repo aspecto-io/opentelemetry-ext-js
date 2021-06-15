@@ -163,23 +163,13 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                     ? trace.setSpan(context.active(), span)
                     : suppressTypeormInternalTracing(trace.setSpan(context.active(), span));
 
-                const response = await (self._config?.suppressInternalInstrumentation
-                    ? context.with(suppressTracing(traceContext), () =>
-                          endSpan(() => original.apply(this, arguments), span)
-                      )
-                    : context.with(traceContext, () => endSpan(() => original.apply(this, arguments), span)));
+                const promise: Promise<any> = self._config?.suppressInternalInstrumentation
+                    ? context.with(suppressTracing(traceContext), () => original.apply(this, arguments), span)
+                    : context.with(traceContext, () => original.apply(this, arguments), span);
 
+                const response = await self._endSpan(() => promise, span);
                 if (isTypeormInternalTracingSuppressed(context.active())) {
                     unsuppressTypeormInternalTracing(context.active());
-                }
-                if (self._config?.responseHook) {
-                    safeExecuteInTheMiddle(
-                        () => self._config.responseHook(span, response),
-                        (e: Error) => {
-                            if (e) diag.error('typeorm instrumentation: responseHook error', e);
-                        },
-                        true
-                    );
                 }
                 return response;
             };
@@ -217,57 +207,61 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                     ? trace.setSpan(context.active(), span)
                     : suppressTypeormInternalTracing(trace.setSpan(context.active(), span));
 
-                const response = await (self._config?.suppressInternalInstrumentation
-                    ? context.with(suppressTracing(traceContext), () =>
-                          endSpan(() => original.apply(this, arguments), span)
-                      )
-                    : context.with(traceContext, () => endSpan(() => original.apply(this, arguments), span)));
+                const promise: Promise<any> = self._config?.suppressInternalInstrumentation
+                    ? context.with(suppressTracing(traceContext), () => original.apply(this, arguments), span)
+                    : context.with(traceContext, () => original.apply(this, arguments), span);
+
+                const response = await self._endSpan(() => promise, span);
                 if (isTypeormInternalTracingSuppressed(context.active())) {
                     unsuppressTypeormInternalTracing(context.active());
-                }
-                if (self._config?.responseHook) {
-                    safeExecuteInTheMiddle(
-                        () => self._config.responseHook(span, response),
-                        (e: Error) => {
-                            if (e) diag.error('typeorm instrumentation: responseHook error', e);
-                        },
-                        true
-                    );
                 }
                 return response;
             };
         };
     }
-}
 
-const endSpan = (traced: () => any | Promise<any>, span: Span) => {
-    try {
-        const result = traced();
-        if (isPromise(result)) {
-            return Promise.resolve(result)
-                .catch((err) => {
-                    if (err) {
-                        if (typeof err === 'string') {
-                            span.setStatus({ code: SpanStatusCode.ERROR, message: err });
-                        } else {
-                            span.recordException(err);
-                            span.setStatus({ code: SpanStatusCode.ERROR, message: err?.message });
+    private _endSpan(traced: any, span: Span) {
+        const executeResponseHook = (response: any) => {
+            if (this._config?.responseHook) {
+                safeExecuteInTheMiddle(
+                    () => this._config.responseHook(span, response),
+                    (e: Error) => {
+                        if (e) diag.error('typeorm instrumentation: responseHook error', e);
+                    },
+                    true
+                );
+            }
+            return response;
+        };
+        try {
+            const response = traced();
+            if (isPromise(response)) {
+                return Promise.resolve(response)
+                    .then((response) => executeResponseHook(response))
+                    .catch((err) => {
+                        if (err) {
+                            if (typeof err === 'string') {
+                                span.setStatus({ code: SpanStatusCode.ERROR, message: err });
+                            } else {
+                                span.recordException(err);
+                                span.setStatus({ code: SpanStatusCode.ERROR, message: err?.message });
+                            }
                         }
-                    }
-                    throw err;
-                })
-                .finally(() => span.end());
-        } else {
+                        throw err;
+                    })
+                    .finally(() => span.end());
+            } else {
+                span.end();
+                return executeResponseHook(response);
+            }
+        } catch (error: any) {
+            span.recordException(error);
+            span.setStatus({ code: SpanStatusCode.ERROR, message: error?.message });
             span.end();
-            return result;
+            throw error;
         }
-    } catch (error: any) {
-        span.recordException(error);
-        span.setStatus({ code: SpanStatusCode.ERROR, message: error?.message });
-        span.end();
-        throw error;
     }
-};
+}
 
 const buildStatement = (func: Function, args: any[]) => {
     const paramNames = getParamNames(func);
