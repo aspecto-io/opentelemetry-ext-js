@@ -42,7 +42,6 @@ describe('instrumentation-sequelize', () => {
         }
 
         User.init({ firstName: { type: sequelize.DataTypes.STRING } }, { sequelize: instance });
-        // const User = instance.define('User', { firstName: { type: sequelize.DataTypes.STRING } });
 
         it('create is instrumented', async () => {
             try {
