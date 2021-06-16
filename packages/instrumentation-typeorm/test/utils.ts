@@ -60,7 +60,7 @@ export const localPostgreSQLOptions: typeorm.ConnectionOptions = {
     type: 'postgres',
     host: 'localhost',
     port: 5432,
-    username: 'motti',
+    username: 'aspecto',
     password: 'mysecretpassword',
     entities: [User],
 };
