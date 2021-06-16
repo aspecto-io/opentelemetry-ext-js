@@ -2,7 +2,12 @@ import { Span, SpanKind, SpanStatusCode, trace, context, diag, createContextKey,
 import { suppressTracing } from '@opentelemetry/core';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { TypeormInstrumentationConfig } from './types';
-import { getParamNames } from './utils';
+import {
+    getParamNames,
+    isTypeormInternalTracingSuppressed,
+    suppressTypeormInternalTracing,
+    unsuppressTypeormInternalTracing,
+} from './utils';
 import { VERSION } from './version';
 import type * as typeorm from 'typeorm';
 import {
@@ -287,16 +292,3 @@ const buildStatement = (func: Function, args: any[]) => {
     });
     return statement;
 };
-
-const SUPPRESS_TYPEORM_INTERNAL_TRACING_KEY = createContextKey(
-    'instrumentation-typeorm Context Key SUPPRESS_TYPEORM_INTERNAL_TRACING'
-);
-
-const suppressTypeormInternalTracing = (context: Context) =>
-    context.setValue(SUPPRESS_TYPEORM_INTERNAL_TRACING_KEY, true);
-
-const isTypeormInternalTracingSuppressed = (context: Context) =>
-    context.getValue(SUPPRESS_TYPEORM_INTERNAL_TRACING_KEY) === true;
-
-const unsuppressTypeormInternalTracing = (context: Context) =>
-    context.deleteValue(SUPPRESS_TYPEORM_INTERNAL_TRACING_KEY);

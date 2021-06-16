@@ -5,49 +5,17 @@ import { SpanStatusCode } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { TypeormInstrumentation, TypeormInstrumentationConfig } from '../src';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
+
 const instrumentation = new TypeormInstrumentation();
-
 import * as typeorm from 'typeorm';
-
-const originalCreate = typeorm.ConnectionManager.prototype.create;
-
-const setMocks = () => {
-    const emptySuccessFunc = async (_argName: any) => {};
-    const successFuncWithPayload = async () => ({ foo: 'goo' });
-    const errorFunc = async () => {
-        throw new Error('some error');
-    };
-
-    const createManager = (connectionOptions: any) => {
-        return {
-            connection: {
-                options: connectionOptions,
-            },
-            save: emptySuccessFunc,
-            remove: successFuncWithPayload,
-            find: errorFunc,
-        };
-    };
-
-    typeorm.ConnectionManager.prototype.create = ((options: any) => {
-        const manager = createManager(options);
-        return {
-            connect: () => ({ manager }),
-            manager,
-        };
-    }) as any;
-};
-
-const removeMocks = () => {
-    typeorm.ConnectionManager.prototype.create = originalCreate;
-};
+import { setMocks, resetMocks } from './utils';
 
 describe('EntityManager', () => {
     before(() => {
         setMocks();
     });
     after(() => {
-        removeMocks();
+        resetMocks();
         instrumentation.enable();
     });
     beforeEach(() => {
@@ -103,49 +71,6 @@ describe('EntityManager', () => {
             expect(typeOrmSpans.length).toBe(1);
             expect(typeOrmSpans[0].status.code).toBe(SpanStatusCode.ERROR);
             expect(typeOrmSpans[0].status.message).toBe('some error');
-        });
-
-        it('responseHook works', async () => {
-            setMocks();
-            instrumentation.disable();
-            const config: TypeormInstrumentationConfig = {
-                responseHook: (span: Span, response: any) => {
-                    span.setAttribute('test', JSON.stringify(response));
-                },
-            };
-            instrumentation.setConfig(config);
-            instrumentation.enable();
-
-            const connection = await typeorm.createConnection(options);
-            const statement = { test: 123 };
-            await connection.manager.remove(statement);
-            const typeOrmSpans = getTestSpans();
-
-            expect(typeOrmSpans.length).toBe(1);
-            const attributes = typeOrmSpans[0].attributes;
-
-            expect(attributes['test']).toBe(JSON.stringify({ foo: 'goo' }));
-            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('remove');
-            expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(options.type);
-        });
-
-        it('moduleVersionAttributeName works', async () => {
-            setMocks();
-            instrumentation.disable();
-            const config: TypeormInstrumentationConfig = {
-                moduleVersionAttributeName: 'module.version',
-            };
-            instrumentation.setConfig(config);
-            instrumentation.enable();
-
-            const connection = await typeorm.createConnection(options);
-            const statement = { test: 123 };
-            await connection.manager.remove(statement);
-            const typeOrmSpans = getTestSpans();
-
-            expect(typeOrmSpans.length).toBe(1);
-            const attributes = typeOrmSpans[0].attributes;
-            expect(attributes['module.version']).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
         });
     });
 
