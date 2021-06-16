@@ -10,6 +10,12 @@ export const setMocks = () => {
     const errorFunc = async () => {
         throw new Error('some error');
     };
+    const findAndCountFunc = async () => {
+        if (!isTypeormInternalTracingSuppressed(ctx.active())) {
+            trace.getTracerProvider().getTracer('default').startSpan('child span of findAndCount').end();
+        }
+        return [[{ foo: 'goo' }], 1];
+    };
 
     const createManager = (connectionOptions: any) => {
         return {
@@ -19,19 +25,32 @@ export const setMocks = () => {
             save: emptySuccessFunc,
             remove: successFuncWithPayload,
             find: errorFunc,
-            findAndCount: async () => {
-                if (!isTypeormInternalTracingSuppressed(ctx.active())) {
-                    trace.getTracerProvider().getTracer('default').startSpan('child span of findAndCount').end();
-                }
-                return [[{ foo: 'goo' }], 1];
-            },
+            findAndCount: findAndCountFunc,
+        };
+    };
+
+    const getRepository = () => {
+        return {
+            findAndCount: findAndCountFunc,
         };
     };
 
     typeorm.ConnectionManager.prototype.create = ((options: any) => {
         const manager = createManager(options);
+        const driver = {
+            escape: (s) => s,
+            escapeQueryWithParameters: (sql: string, parameters: any, nativeParameters: any) => [sql, [parameters]],
+            normalizeType: (column: any) => 'varchar',
+            supportedDataTypes: ['varchar'],
+        } as typeorm.Driver;
+
+        const connection = new typeorm.Connection(options) as any;
+        connection.manager = manager;
+        connection.getRepository = getRepository;
+        connection.driver = driver;
+        connection.buildMetadatas();
         return {
-            connect: () => ({ manager }),
+            connect: () => connection,
             manager,
         };
     }) as any;
@@ -56,7 +75,7 @@ export class User {
     isActive: boolean;
 }
 
-export const localPostgreSQLOptions: typeorm.ConnectionOptions = {
+export const defaultOptions: typeorm.ConnectionOptions = {
     type: 'postgres',
     host: 'localhost',
     port: 5432,

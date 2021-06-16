@@ -7,7 +7,7 @@ import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
 const instrumentation = new TypeormInstrumentation();
 import * as typeorm from 'typeorm';
-import { setMocks, localPostgreSQLOptions, User } from './utils';
+import { setMocks, defaultOptions, User } from './mocks';
 
 describe('TypeormInstrumentationConfig', () => {
     it('responseHook', async () => {
@@ -21,7 +21,7 @@ describe('TypeormInstrumentationConfig', () => {
         instrumentation.setConfig(config);
         instrumentation.enable();
 
-        const connection = await typeorm.createConnection(localPostgreSQLOptions);
+        const connection = await typeorm.createConnection(defaultOptions);
         const statement = { test: 123 };
         await connection.manager.remove(statement);
         const typeOrmSpans = getTestSpans();
@@ -31,7 +31,7 @@ describe('TypeormInstrumentationConfig', () => {
 
         expect(attributes['test']).toBe(JSON.stringify({ foo: 'goo' }));
         expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('remove');
-        expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(localPostgreSQLOptions.type);
+        expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(defaultOptions.type);
     });
 
     it('moduleVersionAttributeName works', async () => {
@@ -43,7 +43,7 @@ describe('TypeormInstrumentationConfig', () => {
         instrumentation.setConfig(config);
         instrumentation.enable();
 
-        const connection = await typeorm.createConnection(localPostgreSQLOptions);
+        const connection = await typeorm.createConnection(defaultOptions);
         const statement = { test: 123 };
         await connection.manager.remove(statement);
         const typeOrmSpans = getTestSpans();
@@ -56,7 +56,7 @@ describe('TypeormInstrumentationConfig', () => {
     it('enableInternalInstrumentation:true', async () => {
         const config: TypeormInstrumentationConfig = { enableInternalInstrumentation: true };
         instrumentation.setConfig(config);
-        const conn = await typeorm.createConnection(localPostgreSQLOptions);
+        const conn = await typeorm.createConnection(defaultOptions);
         const [users, count] = await conn.manager.findAndCount(User);
         expect(count).toBeGreaterThan(0);
 
@@ -67,7 +67,7 @@ describe('TypeormInstrumentationConfig', () => {
     it('enableInternalInstrumentation:false', async () => {
         const config: TypeormInstrumentationConfig = { enableInternalInstrumentation: false };
         instrumentation.setConfig(config);
-        const conn = await typeorm.createConnection(localPostgreSQLOptions);
+        const conn = await typeorm.createConnection(defaultOptions);
         const [users, count] = await conn.manager.findAndCount(User);
         expect(count).toBeGreaterThan(0);
 

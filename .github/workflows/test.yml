@@ -35,14 +35,6 @@ jobs:
         ports:
           - 22221:5672
 
-      postgres:
-        image: postgres
-        env:
-          POSTGRES_USER: aspecto
-          POSTGRES_PASSWORD: mysecretpassword
-        ports:
-          - 5432:5432
-
     steps:
       - uses: actions/checkout@v2
         with:

@@ -1,6 +1,5 @@
 import 'mocha';
 import expect from 'expect';
-import { ReadableSpan, Span } from '@opentelemetry/tracing';
 import { SpanStatusCode } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { TypeormInstrumentation, TypeormInstrumentationConfig } from '../src';
@@ -8,7 +7,7 @@ import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
 const instrumentation = new TypeormInstrumentation();
 import * as typeorm from 'typeorm';
-import { setMocks, resetMocks } from './utils';
+import { setMocks, resetMocks } from './mocks';
 
 describe('EntityManager', () => {
     before(() => {

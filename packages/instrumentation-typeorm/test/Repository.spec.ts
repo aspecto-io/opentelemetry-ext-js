@@ -4,10 +4,13 @@ import { TypeormInstrumentation } from '../src';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
 const instrumentation = new TypeormInstrumentation();
-import { localPostgreSQLOptions, User } from './utils';
+import { defaultOptions, User, setMocks } from './mocks';
 import * as typeorm from 'typeorm';
 
 describe('Repository', () => {
+    before(() => {
+        setMocks();
+    });
     beforeEach(() => {
         instrumentation.enable();
     });
@@ -17,16 +20,12 @@ describe('Repository', () => {
     });
 
     it('findAndCount', async () => {
-        const conn = await typeorm.createConnection(localPostgreSQLOptions);
-        try {
-            const repo = conn.getRepository(User);
-            const [users, count] = await repo.findAndCount();
-            expect(count).toBeGreaterThan(0);
+        const conn = await typeorm.createConnection(defaultOptions);
+        const repo = conn.getRepository(User);
+        const [users, count] = await repo.findAndCount();
+        expect(count).toBeGreaterThan(0);
 
-            const spans = getTestSpans();
-            expect(spans.length).toEqual(1);
-        } finally {
-            await conn.close();
-        }
+        const spans = getTestSpans();
+        expect(spans.length).toEqual(1);
     });
 });
