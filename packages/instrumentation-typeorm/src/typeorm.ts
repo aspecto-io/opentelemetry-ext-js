@@ -43,7 +43,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
     protected init(): InstrumentationModuleDefinition<typeof typeorm> {
         const selectQueryBuilder = new InstrumentationNodeModuleFile<typeof typeorm>(
             'typeorm/query-builder/SelectQueryBuilder.js',
-            ['*'],
+            ['>0.2.28'],
             (moduleExports, moduleVersion) => {
                 selectQueryBuilderExecuteMethods.map((method) => {
                     if (isWrapped(moduleExports.SelectQueryBuilder.prototype?.[method])) {
@@ -70,7 +70,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
 
         const module = new InstrumentationNodeModuleDefinition<typeof typeorm>(
             'typeorm',
-            ['*'],
+            ['>0.2.28'],
             (moduleExports, moduleVersion) => {
                 if (moduleExports === undefined || moduleExports === null) {
                     return moduleExports;

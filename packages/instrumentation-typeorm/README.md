@@ -9,6 +9,9 @@ This module provides automatic instrumentation for [`TypeORM`](https://typeorm.i
 npm install --save opentelemetry-instrumentation-typeorm
 ```
 
+## Supported Versions
+This instrumentation supports `>0.2.28`:
+
 ## Usage
 For further automatic instrumentation instruction see the [@opentelemetry/instrumentation](https://github.com/open-telemetry/opentelemetry-js/tree/main/packages/opentelemetry-instrumentation) package.
 
