@@ -28,8 +28,10 @@
     "bugs": {
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
     },
+    "peerDependencies": {
+        "@opentelemetry/api": "^0.20.0"
+    },
     "dependencies": {
-        "@opentelemetry/api": "^0.20.0",
         "@opentelemetry/resources": "^0.20.0"
     },
     "devDependencies": {
