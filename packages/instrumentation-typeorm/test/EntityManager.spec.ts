@@ -31,6 +31,7 @@ describe('EntityManager', () => {
             expect(typeOrmSpans.length).toBe(1);
             expect(typeOrmSpans[0].status.code).toBe(SpanStatusCode.UNSET);
             const attributes = typeOrmSpans[0].attributes;
+            expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
             expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(options.type);
             expect(attributes[SemanticAttributes.DB_NAME]).toBe(options.database);
             expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('save');
@@ -70,16 +71,18 @@ describe('EntityManager', () => {
 
             const spans = getTestSpans();
             expect(spans.length).toBe(2);
-            const postgresSpan = spans[0];
-            const mySqlSpan = spans[1];
+            const sqlite1Span = spans[0];
+            const sqlite2Span = spans[1];
 
-            expect(postgresSpan.attributes[SemanticAttributes.DB_SYSTEM]).toBe(defaultOptions.type);
-            expect(postgresSpan.attributes[SemanticAttributes.DB_NAME]).toBe(defaultOptions.database);
-            expect(postgresSpan.attributes[SemanticAttributes.DB_OPERATION]).toBe('save');
+            expect(sqlite1Span.attributes[SemanticAttributes.DB_SYSTEM]).toBe(defaultOptions.type);
+            expect(sqlite1Span.attributes[SemanticAttributes.DB_NAME]).toBe(defaultOptions.database);
+            expect(sqlite1Span.attributes[SemanticAttributes.DB_OPERATION]).toBe('save');
+            expect(sqlite1Span.attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
 
-            expect(mySqlSpan.attributes[SemanticAttributes.DB_SYSTEM]).toBe(options2.type);
-            expect(mySqlSpan.attributes[SemanticAttributes.DB_NAME]).toBe(options2.database);
-            expect(mySqlSpan.attributes[SemanticAttributes.DB_OPERATION]).toBe('remove');
+            expect(sqlite2Span.attributes[SemanticAttributes.DB_SYSTEM]).toBe(options2.type);
+            expect(sqlite2Span.attributes[SemanticAttributes.DB_NAME]).toBe(options2.database);
+            expect(sqlite2Span.attributes[SemanticAttributes.DB_OPERATION]).toBe('remove');
+            expect(sqlite2Span.attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
             await sqlite1.close();
             await sqlite2.close();
         });

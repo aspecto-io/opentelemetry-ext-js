@@ -157,9 +157,15 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
 
                 //ignore EntityMetadataNotFoundError
                 try {
-                    const metadata = this.metadata ?? this.connection.getMetadata(args[0]);
-                    if (metadata?.tableName) {
-                        attributes[SemanticAttributes.DB_SQL_TABLE] = metadata.tableName;
+                    if (this.metadata) {
+                        attributes[SemanticAttributes.DB_SQL_TABLE] = this.metadata.tableName;
+                    } else {
+                        const entity = args[0];
+                        const name = typeof entity === 'object' ? entity?.constructor?.name : entity;
+                        const metadata = this.connection.getMetadata(name);
+                        if (metadata?.tableName) {
+                            attributes[SemanticAttributes.DB_SQL_TABLE] = metadata.tableName;
+                        }
                     }
                 } catch {}
 

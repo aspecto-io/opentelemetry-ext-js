@@ -48,6 +48,7 @@ describe('TypeormInstrumentationConfig', () => {
 
         expect(typeOrmSpans.length).toBe(1);
         const attributes = typeOrmSpans[0].attributes;
+        expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
         expect(attributes['module.version']).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
         await connection.close();
     });
@@ -82,6 +83,7 @@ describe('TypeormInstrumentationConfig', () => {
         const attributes = spans[0].attributes;
         expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('findAndCount');
         expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(defaultOptions.type);
+        expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
         await connection.close();
     });
 });
