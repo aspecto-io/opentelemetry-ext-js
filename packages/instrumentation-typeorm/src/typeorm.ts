@@ -2,12 +2,7 @@ import { Span, SpanKind, SpanStatusCode, trace, context, diag, createContextKey,
 import { suppressTracing } from '@opentelemetry/core';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { TypeormInstrumentationConfig } from './types';
-import {
-    getParamNames,
-    isTypeormInternalTracingSuppressed,
-    suppressTypeormInternalTracing,
-    unsuppressTypeormInternalTracing,
-} from './utils';
+import { getParamNames, isTypeormInternalTracingSuppressed, suppressTypeormInternalTracing } from './utils';
 import { VERSION } from './version';
 import type * as typeorm from 'typeorm';
 import {
@@ -71,7 +66,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
         const module = new InstrumentationNodeModuleDefinition<typeof typeorm>(
             'typeorm',
             ['>0.2.28'],
-            (moduleExports, moduleVersion) => {
+            (moduleExports, moduleVersion: string | undefined) => {
                 if (moduleExports === undefined || moduleExports === null) {
                     return moduleExports;
                 }
@@ -96,7 +91,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
         return module;
     }
 
-    private _createConnectionManagerPatch(moduleVersion: string) {
+    private _createConnectionManagerPatch(moduleVersion?: string) {
         const self = this;
         return (original: Function) => {
             return function (options: typeorm.ConnectionOptions) {
@@ -135,7 +130,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
         };
     }
 
-    private _getEntityManagerFunctionPatch(opName: string, moduleVersion: string) {
+    private _getEntityManagerFunctionPatch(opName: string, moduleVersion?: string) {
         const self = this;
         diag.debug(`typeorm instrumentation: patched EntityManager ${opName} prototype`);
         return function (original: Function) {
@@ -151,7 +146,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                     [SemanticAttributes.DB_STATEMENT]: JSON.stringify(buildStatement(original, args)),
                 };
 
-                if (self._config.moduleVersionAttributeName) {
+                if (self._config.moduleVersionAttributeName && moduleVersion) {
                     attributes[self._config.moduleVersionAttributeName] = moduleVersion;
                 }
 
@@ -178,19 +173,19 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                     attributes,
                 });
 
+                const contextWithSpan = trace.setSpan(context.active(), span);
+
                 const traceContext = self._config.enableInternalInstrumentation
-                    ? trace.setSpan(context.active(), span)
-                    : suppressTypeormInternalTracing(trace.setSpan(context.active(), span));
+                    ? contextWithSpan
+                    : suppressTypeormInternalTracing(contextWithSpan);
 
-                const promise: Promise<any> = self._config?.suppressInternalInstrumentation
-                    ? context.with(suppressTracing(traceContext), () => original.apply(this, arguments), span)
-                    : context.with(traceContext, () => original.apply(this, arguments), span);
+                const contextWithSuppressTracing = self._config.suppressInternalInstrumentation
+                    ? suppressTracing(traceContext)
+                    : traceContext;
 
-                const response = await self._endSpan(() => promise, span);
-                if (isTypeormInternalTracingSuppressed(context.active())) {
-                    unsuppressTypeormInternalTracing(context.active());
-                }
-                return response;
+                return context.with(contextWithSuppressTracing, () =>
+                    self._endSpan(() => original.apply(this, arguments), span)
+                );
             };
         };
     }
@@ -198,11 +193,11 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
     private _patchQueryBuilder(moduleVersion: string) {
         const self = this;
         return (original: any) => {
-            return async function () {
+            return function () {
                 if (isTypeormInternalTracingSuppressed(context.active())) {
                     return original.apply(this, arguments);
                 }
-                const [sql, parameters] = this.getQueryAndParameters();
+                const [sql, _parameters] = this.getQueryAndParameters();
                 const mainTableName = this.getMainTableName();
                 const operation = this.expressionMap.queryType;
 
@@ -222,19 +217,19 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                     attributes,
                 });
 
+                const contextWithSpan = trace.setSpan(context.active(), span);
+
                 const traceContext = self._config.enableInternalInstrumentation
-                    ? trace.setSpan(context.active(), span)
-                    : suppressTypeormInternalTracing(trace.setSpan(context.active(), span));
+                    ? contextWithSpan
+                    : suppressTypeormInternalTracing(contextWithSpan);
 
-                const promise: Promise<any> = self._config?.suppressInternalInstrumentation
-                    ? context.with(suppressTracing(traceContext), () => original.apply(this, arguments), span)
-                    : context.with(traceContext, () => original.apply(this, arguments), span);
+                const contextWithSuppressTracing = self._config?.suppressInternalInstrumentation
+                    ? suppressTracing(traceContext)
+                    : traceContext;
 
-                const response = await self._endSpan(() => promise, span);
-                if (isTypeormInternalTracingSuppressed(context.active())) {
-                    unsuppressTypeormInternalTracing(context.active());
-                }
-                return response;
+                return context.with(contextWithSuppressTracing, () =>
+                    self._endSpan(() => original.apply(this, arguments), span)
+                );
             };
         };
     }

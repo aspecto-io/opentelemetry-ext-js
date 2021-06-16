@@ -9,6 +9,3 @@ export const suppressTypeormInternalTracing = (context: Context) =>
 
 export const isTypeormInternalTracingSuppressed = (context: Context) =>
     context.getValue(SUPPRESS_TYPEORM_INTERNAL_TRACING_KEY) === true;
-
-export const unsuppressTypeormInternalTracing = (context: Context) =>
-    context.deleteValue(SUPPRESS_TYPEORM_INTERNAL_TRACING_KEY);
