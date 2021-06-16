@@ -6,7 +6,7 @@ import { TypeormInstrumentation } from '../src';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 const instrumentation = new TypeormInstrumentation();
 import * as typeorm from 'typeorm';
-import { User, defaultOptions, setMocks } from './mocks';
+import { User, defaultOptions } from './utils';
 
 const getQueryBuilder = (connection: typeorm.Connection) => {
     const testQueryRunner = {
@@ -17,9 +17,6 @@ const getQueryBuilder = (connection: typeorm.Connection) => {
 };
 
 describe('QueryBuilder', () => {
-    before(() => {
-        setMocks();
-    });
     beforeEach(() => {
         instrumentation.enable();
     });
@@ -46,7 +43,8 @@ describe('QueryBuilder', () => {
         expect(attributes[SemanticAttributes.NET_PEER_PORT]).toBe(connectionOptions.port);
         expect(attributes[SemanticAttributes.DB_NAME]).toBe(connectionOptions.database);
         expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
-            'SELECT * FROM user users WHERE user.id = :userId'
+            'SELECT * FROM \"user\" \"users\" WHERE user.id = ?'
         );
+        await connection.close();
     });
 });

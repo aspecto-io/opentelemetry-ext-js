@@ -155,6 +155,14 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                     attributes[self._config.moduleVersionAttributeName] = moduleVersion;
                 }
 
+                //ignore EntityMetadataNotFoundError
+                try {
+                    const metadata = this.metadata ?? this.connection.getMetadata(args[0]);
+                    if (metadata?.tableName) {
+                        attributes[SemanticAttributes.DB_SQL_TABLE] = metadata.tableName;
+                    }
+                } catch {}
+
                 Object.entries(attributes).forEach(([key, value]) => {
                     if (value === undefined) delete attributes[key];
                 });
