@@ -19,7 +19,7 @@ export interface TypeormInstrumentationConfig extends InstrumentationConfig {
      * cause the instrumentation to suppress instrumentation of underlying operations.
      */
     suppressInternalInstrumentation?: boolean;
-    /** Some methods such as `getManyAndCount` can generate internally multiple spans. 
+    /** Some methods such as `getManyAndCount` can generate internally multiple spans.
      * To instrument those set this to `true`
      */
     enableInternalInstrumentation?: boolean;

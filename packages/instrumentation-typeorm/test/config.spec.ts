@@ -61,12 +61,12 @@ describe('TypeormInstrumentationConfig', () => {
         const spans = getTestSpans();
         expect(spans.length).toEqual(2);
 
-        const findAndCountSpan = spans.find(s => s.name.indexOf('findAndCount') !== -1);
+        const findAndCountSpan = spans.find((s) => s.name.indexOf('findAndCount') !== -1);
         expect(findAndCountSpan).not.toBeUndefined();
         expect(findAndCountSpan.attributes[SemanticAttributes.DB_OPERATION]).toBe('findAndCount');
         expect(findAndCountSpan.attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
 
-        const selectSpan = spans.find(s => s.name.indexOf('select') !== -1);
+        const selectSpan = spans.find((s) => s.name.indexOf('select') !== -1);
         expect(selectSpan).not.toBeUndefined();
         expect(selectSpan.attributes[SemanticAttributes.DB_OPERATION]).toBe('select');
         expect(selectSpan.attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');

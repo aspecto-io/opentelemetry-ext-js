@@ -43,9 +43,7 @@ describe('QueryBuilder', () => {
         expect(attributes[SemanticAttributes.NET_PEER_PORT]).toBe(connectionOptions.port);
         expect(attributes[SemanticAttributes.DB_NAME]).toBe(connectionOptions.database);
         expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
-        expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
-            'SELECT * FROM \"user\" \"users\" WHERE user.id = ?'
-        );
+        expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe('SELECT * FROM "user" "users" WHERE user.id = ?');
         await connection.close();
     });
 });
