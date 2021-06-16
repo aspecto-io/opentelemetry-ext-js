@@ -21,7 +21,7 @@ describe('EntityManager', () => {
     });
 
     describe('single connection', () => {
-        it('Creates a basic typeorm span', async () => {
+        it('save', async () => {
             const options = defaultOptions;
             const connection = await typeorm.createConnection(defaultOptions);
             const user = new User(1, 'aspecto', 'io');
@@ -36,6 +36,50 @@ describe('EntityManager', () => {
             expect(attributes[SemanticAttributes.DB_NAME]).toBe(options.database);
             expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('save');
             expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(JSON.stringify({ targetOrEntity: user }));
+            await connection.close();
+        });
+
+        it('remove', async () => {
+            const options = defaultOptions;
+            const connection = await typeorm.createConnection(defaultOptions);
+
+            const user = new User(56, 'aspecto', 'io');
+            await connection.manager.save(user);
+            await connection.manager.remove(user);
+            const typeOrmSpans = getTestSpans();
+
+            expect(typeOrmSpans.length).toBe(2);
+            expect(typeOrmSpans[1].status.code).toBe(SpanStatusCode.UNSET);
+            const attributes = typeOrmSpans[1].attributes;
+            expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
+            expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(options.type);
+            expect(attributes[SemanticAttributes.DB_NAME]).toBe(options.database);
+            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('remove');
+            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
+                JSON.stringify({ targetOrEntity: { id: 56, firstName: 'aspecto', lastName: 'io' } })
+            );
+            await connection.close();
+        });
+
+        it('update', async () => {
+            const options = defaultOptions;
+            const connection = await typeorm.createConnection(defaultOptions);
+            const user = new User(56, 'aspecto', 'io');
+            await connection.manager.save(user);
+            const partialEntity = { lastName: '.io' };
+            await connection.manager.update(User, 56, partialEntity);
+            const typeOrmSpans = getTestSpans();
+
+            expect(typeOrmSpans.length).toBe(2);
+            expect(typeOrmSpans[1].status.code).toBe(SpanStatusCode.UNSET);
+            const attributes = typeOrmSpans[1].attributes;
+            expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
+            expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(options.type);
+            expect(attributes[SemanticAttributes.DB_NAME]).toBe(options.database);
+            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('update');
+            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
+                JSON.stringify({ target: 'User', criteria: 56, partialEntity })
+            );
             await connection.close();
         });
 
@@ -57,7 +101,7 @@ describe('EntityManager', () => {
         const options2: typeorm.ConnectionOptions = {
             name: 'connection2',
             type: 'sqlite',
-            database: 'his-db',
+            database: 'connection2.db',
             entities: [User],
             synchronize: true,
         };

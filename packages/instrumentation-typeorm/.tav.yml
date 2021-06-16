@@ -1,4 +1,4 @@
 'typeorm':
-  versions: "*"
+  versions: ">0.2.28"
   commands:
     - yarn test
