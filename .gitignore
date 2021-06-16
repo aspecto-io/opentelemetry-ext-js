@@ -27,3 +27,6 @@ aspecto.log
 
 # created from sequelize unit tests
 memory 
+
+#local database files
+*.db
