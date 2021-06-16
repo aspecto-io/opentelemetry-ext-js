@@ -1,6 +1,6 @@
 import { ResourceAttributes as ResourceAttributesKeys } from '@opentelemetry/semantic-conventions';
 import { Resource, defaultServiceName, ResourceAttributes } from '@opentelemetry/resources';
-import { SyncDetector, SyncDetectorToDetector } from 'opentelemetry-resource-detector-sync-api';
+import { SyncDetector, syncDetectorToDetector } from 'opentelemetry-resource-detector-sync-api';
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
 
@@ -42,4 +42,4 @@ class ServiceSyncDetector implements SyncDetector {
 }
 
 export const serviceSyncDetector = new ServiceSyncDetector();
-export const serviceDetector = SyncDetectorToDetector(serviceSyncDetector);
+export const serviceDetector = syncDetectorToDetector(serviceSyncDetector);

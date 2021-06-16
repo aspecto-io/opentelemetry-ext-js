@@ -1,6 +1,6 @@
 import { ResourceAttributes as ResourceAttributesKeys } from '@opentelemetry/semantic-conventions';
 import { Resource } from '@opentelemetry/resources';
-import { SyncDetector, SyncDetectorToDetector } from 'opentelemetry-resource-detector-sync-api';
+import { SyncDetector, syncDetectorToDetector } from 'opentelemetry-resource-detector-sync-api';
 
 class DeploymentSyncDetector implements SyncDetector {
     detect(): Resource {
@@ -15,4 +15,4 @@ class DeploymentSyncDetector implements SyncDetector {
 }
 
 export const deploymentSyncDetector = new DeploymentSyncDetector();
-export const deploymentDetector = SyncDetectorToDetector(deploymentSyncDetector);
+export const deploymentDetector = syncDetectorToDetector(deploymentSyncDetector);
