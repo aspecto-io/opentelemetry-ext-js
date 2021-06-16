@@ -1,4 +1,4 @@
-# OpenTelemetry Deployment Resource Detector for Node.js
+# OpenTelemetry Service Resource Detector for Node.js
 [![NPM version](https://img.shields.io/npm/v/opentelemetry-resource-detector-service.svg)](https://www.npmjs.com/package/opentelemetry-resource-detector-service)
 
 This module provides automatic resource detector for [Service](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions#service)
@@ -29,7 +29,7 @@ import { serviceDetector } from 'opentelemetry-resource-detector-service';
 
 ( async () => {
     const resource = await detectResources({
-        detectors: [deploymentDetector, /* add other async detectors here */],
+        detectors: [serviceDetector, /* add other async detectors here */],
     });
     const tracerProvider = new NodeTracerProvider({ resource });
     // Initialize auto instrumentation plugins and register provider.

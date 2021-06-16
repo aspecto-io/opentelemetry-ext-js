@@ -11,9 +11,9 @@ describe('deployment detector', () => {
     });
 
     it('no deployment environment in environment variable', () => {
-        delete process.env.OTEL_SERVICE_NAME;
+        delete process.env.NODE_ENV;
         const resource = deploymentSyncDetector.detect();
-        expect(resource.attributes[ResourceAttributes.SERVICE_NAME]).toBeUndefined();
+        expect(resource.attributes[ResourceAttributes.DEPLOYMENT_ENVIRONMENT]).toBeUndefined();
     });
 
     it('async version', async () => {
