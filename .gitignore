@@ -24,3 +24,6 @@ yarn.lock
 # aspecto
 aspecto.json
 aspecto.log
+
+# created from sequelize unit tests
+memory 
