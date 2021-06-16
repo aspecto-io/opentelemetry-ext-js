@@ -7,7 +7,7 @@ import { TypeormInstrumentation } from '../src';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 const instrumentation = new TypeormInstrumentation();
 import * as typeorm from 'typeorm';
-import {User, localPostgreSQLOptions} from './utils';
+import { User, localPostgreSQLOptions } from './utils';
 
 describe('QueryBuilder', () => {
     beforeEach(() => {
