@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-kafkajs",
-    "version": "0.5.0",
+    "version": "0.5.1",
     "description": "open telemetry instrumentation for the `kafkajs` kafka client",
     "keywords": [
         "kafka",
@@ -45,7 +45,7 @@
         "kafkajs": "^1.12.0",
         "mocha": "^8.4.0",
         "opentelemetry-instrumentation-mocha": "^0.0.1-rc.1",
-        "opentelemetry-instrumentation-testing-utils": "^0.5.0",
+        "opentelemetry-instrumentation-testing-utils": "^0.5.1",
         "ts-node": "^9.1.1",
         "typescript": "^3.9.5"
     },

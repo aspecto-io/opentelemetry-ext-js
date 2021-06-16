@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-express",
-    "version": "0.5.0",
+    "version": "0.5.1",
     "description": "enhanced open telemetry instrumentation for the `express` web framework",
     "author": "Aspecto.io",
     "license": "Apache-2.0",
@@ -47,7 +47,7 @@
         "express": "4.17.1",
         "mocha": "^8.4.0",
         "opentelemetry-instrumentation-mocha": "^0.0.1-rc.1",
-        "opentelemetry-instrumentation-testing-utils": "^0.5.0",
+        "opentelemetry-instrumentation-testing-utils": "^0.5.1",
         "test-all-versions": "^5.0.1"
     },
     "mocha": {

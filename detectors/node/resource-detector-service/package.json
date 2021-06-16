@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-resource-detector-service",
-    "version": "0.4.0",
+    "version": "0.4.1",
     "description": "open telemetry resource detector for service",
     "keywords": [
         "opentelemetry"
@@ -37,7 +37,7 @@
     "dependencies": {
         "@opentelemetry/resources": "^0.20.0",
         "@opentelemetry/semantic-conventions": "^0.20.0",
-        "opentelemetry-resource-detector-sync-api": "^0.4.0",
+        "opentelemetry-resource-detector-sync-api": "^0.4.1",
         "uuid": "^8.3.2"
     },
     "devDependencies": {
