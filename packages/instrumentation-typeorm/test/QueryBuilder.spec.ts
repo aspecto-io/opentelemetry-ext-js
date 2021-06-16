@@ -6,32 +6,8 @@ import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { TypeormInstrumentation } from '../src';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 const instrumentation = new TypeormInstrumentation();
-
 import * as typeorm from 'typeorm';
-
-@typeorm.Entity()
-export class User {
-    @typeorm.PrimaryGeneratedColumn()
-    id: number;
-
-    @typeorm.Column()
-    firstName: string;
-
-    @typeorm.Column()
-    lastName: string;
-
-    @typeorm.Column({ default: true })
-    isActive: boolean;
-}
-
-const options: typeorm.ConnectionOptions = {
-    type: 'postgres',
-    host: 'localhost',
-    port: 5432,
-    username: 'motti',
-    password: 'mysecretpassword',
-    entities: [User],
-};
+import {User, localPostgreSQLOptions} from './utils';
 
 describe('QueryBuilder', () => {
     beforeEach(() => {
@@ -43,7 +19,8 @@ describe('QueryBuilder', () => {
     });
 
     it('getManyAndCount', async () => {
-        const connection = await typeorm.createConnection(options);
+        const connectionOptions = localPostgreSQLOptions as any;
+        const connection = await typeorm.createConnection(connectionOptions);
         try {
             const users = await connection
                 .createQueryBuilder(User, 'user')
@@ -55,12 +32,11 @@ describe('QueryBuilder', () => {
             expect(typeOrmSpans.length).toBe(1);
             expect(typeOrmSpans[0].status.code).toBe(SpanStatusCode.UNSET);
             const attributes = typeOrmSpans[0].attributes;
-            expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(options.type);
-            expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(options.type);
-            expect(attributes[SemanticAttributes.DB_USER]).toBe(options.username);
-            expect(attributes[SemanticAttributes.NET_PEER_NAME]).toBe(options.host);
-            expect(attributes[SemanticAttributes.NET_PEER_PORT]).toBe(options.port);
-            expect(attributes[SemanticAttributes.DB_NAME]).toBe(options.database);
+            expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(connectionOptions.type);
+            expect(attributes[SemanticAttributes.DB_USER]).toBe(connectionOptions.username);
+            expect(attributes[SemanticAttributes.NET_PEER_NAME]).toBe(connectionOptions.host);
+            expect(attributes[SemanticAttributes.NET_PEER_PORT]).toBe(connectionOptions.port);
+            expect(attributes[SemanticAttributes.DB_NAME]).toBe(connectionOptions.database);
             expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
                 'SELECT "user"."id" AS "user_id", "user"."firstName" AS "user_firstName", "user"."lastName" AS "user_lastName", "user"."isActive" AS "user_isActive" FROM "user" "user" WHERE "user"."id" = $1'
             );
