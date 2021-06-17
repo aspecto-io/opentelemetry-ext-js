@@ -30,3 +30,6 @@ post-install-git-resource.json
 
 # created from sequelize unit tests
 memory 
+
+#local database files
+*.db
