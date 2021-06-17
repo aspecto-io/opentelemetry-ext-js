@@ -19,7 +19,7 @@
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js.git"
     },
     "scripts": {
-        "postinstall": "node dist/src/persist-on-post-install.js",
+        "postinstall": "node dist/src/persist-on-post-install.js || exit 0",
         "build": "tsc",
         "prepare": "yarn run build",
         "test": "mocha",
