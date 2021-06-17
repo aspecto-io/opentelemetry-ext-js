@@ -1,6 +1,7 @@
 import child_process from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import { gitSha1Regex } from './types';
 
 /**
  * Try to run git cli to find the git sha of the current HEAD
@@ -32,7 +33,7 @@ const headShaFromGitDir = (): string | null => {
     try {
         const headFilePath = path.join(process.cwd(), '.git', 'HEAD');
         const rev = fs.readFileSync(headFilePath).toString().trim();
-        if (rev.indexOf(':') === -1) {
+        if (rev.match(gitSha1Regex)) {
             return rev;
         } else if (rev.startsWith('ref: ')) {
             // can return something like 'ref: refs/heads/resource-detectors'
@@ -48,10 +49,12 @@ const headShaFromGitDir = (): string | null => {
 
 const shaFromEnvVariable = (): string => {
     const possibleEnvVars = [
-        'GITHUB_SHA', // GitHub Actions
-        'CIRCLE_SHA1', //CircleCI
-        'TRAVIS_PULL_REQUEST_SHA', // TravisCI
-        'CI_COMMIT_SHA', // GitLab CI/CD
+        'GIT_COMMIT_SHA', // Value used to sha which will also be persisted to postinstall file
+        'VCS_COMMIT_ID', // attribute name syntax
+        'GITHUB_SHA', // CI: GitHub Actions
+        'CIRCLE_SHA1', // CI: CircleCI
+        'TRAVIS_PULL_REQUEST_SHA', // CI: TravisCI
+        'CI_COMMIT_SHA', // CI: GitLab CI/CD
     ];
 
     for (const envVar of possibleEnvVars) {

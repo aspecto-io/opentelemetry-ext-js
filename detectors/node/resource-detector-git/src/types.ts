@@ -1,5 +1,7 @@
 
-export const postInstallFileName = './post-install-git-resource.json';
+export const postInstallFileName = 'post-install-git-resource.json';
+
+export const gitSha1Regex = /^[0-9a-f]{40}$/;
 
 export const GitResourceAttributes = {
 

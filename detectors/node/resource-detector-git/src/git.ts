@@ -42,7 +42,8 @@ class GitSyncDetector implements SyncDetector {
 
     readPostInstallResource(): Resource {
         try {
-            const attributes = require(`../${postInstallFileName}`);
+            // from dist/src/ to package root (where the file is stored)
+            const attributes = require(`../../${postInstallFileName}`);
             return new Resource(attributes);
         } catch {
             return Resource.empty();
