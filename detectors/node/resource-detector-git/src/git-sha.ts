@@ -62,13 +62,12 @@ const shaFromEnvVariable = (): string => {
             return process.env[envVar];
         }
     }
-}
+};
 
 export const getHeadSha = (): string | null => {
-
     // if running in CI context, try to get git sha from environment variables first
     const envSha = shaFromEnvVariable();
-    if(envSha) {
+    if (envSha) {
         return envSha;
     }
 

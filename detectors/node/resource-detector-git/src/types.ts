@@ -1,10 +1,8 @@
-
 export const postInstallFileName = 'post-install-git-resource.json';
 
 export const gitSha1Regex = /^[0-9a-f]{40}$/;
 
 export const GitResourceAttributes = {
-
     /**
      * An identifier for the version control system (VCS) being used.
      */
@@ -25,5 +23,4 @@ export const GitResourceAttributes = {
      * The name of the current, active branch
      */
     VCS_BRANCH_NAME: 'vcs.branch.name',
-
-}
+};

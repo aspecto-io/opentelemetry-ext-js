@@ -27,4 +27,4 @@ export const getCloneId = (): string | undefined => {
     const newId = uuidv4();
     writeGitConfig(newId);
     return readGitConfig();
-}
+};

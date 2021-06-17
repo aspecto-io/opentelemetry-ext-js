@@ -6,7 +6,6 @@ import { getCloneId } from './git-clone-id';
 import { getGitBranchName } from './git-branch';
 
 class GitSyncDetector implements SyncDetector {
-
     detect(): Resource {
         const fromGitDb = this.createGitResourceFromGitDb();
         const fromPostInstallStamp = this.readPostInstallResource();
@@ -28,12 +27,12 @@ class GitSyncDetector implements SyncDetector {
         };
 
         const cloneId = getCloneId();
-        if(cloneId) {
+        if (cloneId) {
             attributes[GitResourceAttributes.VCS_CLONE_ID] = cloneId;
         }
 
         const branchName = getGitBranchName();
-        if(branchName) {
+        if (branchName) {
             attributes[GitResourceAttributes.VCS_BRANCH_NAME] = branchName;
         }
 
@@ -49,7 +48,6 @@ class GitSyncDetector implements SyncDetector {
             return Resource.empty();
         }
     }
-
 }
 
 export const gitSyncDetector = new GitSyncDetector();

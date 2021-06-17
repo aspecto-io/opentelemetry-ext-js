@@ -18,7 +18,7 @@ const getBranchNameFromGitCli = (): string => {
  * This can be useful if git cli is not installed (like if codebase was copied / mounted into a docker container).
  * This method assumes that git directory is called '.git' and that cwd of the process is the repo root.
  */
- const branchNameFromGitDir = (): string => {
+const branchNameFromGitDir = (): string => {
     try {
         const headFilePath = path.join(process.cwd(), '.git', 'HEAD');
         const rev = fs.readFileSync(headFilePath).toString().trim();
@@ -37,12 +37,12 @@ const getBranchNameFromGitCli = (): string => {
 
 export const getGitBranchName = (): string | undefined => {
     const valueFromCli = getBranchNameFromGitCli();
-    if(valueFromCli) {
+    if (valueFromCli) {
         return valueFromCli;
     }
 
     const valueFromGitDir = branchNameFromGitDir();
-    if(valueFromGitDir) {
+    if (valueFromGitDir) {
         return valueFromGitDir;
     }
 };

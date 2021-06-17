@@ -1,6 +1,6 @@
-import { gitSyncDetector } from "."
+import { gitSyncDetector } from '.';
 import fs from 'fs';
-import { postInstallFileName } from "./types";
+import { postInstallFileName } from './types';
 
 /**
  * Sometimes git database is not available at runtime.
@@ -19,6 +19,6 @@ import { postInstallFileName } from "./types";
 export const persistResourceOnPostInstall = () => {
     const resource = gitSyncDetector.createGitResourceFromGitDb();
     fs.writeFileSync(`./${postInstallFileName}`, JSON.stringify(resource.attributes, null, 2));
-}
+};
 
 persistResourceOnPostInstall();
