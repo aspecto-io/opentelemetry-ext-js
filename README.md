@@ -49,6 +49,7 @@ The instrumentations in this repo are:
 | --- | --- | --- |
 | [Service](./detectors/node/resource-detector-service) | Synchronous | [![NPM version](https://img.shields.io/npm/v/opentelemetry-resource-detector-service.svg)](https://www.npmjs.com/package/opentelemetry-resource-detector-service) |
 | [Deployment](./detectors/node/resource-detector-deployment) | Synchronous | [![NPM version](https://img.shields.io/npm/v/opentelemetry-resource-detector-deployment.svg)](https://www.npmjs.com/package/opentelemetry-resource-detector-deployment)
+| [Git](./detectors/node/resource-detector-git) | Synchronous | [![NPM version](https://img.shields.io/npm/v/opentelemetry-resource-detector-git.svg)](https://www.npmjs.com/package/opentelemetry-resource-detector-git)
 
 
 ## Compatability Table
