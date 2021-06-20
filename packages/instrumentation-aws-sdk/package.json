@@ -41,7 +41,7 @@
         "@opentelemetry/core": "^0.21.0",
         "@opentelemetry/instrumentation": "^0.21.0",
         "@opentelemetry/semantic-conventions": "^0.21.0",
-        "opentelemetry-propagation-utils": "^0.7.0"
+        "opentelemetry-propagation-utils": "^0.7.1"
     },
     "devDependencies": {
         "@aws-sdk/client-s3": "3.13.1",
