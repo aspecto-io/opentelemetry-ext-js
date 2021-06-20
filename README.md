@@ -44,6 +44,13 @@ The instrumentations in this repo are:
 | [opentelemetry-instrumentation-express](./packages/instrumentation-express) | [`express`](https://github.com/expressjs/express) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-express.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-express) |
 |[opentelemetry-instrumentation-socket.io](./packages/instrumentation-socket.io) | [`socket.io`](https://github.com/socketio/socket.io) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-socket.io.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-socket.io)
 
+## Resource Detectors
+| Detector | Synchronicity | NPM |
+| --- | --- | --- |
+| [Service](./detectors/node/resource-detector-service) | Synchronous | [![NPM version](https://img.shields.io/npm/v/opentelemetry-resource-detector-service.svg)](https://www.npmjs.com/package/opentelemetry-resource-detector-service) |
+| [Deployment](./detectors/node/resource-detector-deployment) | Synchronous | [![NPM version](https://img.shields.io/npm/v/opentelemetry-resource-detector-deployment.svg)](https://www.npmjs.com/package/opentelemetry-resource-detector-deployment)
+
+
 ## Compatability Table
 
 | Instrumentations Version | OpenTelemetry Version |

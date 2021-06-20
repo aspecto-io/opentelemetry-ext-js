@@ -11,4 +11,16 @@ export interface TypeormInstrumentationConfig extends InstrumentationConfig {
      * and value of the module version.
      */
     moduleVersionAttributeName?: string;
+    /**
+     * Typeorm operation use mongodb/postgres/mysql/mariadb/etc. under the hood.
+     * If, for example, postgres instrumentation is enabled, a postgres operation will also create
+     * a postgres span describing the communication.
+     * Setting the `suppressInternalInstrumentation` config value to `true` will
+     * cause the instrumentation to suppress instrumentation of underlying operations.
+     */
+    suppressInternalInstrumentation?: boolean;
+    /** Some methods such as `getManyAndCount` can generate internally multiple spans.
+     * To instrument those set this to `true`
+     */
+    enableInternalInstrumentation?: boolean;
 }

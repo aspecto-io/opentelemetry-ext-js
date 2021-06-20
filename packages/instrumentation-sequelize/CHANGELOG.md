@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.5.2](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-sequelize@0.5.1...opentelemetry-instrumentation-sequelize@0.5.2) (2021-06-16)
+
+
+### Features
+
+* add sync resource detector api and service and deployment detectors ([#129](https://github.com/aspecto-io/opentelemetry-ext-js/issues/129)) ([17d63f8](https://github.com/aspecto-io/opentelemetry-ext-js/commit/17d63f87e8103fecd9f6f906eed9931e2f5a4aaa))
+
+
+
+
+
+## [0.5.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-sequelize@0.5.0...opentelemetry-instrumentation-sequelize@0.5.1) (2021-06-15)
+
+
+### Features
+
+* add table name to sequelize spans ([#132](https://github.com/aspecto-io/opentelemetry-ext-js/issues/132)) ([8751164](https://github.com/aspecto-io/opentelemetry-ext-js/commit/8751164c3c07c342f6e665075350410b90041158))
+
+
+
+
+
 # [0.5.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-sequelize@0.4.4...opentelemetry-instrumentation-sequelize@0.5.0) (2021-06-09)
 
 **Note:** Version bump only for package opentelemetry-instrumentation-sequelize

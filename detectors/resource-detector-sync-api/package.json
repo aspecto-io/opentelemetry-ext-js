@@ -1,0 +1,41 @@
+{
+    "name": "opentelemetry-resource-detector-sync-api",
+    "version": "0.5.0",
+    "description": "open telemetry api for sync resource detectors",
+    "keywords": [
+        "opentelemetry"
+    ],
+    "homepage": "https://github.com/aspecto-io/opentelemetry-ext-js",
+    "license": "Apache-2.0",
+    "main": "dist/src/index.js",
+    "files": [
+        "dist/src/**/*.js",
+        "dist/src/**/*.d.ts",
+        "LICENSE",
+        "README.md"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/aspecto-io/opentelemetry-ext-js.git"
+    },
+    "scripts": {
+        "build": "tsc",
+        "prepare": "yarn run build",
+        "watch": "tsc -w",
+        "version:update": "node ../../scripts/version-update.js",
+        "version": "yarn run version:update"
+    },
+    "bugs": {
+        "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
+    },
+    "peerDependencies": {
+        "@opentelemetry/api": "^0.20.0"
+    },
+    "dependencies": {
+        "@opentelemetry/resources": "^0.20.0"
+    },
+    "devDependencies": {
+        "ts-node": "^9.1.1",
+        "typescript": "^4.0.5"
+    }
+}

@@ -4,6 +4,7 @@ import { NetTransportValues, SemanticAttributes } from '@opentelemetry/semantic-
 import * as sequelize from 'sequelize';
 import { SequelizeInstrumentationConfig } from './types';
 import { VERSION } from './version';
+import { extractTableFromQuery } from './utils';
 import {
     InstrumentationBase,
     InstrumentationModuleDefinition,
@@ -106,6 +107,13 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
             const sequelizeInstance: sequelize.Sequelize = this;
             const config = sequelizeInstance?.config;
 
+            let tableName = option?.instance?.constructor?.tableName;
+            if (!tableName) {
+                if (Array.isArray(option?.tableNames) && option.tableNames.length > 0)
+                    tableName = option?.tableNames.sort().join(',');
+                else tableName = extractTableFromQuery(statement);
+            }
+
             const attributes = {
                 [SemanticAttributes.DB_SYSTEM]: sequelizeInstance.getDialect(),
                 [SemanticAttributes.DB_USER]: config?.username,
@@ -115,7 +123,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
                 [SemanticAttributes.DB_NAME]: config?.database,
                 [SemanticAttributes.DB_OPERATION]: operation,
                 [SemanticAttributes.DB_STATEMENT]: statement,
-                component: 'sequelize',
+                [SemanticAttributes.DB_SQL_TABLE]: tableName,
                 // [SemanticAttributes.NET_PEER_IP]: '?', // Part of protocol
             };
 
@@ -132,8 +140,15 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
                 attributes,
             });
 
+            const activeContextWithSpan = trace.setSpan(context.active(), newSpan);
+
             return context
-                .with(trace.setSpan(context.active(), newSpan), () => original.apply(this, arguments))
+                .with(
+                    self._config.suppressInternalInstrumentation
+                        ? suppressTracing(activeContextWithSpan)
+                        : activeContextWithSpan,
+                    () => original.apply(this, arguments)
+                )
                 .then((response: any) => {
                     if (self._config?.responseHook) {
                         safeExecuteInTheMiddle(
