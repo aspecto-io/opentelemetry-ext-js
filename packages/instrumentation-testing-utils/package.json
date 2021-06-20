@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-testing-utils",
-    "version": "0.5.1",
+    "version": "0.21.0",
     "description": "utils for testing opentelemetry js instrumentation libraries",
     "keywords": [
         "opentelemetry",
@@ -28,10 +28,15 @@
     "bugs": {
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
     },
+    "peerDependencies": {
+        "@opentelemetry/api": "^0.21.0"
+    },
     "dependencies": {
-        "@opentelemetry/api": "^0.20.0",
-        "@opentelemetry/exporter-jaeger": "^0.20.0",
-        "@opentelemetry/node": "^0.20.0",
-        "@opentelemetry/tracing": "^0.20.0"
+        "@opentelemetry/exporter-jaeger": "^0.21.0",
+        "@opentelemetry/node": "^0.21.0",
+        "@opentelemetry/tracing": "^0.21.0"
+    },
+    "devDependencies": {
+        "@opentelemetry/api": "^0.21.0"
     }
 }

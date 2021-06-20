@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.21.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-typeorm@0.5.1...opentelemetry-instrumentation-typeorm@0.21.0) (2021-06-20)
+
+
+### Features
+
+* Instrument typeorm query builder ([#131](https://github.com/aspecto-io/opentelemetry-ext-js/issues/131)) ([dc10948](https://github.com/aspecto-io/opentelemetry-ext-js/commit/dc109481899c708bfe711a1d7d2f63d3aa84c48d))
+
+
+
+
+
 ## [0.5.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-typeorm@0.5.0...opentelemetry-instrumentation-typeorm@0.5.1) (2021-06-16)
 
 
