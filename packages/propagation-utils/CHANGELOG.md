@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.21.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-propagation-utils@0.7.1...opentelemetry-propagation-utils@0.21.0) (2021-06-20)
+
+**Note:** Version bump only for package opentelemetry-propagation-utils
+
+
+
+
+
 ## [0.7.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-propagation-utils@0.7.0...opentelemetry-propagation-utils@0.7.1) (2021-06-16)
 
 
