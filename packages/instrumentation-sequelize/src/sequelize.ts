@@ -49,7 +49,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
         if (moduleExports === undefined || moduleExports === null) {
             return moduleExports;
         }
-        diag.debug(`applying patch to sequelize ConnectionManager`);
+        diag.debug(`sequelize instrumentation: applying patch to sequelize ConnectionManager`);
         this.unpatchConnectionManager(moduleExports);
         this._wrap(moduleExports.ConnectionManager.prototype, 'getConnection', this._getConnectionPatch.bind(this));
         return moduleExports;
@@ -68,7 +68,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
             return moduleExports;
         }
 
-        diag.debug(`applying patch to sequelize`);
+        diag.debug(`sequelize instrumentation: applying patch to sequelize`);
         this.unpatch(moduleExports);
         this._wrap(moduleExports.Sequelize.prototype, 'query', this._createQueryPatch.bind(this));
 
