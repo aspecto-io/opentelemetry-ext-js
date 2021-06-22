@@ -64,6 +64,7 @@ describe('service detector', () => {
 
         it('read from git cli', () => {
             const expectedHeadSha = child_process.execSync('git rev-parse HEAD').toString().trim();
+            console.log('$$$$$$$$$$$$$$$$ ', {expectedHeadSha});
             const resource = gitSyncDetector.createGitResourceFromGitDb();
             expect(resource.attributes[GitResourceAttributes.VCS_COMMIT_ID]).toMatch(expectedHeadSha);
             expect(expectedHeadSha).toMatch(/^[0-9a-f]{40}$/);
