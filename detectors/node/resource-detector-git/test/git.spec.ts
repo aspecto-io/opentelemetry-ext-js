@@ -88,7 +88,8 @@ describe('service detector', () => {
     describe('git branch', () => {
         it('read with git cli', () => {
             const expectedBranchName = child_process.execSync('git branch --show-current').toString().trim();
-            console.log('===========', { expectedBranchName });
+            const revParse = child_process.execSync('git rev-parse --abbrev-ref HEAD').toString().trim();
+            console.log('===========', { expectedBranchName, revParse });
             const resource = gitSyncDetector.createGitResourceFromGitDb();
             expect(resource.attributes[GitResourceAttributes.VCS_BRANCH_NAME]).toMatch(expectedBranchName);
         });
