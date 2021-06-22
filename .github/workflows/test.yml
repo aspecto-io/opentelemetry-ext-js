@@ -36,10 +36,12 @@ jobs:
           - 22221:5672
 
     steps:
+
+      - run: printenv GITHUB_REF
+
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-          ref: ${GITHUB_REF##*/}
 
       - name: Fetch all history for all tags and branches
         run: git fetch
