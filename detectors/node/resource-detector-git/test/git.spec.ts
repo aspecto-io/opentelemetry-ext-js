@@ -12,6 +12,15 @@ describe('git detector', () => {
         process.env = {};
     });
 
+    let executeGitCommandStub;
+
+    beforeEach(() => {
+        executeGitCommandStub = sinon.stub(utils, 'executeGitCommand');
+
+        // defaults for git commands so test will work in CI and not try to execute actual git commands which will fail.
+        // specific tests can then override this default
+        executeGitCommandStub.returns('');
+    });
     afterEach(() => {
         sinon.restore();
     });
@@ -53,7 +62,7 @@ describe('git detector', () => {
 
         it('read from git cli', () => {
             const expectedHeadSha = '0000000000111111111122222222223333333333';
-            sinon.stub(utils, 'executeGitCommand').returns(expectedHeadSha);
+            executeGitCommandStub.returns(expectedHeadSha);
             const resource = gitSyncDetector.createGitResourceFromGitDb();
             expect(resource.attributes[GitResourceAttributes.VCS_COMMIT_ID]).toMatch(expectedHeadSha);
         });
@@ -62,7 +71,7 @@ describe('git detector', () => {
             const expectedHeadSha = '3333333333222222222211111111110000000000';
 
             // running the command returns empty result -> thus fails and fallback to git dir
-            sinon.stub(utils, 'executeGitCommand').returns('');
+            executeGitCommandStub.returns('');
 
             // reading HEAD returns a SHA value (like what you'll get in detached HEAD setup)
             sinon.stub(utils, 'readFileFromGitDir').withArgs('HEAD').returns(expectedHeadSha);
@@ -76,7 +85,7 @@ describe('git detector', () => {
             const headRef = 'refs/heads/my-testing-branch';
 
             // running the command returns empty result -> thus fails and fallback to git dir
-            sinon.stub(utils, 'executeGitCommand').returns('');
+            executeGitCommandStub.returns('');
 
             // reading HEAD returns a SHA value (like what you'll get in detached HEAD setup)
             const fsStub = sinon.stub(utils, 'readFileFromGitDir');
@@ -92,7 +101,7 @@ describe('git detector', () => {
             const headRef = 'refs/tags/my-testing-branch';
 
             // running the command returns empty result -> thus fails and fallback to git dir
-            sinon.stub(utils, 'executeGitCommand').returns('');
+            executeGitCommandStub.returns('');
 
             // reading HEAD returns a SHA value (like what you'll get in detached HEAD setup)
             const fsStub = sinon.stub(utils, 'readFileFromGitDir');
@@ -108,7 +117,7 @@ describe('git detector', () => {
             const headRef = 'refs/heads/my-testing-branch';
 
             // running the command returns empty result -> thus fails and fallback to git dir
-            sinon.stub(utils, 'executeGitCommand').returns('');
+            executeGitCommandStub.returns('');
 
             // reading HEAD returns a SHA value (like what you'll get in detached HEAD setup)
             const fsStub = sinon.stub(utils, 'readFileFromGitDir');
@@ -127,7 +136,7 @@ describe('git detector', () => {
     describe('git branch', () => {
         it('read with git cli', () => {
             const expectedBranchName = 'my-testing-branch';
-            sinon.stub(utils, 'executeGitCommand').returns(expectedBranchName);
+            executeGitCommandStub.returns(expectedBranchName);
             const resource = gitSyncDetector.createGitResourceFromGitDb();
             expect(resource.attributes[GitResourceAttributes.VCS_BRANCH_NAME]).toMatch(expectedBranchName);
         });
@@ -135,9 +144,8 @@ describe('git detector', () => {
         it('read with git dir detached HEAD', () => {
             const headSha = '3333333333111111111100000000002222222222';
 
-            const executeGitSha = sinon.stub(utils, 'executeGitCommand');
-            executeGitSha.withArgs('git rev-parse HEAD').returns(headSha);
-            executeGitSha.withArgs('git branch --show-current').returns('');
+            executeGitCommandStub.withArgs('git rev-parse HEAD').returns(headSha);
+            executeGitCommandStub.withArgs('git branch --show-current').returns('');
             const fsStub = sinon.stub(utils, 'readFileFromGitDir');
             fsStub.withArgs('HEAD').returns(headSha);
 
@@ -149,9 +157,8 @@ describe('git detector', () => {
             const branchName = 'my-testing-branch';
             const headSha = '3333333333111111111100000000002222222222';
 
-            const executeGitSha = sinon.stub(utils, 'executeGitCommand');
-            executeGitSha.withArgs('git rev-parse HEAD').returns(headSha);
-            executeGitSha.withArgs('git branch --show-current').returns('');
+            executeGitCommandStub.withArgs('git rev-parse HEAD').returns(headSha);
+            executeGitCommandStub.withArgs('git branch --show-current').returns('');
             const fsStub = sinon.stub(utils, 'readFileFromGitDir');
             fsStub.withArgs('HEAD').returns(`ref: refs/heads/${branchName}`);
 
@@ -165,9 +172,10 @@ describe('git detector', () => {
             const headSha = '3333333333111111111100000000002222222222';
             const expectedGitCloneId = 'git-clone-id-from-tests';
 
-            const executeGitSha = sinon.stub(utils, 'executeGitCommand');
-            executeGitSha.withArgs('git rev-parse HEAD').returns(headSha);
-            executeGitSha.withArgs('git config --local opentelemetry.resource.clone.id').returns(expectedGitCloneId);
+            executeGitCommandStub.withArgs('git rev-parse HEAD').returns(headSha);
+            executeGitCommandStub
+                .withArgs('git config --local opentelemetry.resource.clone.id')
+                .returns(expectedGitCloneId);
 
             const resource = gitSyncDetector.createGitResourceFromGitDb();
             expect(resource.attributes[GitResourceAttributes.VCS_CLONE_ID]).toMatch(expectedGitCloneId);
@@ -177,15 +185,14 @@ describe('git detector', () => {
             const headSha = '3333333333111111111100000000002222222222';
             const expectedGitCloneId = 'git-clone-id-from-tests';
 
-            const executeGitSha = sinon.stub(utils, 'executeGitCommand');
-            executeGitSha.withArgs('git rev-parse HEAD').returns(headSha);
-            executeGitSha
+            executeGitCommandStub.withArgs('git rev-parse HEAD').returns(headSha);
+            executeGitCommandStub
                 .withArgs('git config --local opentelemetry.resource.clone.id')
                 .onFirstCall()
                 .returns('')
                 .onSecondCall()
                 .returns(expectedGitCloneId);
-            executeGitSha
+            executeGitCommandStub
                 .withArgs(sinon.match((cmd) => cmd.startsWith('git config --local opentelemetry.resource.clone.id ')))
                 .onFirstCall()
                 .returns('0');
@@ -194,7 +201,7 @@ describe('git detector', () => {
             expect(resource.attributes[GitResourceAttributes.VCS_CLONE_ID]).toMatch(expectedGitCloneId);
 
             // assert that writing git config is with valid uuid
-            const gitWriteCommand = executeGitSha.getCall(2).args[0];
+            const gitWriteCommand = executeGitCommandStub.getCall(2).args[0];
             expect(gitWriteCommand.split(' ')[4]).toMatch(
                 /^[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}$/
             );
