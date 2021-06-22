@@ -43,6 +43,8 @@ jobs:
       - name: Fetch all history for all tags and branches
         run: git fetch
 
+      - run: ls .git
+
       - name: Install Dependencies
         run: yarn
 
