@@ -99,31 +99,31 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
     }
 
     protected patchV3ConstructStack(moduleExports, moduleVersion: string) {
-        diag.debug(`applying patch to aws-sdk v3 constructStack`);
+        diag.debug(`aws-sdk instrumentation: applying patch to aws-sdk v3 constructStack`);
         this._wrap(moduleExports, 'constructStack', this._getV3ConstructStackPatch.bind(this, moduleVersion));
         return moduleExports;
     }
 
     protected unpatchV3ConstructStack(moduleExports) {
-        diag.debug(`applying unpatch to aws-sdk v3 constructStack`);
+        diag.debug(`aws-sdk instrumentation: applying unpatch to aws-sdk v3 constructStack`);
         this._unwrap(moduleExports, 'constructStack');
         return moduleExports;
     }
 
     protected patchV3SmithyClient(moduleExports) {
-        diag.debug(`applying patch to aws-sdk v3 client send`);
+        diag.debug(`aws-sdk instrumentation: applying patch to aws-sdk v3 client send`);
         this._wrap(moduleExports.Client.prototype, 'send', this._getV3SmithyClientSendPatch.bind(this));
         return moduleExports;
     }
 
     protected unpatchV3SmithyClient(moduleExports) {
-        diag.debug(`applying patch to aws-sdk v3 constructStack`);
+        diag.debug(`aws-sdk instrumentation: applying patch to aws-sdk v3 constructStack`);
         this._unwrap(moduleExports.Client.prototype, 'send');
         return moduleExports;
     }
 
     protected patchV2(moduleExports: typeof AWS, moduleVersion: string) {
-        diag.debug(`applying patch to ${AwsInstrumentation.component}`);
+        diag.debug(`aws-sdk instrumentation: applying patch to ${AwsInstrumentation.component}`);
         this.unpatchV2(moduleExports);
         this._wrap(moduleExports?.Request.prototype, 'send', this._getRequestSendPatch.bind(this, moduleVersion));
         this._wrap(moduleExports?.Request.prototype, 'promise', this._getRequestPromisePatch.bind(this, moduleVersion));
@@ -405,7 +405,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
             const span = self._startAwsV2Span(awsV2Request, requestMetadata, normalizedRequest, moduleVersion);
             awsV2Request[self.REQUEST_SPAN_KEY] = span;
             const activeContextWithSpan = trace.setSpan(context.active(), span);
-            const callbackWithContext = context.bind(callback, activeContextWithSpan);
+            const callbackWithContext = context.bind(activeContextWithSpan, callback);
 
             self._callUserPreRequestHook(span, normalizedRequest);
             self._registerV2CompletedEvent(span, awsV2Request, normalizedRequest, activeContextWithSpan);

@@ -32,7 +32,7 @@ describe('amqplib instrumentation callback model', function () {
     beforeEach((done) => {
         instrumentation.enable();
         conn.createChannel(
-            context.bind((err, c) => {
+            context.bind(context.active(), (err, c) => {
                 channel = c;
                 // install an error handler, otherwise when we have tests that create error on the channel,
                 // it throws and crash process
@@ -40,10 +40,10 @@ describe('amqplib instrumentation callback model', function () {
                 channel.assertQueue(
                     queueName,
                     { durable: false },
-                    context.bind((err, ok) => {
+                    context.bind(context.active(), (err, ok) => {
                         channel.purgeQueue(
                             queueName,
-                            context.bind((err, ok) => {
+                            context.bind(context.active(), (err, ok) => {
                                 done();
                             })
                         );

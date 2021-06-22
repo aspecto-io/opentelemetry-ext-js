@@ -160,7 +160,7 @@ export class SqsServiceExtension implements ServiceExtension {
             propagation.inject(context.active(), attributes, sqsContextSetter);
         } else {
             diag.warn(
-                'OpenTelemetry aws-sdk instrumentation cannot set context propagation on SQS message due to maximum amount of MessageAttributes'
+                'aws-sdk instrumentation: cannot set context propagation on SQS message due to maximum amount of MessageAttributes'
             );
         }
         return attributes;

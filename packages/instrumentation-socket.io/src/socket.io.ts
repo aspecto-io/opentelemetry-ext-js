@@ -43,7 +43,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                 if (moduleExports === undefined || moduleExports === null) {
                     return moduleExports;
                 }
-                diag.debug(`applying patch to socket.io Socket`);
+                diag.debug(`socket.io instrumentation: applying patch to socket.io Socket`);
                 if (isWrapped(moduleExports?.Socket?.prototype?.on)) {
                     this._unwrap(moduleExports.Socket.prototype, 'on');
                 }
@@ -72,7 +72,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                 if (moduleExports === undefined || moduleExports === null) {
                     return moduleExports;
                 }
-                diag.debug(`applying patch to socket.io StrictEventEmitter`);
+                diag.debug(`socket.io instrumentation: applying patch to socket.io StrictEventEmitter`);
                 if (isWrapped(moduleExports?.BroadcastOperator?.prototype?.emit)) {
                     this._unwrap(moduleExports.BroadcastOperator.prototype, 'emit');
                 }
@@ -93,7 +93,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                 if (moduleExports === undefined || moduleExports === null) {
                     return moduleExports;
                 }
-                diag.debug(`applying patch to socket.io Namespace`);
+                diag.debug(`socket.io instrumentation: applying patch to socket.io Namespace`);
                 if (isWrapped(moduleExports?.Namespace?.prototype?.emit)) {
                     this._unwrap(moduleExports.Namespace.prototype, 'emit');
                 }
@@ -113,7 +113,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                 if (moduleExports === undefined || moduleExports === null) {
                     return moduleExports;
                 }
-                diag.debug(`applying patch to socket.io Server`);
+                diag.debug(`socket.io instrumentation: applying patch to socket.io Server`);
                 if (isWrapped(moduleExports?.Server?.prototype?.on)) {
                     this._unwrap(moduleExports.Server.prototype, 'on');
                 }
