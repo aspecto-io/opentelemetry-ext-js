@@ -37,7 +37,7 @@ jobs:
 
     steps:
 
-      - run: echo ${{ github.head_ref }}
+      - run: printenv GITHUB_HEAD_REF
 
       - uses: actions/checkout@v2
         with:
