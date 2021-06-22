@@ -7,7 +7,6 @@ import * as sinon from 'sinon';
 import { Resource } from '@opentelemetry/resources';
 
 describe('git detector', () => {
-
     before(() => {
         // clear env, so it does not affect the tests when run in CI with CI git variables
         process.env = {};
@@ -66,10 +65,7 @@ describe('git detector', () => {
             sinon.stub(utils, 'executeGitCommand').returns('');
 
             // reading HEAD returns a SHA value (like what you'll get in detached HEAD setup)
-            sinon
-                .stub(utils, 'readFileFromGitDir')
-                .withArgs('HEAD')
-                .returns(expectedHeadSha);
+            sinon.stub(utils, 'readFileFromGitDir').withArgs('HEAD').returns(expectedHeadSha);
 
             const resource = gitSyncDetector.createGitResourceFromGitDb();
             expect(resource.attributes[GitResourceAttributes.VCS_COMMIT_ID]).toMatch(expectedHeadSha);
