@@ -45,8 +45,8 @@ const headShaFromGitDir = (): string | undefined => {
 
 const shaFromEnvVariable = (): string => {
     const possibleEnvVars = [
-        'GIT_COMMIT_SHA', // Value used to sha which will also be persisted to postinstall file
-        'VCS_COMMIT_ID', // attribute name syntax
+        'GIT_COMMIT_SHA',
+        'VCS_COMMIT_ID', // alias which follows the attribute name convention
         'GITHUB_SHA', // CI: GitHub Actions
         'CIRCLE_SHA1', // CI: CircleCI
         'TRAVIS_PULL_REQUEST_SHA', // CI: TravisCI

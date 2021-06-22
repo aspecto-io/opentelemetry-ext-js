@@ -146,6 +146,30 @@ describe('git detector', () => {
     // in case of detached HEAD, they might not work.
     // maybe they can be improved...
     describe('git branch', () => {
+        it('read from env variable as explicit branch name', () => {
+            process.env.GIT_BRANCH_NAME = 'git-branch-name';
+            const resource1 = gitSyncDetector.createGitResourceFromGitDb();
+            expect(resource1.attributes[GitResourceAttributes.VCS_BRANCH_NAME]).toMatch(process.env.GIT_BRANCH_NAME);
+            delete process.env.GIT_BRANCH_NAME;
+
+            process.env.VCS_BRANCH_NAME = 'vcs-branch-name';
+            const resource2 = gitSyncDetector.createGitResourceFromGitDb();
+            expect(resource2.attributes[GitResourceAttributes.VCS_BRANCH_NAME]).toMatch(process.env.VCS_BRANCH_NAME);
+            delete process.env.VCS_BRANCH_NAME;
+
+            process.env.GITHUB_HEAD_REF = 'github-head-ref';
+            const resource3 = gitSyncDetector.createGitResourceFromGitDb();
+            expect(resource3.attributes[GitResourceAttributes.VCS_BRANCH_NAME]).toMatch(process.env.GITHUB_HEAD_REF);
+            delete process.env.GITHUB_HEAD_REF;
+        });
+
+        it('read from env variable as ref', () => {
+            process.env.GITHUB_REF = 'refs/heads/github-ref';
+            const resource1 = gitSyncDetector.createGitResourceFromGitDb();
+            expect(resource1.attributes[GitResourceAttributes.VCS_BRANCH_NAME]).toMatch('github-ref');
+            delete process.env.GITHUB_REF;
+        });
+
         it('read with git cli', () => {
             const expectedBranchName = 'my-testing-branch';
             gitBranchShowCurrentStub.returns(expectedBranchName);
