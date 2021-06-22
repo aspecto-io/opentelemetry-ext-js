@@ -65,7 +65,7 @@ export const createInitialRouteState = (req: express.Request): ExpressConsumedRo
     // at this point, we have the raw http req object, and not the express req.
     // thus, we cannot call req.path
     // we use parseurl(req).pathname which is exactly what express is doing
-    const parseurl = require('parseurl');
+    const parseurl = eval('require')('parseurl');
     const path = parseurl(req).pathname;
     return { resolvedRoute: '', remainingRoute: path, configuredRoute: '', params: {} };
 };

@@ -14,7 +14,7 @@ const getLayerPathAlternativeFromFirstArg = (
     pathInput: any,
     options
 ): LayerPathAlternative | LayerPathAlternative[] => {
-    const pathRegexp = require('path-to-regexp');
+    const pathRegexp = eval('require')('path-to-regexp');
 
     if (typeof pathInput === 'string') {
         return {
