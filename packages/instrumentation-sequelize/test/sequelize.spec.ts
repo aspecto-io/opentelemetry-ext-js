@@ -225,6 +225,49 @@ describe('instrumentation-sequelize', () => {
                 'SELECT `id`, `firstName`, `createdAt`, `updatedAt` FROM `Users` AS `User`;'
             );
         });
+
+        describe('query is instrumented', () => {
+            it('with options not specified', async () => {
+                try {
+                    await instance.query('SELECT 1 + 1');
+                } catch {
+                    // Do not care about the error
+                }
+                const spans = getSequelizeSpans();
+                expect(spans.length).toBe(1);
+                const attributes = spans[0].attributes;
+
+                expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('SELECT');
+                expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe('SELECT 1 + 1');
+            });
+            it('with type not specified in options', async () => {
+                try {
+                    await instance.query('SELECT 1 + 1', {});
+                } catch {
+                    // Do not care about the error
+                }
+                const spans = getSequelizeSpans();
+                expect(spans.length).toBe(1);
+                const attributes = spans[0].attributes;
+
+                expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('SELECT');
+                expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe('SELECT 1 + 1');
+            });
+
+            it('with type specified in options', async () => {
+                try {
+                    await instance.query('SELECT 1 + 1', { type: sequelize.QueryTypes.RAW });
+                } catch {
+                    // Do not care about the error
+                }
+                const spans = getSequelizeSpans();
+                expect(spans.length).toBe(1);
+                const attributes = spans[0].attributes;
+
+                expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('RAW');
+                expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe('SELECT 1 + 1');
+            });
+        });
     });
 
     describe('sqlite', () => {

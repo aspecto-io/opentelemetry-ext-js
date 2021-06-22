@@ -97,7 +97,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
             }
 
             let statement = sql?.query ? sql.query : sql;
-            let operation = option.type;
+            let operation = option?.type;
 
             if (typeof statement === 'string') {
                 statement = statement.trim();
