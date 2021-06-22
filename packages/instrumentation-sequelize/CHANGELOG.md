@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.21.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-sequelize@0.21.0...opentelemetry-instrumentation-sequelize@0.21.1) (2021-06-22)
+
+
+### Bug Fixes
+
+* **instrumentation-sequelize:** handle query call without options ([#139](https://github.com/aspecto-io/opentelemetry-ext-js/issues/139)) ([d40a1b2](https://github.com/aspecto-io/opentelemetry-ext-js/commit/d40a1b2799b3a45dfaecd2f396b45ad22ec42f52))
+
+
+
+
+
 # [0.21.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-sequelize@0.5.2...opentelemetry-instrumentation-sequelize@0.21.0) (2021-06-20)
 
 **Note:** Version bump only for package opentelemetry-instrumentation-sequelize
