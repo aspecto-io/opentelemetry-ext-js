@@ -7,6 +7,12 @@ import * as sinon from 'sinon';
 import { Resource } from '@opentelemetry/resources';
 
 describe('git detector', () => {
+
+    before(() => {
+        // clear env, so it does not affect the tests when run in CI with CI git variables
+        process.env = {};
+    });
+
     afterEach(() => {
         sinon.restore();
     });
