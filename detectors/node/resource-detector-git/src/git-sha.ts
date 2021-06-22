@@ -30,7 +30,7 @@ const headShaFromGitDir = (): string | undefined => {
         const rev = readFileFromGitDir('HEAD');
         if (isStringSha(rev)) {
             return rev;
-        } else if (rev.startsWith('ref: refs/heads/')) {
+        } else if (rev.startsWith('ref: ')) {
             // can return something like 'ref: refs/heads/resource-detectors'
             const ref = rev.substring(5).replace('\n', '');
             const refFileContent = readFileFromGitDir(ref);

@@ -48,7 +48,7 @@ describe('git detector', () => {
 
         it('read from git cli', () => {
             const expectedHeadSha = '0000000000111111111122222222223333333333';
-            sinon.stub(utils, 'executeGitCommand').callsFake(() => expectedHeadSha);
+            sinon.stub(utils, 'executeGitCommand').returns(expectedHeadSha);
             const resource = gitSyncDetector.createGitResourceFromGitDb();
             expect(resource.attributes[GitResourceAttributes.VCS_COMMIT_ID]).toMatch(expectedHeadSha);
         });
@@ -57,13 +57,13 @@ describe('git detector', () => {
             const expectedHeadSha = '3333333333222222222211111111110000000000';
 
             // running the command returns empty result -> thus fails and fallback to git dir
-            sinon.stub(utils, 'executeGitCommand').callsFake(() => '');
+            sinon.stub(utils, 'executeGitCommand').returns('');
 
             // reading HEAD returns a SHA value (like what you'll get in detached HEAD setup)
             sinon
                 .stub(utils, 'readFileFromGitDir')
                 .withArgs('HEAD')
-                .callsFake(() => expectedHeadSha);
+                .returns(expectedHeadSha);
 
             const resource = gitSyncDetector.createGitResourceFromGitDb();
             expect(resource.attributes[GitResourceAttributes.VCS_COMMIT_ID]).toMatch(expectedHeadSha);
@@ -74,12 +74,12 @@ describe('git detector', () => {
             const headRef = 'refs/heads/my-testing-branch';
 
             // running the command returns empty result -> thus fails and fallback to git dir
-            sinon.stub(utils, 'executeGitCommand').callsFake(() => '');
+            sinon.stub(utils, 'executeGitCommand').returns('');
 
             // reading HEAD returns a SHA value (like what you'll get in detached HEAD setup)
             const fsStub = sinon.stub(utils, 'readFileFromGitDir');
-            fsStub.withArgs('HEAD').callsFake(() => `ref: ${headRef}`);
-            fsStub.withArgs(headRef).callsFake(() => expectedHeadSha);
+            fsStub.withArgs('HEAD').returns(`ref: ${headRef}`);
+            fsStub.withArgs(headRef).returns(expectedHeadSha);
 
             const resource = gitSyncDetector.createGitResourceFromGitDb();
             expect(resource.attributes[GitResourceAttributes.VCS_COMMIT_ID]).toMatch(expectedHeadSha);
@@ -90,15 +90,15 @@ describe('git detector', () => {
             const headRef = 'refs/tags/my-testing-branch';
 
             // running the command returns empty result -> thus fails and fallback to git dir
-            sinon.stub(utils, 'executeGitCommand').callsFake(() => '');
+            sinon.stub(utils, 'executeGitCommand').returns('');
 
             // reading HEAD returns a SHA value (like what you'll get in detached HEAD setup)
             const fsStub = sinon.stub(utils, 'readFileFromGitDir');
-            fsStub.withArgs('HEAD').callsFake(() => `ref: ${headRef}`);
-            fsStub.withArgs(headRef).callsFake(() => tagHeadSha);
+            fsStub.withArgs('HEAD').returns(`ref: ${headRef}`);
+            fsStub.withArgs(headRef).returns(tagHeadSha);
 
             const resource = gitSyncDetector.createGitResourceFromGitDb();
-            expect(resource).toStrictEqual(Resource.empty());
+            expect(resource.attributes[GitResourceAttributes.VCS_COMMIT_ID]).toMatch(tagHeadSha);
         });
 
         it('read from git dir when HEAD is ref and is not SHA', () => {
@@ -106,12 +106,12 @@ describe('git detector', () => {
             const headRef = 'refs/heads/my-testing-branch';
 
             // running the command returns empty result -> thus fails and fallback to git dir
-            sinon.stub(utils, 'executeGitCommand').callsFake(() => '');
+            sinon.stub(utils, 'executeGitCommand').returns('');
 
             // reading HEAD returns a SHA value (like what you'll get in detached HEAD setup)
             const fsStub = sinon.stub(utils, 'readFileFromGitDir');
-            fsStub.withArgs('HEAD').callsFake(() => `ref: ${headRef}`);
-            fsStub.withArgs(headRef).callsFake(() => nonShaContent);
+            fsStub.withArgs('HEAD').returns(`ref: ${headRef}`);
+            fsStub.withArgs(headRef).returns(nonShaContent);
 
             // when we could not resolve a SHA, we return empty resource
             const resource = gitSyncDetector.createGitResourceFromGitDb();
@@ -125,7 +125,7 @@ describe('git detector', () => {
     describe('git branch', () => {
         it('read with git cli', () => {
             const expectedBranchName = 'my-testing-branch';
-            sinon.stub(utils, 'executeGitCommand').callsFake(() => expectedBranchName);
+            sinon.stub(utils, 'executeGitCommand').returns(expectedBranchName);
             const resource = gitSyncDetector.createGitResourceFromGitDb();
             expect(resource.attributes[GitResourceAttributes.VCS_BRANCH_NAME]).toMatch(expectedBranchName);
         });
@@ -134,10 +134,10 @@ describe('git detector', () => {
             const headSha = '3333333333111111111100000000002222222222';
 
             const executeGitSha = sinon.stub(utils, 'executeGitCommand');
-            executeGitSha.withArgs('git rev-parse HEAD').callsFake(() => headSha);
-            executeGitSha.withArgs('git branch --show-current').callsFake(() => '');
+            executeGitSha.withArgs('git rev-parse HEAD').returns(headSha);
+            executeGitSha.withArgs('git branch --show-current').returns('');
             const fsStub = sinon.stub(utils, 'readFileFromGitDir');
-            fsStub.withArgs('HEAD').callsFake(() => headSha);
+            fsStub.withArgs('HEAD').returns(headSha);
 
             const resource = gitSyncDetector.createGitResourceFromGitDb();
             expect(resource.attributes[GitResourceAttributes.VCS_BRANCH_NAME]).toBeUndefined();
@@ -148,10 +148,10 @@ describe('git detector', () => {
             const headSha = '3333333333111111111100000000002222222222';
 
             const executeGitSha = sinon.stub(utils, 'executeGitCommand');
-            executeGitSha.withArgs('git rev-parse HEAD').callsFake(() => headSha);
-            executeGitSha.withArgs('git branch --show-current').callsFake(() => '');
+            executeGitSha.withArgs('git rev-parse HEAD').returns(headSha);
+            executeGitSha.withArgs('git branch --show-current').returns('');
             const fsStub = sinon.stub(utils, 'readFileFromGitDir');
-            fsStub.withArgs('HEAD').callsFake(() => `ref: refs/heads/${branchName}`);
+            fsStub.withArgs('HEAD').returns(`ref: refs/heads/${branchName}`);
 
             const resource = gitSyncDetector.createGitResourceFromGitDb();
             expect(resource.attributes[GitResourceAttributes.VCS_BRANCH_NAME]).toMatch(branchName);
@@ -164,7 +164,7 @@ describe('git detector', () => {
             const expectedGitCloneId = 'git-clone-id-from-tests';
 
             const executeGitSha = sinon.stub(utils, 'executeGitCommand');
-            executeGitSha.withArgs('git rev-parse HEAD').callsFake(() => headSha);
+            executeGitSha.withArgs('git rev-parse HEAD').returns(headSha);
             executeGitSha.withArgs('git config --local opentelemetry.resource.clone.id').returns(expectedGitCloneId);
 
             const resource = gitSyncDetector.createGitResourceFromGitDb();
@@ -176,7 +176,7 @@ describe('git detector', () => {
             const expectedGitCloneId = 'git-clone-id-from-tests';
 
             const executeGitSha = sinon.stub(utils, 'executeGitCommand');
-            executeGitSha.withArgs('git rev-parse HEAD').callsFake(() => headSha);
+            executeGitSha.withArgs('git rev-parse HEAD').returns(headSha);
             executeGitSha
                 .withArgs('git config --local opentelemetry.resource.clone.id')
                 .onFirstCall()
