@@ -1,15 +1,13 @@
 import child_process from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import { executeGitCommand, readFileFromGitDir } from './fecth-git-data';
 import { gitSha1Regex } from './types';
 
 const getBranchNameFromGitCli = (): string => {
     const gitGetShaCommand = 'git branch --show-current';
     try {
-        return child_process
-            .execSync(gitGetShaCommand, { stdio: ['ignore', 'pipe', 'pipe'] })
-            .toString()
-            .trim();
+        return executeGitCommand(gitGetShaCommand);
     } catch {}
 };
 
@@ -20,12 +18,11 @@ const getBranchNameFromGitCli = (): string => {
  */
 const branchNameFromGitDir = (): string => {
     try {
-        const headFilePath = path.join(process.cwd(), '.git', 'HEAD');
-        const rev = fs.readFileSync(headFilePath).toString().trim();
+        const rev = readFileFromGitDir('HEAD');
         if (rev.match(gitSha1Regex)) {
             // detached HEAD
             return null;
-        } else if (rev.startsWith('ref: ')) {
+        } else if (rev.startsWith('ref: refs/heads/')) {
             // can return something like 'ref: refs/heads/resource-detectors'
             const ref = rev.substring(5).replace('\n', '');
             return ref.split(path.sep)[2];

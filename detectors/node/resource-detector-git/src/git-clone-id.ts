@@ -1,23 +1,15 @@
 import child_process from 'child_process';
 import { v4 as uuidv4 } from 'uuid';
+import { executeGitCommand } from './fecth-git-data';
 
 const gitConfigName = 'opentelemetry.resource.clone.id';
 
 const readGitConfig = (): string | undefined => {
-    const gitConfigReadCommand = `git config --local ${gitConfigName}`;
-    try {
-        return child_process
-            .execSync(gitConfigReadCommand, { stdio: ['ignore', 'pipe', 'pipe'] })
-            .toString()
-            .trim();
-    } catch {}
+    return executeGitCommand(`git config --local ${gitConfigName}`);
 };
 
 const writeGitConfig = (value: string) => {
-    const gitConfigWriteCommand = `git config --local ${gitConfigName} ${value}`;
-    try {
-        return child_process.execSync(gitConfigWriteCommand, { stdio: ['ignore', 'pipe', 'pipe'] });
-    } catch {}
+    return executeGitCommand(`git config --local ${gitConfigName} ${value}`);
 };
 
 export const getCloneId = (): string | undefined => {

@@ -1,7 +1,9 @@
-import child_process from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import { executeGitCommand, readFileFromGitDir } from './fecth-git-data';
 import { gitSha1Regex } from './types';
+
+const isStringSha = (s: string): boolean => s.match(gitSha1Regex) !== null;
 
 /**
  * Try to run git cli to find the git sha of the current HEAD
@@ -11,10 +13,7 @@ import { gitSha1Regex } from './types';
 const headShaFromGitCli = (): string | null => {
     const gitGetShaCommand = 'git rev-parse HEAD';
     try {
-        return child_process
-            .execSync(gitGetShaCommand, { stdio: ['ignore', 'pipe', 'pipe'] })
-            .toString()
-            .trim();
+        return executeGitCommand(gitGetShaCommand);
     } catch {
         // throws if git not installed, or if this is not a git repo, or if command fails
         return null;
@@ -25,26 +24,23 @@ const headShaFromGitCli = (): string | null => {
  * Try to read git sha of HEAD directly from git dir.
  * This can be useful if git cli is not installed (like if codebase was copied / mounted into a docker container).
  * This method assumes that git directory is called '.git' and that cwd of the process is the repo root.
- *
- * @returns {(string | null)}
- * @memberof GitSyncDetector
  */
-const headShaFromGitDir = (): string | null => {
+const headShaFromGitDir = (): string | undefined => {
     try {
-        const headFilePath = path.join(process.cwd(), '.git', 'HEAD');
-        const rev = fs.readFileSync(headFilePath).toString().trim();
-        if (rev.match(gitSha1Regex)) {
+        const rev = readFileFromGitDir('HEAD');
+        if (isStringSha(rev)) {
             return rev;
-        } else if (rev.startsWith('ref: ')) {
+        } else if (rev.startsWith('ref: refs/heads/')) {
             // can return something like 'ref: refs/heads/resource-detectors'
             const ref = rev.substring(5).replace('\n', '');
-            const refFile = path.join(process.cwd(), '.git', ref);
-            return fs.readFileSync(refFile).toString().replace('\n', '').trim();
+            const refFileContent = readFileFromGitDir(ref);
+            if(isStringSha(refFileContent)) {
+                return refFileContent;
+            }
         }
     } catch {
         // file is missing or content not as expected
     }
-    return null;
 };
 
 const shaFromEnvVariable = (): string => {
