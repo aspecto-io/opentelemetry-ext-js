@@ -40,12 +40,9 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-          ref: ${{ env.GITHUB_HEAD_REF }}
 
       - name: Fetch all history for all tags and branches
         run: git fetch
-
-      - run: cat .git/HEAD
 
       - name: Install Dependencies
         run: yarn
