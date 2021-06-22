@@ -4,7 +4,7 @@ import fs from 'fs';
 
 export const executeGitCommand = (gitCommand: string): string => {
     return child_process
-        .execSync(gitCommand, { stdio: ['ignore', 'pipe', 'pipe'] })
+        .execSync(gitCommand, { stdio: ['ignore', 'pipe', 'pipe'], timeout: 250 })
         .toString()
         .trim();
 };
