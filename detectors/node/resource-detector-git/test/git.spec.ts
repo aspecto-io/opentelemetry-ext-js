@@ -7,7 +7,6 @@ import * as sinon from 'sinon';
 import { Resource } from '@opentelemetry/resources';
 
 describe('git detector', () => {
-
     afterEach(() => {
         sinon.restore();
     });
@@ -160,7 +159,6 @@ describe('git detector', () => {
     });
 
     describe('git clone id', () => {
-
         it('should read existing value', () => {
             const headSha = '3333333333111111111100000000002222222222';
             const expectedGitCloneId = 'git-clone-id-from-tests';
