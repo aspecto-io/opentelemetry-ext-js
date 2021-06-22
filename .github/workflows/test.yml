@@ -43,7 +43,7 @@ jobs:
       - name: Fetch all history for all tags and branches
         run: git fetch
 
-      - run: ls .git
+      - run: cat .git/HEAD
 
       - name: Install Dependencies
         run: yarn
