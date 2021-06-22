@@ -37,11 +37,10 @@ jobs:
 
     steps:
 
-      - run: printenv GITHUB_HEAD_REF
-
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
+          ref: ${{GITHUB_HEAD_REF}}
 
       - name: Fetch all history for all tags and branches
         run: git fetch
