@@ -10,6 +10,9 @@ export const executeGitCommand = (gitCommand: string): string => {
 };
 
 export const readFileFromGitDir = (pathInGit: string): string => {
-    const headFilePath = path.join(process.cwd(), '.git', pathInGit);
+    // git always use refs with '/', but on windows, when accessing the fs,
+    // we should replace it to '\'
+    const pathInGitOsSpecific = pathInGit.replace('/', path.sep);
+    const headFilePath = path.join(process.cwd(), '.git', pathInGitOsSpecific);
     return fs.readFileSync(headFilePath).toString().trim();
 };

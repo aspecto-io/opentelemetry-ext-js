@@ -2,10 +2,11 @@ import path from 'path';
 import { executeGitCommand, readFileFromGitDir } from './fecth-git-data';
 
 const extractBranchNameFromRef = (ref: string): string | undefined => {
+    // git stores the ref with '/' in windows as well
     if (!ref.startsWith('refs/heads/')) {
         return;
     }
-    return ref.split(path.sep)[2];
+    return ref.split('/')[2];
 };
 
 const branchNameFromEnv = (): string => {
