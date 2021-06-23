@@ -5,7 +5,7 @@ This module provides automatic resource detector for Git Version Control System.
 
 The detector is doing best effort to extract git info, including these cases:
 - Git info from common CI environment variables.
-- Docker environment where `.git` db is present (copied or mounted into image) but `git` cli is not installed on the image.
+- Docker environment where `.git` db is present (copied to image or mounted into the container) but `git` cli is not installed on the image.
 - Docker environment where `.git` db is missing, but node_modules is copied to image from source environment where `.git` db was available
 
 ## Installation
