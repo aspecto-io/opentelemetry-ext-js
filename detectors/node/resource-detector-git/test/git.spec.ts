@@ -2,7 +2,7 @@ import 'mocha';
 import expect from 'expect';
 import { gitSyncDetector } from '../src';
 import { GitResourceAttributes } from '../src/types';
-import * as utils from '../src/fecth-git-data';
+import * as fetchGitData from '../src/fecth-git-data';
 import * as sinon from 'sinon';
 import { Resource } from '@opentelemetry/resources';
 
@@ -19,7 +19,7 @@ describe('git detector', () => {
     let gitBranchShowCurrentStub;
 
     beforeEach(() => {
-        executeGitCommandStub = sinon.stub(utils, 'executeGitCommand');
+        executeGitCommandStub = sinon.stub(fetchGitData, 'executeGitCommand');
 
         // defaults for git commands so test will work in CI and not try to execute actual git commands which will fail.
         // specific tests can then override this default
@@ -86,7 +86,7 @@ describe('git detector', () => {
             gitRevParseHeadStub.returns('');
 
             // reading HEAD returns a SHA value (like what you'll get in detached HEAD setup)
-            sinon.stub(utils, 'readFileFromGitDir').withArgs('HEAD').returns(expectedHeadSha);
+            sinon.stub(fetchGitData, 'readFileFromGitDir').withArgs('HEAD').returns(expectedHeadSha);
 
             const resource = gitSyncDetector.createGitResourceFromGitDb();
             expect(resource.attributes[GitResourceAttributes.VCS_COMMIT_ID]).toMatch(expectedHeadSha);
@@ -100,7 +100,7 @@ describe('git detector', () => {
             gitRevParseHeadStub.returns('');
 
             // reading HEAD returns a SHA value (like what you'll get in detached HEAD setup)
-            const fsStub = sinon.stub(utils, 'readFileFromGitDir');
+            const fsStub = sinon.stub(fetchGitData, 'readFileFromGitDir');
             fsStub.withArgs('HEAD').returns(`ref: ${headRef}`);
             fsStub.withArgs(headRef).returns(expectedHeadSha);
 
@@ -116,7 +116,7 @@ describe('git detector', () => {
             gitRevParseHeadStub.returns('');
 
             // reading HEAD returns a SHA value (like what you'll get in detached HEAD setup)
-            const fsStub = sinon.stub(utils, 'readFileFromGitDir');
+            const fsStub = sinon.stub(fetchGitData, 'readFileFromGitDir');
             fsStub.withArgs('HEAD').returns(`ref: ${headRef}`);
             fsStub.withArgs(headRef).returns(tagHeadSha);
 
@@ -132,7 +132,7 @@ describe('git detector', () => {
             gitRevParseHeadStub.returns('');
 
             // reading HEAD returns a SHA value (like what you'll get in detached HEAD setup)
-            const fsStub = sinon.stub(utils, 'readFileFromGitDir');
+            const fsStub = sinon.stub(fetchGitData, 'readFileFromGitDir');
             fsStub.withArgs('HEAD').returns(`ref: ${headRef}`);
             fsStub.withArgs(headRef).returns(nonShaContent);
 
@@ -179,7 +179,7 @@ describe('git detector', () => {
 
         it('read with git dir detached HEAD', () => {
             gitBranchShowCurrentStub.returns('');
-            const fsStub = sinon.stub(utils, 'readFileFromGitDir');
+            const fsStub = sinon.stub(fetchGitData, 'readFileFromGitDir');
             fsStub.withArgs('HEAD').returns(defaultHeadSha);
 
             const resource = gitSyncDetector.createGitResourceFromGitDb();
@@ -190,7 +190,7 @@ describe('git detector', () => {
             const branchName = 'my-testing-branch';
 
             gitBranchShowCurrentStub.returns('');
-            const fsStub = sinon.stub(utils, 'readFileFromGitDir');
+            const fsStub = sinon.stub(fetchGitData, 'readFileFromGitDir');
             fsStub.withArgs('HEAD').returns(`ref: refs/heads/${branchName}`);
 
             const resource = gitSyncDetector.createGitResourceFromGitDb();
