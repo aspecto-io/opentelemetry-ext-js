@@ -25,6 +25,9 @@ yarn.lock
 aspecto.json
 aspecto.log
 
+# resource
+post-install-git-resource.json
+
 # created from sequelize unit tests
 memory 
 
