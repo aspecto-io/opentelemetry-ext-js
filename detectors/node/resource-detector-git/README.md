@@ -4,9 +4,9 @@
 This module provides automatic resource detector for Git Version Control System. This resource is not part of [open telemetry semantic conventions specification for resources](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions).
 
 The detector is doing best effort to extract git info, including these cases:
-- Docker environment where `.git` db is present (copied or mounted into image) but `git` cli is not installed.
+- Git info from common CI environment variables.
+- Docker environment where `.git` db is present (copied or mounted into image) but `git` cli is not installed on the image.
 - Docker environment where `.git` db is missing, but node_modules is copied to image from source environment where `.git` db was available
-- Git info from common CI environment variables
 
 ## Installation
 
