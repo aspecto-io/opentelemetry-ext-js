@@ -1,12 +1,12 @@
 # OpenTelemetry Service Resource Detector for Node.js
 [![NPM version](https://img.shields.io/npm/v/opentelemetry-resource-detector-git.svg)](https://www.npmjs.com/package/opentelemetry-resource-detector-git)
 
-This module provides automatic resource detector for Git Version Control System. This resource is not part of open telemetry specification.
+This module provides automatic resource detector for Git Version Control System. This resource is not part of [open telemetry semantic conventions specification for resources](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/resource/semantic_conventions).
 
-The detector is doing best effort to extract git info, including support for the:
-- Docker environment where `.git` db is present but `git` cli is not installed
-- Docker environment where `.git` db is missing, node_modules is copied to image from environment where `.git` db was available
-- Reading data from common CI environment variables
+The detector is doing best effort to extract git info, including these cases:
+- Docker environment where `.git` db is present (copied or mounted into image) but `git` cli is not installed.
+- Docker environment where `.git` db is missing, but node_modules is copied to image from source environment where `.git` db was available
+- Git info from common CI environment variables
 
 ## Installation
 
