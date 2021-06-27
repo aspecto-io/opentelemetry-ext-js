@@ -1,4 +1,5 @@
 import { ExpressConsumedRouteState, LayerPath } from '../types';
+import parseurl from 'parseurl';
 import type express from 'express';
 
 export const getUsedPathFromLayerPath = (
@@ -65,7 +66,6 @@ export const createInitialRouteState = (req: express.Request): ExpressConsumedRo
     // at this point, we have the raw http req object, and not the express req.
     // thus, we cannot call req.path
     // we use parseurl(req).pathname which is exactly what express is doing
-    const parseurl = require('parseurl');
     const path = parseurl(req).pathname;
     return { resolvedRoute: '', remainingRoute: path, configuredRoute: '', params: {} };
 };

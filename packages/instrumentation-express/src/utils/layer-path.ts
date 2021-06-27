@@ -1,4 +1,5 @@
 import { LayerPath, LayerPathAlternative } from '../types';
+import pathRegexp  from 'path-to-regexp';
 import type express from 'express';
 
 const pathStringToDisplayValue = (pathInput: string, options: express.RouterOptions): string => {
@@ -14,7 +15,6 @@ const getLayerPathAlternativeFromFirstArg = (
     pathInput: any,
     options
 ): LayerPathAlternative | LayerPathAlternative[] => {
-    const pathRegexp = require('path-to-regexp');
 
     if (typeof pathInput === 'string') {
         return {
