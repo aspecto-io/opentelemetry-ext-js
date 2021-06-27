@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.21.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-express@0.21.0...opentelemetry-instrumentation-express@0.21.1) (2021-06-27)
+
+
+### Bug Fixes
+
+* **instrumentation-express:** explicitly depend on used express util packages ([#141](https://github.com/aspecto-io/opentelemetry-ext-js/issues/141)) ([2ae18cb](https://github.com/aspecto-io/opentelemetry-ext-js/commit/2ae18cb36b455eedfde5db0e80e05b7529632358))
+
+
+
+
+
 # [0.21.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-express@0.5.1...opentelemetry-instrumentation-express@0.21.0) (2021-06-20)
 
 **Note:** Version bump only for package opentelemetry-instrumentation-express
