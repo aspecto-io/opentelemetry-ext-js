@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.22.0](https://github.com/aspecto-io/opentelemetry-amqplib/compare/opentelemetry-instrumentation-amqplib@0.21.0...opentelemetry-instrumentation-amqplib@0.22.0) (2021-06-28)
+
+**Note:** Version bump only for package opentelemetry-instrumentation-amqplib
+
+
+
+
+
 # [0.21.0](https://github.com/aspecto-io/opentelemetry-amqplib/compare/opentelemetry-instrumentation-amqplib@0.5.1...opentelemetry-instrumentation-amqplib@0.21.0) (2021-06-20)
 
 **Note:** Version bump only for package opentelemetry-instrumentation-amqplib
