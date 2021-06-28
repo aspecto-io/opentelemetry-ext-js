@@ -54,7 +54,7 @@
         "expect": "^26.6.2",
         "mocha": "^8.4.0",
         "nock": "^13.0.11",
-        "opentelemetry-instrumentation-mocha": "0.0.1-rc.2",
+        "opentelemetry-instrumentation-mocha": "0.0.1-rc.3",
         "opentelemetry-instrumentation-testing-utils": "^0.21.0",
         "test-all-versions": "^5.0.1",
         "ts-node": "^9.1.1",
