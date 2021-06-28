@@ -41,23 +41,23 @@
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
     },
     "peerDependencies": {
-        "@opentelemetry/api": "^0.21.0"
+        "@opentelemetry/api": "^1.0.0"
     },
     "dependencies": {
-        "@opentelemetry/core": "^0.21.0",
-        "@opentelemetry/instrumentation": "^0.21.0",
-        "@opentelemetry/semantic-conventions": "^0.21.0"
+        "@opentelemetry/core": "^0.22.0",
+        "@opentelemetry/instrumentation": "^0.22.0",
+        "@opentelemetry/semantic-conventions": "^0.22.0"
     },
     "devDependencies": {
         "@elastic/elasticsearch": "^7.8.0",
-        "@opentelemetry/api": "^0.21.0",
+        "@opentelemetry/api": "^1.0.0",
         "@types/chai": "^4.2.15",
         "@types/mocha": "^8.2.2",
         "chai": "^4.3.0",
         "expect": "^26.6.2",
         "mocha": "^8.4.0",
         "nock": "^13.0.9",
-        "opentelemetry-instrumentation-mocha": "0.0.1-rc.2",
+        "opentelemetry-instrumentation-mocha": "0.0.1-rc.3",
         "opentelemetry-instrumentation-testing-utils": "^0.21.0",
         "sinon": "^9.2.4",
         "test-all-versions": "^5.0.1",

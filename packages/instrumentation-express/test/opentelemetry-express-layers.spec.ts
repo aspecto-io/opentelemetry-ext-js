@@ -672,8 +672,8 @@ describe('opentelemetry-express-layers', () => {
         describe('multiple routes', () => {
             it('two sibling routes, first is calling res.end()', async () => {
                 app.get('/:firstRouteParam', resEndMiddleware);
-                app.get('/:secondRouteParam', (req, res, next) => {
-                    throw Error('should not be invoked');
+                app.get('/:secondRouteParam', (_req: express.Request, _res: express.Response) => {
+                    throw new Error('should not be invoked');
                 });
                 const s = await sendRequest('/foo');
                 expectRouteAttributes(s, '/:firstRouteParam', '/:firstRouteParam', {
