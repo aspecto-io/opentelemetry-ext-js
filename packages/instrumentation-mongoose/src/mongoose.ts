@@ -36,7 +36,7 @@ export const _STORED_PARENT_SPAN: unique symbol = Symbol('stored-parent-span');
 
 export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose> {
     static readonly component = 'mongoose';
-    protected _config: MongooseInstrumentationConfig;
+    protected override _config: MongooseInstrumentationConfig;
     private moduleVersion: string;
 
     constructor(config: MongooseInstrumentationConfig = {}) {
@@ -46,7 +46,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
         if (!config.dbStatementSerializer) this._config.dbStatementSerializer = () => undefined;
     }
 
-    setConfig(config: MongooseInstrumentationConfig = {}) {
+    override setConfig(config: MongooseInstrumentationConfig = {}) {
         this._config = Object.assign({}, config);
         if (!config.dbStatementSerializer) this._config.dbStatementSerializer = () => undefined;
     }

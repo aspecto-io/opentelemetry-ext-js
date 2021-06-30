@@ -19,7 +19,7 @@ import isPromise from 'is-promise';
 const reservedEvents = ['connect', 'connect_error', 'disconnect', 'disconnecting', 'newListener', 'removeListener'];
 
 export class SocketIoInstrumentation extends InstrumentationBase<Io> {
-    protected _config!: SocketIoInstrumentationConfig;
+    protected override _config!: SocketIoInstrumentationConfig;
 
     constructor(config: SocketIoInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-socket.io', VERSION, Object.assign({}, config));

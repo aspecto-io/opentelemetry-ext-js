@@ -37,13 +37,13 @@ const originalLayerStore = Symbol('otel.express-plugins.orig-layer-export');
 
 export class ExpressInstrumentation extends InstrumentationBase<typeof express> {
     static readonly supportedVersions = ['^4.9.0'];
-    protected _config: ExpressInstrumentationConfig;
+    protected override _config: ExpressInstrumentationConfig;
 
     constructor(config: ExpressInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-express', VERSION, Object.assign({}, config));
     }
 
-    setConfig(config: ExpressInstrumentationConfig = {}) {
+    override setConfig(config: ExpressInstrumentationConfig = {}) {
         this._config = Object.assign({}, config);
     }
 

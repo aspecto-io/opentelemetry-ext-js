@@ -25,13 +25,13 @@ import {
 import { VERSION } from './version';
 
 export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
-    protected _config: AmqplibInstrumentationConfig;
+    protected override _config: AmqplibInstrumentationConfig;
 
     constructor(config: AmqplibInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-amqplib', VERSION, Object.assign({}, DEFAULT_CONFIG, config));
     }
 
-    setConfig(config: AmqplibInstrumentationConfig = {}) {
+    override setConfig(config: AmqplibInstrumentationConfig = {}) {
         this._config = Object.assign({}, DEFAULT_CONFIG, config);
     }
 

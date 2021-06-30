@@ -16,14 +16,14 @@ import {
 
 export class SequelizeInstrumentation extends InstrumentationBase<typeof sequelize> {
     static readonly component = 'sequelize';
-    protected _config!: SequelizeInstrumentationConfig;
+    protected override _config!: SequelizeInstrumentationConfig;
     private moduleVersion: string;
 
     constructor(config: SequelizeInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-sequelize', VERSION, Object.assign({}, config));
     }
 
-    setConfig(config: SequelizeInstrumentationConfig = {}) {
+    override setConfig(config: SequelizeInstrumentationConfig = {}) {
         this._config = Object.assign({}, config);
     }
 

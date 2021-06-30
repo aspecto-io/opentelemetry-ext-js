@@ -24,7 +24,7 @@ import { ELASTICSEARCH_API_FILES } from './helpers';
 export class ElasticsearchInstrumentation extends InstrumentationBase<typeof elasticsearch> {
     static readonly component = '@elastic/elasticsearch';
 
-    protected _config: ElasticsearchInstrumentationConfig;
+    protected override _config: ElasticsearchInstrumentationConfig;
     private _isEnabled = false;
     private moduleVersion: string;
 
@@ -32,7 +32,7 @@ export class ElasticsearchInstrumentation extends InstrumentationBase<typeof ela
         super('opentelemetry-instrumentation-elasticsearch', VERSION, Object.assign({}, config));
     }
 
-    setConfig(config: ElasticsearchInstrumentationConfig = {}) {
+    override setConfig(config: ElasticsearchInstrumentationConfig = {}) {
         this._config = Object.assign({}, config);
     }
 
