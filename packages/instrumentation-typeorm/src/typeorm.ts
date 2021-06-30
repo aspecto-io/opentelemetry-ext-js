@@ -29,7 +29,7 @@ const selectQueryBuilderExecuteMethods: SelectQueryBuilderMethods[] = [
 ];
 
 export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> {
-    protected _config!: TypeormInstrumentationConfig;
+    protected override _config!: TypeormInstrumentationConfig;
 
     constructor(config: TypeormInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-typeorm', VERSION, Object.assign({}, config));

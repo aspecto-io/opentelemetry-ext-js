@@ -41,14 +41,14 @@ import {
 
 export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> {
     static readonly component = 'kafkajs';
-    protected _config!: KafkaJsInstrumentationConfig;
+    protected override _config!: KafkaJsInstrumentationConfig;
     private moduleVersion: string;
 
     constructor(config: KafkaJsInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-kafkajs', VERSION, Object.assign({}, config));
     }
 
-    setConfig(config: KafkaJsInstrumentationConfig = {}) {
+    override setConfig(config: KafkaJsInstrumentationConfig = {}) {
         this._config = Object.assign({}, config);
     }
 

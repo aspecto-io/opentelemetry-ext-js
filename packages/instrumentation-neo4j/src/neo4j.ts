@@ -15,13 +15,13 @@ import { getAttributesFromNeo4jSession } from './utils';
 type Neo4J = typeof neo4j;
 
 export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
-    protected _config!: Neo4jInstrumentationConfig;
+    protected override _config!: Neo4jInstrumentationConfig;
 
     constructor(config: Neo4jInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-neo4j', VERSION, Object.assign({}, config));
     }
 
-    setConfig(config: Neo4jInstrumentationConfig = {}) {
+    override setConfig(config: Neo4jInstrumentationConfig = {}) {
         this._config = config;
     }
 

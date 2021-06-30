@@ -42,7 +42,7 @@ const storedV3ClientConfig = Symbol('opentelemetry.aws-sdk.client.config');
 
 export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
     static readonly component = 'aws-sdk';
-    protected _config!: AwsSdkInstrumentationConfig;
+    protected override _config!: AwsSdkInstrumentationConfig;
     private REQUEST_SPAN_KEY = Symbol('opentelemetry.instrumentation.aws-sdk.span');
     private servicesExtensions: ServicesExtensions = new ServicesExtensions();
 
@@ -50,7 +50,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
         super('opentelemetry-instrumentation-aws-sdk', VERSION, Object.assign({}, config));
     }
 
-    setConfig(config: AwsSdkInstrumentationConfig = {}) {
+    override setConfig(config: AwsSdkInstrumentationConfig = {}) {
         this._config = Object.assign({}, config);
     }
 
