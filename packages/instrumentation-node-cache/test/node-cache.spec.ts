@@ -1,0 +1,145 @@
+import 'mocha';
+import expect from 'expect';
+import { getTestSpans, resetMemoryExporter } from 'opentelemetry-instrumentation-testing-utils';
+import { NodeCacheInstrumentation } from '../src';
+import { context, ROOT_CONTEXT } from '@opentelemetry/api';
+
+const DB_RESPONSE = 'db.response';
+const instrumentation = new NodeCacheInstrumentation({
+    responseHook: (span, response) =>
+        span.setAttribute(DB_RESPONSE, typeof response === 'object' ? JSON.stringify(response) : response),
+});
+instrumentation.enable();
+
+import NodeCache from 'node-cache';
+import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+
+describe('node-cache instrumentation', () => {
+    let cache = new NodeCache();
+
+    const getSingleSpan = () => {
+        const spans = getTestSpans();
+        // console.log(spans.map(s => s.name))
+        expect(spans.length).toBe(1);
+        return spans[0];
+    };
+
+    beforeEach(async () => {
+        resetMemoryExporter();
+        cache = new NodeCache();
+        instrumentation.enable();
+    });
+
+    afterEach(async () => {
+        instrumentation.disable();
+    });
+
+    describe('instruments functions', () => {
+        it('set', () => {
+            cache.set('some-key', 'cool');
+            const span = getSingleSpan();
+
+            expect(span.name).toBe('node-cache set');
+            expect(span.attributes[SemanticAttributes.DB_SYSTEM]).toBe('node-cache');
+            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('set');
+            expect(span.attributes[DB_RESPONSE]).toBe(true);
+        });
+
+        it('get', () => {
+            cache.set('some-key', 'some-value');
+            resetMemoryExporter();
+            cache.get('some-key');
+            const span = getSingleSpan();
+
+            expect(span.name).toBe('node-cache get');
+            expect(span.attributes[SemanticAttributes.DB_SYSTEM]).toBe('node-cache');
+            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('get');
+            expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe('get some-key');
+            expect(span.attributes[DB_RESPONSE]).toBe('some-value');
+        });
+
+        it('has', () => {
+            cache.has('some-key');
+            const span = getSingleSpan();
+
+            expect(span.name).toBe('node-cache has');
+            expect(span.attributes[SemanticAttributes.DB_SYSTEM]).toBe('node-cache');
+            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('has');
+            expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe('has some-key');
+            expect(span.attributes[DB_RESPONSE]).toBe(false);
+        });
+
+        it('take', () => {
+            cache.set('some-key', 'some-value');
+            resetMemoryExporter();
+            cache.take('some-key');
+            const span = getSingleSpan();
+
+            expect(span.name).toBe('node-cache take');
+            expect(span.attributes[SemanticAttributes.DB_SYSTEM]).toBe('node-cache');
+            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('take');
+            expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe('take some-key');
+            expect(span.attributes[DB_RESPONSE]).toBe('some-value');
+        });
+
+        it('del', () => {
+            cache.set('some-key', 'some-value');
+            resetMemoryExporter();
+            cache.del('some-key');
+            const span = getSingleSpan();
+
+            expect(span.name).toBe('node-cache del');
+            expect(span.attributes[SemanticAttributes.DB_SYSTEM]).toBe('node-cache');
+            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('del');
+            expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe('del some-key');
+            expect(span.attributes[DB_RESPONSE]).toBe(1);
+        });
+
+        it('mdel', () => {
+            cache.set('some-key', 'some-value');
+            cache.set('some-other-key', 'some-value');
+            resetMemoryExporter();
+            cache.del(['some-key', 'some-other-key']);
+            const span = getSingleSpan();
+
+            expect(span.name).toBe('node-cache del');
+            expect(span.attributes[SemanticAttributes.DB_SYSTEM]).toBe('node-cache');
+            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('del');
+            expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe('del some-key,some-other-key');
+            expect(span.attributes[DB_RESPONSE]).toBe(2);
+        });
+
+        it('mget', () => {
+            cache.set('a', 'x');
+            cache.set('b', 'y');
+            resetMemoryExporter();
+            const res = cache.mget(['a', 'b', 'c']);
+            expect(res).toEqual({ a: 'x', b: 'y' });
+            const span = getSingleSpan();
+
+            expect(span.name).toBe('node-cache mget');
+            expect(span.attributes[SemanticAttributes.DB_SYSTEM]).toBe('node-cache');
+            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('mget');
+            expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe('mget a,b,c');
+            expect(JSON.parse(span.attributes[DB_RESPONSE] as string)).toEqual({ a: 'x', b: 'y' });
+        });
+    });
+
+    describe('requireParentSpan', () => {
+        before(() => {
+            instrumentation.disable();
+            instrumentation.setConfig({
+                requireParentSpan: true,
+            });
+            instrumentation.enable();
+        });
+
+        it.only('should not start span on node-cache method', () => {
+            context.with(ROOT_CONTEXT, () => {
+                cache.get('test');
+            });
+            const spans = getTestSpans();
+            expect(spans.length).toBe(0);
+        });
+    });
+});
