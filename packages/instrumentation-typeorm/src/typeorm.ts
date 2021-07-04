@@ -29,26 +29,28 @@ const selectQueryBuilderExecuteMethods: SelectQueryBuilderMethods[] = [
 ];
 
 type EntityManagerMethods = keyof typeorm.EntityManager;
-const functionsUsingEntityPersistExecutor : EntityManagerMethods[] = ['save', 'remove', 'softRemove', 'recover'];
+const functionsUsingEntityPersistExecutor: EntityManagerMethods[] = ['save', 'remove', 'softRemove', 'recover'];
 const functionsUsingQueryBuilder: EntityManagerMethods[] = [
-                    'insert',
-                    'update',
-                    'delete',
-                    'softDelete',
-                    'restore',
-                    'count',
-                    'find',
-                    'findAndCount',
-                    'findByIds',
-                    'findOne',
-                    'increment',
-                    'decrement',
-                ];
-const entityManagerMethods: EntityManagerMethods[] = [...functionsUsingEntityPersistExecutor, ...functionsUsingQueryBuilder];
+    'insert',
+    'update',
+    'delete',
+    'softDelete',
+    'restore',
+    'count',
+    'find',
+    'findAndCount',
+    'findByIds',
+    'findOne',
+    'increment',
+    'decrement',
+];
+const entityManagerMethods: EntityManagerMethods[] = [
+    ...functionsUsingEntityPersistExecutor,
+    ...functionsUsingQueryBuilder,
+];
 
 export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> {
     protected override _config!: TypeormInstrumentationConfig;
-
     constructor(config: TypeormInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-typeorm', VERSION, Object.assign({}, config));
     }
@@ -108,20 +110,17 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
             }
         );
 
-        const module = new InstrumentationNodeModuleDefinition<typeof typeorm>(
-            'typeorm',
-            ['>0.2.28'],
-        null,
-            null,
-            [selectQueryBuilder, entityManager]
-        );
+        const module = new InstrumentationNodeModuleDefinition<typeof typeorm>('typeorm', ['>0.2.28'], null, null, [
+            selectQueryBuilder,
+            entityManager,
+        ]);
         return module;
     }
 
     private _patchEntityManagerFunction(opName: string, moduleVersion?: string) {
         const self = this;
         diag.debug(`typeorm instrumentation: patched EntityManager ${opName} prototype`);
-        return  (original: any) => {
+        return (original: any) => {
             return function (...args: any[]) {
                 if (isTypeormInternalTracingSuppressed(context.active())) {
                     return original.apply(this, arguments);
