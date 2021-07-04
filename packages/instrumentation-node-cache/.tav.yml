@@ -1,0 +1,4 @@
+'node-cache':
+  versions: ">=5.0.0"
+  commands:
+    - yarn test
