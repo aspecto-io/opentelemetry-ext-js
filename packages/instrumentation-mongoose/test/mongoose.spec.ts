@@ -390,6 +390,7 @@ describe('mongoose instrumentation', () => {
         const spans = getTestSpans();
         expect(spans.length).toBe(1);
         assertSpan(spans[0]);
+        console.log(spans[0].attributes[SemanticAttributes.DB_STATEMENT]);
         const reqPayload = JSON.parse(spans[0].attributes[SemanticAttributes.DB_STATEMENT] as string);
         expect(reqPayload.fields).toStrictEqual(projection);
     });
