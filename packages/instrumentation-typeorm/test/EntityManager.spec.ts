@@ -21,6 +21,24 @@ describe('EntityManager', () => {
     });
 
     describe('single connection', () => {
+        it('save using connection.manager', async () => {
+            const options = defaultOptions;
+            const connection = await typeorm.createConnection(defaultOptions);
+            const user = new User(1, 'aspecto', 'io');
+            await connection.manager.save(user);
+            const typeOrmSpans = getTestSpans();
+
+            expect(typeOrmSpans.length).toBe(1);
+            expect(typeOrmSpans[0].status.code).toBe(SpanStatusCode.UNSET);
+            const attributes = typeOrmSpans[0].attributes;
+            expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
+            expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(options.type);
+            expect(attributes[SemanticAttributes.DB_NAME]).toBe(options.database);
+            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('save');
+            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(JSON.stringify({ targetOrEntity: user }));
+            await connection.close();
+        });
+
         it('save', async () => {
             const options = defaultOptions;
             const connection = await typeorm.createConnection(defaultOptions);
