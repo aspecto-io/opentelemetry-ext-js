@@ -24,7 +24,7 @@ export class NodeCacheInstrumentation extends InstrumentationBase<NodeCacheType>
     protected init(): InstrumentationModuleDefinition<NodeCacheType> {
         const module = new InstrumentationNodeModuleDefinition<NodeCacheType>(
             'node-cache',
-            ['*'],
+            ['>=5.0.0'],
             this.patch.bind(this)
         );
         return module;

@@ -71,7 +71,9 @@ describe('node-cache instrumentation', () => {
         it('take', () => {
             cache.set('some-key', 'some-value');
             resetMemoryExporter();
-            cache.take('some-key');
+            // Does not exist on versions <= 5.1.1, need to hack this
+            if (!cache['take']) return;
+            cache['take']('some-key');
             const span = getSingleSpan();
 
             expect(span.name).toBe('node-cache take');
