@@ -14,6 +14,7 @@
     "files": [
         "dist/src/**/*.js",
         "dist/src/**/*.d.ts",
+        "dist/src/**/*.js.map",
         "LICENSE",
         "README.md"
     ],
