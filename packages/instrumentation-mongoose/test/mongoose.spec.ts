@@ -383,6 +383,21 @@ describe('mongoose instrumentation', () => {
         expect(spans[0].attributes[SemanticAttributes.DB_STATEMENT]).toBe(undefined);
     });
 
+    it('projection is sent to serializer', async () => {
+        instrumentation.disable();
+        instrumentation.setConfig({ dbStatementSerializer: (_operation: string, payload) => JSON.stringify(payload) });
+        instrumentation.enable();
+
+        const projection = { firstName: 1 };
+        await User.find({ id: '_test1' }, projection);
+
+        const spans = getTestSpans();
+        expect(spans.length).toBe(1);
+        assertSpan(spans[0]);
+        const reqPayload = JSON.parse(spans[0].attributes[SemanticAttributes.DB_STATEMENT] as string);
+        expect(reqPayload.fields).toStrictEqual(projection);
+    });
+
     describe('responseHook', () => {
         const RESPONSE = 'db.response';
         before(() => {

@@ -138,6 +138,7 @@ export class MongooseInstrumentation extends InstrumentationBase<typeof mongoose
                         condition: this._conditions,
                         updates: this._update,
                         options: this.options,
+                        fields: this._fields,
                     }),
                 };
                 const span = startSpan({
