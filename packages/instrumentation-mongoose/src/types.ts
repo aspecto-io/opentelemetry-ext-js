@@ -7,6 +7,7 @@ export interface SerializerPayload {
     updates?: any;
     document?: any;
     aggregatePipeline?: any;
+    fields?: any;
 }
 
 export type DbStatementSerializer = (operation: string, payload: SerializerPayload) => string;
