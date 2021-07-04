@@ -120,7 +120,7 @@ export class NodeCacheInstrumentation extends InstrumentationBase<NodeCacheType>
                     span.recordException(err);
                     span.setStatus({
                         code: SpanStatusCode.ERROR,
-                        message: err.message,
+                        message: typeof err === 'string' ? err : err?.message,
                     });
                     throw err;
                 } finally {
