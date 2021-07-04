@@ -25,8 +25,7 @@ export class NodeCacheInstrumentation extends InstrumentationBase<NodeCacheType>
         const module = new InstrumentationNodeModuleDefinition<NodeCacheType>(
             'node-cache',
             ['*'],
-            this.patch.bind(this),
-            (moduleExports) => moduleExports
+            this.patch.bind(this)
         );
         return module;
     }
@@ -38,12 +37,34 @@ export class NodeCacheInstrumentation extends InstrumentationBase<NodeCacheType>
 
         function PatchedNodeCache(options = {}) {
             const inst: NodeCache = new (origConstructor as any)(options);
-            ['get', 'take', 'del', 'getTtl', 'has', 'set', 'mget'].forEach((op) =>
+            ['get', 'take', 'del', 'getTtl', 'has', 'set', 'mget', 'flushAll'].forEach((op) =>
                 self._wrap(
                     inst,
                     op as keyof NodeCache,
-                    self.patchClassFunction(op, (args: any[]) => `${op} ${args[0]}`).bind(self)
+                    self
+                        .patchClassFunction(
+                            op,
+                            (args: any[]) => `${op} ${args[0] ? args[0] : ''}`.trim(),
+                            moduleVersion
+                        )
+                        .bind(self)
                 )
+            );
+            self._wrap(
+                inst,
+                'mset',
+                self
+                    .patchClassFunction(
+                        'mset',
+                        (args: any[]) => `mset ${args[0].map((entry: NodeCache.ValueSetItem) => entry.key).join(',')}`,
+                        moduleVersion
+                    )
+                    .bind(self)
+            );
+            self._wrap(
+                inst,
+                'ttl',
+                self.patchClassFunction('ttl', (args: any[]) => `ttl ${args[0]} ${args[1]}`, moduleVersion).bind(self)
             );
             return inst;
         }
@@ -52,7 +73,7 @@ export class NodeCacheInstrumentation extends InstrumentationBase<NodeCacheType>
         return PatchedNodeCache;
     }
 
-    private patchClassFunction(opName: string, toStatement: (...args: any[]) => string) {
+    private patchClassFunction(opName: string, toStatement: (...args: any[]) => string, moduleVersion: string) {
         const self = this;
         return (originalFunc: Function) => {
             return function func() {
@@ -68,6 +89,18 @@ export class NodeCacheInstrumentation extends InstrumentationBase<NodeCacheType>
                         [SemanticAttributes.DB_STATEMENT]: toStatement(arguments),
                     },
                 });
+
+                if (self._config.requestHook) {
+                    try {
+                        self._config.requestHook(span, {
+                            moduleVersion,
+                            operation: opName,
+                            args: Object.values(arguments),
+                        });
+                    } catch (err) {
+                        diag.error('node-cache instrumentation: requestHook error', err);
+                    }
+                }
 
                 try {
                     // Some operations, like "take", use other operation under the hood
