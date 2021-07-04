@@ -28,9 +28,29 @@ const selectQueryBuilderExecuteMethods: SelectQueryBuilderMethods[] = [
     'getRawMany',
 ];
 
+type EntityManagerMethods = keyof typeorm.EntityManager;
+const functionsUsingEntityPersistExecutor: EntityManagerMethods[] = ['save', 'remove', 'softRemove', 'recover'];
+const functionsUsingQueryBuilder: EntityManagerMethods[] = [
+    'insert',
+    'update',
+    'delete',
+    'softDelete',
+    'restore',
+    'count',
+    'find',
+    'findAndCount',
+    'findByIds',
+    'findOne',
+    'increment',
+    'decrement',
+];
+const entityManagerMethods: EntityManagerMethods[] = [
+    ...functionsUsingEntityPersistExecutor,
+    ...functionsUsingQueryBuilder,
+];
+
 export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> {
     protected override _config!: TypeormInstrumentationConfig;
-
     constructor(config: TypeormInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-typeorm', VERSION, Object.assign({}, config));
     }
@@ -63,78 +83,48 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
             }
         );
 
-        const module = new InstrumentationNodeModuleDefinition<typeof typeorm>(
-            'typeorm',
+        const entityManager = new InstrumentationNodeModuleFile<typeof typeorm>(
+            'typeorm/entity-manager/EntityManager.js',
             ['>0.2.28'],
-            (moduleExports, moduleVersion: string | undefined) => {
-                if (moduleExports === undefined || moduleExports === null) {
-                    return moduleExports;
-                }
-                if (isWrapped(moduleExports.ConnectionManager.prototype.create)) {
-                    this._unwrap(moduleExports.ConnectionManager.prototype, 'create');
-                }
-                this._wrap(
-                    moduleExports.ConnectionManager.prototype,
-                    'create',
-                    this._createConnectionManagerPatch(moduleVersion)
-                );
+            (moduleExports, moduleVersion) => {
+                entityManagerMethods.map((method) => {
+                    if (isWrapped(moduleExports.EntityManager.prototype?.[method])) {
+                        this._unwrap(moduleExports.EntityManager.prototype, method);
+                    }
+                    this._wrap(
+                        moduleExports.EntityManager.prototype,
+                        method,
+                        this._patchEntityManagerFunction(method, moduleVersion)
+                    );
+                });
 
                 return moduleExports;
             },
             (moduleExports) => {
-                if (isWrapped(moduleExports.ConnectionManager.prototype.create)) {
-                    this._unwrap(moduleExports.ConnectionManager.prototype, 'create');
-                }
-            },
-            [selectQueryBuilder]
+                entityManagerMethods.map((method) => {
+                    if (isWrapped(moduleExports.EntityManager.prototype?.[method])) {
+                        this._unwrap(moduleExports.EntityManager.prototype, method);
+                    }
+                });
+                return moduleExports;
+            }
         );
+
+        const module = new InstrumentationNodeModuleDefinition<typeof typeorm>('typeorm', ['>0.2.28'], null, null, [
+            selectQueryBuilder,
+            entityManager,
+        ]);
         return module;
     }
 
-    private _createConnectionManagerPatch(moduleVersion?: string) {
-        const self = this;
-        return (original: Function) => {
-            return function (options: typeorm.ConnectionOptions) {
-                const connection: typeorm.Connection = original.apply(this, arguments);
-
-                // Both types using same patch right now, keep different declarations for future improvements
-                const functionsUsingEntityPersistExecutor = ['save', 'remove', 'softRemove', 'recover'];
-                const functionsUsingQueryBuilder = [
-                    'insert',
-                    'update',
-                    'delete',
-                    'softDelete',
-                    'restore',
-                    'count',
-                    'find',
-                    'findAndCount',
-                    'findByIds',
-                    'findOne',
-                    'increment',
-                    'decrement',
-                ];
-
-                const patch = (operation: string) => {
-                    if (connection.manager[operation])
-                        self._wrap(
-                            connection.manager,
-                            operation as keyof typeorm.EntityManager,
-                            self._getEntityManagerFunctionPatch(operation, moduleVersion).bind(self)
-                        );
-                };
-
-                functionsUsingEntityPersistExecutor.forEach(patch);
-                functionsUsingQueryBuilder.forEach(patch);
-                return connection;
-            };
-        };
-    }
-
-    private _getEntityManagerFunctionPatch(opName: string, moduleVersion?: string) {
+    private _patchEntityManagerFunction(opName: string, moduleVersion?: string) {
         const self = this;
         diag.debug(`typeorm instrumentation: patched EntityManager ${opName} prototype`);
-        return function (original: Function) {
-            return async function (...args: any[]) {
+        return (original: any) => {
+            return function (...args: any[]) {
+                if (isTypeormInternalTracingSuppressed(context.active())) {
+                    return original.apply(this, arguments);
+                }
                 const connectionOptions = this?.connection?.options ?? {};
                 const attributes = {
                     [SemanticAttributes.DB_SYSTEM]: connectionOptions.type,
