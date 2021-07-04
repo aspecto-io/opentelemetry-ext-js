@@ -24,8 +24,9 @@ describe('EntityManager', () => {
         it('save', async () => {
             const options = defaultOptions;
             const connection = await typeorm.createConnection(defaultOptions);
+            const manager = connection.createEntityManager();
             const user = new User(1, 'aspecto', 'io');
-            await connection.manager.save(user);
+            await manager.save(user);
             const typeOrmSpans = getTestSpans();
 
             expect(typeOrmSpans.length).toBe(1);
@@ -42,10 +43,11 @@ describe('EntityManager', () => {
         it('remove', async () => {
             const options = defaultOptions;
             const connection = await typeorm.createConnection(defaultOptions);
+            const manager = connection.createEntityManager();
 
             const user = new User(56, 'aspecto', 'io');
-            await connection.manager.save(user);
-            await connection.manager.remove(user);
+            await manager.save(user);
+            await manager.remove(user);
             const typeOrmSpans = getTestSpans();
 
             expect(typeOrmSpans.length).toBe(2);
@@ -64,10 +66,11 @@ describe('EntityManager', () => {
         it('update', async () => {
             const options = defaultOptions;
             const connection = await typeorm.createConnection(defaultOptions);
+            const manager = connection.createEntityManager();
             const user = new User(56, 'aspecto', 'io');
-            await connection.manager.save(user);
+            await manager.save(user);
             const partialEntity = { lastName: '.io' };
-            await connection.manager.update(User, 56, partialEntity);
+            await manager.update(User, 56, partialEntity);
             const typeOrmSpans = getTestSpans();
 
             expect(typeOrmSpans.length).toBe(2);
@@ -85,8 +88,9 @@ describe('EntityManager', () => {
 
         it('Sets failure status when function throws', async () => {
             const connection = await typeorm.createConnection(defaultOptions);
+            const manager = connection.createEntityManager();
             try {
-                await connection.manager.find({} as any);
+                await manager.find({} as any);
             } catch (err) {}
 
             const typeOrmSpans = getTestSpans();
@@ -108,10 +112,12 @@ describe('EntityManager', () => {
 
         it('appends matching connection details to span', async () => {
             const [sqlite1, sqlite2] = await typeorm.createConnections([defaultOptions, options2]);
+            const manager1 = sqlite1.createEntityManager();
+            const manager2 = sqlite2.createEntityManager();
 
             const user = new User(1, 'aspecto', 'io');
-            await sqlite1.manager.save(user);
-            await sqlite2.manager.remove(user);
+            await manager1.save(user);
+            await manager2.remove(user);
 
             const spans = getTestSpans();
             expect(spans.length).toBe(2);

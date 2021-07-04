@@ -24,9 +24,8 @@ describe('Repository', () => {
         await repo.insert(user);
         const [users, count] = await repo.findAndCount();
         expect(count).toBeGreaterThan(0);
-
         const spans = getTestSpans();
-        expect(spans.length).toEqual(1);
+        expect(spans.length).toEqual(2);
         const span = spans[0];
         const attributes = span.attributes;
         expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
