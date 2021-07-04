@@ -43,6 +43,7 @@ The instrumentations in this repo are:
 | [opentelemetry-instrumentation-amqplib](./packages/instrumentation-amqplib) | [`amqplib`](https://github.com/squaremo/amqp.node) (RabbitMQ) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-amqplib.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-amqplib) | 
 | [opentelemetry-instrumentation-express](./packages/instrumentation-express) | [`express`](https://github.com/expressjs/express) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-express.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-express) |
 |[opentelemetry-instrumentation-socket.io](./packages/instrumentation-socket.io) | [`socket.io`](https://github.com/socketio/socket.io) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-socket.io.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-socket.io)
+|[opentelemetry-instrumentation-node-cache](./packages/instrumentation-node-cache) | [`node-cache`](https://www.npmjs.com/package/node-cache) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-node-cache.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-node-cache)
 
 ## Resource Detectors
 | Detector | Synchronicity | NPM |

@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.22.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-typeorm@0.22.0...opentelemetry-instrumentation-typeorm@0.22.1) (2021-07-04)
+
+
+### Bug Fixes
+
+* entity manager not instrumented ([#145](https://github.com/aspecto-io/opentelemetry-ext-js/issues/145)) ([19f6c70](https://github.com/aspecto-io/opentelemetry-ext-js/commit/19f6c7079abdc9519edfe79922fb26165bacaecd))
+
+
+
+
+
 # [0.22.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-typeorm@0.21.0...opentelemetry-instrumentation-typeorm@0.22.0) (2021-06-28)
 
 **Note:** Version bump only for package opentelemetry-instrumentation-typeorm
