@@ -7,8 +7,13 @@ export interface NodeCacheRequestInfo {
     args: any[];
 }
 
+export interface NodeCacheResponseInfo {
+    operation: string;
+    response: any;
+}
+
 export interface NodeCacheInstrumentationConfig extends InstrumentationConfig {
     requestHook?: (span: Span, requestInfo: NodeCacheRequestInfo) => void;
-    responseHook?: (span: Span, response: any) => void;
+    responseHook?: (span: Span, responseInfo: NodeCacheResponseInfo) => void;
     requireParentSpan?: boolean;
 }

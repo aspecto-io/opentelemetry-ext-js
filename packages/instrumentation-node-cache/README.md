@@ -35,7 +35,7 @@ node-cache instrumentation has few options available to choose from. You can set
 | Option | Type  | Description |
 | --- | --- | --- |
 | `requestHook` | function | Hook for adding custom attributes before express start handling the request. Receives params: `span, { moduleVersion, operation, args }` |
-| `responseHook` | function | Hook called before response is returned, which allows to add custom attributes to span.<br>Function receive params: `span`,<br>`result` (object) |
+| `responseHook` | function | Hook called before response is returned, which allows to add custom attributes to span.<br>Function receive params: `span, { operation, response }` |
 | `requireParentSpan` | `boolean` | Set to true if you only want to trace operation which has parent spans |
 
 See the [tests](./test/node-cache.spec.ts) for config usage example.

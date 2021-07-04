@@ -6,7 +6,7 @@ import { context, ROOT_CONTEXT } from '@opentelemetry/api';
 
 const DB_RESPONSE = 'db.response';
 const instrumentation = new NodeCacheInstrumentation({
-    responseHook: (span, response) =>
+    responseHook: (span, { response }) =>
         span.setAttribute(DB_RESPONSE, typeof response === 'object' ? JSON.stringify(response) : response),
 });
 instrumentation.enable();

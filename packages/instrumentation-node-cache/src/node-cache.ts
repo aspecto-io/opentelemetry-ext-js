@@ -110,7 +110,7 @@ export class NodeCacheInstrumentation extends InstrumentationBase<NodeCacheType>
                     );
                     if (self._config.responseHook) {
                         try {
-                            self._config.responseHook(span, response);
+                            self._config.responseHook(span, { operation: opName, response });
                         } catch (err) {
                             diag.error('node-cache instrumentation: responseHook error', err);
                         }
