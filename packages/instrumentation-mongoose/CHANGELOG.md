@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.23.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-mongoose@0.22.1...opentelemetry-instrumentation-mongoose@0.23.0) (2021-07-05)
+
+
+### Features
+
+* upgrade to opentelemetry@0.23.0 ([#149](https://github.com/aspecto-io/opentelemetry-ext-js/issues/149)) ([c56258e](https://github.com/aspecto-io/opentelemetry-ext-js/commit/c56258eba8885fa7ac9a2d26e4860c30f33fe513))
+* **instrumentation-mongoose:** capture projection of mongoose queries ([#148](https://github.com/aspecto-io/opentelemetry-ext-js/issues/148)) ([514dfb6](https://github.com/aspecto-io/opentelemetry-ext-js/commit/514dfb6ffd3d16954bbd3bd37c875839ca813648))
+
+
+
+
+
 ## [0.22.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-mongoose@0.22.0...opentelemetry-instrumentation-mongoose@0.22.1) (2021-07-04)
 
 

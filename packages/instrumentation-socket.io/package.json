@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-socket.io",
-    "version": "0.22.1",
+    "version": "0.23.0",
     "description": "open telemetry instrumentation for the `socket.io` package",
     "keywords": [
         "socket.io",
@@ -56,7 +56,7 @@
         "expect": "^26.6.2",
         "mocha": "^8.4.0",
         "opentelemetry-instrumentation-mocha": "0.0.1-rc.4",
-        "opentelemetry-instrumentation-testing-utils": "^0.22.1",
+        "opentelemetry-instrumentation-testing-utils": "^0.23.0",
         "socket.io": "^4.1.2",
         "socket.io-client": "^4.1.1",
         "test-all-versions": "^5.0.1",
