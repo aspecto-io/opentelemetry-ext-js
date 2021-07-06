@@ -14,6 +14,7 @@ const branchNameFromEnv = (): string => {
         'GIT_BRANCH_NAME',
         'VCS_BRANCH_NAME', // attribute name syntax
         'GITHUB_HEAD_REF', // CI: GitHub Actions. the name is misleading, this is actually branch name and not the ref
+        'CIRCLE_BRANCH',
     ];
 
     for (const envVar of possibleEnvVars) {
