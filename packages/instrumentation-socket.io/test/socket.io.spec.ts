@@ -115,7 +115,7 @@ describe('SocketIoInstrumentation', () => {
                                         expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual(
                                             'socket.io'
                                         );
-                                        expect(span.attributes['payload']).toEqual([data]);
+                                        expect(span.attributes['payload']).toEqual(JSON.stringify([data]));
                                         done();
                                     } catch (e) {
                                         done(e);
