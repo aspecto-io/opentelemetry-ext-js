@@ -1,4 +1,4 @@
-import { strict as assert} from 'assert';
+import { strict as assert } from 'assert';
 import http from 'http';
 import { AddressInfo } from 'net';
 
@@ -31,7 +31,6 @@ export const createServerInstance = (server?: http.Server) => {
     }
     return new Server(server);
 };
-
 
 export const getSocketIoSpans = (): ReadableSpan[] =>
     getTestSpans().filter((s) => s.attributes[SemanticAttributes.MESSAGING_SYSTEM] === 'socket.io');

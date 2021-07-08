@@ -112,7 +112,9 @@ describe('SocketIoInstrumentation', () => {
                                 (span) => {
                                     try {
                                         expect(span.kind).toEqual(SpanKind.CONSUMER);
-                                        expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
+                                        expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual(
+                                            'socket.io'
+                                        );
                                         expect(span.attributes['payload']).toEqual([data]);
                                         done();
                                     } catch (e) {
@@ -165,7 +167,9 @@ describe('SocketIoInstrumentation', () => {
                                 (span) => {
                                     try {
                                         expect(span.kind).toEqual(SpanKind.CONSUMER);
-                                        expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
+                                        expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual(
+                                            'socket.io'
+                                        );
                                         done();
                                     } catch (e) {
                                         done(e);
@@ -250,7 +254,9 @@ describe('SocketIoInstrumentation', () => {
                                 (span) => {
                                     try {
                                         expect(span.kind).toEqual(SpanKind.CONSUMER);
-                                        expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
+                                        expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual(
+                                            'socket.io'
+                                        );
                                         expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual(
                                             '/testing'
                                         );
