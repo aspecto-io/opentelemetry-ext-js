@@ -123,10 +123,14 @@ describe('SocketIoInstrumentation', () => {
                             expectSpan(
                                 'test_reply receive',
                                 (span) => {
-                                    expect(span.kind).toEqual(SpanKind.CONSUMER);
-                                    expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
-                                    expect(span.attributes['payload']).toEqual(JSON.stringify([data]));
-                                    done();
+                                    try {
+                                        expect(span.kind).toEqual(SpanKind.CONSUMER);
+                                        expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
+                                        expect(span.attributes['payload']).toEqual([data]);
+                                        done();
+                                    } catch (e) {
+                                        done(e);
+                                    }
                                 },
                                 3
                             );
@@ -172,9 +176,13 @@ describe('SocketIoInstrumentation', () => {
                             expectSpan(
                                 'test_reply receive',
                                 (span) => {
-                                    expect(span.kind).toEqual(SpanKind.CONSUMER);
-                                    expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
-                                    done();
+                                    try {
+                                        expect(span.kind).toEqual(SpanKind.CONSUMER);
+                                        expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
+                                        done();
+                                    } catch (e) {
+                                        done(e);
+                                    }
                                 },
                                 3
                             );
@@ -253,12 +261,16 @@ describe('SocketIoInstrumentation', () => {
                             expectSpan(
                                 '/testing test_reply receive',
                                 (span) => {
-                                    expect(span.kind).toEqual(SpanKind.CONSUMER);
-                                    expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
-                                    expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual(
-                                        '/testing'
-                                    );
-                                    done();
+                                    try {
+                                        expect(span.kind).toEqual(SpanKind.CONSUMER);
+                                        expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
+                                        expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual(
+                                            '/testing'
+                                        );
+                                        done();
+                                    } catch (e) {
+                                        done(e);
+                                    }
                                 },
                                 2
                             );
@@ -278,9 +290,13 @@ describe('SocketIoInstrumentation', () => {
                     client.close();
                     sio.close();
                     expectSpan(`/[${socket.id}] send`, (span) => {
-                        expect(span.kind).toEqual(SpanKind.PRODUCER);
-                        expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
-                        done();
+                        try {
+                            expect(span.kind).toEqual(SpanKind.PRODUCER);
+                            expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
+                            done();
+                        } catch (e) {
+                            done(e);
+                        }
                     });
                 });
             });
