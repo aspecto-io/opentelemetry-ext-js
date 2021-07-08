@@ -3,14 +3,12 @@ import { ReadableSpan } from '@opentelemetry/tracing';
 import { SocketIoInstrumentation, SocketIoInstrumentationAttributes, SocketIoInstrumentationConfig } from '../src';
 import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
-import { AddressInfo } from 'net';
 import expect from 'expect';
-import http from 'http';
 import 'mocha';
 
 const instrumentation = new SocketIoInstrumentation();
 import { Server, Socket } from 'socket.io';
-import { io } from 'socket.io-client';
+import { createServer, createServerInstance, io } from './utils';
 
 describe('SocketIoInstrumentation', () => {
     const getSocketIoSpans = (): ReadableSpan[] =>
@@ -32,18 +30,9 @@ describe('SocketIoInstrumentation', () => {
         callback(span);
     };
 
-    const createServer = (callback: (server: Server, port: number) => void) => {
-        const server = http.createServer();
-        const sio = new Server(server);
-        server.listen(0, () => {
-            const port = (server.address() as AddressInfo).port;
-            callback(sio, port);
-        });
-    };
-
     describe('Server', () => {
         it('emit is instrumented', () => {
-            const io = new Server();
+            const io = createServerInstance();
             io.emit('test');
             expectSpan('/ send', (span) => {
                 expect(span.kind).toEqual(SpanKind.PRODUCER);
@@ -59,7 +48,7 @@ describe('SocketIoInstrumentation', () => {
                 traceReserved: true,
             };
             instrumentation.setConfig(config);
-            const io = new Server();
+            const io = createServerInstance();
             try {
                 io.emit('connect');
             } catch (error) {}
@@ -70,7 +59,7 @@ describe('SocketIoInstrumentation', () => {
         });
 
         it('send is instrumented', () => {
-            const io = new Server();
+            const io = createServerInstance();
             io.send('test');
             expectSpan('/ send', (span) => {
                 expect(span.kind).toEqual(SpanKind.PRODUCER);
@@ -90,7 +79,7 @@ describe('SocketIoInstrumentation', () => {
             };
             instrumentation.setConfig(config);
 
-            const io = new Server();
+            const io = createServerInstance();
             io.emit('test', 1234);
             expectSpan('/ send', (span) => {
                 expect(span.attributes['payload']).toEqual(JSON.stringify([1234]));
@@ -104,7 +93,7 @@ describe('SocketIoInstrumentation', () => {
                 },
             };
             instrumentation.setConfig(config);
-            const io = new Server();
+            const io = createServerInstance();
             io.emit('test');
             const spans = getSocketIoSpans();
             expect(spans.length).toBe(1);
@@ -197,7 +186,7 @@ describe('SocketIoInstrumentation', () => {
 
         it('broadcast is instrumented', () => {
             const roomName = 'room';
-            const sio = new Server();
+            const sio = createServerInstance();
             sio.to(roomName).emit('broadcast', '1234');
             expectSpan('/[room] send', (span) => {
                 expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual('/');
@@ -206,7 +195,7 @@ describe('SocketIoInstrumentation', () => {
         });
 
         it('broadcast to multiple rooms', () => {
-            const sio = new Server();
+            const sio = createServerInstance();
             sio.to('room1').to('room2').emit('broadcast', '1234');
             expectSpan('/[room1,room2] send', (span) => {
                 expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual('/');
@@ -217,7 +206,7 @@ describe('SocketIoInstrumentation', () => {
 
     describe('Namespace', () => {
         it('emit is instrumented', () => {
-            const io = new Server();
+            const io = createServerInstance();
             const namespace = io.of('/testing');
             namespace.emit('namespace');
             expectSpan('/testing send', (span) => {
@@ -228,7 +217,7 @@ describe('SocketIoInstrumentation', () => {
 
         it('broadcast is instrumented', () => {
             const roomName = 'room';
-            const io = new Server();
+            const io = createServerInstance();
             const namespace = io.of('/testing');
             namespace.to(roomName).emit('broadcast', '1234');
             expectSpan('/testing[room] send', (span) => {
@@ -239,7 +228,7 @@ describe('SocketIoInstrumentation', () => {
         });
 
         it('broadcast to multiple rooms', () => {
-            const io = new Server();
+            const io = createServerInstance();
             const namespace = io.of('/testing');
             namespace.to('room1').to('room2').emit('broadcast', '1234');
             expectSpan('/testing[room1,room2] send', (span) => {
