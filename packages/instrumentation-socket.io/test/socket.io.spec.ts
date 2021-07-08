@@ -112,16 +112,16 @@ describe('SocketIoInstrumentation', () => {
             };
             createServer((sio, port) => {
                 const client = io(`http://localhost:${port}`);
-                client.on('ping', () => client.emit('pong', data));
+                client.on('test', () => client.emit('test_reply', data));
                 sio.on('connection', (socket: Socket) => {
-                    socket.emit('ping');
-                    socket.on('pong', (data) => {
+                    socket.emit('test');
+                    socket.on('test_reply', (data) => {
                         client.close();
                         sio.close();
                         //trace is created after the listener method is completed
                         setTimeout(() => {
                             expectSpan(
-                                'pong receive',
+                                'test_reply receive',
                                 (span) => {
                                     expect(span.kind).toEqual(SpanKind.CONSUMER);
                                     expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
@@ -161,16 +161,16 @@ describe('SocketIoInstrumentation', () => {
         it('on is instrumented', (done) => {
             createServer((sio, port) => {
                 const client = io(`http://localhost:${port}`);
-                client.on('ping', () => client.emit('pong'));
+                client.on('test', () => client.emit('test_reply'));
                 sio.on('connection', (socket: Socket) => {
-                    socket.emit('ping');
-                    socket.on('pong', () => {
+                    socket.emit('test');
+                    socket.on('test_reply', () => {
                         client.close();
                         sio.close();
                         //trace is created after the listener method is completed
                         setTimeout(() => {
                             expectSpan(
-                                'pong receive',
+                                'test_reply receive',
                                 (span) => {
                                     expect(span.kind).toEqual(SpanKind.CONSUMER);
                                     expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
@@ -242,16 +242,16 @@ describe('SocketIoInstrumentation', () => {
             createServer((sio, port) => {
                 const namespace = sio.of('/testing');
                 const client = io(`http://localhost:${port}/testing`);
-                client.on('ping', () => client.emit('pong'));
+                client.on('test', () => client.emit('test_reply'));
                 namespace.on('connection', (socket: Socket) => {
-                    socket.emit('ping');
-                    socket.on('pong', () => {
+                    socket.emit('test');
+                    socket.on('test_reply', () => {
                         client.close();
                         sio.close();
                         //trace is created after the listener method is completed
                         setTimeout(() => {
                             expectSpan(
-                                '/testing pong receive',
+                                '/testing test_reply receive',
                                 (span) => {
                                     expect(span.kind).toEqual(SpanKind.CONSUMER);
                                     expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
@@ -274,7 +274,7 @@ describe('SocketIoInstrumentation', () => {
             createServer((sio, port) => {
                 const client = io(`http://localhost:${port}`);
                 sio.on('connection', (socket: Socket) => {
-                    socket.emit('ping');
+                    socket.emit('test');
                     client.close();
                     sio.close();
                     expectSpan(`/[${socket.id}] send`, (span) => {
