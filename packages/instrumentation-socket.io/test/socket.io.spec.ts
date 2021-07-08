@@ -1,19 +1,14 @@
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { ReadableSpan } from '@opentelemetry/tracing';
 import { SocketIoInstrumentation, SocketIoInstrumentationAttributes, SocketIoInstrumentationConfig } from '../src';
 import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
-import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 import expect from 'expect';
 import 'mocha';
 
 const instrumentation = new SocketIoInstrumentation();
 import { Server, Socket } from 'socket.io';
-import { createServer, createServerInstance, io } from './utils';
+import { createServer, createServerInstance, io, getSocketIoSpans, expectSpan } from './utils';
 
 describe('SocketIoInstrumentation', () => {
-    const getSocketIoSpans = (): ReadableSpan[] =>
-        getTestSpans().filter((s) => s.attributes[SemanticAttributes.MESSAGING_SYSTEM] === 'socket.io');
-
     beforeEach(() => {
         instrumentation.enable();
     });
@@ -21,14 +16,6 @@ describe('SocketIoInstrumentation', () => {
     afterEach(() => {
         instrumentation.disable();
     });
-
-    const expectSpan = (spanName: string, callback?: (span: ReadableSpan) => void, spanCount?: number) => {
-        const spans = getSocketIoSpans();
-        expect(spans.length).toEqual(spanCount || 1);
-        const span = spans.find((s) => s.name === spanName);
-        expect(span).toBeDefined();
-        callback(span);
-    };
 
     describe('Server', () => {
         it('emit is instrumented', () => {
