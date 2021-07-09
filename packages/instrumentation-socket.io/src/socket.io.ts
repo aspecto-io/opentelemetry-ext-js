@@ -22,6 +22,12 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
     protected override _config!: SocketIoInstrumentationConfig;
 
     constructor(config: SocketIoInstrumentationConfig = {}) {
+        if (!Array.isArray(config.emitIgnoreEventList)) {
+            config.emitIgnoreEventList = [];
+        }
+        if (!Array.isArray(config.onIgnoreEventList)) {
+            config.onIgnoreEventList = [];
+        }
         super('opentelemetry-instrumentation-socket.io', VERSION, Object.assign({}, config));
         if (config.filterHttpTransport) {
             const httpInstrumentationConfig =
@@ -137,6 +143,9 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                 if (!self._config.traceReserved && reservedEvents.includes(ev)) {
                     return original.apply(this, arguments);
                 }
+                if (Array.isArray(self._config.onIgnoreEventList) && self._config.onIgnoreEventList.includes(ev)) {
+                    return original.apply(this, arguments);
+                }
                 const wrappedListener = function (...args: any[]) {
                     const eventName = ev;
                     const defaultNamespace = '/';
@@ -204,6 +213,9 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
         return (original: Function) => {
             return function (ev: any, ...args: any[]) {
                 if (!self._config.traceReserved && reservedEvents.includes(ev)) {
+                    return original.apply(this, arguments);
+                }
+                if (Array.isArray(self._config.emitIgnoreEventList) && self._config.emitIgnoreEventList.includes(ev)) {
                     return original.apply(this, arguments);
                 }
                 const messagingSystem = 'socket.io';
