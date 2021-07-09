@@ -16,6 +16,8 @@ const version = require('../node_modules/socket.io/package.json').version;
 
 assert.equal(typeof version, 'string');
 
+export const isV2 = version && /^2\./.test(version);
+
 export const createServer = (callback: (server: Server, port: number) => void) => {
     const server = http.createServer();
     const sio = createServerInstance(server);
@@ -26,7 +28,7 @@ export const createServer = (callback: (server: Server, port: number) => void) =
 };
 
 export const createServerInstance = (server?: http.Server) => {
-    if (version && /^2\./.test(version)) {
+    if (isV2) {
         return (socketIo as any)(server);
     }
     return new Server(server);
