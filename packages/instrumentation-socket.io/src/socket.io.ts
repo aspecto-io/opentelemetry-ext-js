@@ -16,7 +16,14 @@ import { SocketIoInstrumentationConfig, Io, SocketIoInstrumentationAttributes, d
 import { VERSION } from './version';
 import isPromise from 'is-promise';
 
-const reservedEvents = ['connect', 'connect_error', 'disconnect', 'disconnecting', 'newListener', 'removeListener'];
+const reservedEvents = [
+    'connect',
+    'connect_error',
+    'disconnect',
+    'disconnecting',
+    'newListener',
+    'removeListener',
+];
 
 export class SocketIoInstrumentation extends InstrumentationBase<Io> {
     protected override _config!: SocketIoInstrumentationConfig;
@@ -49,7 +56,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                 if (moduleExports === undefined || moduleExports === null) {
                     return moduleExports;
                 }
-                diag.debug(`socket.io instrumentation: applying patch to socket.io Socket`);
+                diag.debug(`socket.io instrumentation: applying patch to socket.io@${moduleVersion} Socket`);
                 if (isWrapped(moduleExports?.Socket?.prototype?.on)) {
                     this._unwrap(moduleExports.Socket.prototype, 'on');
                 }
@@ -78,7 +85,9 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                 if (moduleExports === undefined || moduleExports === null) {
                     return moduleExports;
                 }
-                diag.debug(`socket.io instrumentation: applying patch to socket.io StrictEventEmitter`);
+                diag.debug(
+                    `socket.io instrumentation: applying patch to socket.io@${moduleVersion} StrictEventEmitter`
+                );
                 if (isWrapped(moduleExports?.BroadcastOperator?.prototype?.emit)) {
                     this._unwrap(moduleExports.BroadcastOperator.prototype, 'emit');
                 }
@@ -99,7 +108,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                 if (moduleExports === undefined || moduleExports === null) {
                     return moduleExports;
                 }
-                diag.debug(`socket.io instrumentation: applying patch to socket.io Namespace`);
+                diag.debug(`socket.io instrumentation: applying patch to socket.io@${moduleVersion} Namespace`);
                 if (isWrapped(moduleExports?.Namespace?.prototype?.emit)) {
                     this._unwrap(moduleExports.Namespace.prototype, 'emit');
                 }
@@ -112,28 +121,31 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                 }
             }
         );
-        return new InstrumentationNodeModuleDefinition<Io>(
-            'socket.io',
-            ['>=3'],
-            (moduleExports, moduleVersion) => {
-                if (moduleExports === undefined || moduleExports === null) {
+
+        return [
+            new InstrumentationNodeModuleDefinition<Io>(
+                'socket.io',
+                ['>=3'],
+                (moduleExports, moduleVersion) => {
+                    if (moduleExports === undefined || moduleExports === null) {
+                        return moduleExports;
+                    }
+                    diag.debug(`socket.io instrumentation: applying patch to socket.io@${moduleVersion} Server`);
+                    if (isWrapped(moduleExports?.Server?.prototype?.on)) {
+                        this._unwrap(moduleExports.Server.prototype, 'on');
+                    }
+                    this._wrap(moduleExports.Server.prototype, 'on', this._patchOn(moduleVersion));
                     return moduleExports;
-                }
-                diag.debug(`socket.io instrumentation: applying patch to socket.io Server`);
-                if (isWrapped(moduleExports?.Server?.prototype?.on)) {
-                    this._unwrap(moduleExports.Server.prototype, 'on');
-                }
-                this._wrap(moduleExports.Server.prototype, 'on', this._patchOn(moduleVersion));
-                return moduleExports;
-            },
-            (moduleExports, moduleVersion) => {
-                if (isWrapped(moduleExports?.Server?.prototype?.on)) {
-                    this._unwrap(moduleExports.Server.prototype, 'on');
-                }
-                return moduleExports;
-            },
-            [broadcastOperatorInstrumentation, namespaceInstrumentation, socketInstrumentation]
-        );
+                },
+                (moduleExports, moduleVersion) => {
+                    if (isWrapped(moduleExports?.Server?.prototype?.on)) {
+                        this._unwrap(moduleExports.Server.prototype, 'on');
+                    }
+                    return moduleExports;
+                },
+                [broadcastOperatorInstrumentation, namespaceInstrumentation, socketInstrumentation]
+            ),
+        ];
     }
 
     private _patchOn(moduleVersion: string) {
