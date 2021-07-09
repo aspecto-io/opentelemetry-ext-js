@@ -310,15 +310,19 @@ describe('SocketIoInstrumentation', () => {
                     client.close();
                     sio.close();
                     setTimeout(() => {
-                        expectSpan(`/[${socket.id}] send`, (span) => {
-                            try {
-                                expect(span.kind).toEqual(SpanKind.PRODUCER);
-                                expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
-                                done();
-                            } catch (e) {
-                                done(e);
-                            }
-                        }, 2);
+                        expectSpan(
+                            `/[${socket.id}] send`,
+                            (span) => {
+                                try {
+                                    expect(span.kind).toEqual(SpanKind.PRODUCER);
+                                    expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
+                                    done();
+                                } catch (e) {
+                                    done(e);
+                                }
+                            },
+                            2
+                        );
                     });
                 });
             });
