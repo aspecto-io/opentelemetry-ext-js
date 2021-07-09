@@ -6,7 +6,7 @@ import 'mocha';
 
 const instrumentation = new SocketIoInstrumentation();
 import { Server, Socket } from 'socket.io';
-import { createServer, createServerInstance, io, getSocketIoSpans, expectSpan } from './utils';
+import { createServer, createServerInstance, io, getSocketIoSpans, expectSpan, isV2 } from './utils';
 
 describe('SocketIoInstrumentation', () => {
     beforeEach(() => {
@@ -39,6 +39,13 @@ describe('SocketIoInstrumentation', () => {
             try {
                 io.emit('connect');
             } catch (error) {}
+            if (isV2) {
+                // only for v2: connect do not throw, but are just ignored
+                return expectSpan('/ send', (span) => {
+                    expect(span.kind).toEqual(SpanKind.PRODUCER);
+                    expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
+                });
+            }
             expectSpan('/ send', (span) => {
                 expect(span.status.code).toEqual(SpanStatusCode.ERROR);
                 expect(span.status.message).toEqual('"connect" is a reserved event name');
@@ -91,6 +98,8 @@ describe('SocketIoInstrumentation', () => {
                 onHook: (span, hookInfo) => {
                     span.setAttribute('payload', JSON.stringify(hookInfo.payload));
                 },
+                // only for v2: v2 emits connection on the client side, newer versions do not
+                emitIgnoreEventList: ['connection'],
             };
             instrumentation.setConfig(config);
             const data = {
@@ -132,6 +141,8 @@ describe('SocketIoInstrumentation', () => {
         it('traceReserved:true on is instrumented', (done) => {
             const config: SocketIoInstrumentationConfig = {
                 traceReserved: true,
+                // only for v2: v2 emits [dis]connect[ing] events which later versions do not
+                emitIgnoreEventList: ['disconnect', 'disconnecting', 'connection', 'connect'],
             };
             instrumentation.setConfig(config);
             createServer((sio, port) => {
@@ -152,6 +163,11 @@ describe('SocketIoInstrumentation', () => {
         });
 
         it('on is instrumented', (done) => {
+            const config: SocketIoInstrumentationConfig = {
+                // only for v2: v2 emits connection events which later versions do not
+                emitIgnoreEventList: ['connection'],
+            };
+            instrumentation.setConfig(config);
             createServer((sio, port) => {
                 const client = io(`http://localhost:${port}`);
                 client.on('test', () => client.emit('test_reply'));
@@ -238,6 +254,11 @@ describe('SocketIoInstrumentation', () => {
         });
 
         it('on is instrumented', (done) => {
+            const config: SocketIoInstrumentationConfig = {
+                // only for v2: v2 emits connection events which later versions do not
+                emitIgnoreEventList: ['connection'],
+            };
+            instrumentation.setConfig(config);
             createServer((sio, port) => {
                 const namespace = sio.of('/testing');
                 const client = io(`http://localhost:${port}/testing`);
@@ -276,6 +297,11 @@ describe('SocketIoInstrumentation', () => {
 
     describe('Socket', () => {
         it('emit is instrumented', (done) => {
+            const config: SocketIoInstrumentationConfig = {
+                // only for v2: v2 emits connection events which later versions do not
+                emitIgnoreEventList: ['connection'],
+            };
+            instrumentation.setConfig(config);
             createServer((sio, port) => {
                 const client = io(`http://localhost:${port}`);
                 sio.on('connection', (socket: Socket) => {
