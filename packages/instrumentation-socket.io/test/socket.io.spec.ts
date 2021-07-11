@@ -1,21 +1,14 @@
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { ReadableSpan } from '@opentelemetry/tracing';
 import { SocketIoInstrumentation, SocketIoInstrumentationAttributes, SocketIoInstrumentationConfig } from '../src';
 import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
-import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
-import { AddressInfo } from 'net';
 import expect from 'expect';
-import http from 'http';
 import 'mocha';
 
 const instrumentation = new SocketIoInstrumentation();
 import { Server, Socket } from 'socket.io';
-import { io } from 'socket.io-client';
+import { createServer, createServerInstance, io, getSocketIoSpans, expectSpan } from './utils';
 
 describe('SocketIoInstrumentation', () => {
-    const getSocketIoSpans = (): ReadableSpan[] =>
-        getTestSpans().filter((s) => s.attributes[SemanticAttributes.MESSAGING_SYSTEM] === 'socket.io');
-
     beforeEach(() => {
         instrumentation.enable();
     });
@@ -24,26 +17,9 @@ describe('SocketIoInstrumentation', () => {
         instrumentation.disable();
     });
 
-    const expectSpan = (spanName: string, callback?: (span: ReadableSpan) => void, spanCount?: number) => {
-        const spans = getSocketIoSpans();
-        expect(spans.length).toEqual(spanCount || 1);
-        const span = spans.find((s) => s.name === spanName);
-        expect(span).toBeDefined();
-        callback(span);
-    };
-
-    const createServer = (callback: (server: Server, port: number) => void) => {
-        const server = http.createServer();
-        const sio = new Server(server);
-        server.listen(0, () => {
-            const port = (server.address() as AddressInfo).port;
-            callback(sio, port);
-        });
-    };
-
     describe('Server', () => {
         it('emit is instrumented', () => {
-            const io = new Server();
+            const io = createServerInstance();
             io.emit('test');
             expectSpan('/ send', (span) => {
                 expect(span.kind).toEqual(SpanKind.PRODUCER);
@@ -59,7 +35,7 @@ describe('SocketIoInstrumentation', () => {
                 traceReserved: true,
             };
             instrumentation.setConfig(config);
-            const io = new Server();
+            const io = createServerInstance();
             try {
                 io.emit('connect');
             } catch (error) {}
@@ -70,7 +46,7 @@ describe('SocketIoInstrumentation', () => {
         });
 
         it('send is instrumented', () => {
-            const io = new Server();
+            const io = createServerInstance();
             io.send('test');
             expectSpan('/ send', (span) => {
                 expect(span.kind).toEqual(SpanKind.PRODUCER);
@@ -90,7 +66,7 @@ describe('SocketIoInstrumentation', () => {
             };
             instrumentation.setConfig(config);
 
-            const io = new Server();
+            const io = createServerInstance();
             io.emit('test', 1234);
             expectSpan('/ send', (span) => {
                 expect(span.attributes['payload']).toEqual(JSON.stringify([1234]));
@@ -104,7 +80,7 @@ describe('SocketIoInstrumentation', () => {
                 },
             };
             instrumentation.setConfig(config);
-            const io = new Server();
+            const io = createServerInstance();
             io.emit('test');
             const spans = getSocketIoSpans();
             expect(spans.length).toBe(1);
@@ -123,21 +99,27 @@ describe('SocketIoInstrumentation', () => {
             };
             createServer((sio, port) => {
                 const client = io(`http://localhost:${port}`);
-                client.on('ping', () => client.emit('pong', data));
+                client.on('test', () => client.emit('test_reply', data));
                 sio.on('connection', (socket: Socket) => {
-                    socket.emit('ping');
-                    socket.on('pong', (data) => {
+                    socket.emit('test');
+                    socket.on('test_reply', (data) => {
                         client.close();
                         sio.close();
                         //trace is created after the listener method is completed
                         setTimeout(() => {
                             expectSpan(
-                                'pong receive',
+                                'test_reply receive',
                                 (span) => {
-                                    expect(span.kind).toEqual(SpanKind.CONSUMER);
-                                    expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
-                                    expect(span.attributes['payload']).toEqual(JSON.stringify([data]));
-                                    done();
+                                    try {
+                                        expect(span.kind).toEqual(SpanKind.CONSUMER);
+                                        expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual(
+                                            'socket.io'
+                                        );
+                                        expect(span.attributes['payload']).toEqual(JSON.stringify([data]));
+                                        done();
+                                    } catch (e) {
+                                        done(e);
+                                    }
                                 },
                                 3
                             );
@@ -172,20 +154,26 @@ describe('SocketIoInstrumentation', () => {
         it('on is instrumented', (done) => {
             createServer((sio, port) => {
                 const client = io(`http://localhost:${port}`);
-                client.on('ping', () => client.emit('pong'));
+                client.on('test', () => client.emit('test_reply'));
                 sio.on('connection', (socket: Socket) => {
-                    socket.emit('ping');
-                    socket.on('pong', () => {
+                    socket.emit('test');
+                    socket.on('test_reply', () => {
                         client.close();
                         sio.close();
                         //trace is created after the listener method is completed
                         setTimeout(() => {
                             expectSpan(
-                                'pong receive',
+                                'test_reply receive',
                                 (span) => {
-                                    expect(span.kind).toEqual(SpanKind.CONSUMER);
-                                    expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
-                                    done();
+                                    try {
+                                        expect(span.kind).toEqual(SpanKind.CONSUMER);
+                                        expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual(
+                                            'socket.io'
+                                        );
+                                        done();
+                                    } catch (e) {
+                                        done(e);
+                                    }
                                 },
                                 3
                             );
@@ -197,7 +185,7 @@ describe('SocketIoInstrumentation', () => {
 
         it('broadcast is instrumented', () => {
             const roomName = 'room';
-            const sio = new Server();
+            const sio = createServerInstance();
             sio.to(roomName).emit('broadcast', '1234');
             expectSpan('/[room] send', (span) => {
                 expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual('/');
@@ -206,7 +194,7 @@ describe('SocketIoInstrumentation', () => {
         });
 
         it('broadcast to multiple rooms', () => {
-            const sio = new Server();
+            const sio = createServerInstance();
             sio.to('room1').to('room2').emit('broadcast', '1234');
             expectSpan('/[room1,room2] send', (span) => {
                 expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual('/');
@@ -217,7 +205,7 @@ describe('SocketIoInstrumentation', () => {
 
     describe('Namespace', () => {
         it('emit is instrumented', () => {
-            const io = new Server();
+            const io = createServerInstance();
             const namespace = io.of('/testing');
             namespace.emit('namespace');
             expectSpan('/testing send', (span) => {
@@ -228,7 +216,7 @@ describe('SocketIoInstrumentation', () => {
 
         it('broadcast is instrumented', () => {
             const roomName = 'room';
-            const io = new Server();
+            const io = createServerInstance();
             const namespace = io.of('/testing');
             namespace.to(roomName).emit('broadcast', '1234');
             expectSpan('/testing[room] send', (span) => {
@@ -239,7 +227,7 @@ describe('SocketIoInstrumentation', () => {
         });
 
         it('broadcast to multiple rooms', () => {
-            const io = new Server();
+            const io = createServerInstance();
             const namespace = io.of('/testing');
             namespace.to('room1').to('room2').emit('broadcast', '1234');
             expectSpan('/testing[room1,room2] send', (span) => {
@@ -253,23 +241,29 @@ describe('SocketIoInstrumentation', () => {
             createServer((sio, port) => {
                 const namespace = sio.of('/testing');
                 const client = io(`http://localhost:${port}/testing`);
-                client.on('ping', () => client.emit('pong'));
+                client.on('test', () => client.emit('test_reply'));
                 namespace.on('connection', (socket: Socket) => {
-                    socket.emit('ping');
-                    socket.on('pong', () => {
+                    socket.emit('test');
+                    socket.on('test_reply', () => {
                         client.close();
                         sio.close();
                         //trace is created after the listener method is completed
                         setTimeout(() => {
                             expectSpan(
-                                '/testing pong receive',
+                                '/testing test_reply receive',
                                 (span) => {
-                                    expect(span.kind).toEqual(SpanKind.CONSUMER);
-                                    expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
-                                    expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual(
-                                        '/testing'
-                                    );
-                                    done();
+                                    try {
+                                        expect(span.kind).toEqual(SpanKind.CONSUMER);
+                                        expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual(
+                                            'socket.io'
+                                        );
+                                        expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual(
+                                            '/testing'
+                                        );
+                                        done();
+                                    } catch (e) {
+                                        done(e);
+                                    }
                                 },
                                 2
                             );
@@ -285,13 +279,17 @@ describe('SocketIoInstrumentation', () => {
             createServer((sio, port) => {
                 const client = io(`http://localhost:${port}`);
                 sio.on('connection', (socket: Socket) => {
-                    socket.emit('ping');
+                    socket.emit('test');
                     client.close();
                     sio.close();
                     expectSpan(`/[${socket.id}] send`, (span) => {
-                        expect(span.kind).toEqual(SpanKind.PRODUCER);
-                        expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
-                        done();
+                        try {
+                            expect(span.kind).toEqual(SpanKind.PRODUCER);
+                            expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
+                            done();
+                        } catch (e) {
+                            done(e);
+                        }
                     });
                 });
             });
