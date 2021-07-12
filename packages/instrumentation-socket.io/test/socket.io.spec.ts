@@ -304,7 +304,10 @@ describe('SocketIoInstrumentation', () => {
             };
             instrumentation.setConfig(config);
             createServer((sio, port) => {
-                const client = io(`http://localhost:${port}`);
+                const client = io(`http://localhost:${port}`, {
+                    // websockets transport disconnects without the delay of the polling interval
+                    transports: ['websocket'],
+                });
                 sio.on('connection', (socket: Socket) => {
                     socket.emit('test');
                     client.close();
