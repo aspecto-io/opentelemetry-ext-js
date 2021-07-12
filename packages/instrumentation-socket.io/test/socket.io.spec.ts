@@ -308,14 +308,16 @@ describe('SocketIoInstrumentation', () => {
                     socket.emit('test');
                     client.close();
                     sio.close();
-                    expectSpan(`/[${socket.id}] send`, (span) => {
-                        try {
-                            expect(span.kind).toEqual(SpanKind.PRODUCER);
-                            expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
-                            done();
-                        } catch (e) {
-                            done(e);
-                        }
+                    setTimeout(() => {
+                        expectSpan(`/[${socket.id}] send`, (span) => {
+                            try {
+                                expect(span.kind).toEqual(SpanKind.PRODUCER);
+                                expect(span.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('socket.io');
+                                done();
+                            } catch (e) {
+                                done(e);
+                            }
+                        }, 2);
                     });
                 });
             });
