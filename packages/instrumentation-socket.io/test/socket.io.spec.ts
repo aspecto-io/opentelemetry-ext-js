@@ -11,6 +11,7 @@ import { createServer, createServerInstance, io, getSocketIoSpans, expectSpan, i
 describe('SocketIoInstrumentation', () => {
     beforeEach(() => {
         instrumentation.enable();
+        instrumentation.setConfig({});
     });
 
     afterEach(() => {
