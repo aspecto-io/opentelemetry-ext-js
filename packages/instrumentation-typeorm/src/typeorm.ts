@@ -187,7 +187,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                 if (isTypeormInternalTracingSuppressed(context.active())) {
                     return original.apply(this, arguments);
                 }
-                const [sql, _parameters] = this.getQueryAndParameters();
+                const [sql, parameters] = this.getQueryAndParameters();
                 const mainTableName = this.getMainTableName();
                 const operation = this.expressionMap.queryType;
 
@@ -201,6 +201,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                     [SemanticAttributes.DB_OPERATION]: operation,
                     [SemanticAttributes.DB_STATEMENT]: sql,
                     [SemanticAttributes.DB_SQL_TABLE]: mainTableName,
+                    ['parameters']: JSON.stringify(parameters),
                 };
                 const span: Span = self.tracer.startSpan(`TypeORM ${operation} ${mainTableName}`, {
                     kind: SpanKind.CLIENT,

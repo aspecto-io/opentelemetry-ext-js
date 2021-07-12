@@ -46,4 +46,23 @@ describe('QueryBuilder', () => {
         expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe('SELECT * FROM "user" "users" WHERE user.id = ?');
         await connection.close();
     });
+
+    it('parameters', async () => {
+        const connectionOptions = defaultOptions as any;
+        const connection = await typeorm.createConnection(connectionOptions);
+        await getQueryBuilder(connection).where('user.id = :userId').setParameter('userId', '1').getMany();
+        const typeOrmSpans = getTestSpans();
+        expect(typeOrmSpans.length).toBe(1);
+        expect(typeOrmSpans[0].status.code).toBe(SpanStatusCode.UNSET);
+        const attributes = typeOrmSpans[0].attributes;
+        expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(connectionOptions.type);
+        expect(attributes[SemanticAttributes.DB_USER]).toBe(connectionOptions.username);
+        expect(attributes[SemanticAttributes.NET_PEER_NAME]).toBe(connectionOptions.host);
+        expect(attributes[SemanticAttributes.NET_PEER_PORT]).toBe(connectionOptions.port);
+        expect(attributes[SemanticAttributes.DB_NAME]).toBe(connectionOptions.database);
+        expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
+        expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe('SELECT * FROM "user" "users" WHERE user.id = ?');
+        expect(attributes['parameters']).toBe(JSON.stringify(['1']));
+        await connection.close();
+    });
 });
