@@ -1,7 +1,7 @@
 import { Span, SpanKind, SpanStatusCode, trace, context, diag, createContextKey, Context } from '@opentelemetry/api';
 import { suppressTracing } from '@opentelemetry/core';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { TypeormInstrumentationConfig } from './types';
+import { ExtendedDatabaseAttribute, TypeormInstrumentationConfig } from './types';
 import { getParamNames, isTypeormInternalTracingSuppressed, suppressTypeormInternalTracing } from './utils';
 import { VERSION } from './version';
 import type * as typeorm from 'typeorm';
@@ -187,11 +187,12 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                 if (isTypeormInternalTracingSuppressed(context.active())) {
                     return original.apply(this, arguments);
                 }
-                const [sql, parameters] = this.getQueryAndParameters();
+                const queryBuilder: typeorm.QueryBuilder<any> = this;
+                const sql = queryBuilder.getQuery();
+                const parameters = queryBuilder.getParameters();
                 const mainTableName = this.getMainTableName();
-                const operation = this.expressionMap.queryType;
-
-                const connectionOptions = this?.connection?.options ?? {};
+                const operation = queryBuilder.expressionMap.queryType;
+                const connectionOptions: any = queryBuilder?.connection?.options;
                 const attributes = {
                     [SemanticAttributes.DB_SYSTEM]: connectionOptions.type,
                     [SemanticAttributes.DB_USER]: connectionOptions.username,
@@ -201,7 +202,7 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                     [SemanticAttributes.DB_OPERATION]: operation,
                     [SemanticAttributes.DB_STATEMENT]: sql,
                     [SemanticAttributes.DB_SQL_TABLE]: mainTableName,
-                    ['parameters']: JSON.stringify(parameters),
+                    [ExtendedDatabaseAttribute.DB_STATEMENT_PARAMETERS]: JSON.stringify(parameters),
                 };
                 const span: Span = self.tracer.startSpan(`TypeORM ${operation} ${mainTableName}`, {
                     kind: SpanKind.CLIENT,

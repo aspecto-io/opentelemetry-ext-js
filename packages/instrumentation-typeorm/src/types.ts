@@ -1,6 +1,10 @@
 import { Span } from '@opentelemetry/api';
 import { InstrumentationConfig } from '@opentelemetry/instrumentation';
 
+export enum ExtendedDatabaseAttribute {
+    DB_STATEMENT_PARAMETERS = 'db.statement.parameters',
+}
+
 export type TypeormResponseCustomAttributesFunction = (span: Span, response: any) => void;
 
 export interface TypeormInstrumentationConfig extends InstrumentationConfig {
