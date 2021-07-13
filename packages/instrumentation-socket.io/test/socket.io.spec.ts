@@ -234,7 +234,6 @@ describe('SocketIoInstrumentation', () => {
                             } catch (e) {
                                 done(e);
                             }
-
                         });
                     });
                 });
