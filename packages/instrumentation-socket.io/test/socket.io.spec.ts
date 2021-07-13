@@ -31,6 +31,17 @@ describe('SocketIoInstrumentation', () => {
             });
         });
 
+        it('emitIgnoreEventList events are ignored', () => {
+            const io = createServerInstance();
+            const config: SocketIoInstrumentationConfig = {
+                emitIgnoreEventList: ['ignored'],
+            };
+            instrumentation.setConfig(config);
+            io.emit('test');
+            io.emit('ignored');
+            expect(getSocketIoSpans().length).toEqual(1);
+        });
+
         it('emit reserved events error is instrumented', () => {
             const config: SocketIoInstrumentationConfig = {
                 traceReserved: true,
@@ -194,6 +205,36 @@ describe('SocketIoInstrumentation', () => {
                                 },
                                 3
                             );
+                        });
+                    });
+                });
+            });
+        });
+
+        it('onIgnoreEventList events are ignored', (done) => {
+            const config: SocketIoInstrumentationConfig = {
+                onIgnoreEventList: ['test_reply'],
+                // only for v2: v2 emits connection events which later versions do not
+                emitIgnoreEventList: ['connection'],
+            };
+            instrumentation.setConfig(config);
+            createServer((sio, port) => {
+                const client = io(`http://localhost:${port}`);
+                client.on('test', () => client.emit('test_reply'));
+                sio.on('connection', (socket: Socket) => {
+                    socket.emit('test');
+                    socket.on('test_reply', () => {
+                        client.close();
+                        sio.close();
+                        //trace is created after the listener method is completed
+                        setTimeout(() => {
+                            try {
+                                expect(getSocketIoSpans().length).toEqual(2);
+                                done();
+                            } catch (e) {
+                                done(e);
+                            }
+
                         });
                     });
                 });
