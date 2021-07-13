@@ -10,9 +10,12 @@ import expect from 'expect';
 import { Server, Socket } from 'socket.io';
 import socketIo from 'socket.io';
 import * as ioClient from 'socket.io-client';
+import * as path from 'path';
 
 export const io = (ioClient.io || (ioClient as any).default) as typeof ioClient.io;
-const version = require('../node_modules/socket.io/package.json').version;
+const packageJsonPath = (packageName: string) =>
+    path.join(path.dirname(require.resolve(packageName)), '..', 'package.json');
+const version = require(packageJsonPath('socket.io')).version;
 
 assert.equal(typeof version, 'string');
 
