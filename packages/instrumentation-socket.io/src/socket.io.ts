@@ -22,13 +22,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
     protected override _config!: SocketIoInstrumentationConfig;
 
     constructor(config: SocketIoInstrumentationConfig = {}) {
-        if (!Array.isArray(config.emitIgnoreEventList)) {
-            config.emitIgnoreEventList = [];
-        }
-        if (!Array.isArray(config.onIgnoreEventList)) {
-            config.onIgnoreEventList = [];
-        }
-        super('opentelemetry-instrumentation-socket.io', VERSION, Object.assign({}, config));
+        super('opentelemetry-instrumentation-socket.io', VERSION, normalizeConfig(config));
         if (config.filterHttpTransport) {
             const httpInstrumentationConfig =
                 config.filterHttpTransport.httpInstrumentation.getConfig() as HttpInstrumentationConfig;
@@ -41,6 +35,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
             config.filterHttpTransport.httpInstrumentation.setConfig(httpInstrumentationConfig);
         }
     }
+
     protected init() {
         const socketInstrumentation = new InstrumentationNodeModuleFile<any>(
             'socket.io/dist/socket.js',
@@ -211,6 +206,10 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
         ];
     }
 
+    override setConfig(config: SocketIoInstrumentationConfig = {}) {
+        return super.setConfig(normalizeConfig(config));
+    }
+
     private _patchOn(moduleVersion: string) {
         const self = this;
         return (original: Function) => {
@@ -218,7 +217,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                 if (!self._config.traceReserved && reservedEvents.includes(ev)) {
                     return original.apply(this, arguments);
                 }
-                if (Array.isArray(self._config.onIgnoreEventList) && self._config.onIgnoreEventList.includes(ev)) {
+                if (self._config.onIgnoreEventList.includes(ev)) {
                     return original.apply(this, arguments);
                 }
                 const wrappedListener = function (...args: any[]) {
@@ -290,7 +289,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                 if (!self._config.traceReserved && reservedEvents.includes(ev)) {
                     return original.apply(this, arguments);
                 }
-                if (Array.isArray(self._config.emitIgnoreEventList) && self._config.emitIgnoreEventList.includes(ev)) {
+                if (self._config.emitIgnoreEventList.includes(ev)) {
                     return original.apply(this, arguments);
                 }
                 const messagingSystem = 'socket.io';
@@ -345,3 +344,14 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
         };
     }
 }
+
+const normalizeConfig = (config?: SocketIoInstrumentationConfig) => {
+    config = Object.assign({}, config);
+    if (!Array.isArray(config.emitIgnoreEventList)) {
+        config.emitIgnoreEventList = [];
+    }
+    if (!Array.isArray(config.onIgnoreEventList)) {
+        config.onIgnoreEventList = [];
+    }
+    return config;
+};
