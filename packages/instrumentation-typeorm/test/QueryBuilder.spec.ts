@@ -20,10 +20,7 @@ describe('QueryBuilder', () => {
     it('getManyAndCount', async () => {
         const connectionOptions = defaultOptions as any;
         const connection = await typeorm.createConnection(connectionOptions);
-        const users = await getQueryBuilder(connection)
-            .where('user.id = :userId')
-            .setParameter('userId', '1')
-            .getManyAndCount();
+        const users = await getQueryBuilder(connection).where('user.id = :userId', { userId: '1' }).getManyAndCount();
         expect(users.length).toBeGreaterThan(0);
         const typeOrmSpans = getTestSpans();
         expect(typeOrmSpans.length).toBe(1);

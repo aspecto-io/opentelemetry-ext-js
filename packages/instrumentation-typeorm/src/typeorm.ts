@@ -204,7 +204,9 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
                     [SemanticAttributes.DB_SQL_TABLE]: mainTableName,
                 };
                 if (self._config.collectParameters) {
-                    attributes[ExtendedDatabaseAttribute.DB_STATEMENT_PARAMETERS] = JSON.stringify(parameters);
+                    try {
+                        attributes[ExtendedDatabaseAttribute.DB_STATEMENT_PARAMETERS] = JSON.stringify(parameters);
+                    } catch (err) {}
                 }
                 const span: Span = self.tracer.startSpan(`TypeORM ${operation} ${mainTableName}`, {
                     kind: SpanKind.CLIENT,

@@ -27,6 +27,6 @@ export interface TypeormInstrumentationConfig extends InstrumentationConfig {
      * To instrument those set this to `true`
      */
     enableInternalInstrumentation?: boolean;
-    /** set to `true` if you want to instrument the SQL parameters (may leak sensitive information) */
+    /** set to `true` if you want to capture the parameter values for parameterized SQL queries (**may leak sensitive information**) */
     collectParameters?: boolean;
 }
