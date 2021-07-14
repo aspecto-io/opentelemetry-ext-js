@@ -27,8 +27,12 @@ export interface HttpTransportInstrumentationConfig {
 export interface SocketIoInstrumentationConfig extends InstrumentationConfig {
     /** Hook for adding custom attributes before socket.io emits the event */
     emitHook?: SocketIoHookFunction;
+    /** list of events to ignore tracing on for socket.io emits */
+    emitIgnoreEventList?: string[];
     /** Hook for adding custom attributes before the event listener (callback) is invoked */
     onHook?: SocketIoHookFunction;
+    /** list of events to ignore tracing on for socket.io listeners */
+    onIgnoreEventList?: string[];
     /** Set to `true` if you want to trace socket.io reserved events (see https://socket.io/docs/v4/emit-cheatsheet/#Reserved-events) */
     traceReserved?: boolean;
     /** Set to `TransportInstrumentationConfig` if you want to filter out socket.io HTTP transport  */

@@ -22,7 +22,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
     protected override _config!: SocketIoInstrumentationConfig;
 
     constructor(config: SocketIoInstrumentationConfig = {}) {
-        super('opentelemetry-instrumentation-socket.io', VERSION, Object.assign({}, config));
+        super('opentelemetry-instrumentation-socket.io', VERSION, normalizeConfig(config));
         if (config.filterHttpTransport) {
             const httpInstrumentationConfig =
                 config.filterHttpTransport.httpInstrumentation.getConfig() as HttpInstrumentationConfig;
@@ -35,6 +35,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
             config.filterHttpTransport.httpInstrumentation.setConfig(httpInstrumentationConfig);
         }
     }
+
     protected init() {
         const socketInstrumentation = new InstrumentationNodeModuleFile<any>(
             'socket.io/dist/socket.js',
@@ -43,7 +44,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                 if (moduleExports === undefined || moduleExports === null) {
                     return moduleExports;
                 }
-                diag.debug(`socket.io instrumentation: applying patch to socket.io Socket`);
+                diag.debug(`socket.io instrumentation: applying patch to socket.io@${moduleVersion} Socket`);
                 if (isWrapped(moduleExports?.Socket?.prototype?.on)) {
                     this._unwrap(moduleExports.Socket.prototype, 'on');
                 }
@@ -72,7 +73,9 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                 if (moduleExports === undefined || moduleExports === null) {
                     return moduleExports;
                 }
-                diag.debug(`socket.io instrumentation: applying patch to socket.io StrictEventEmitter`);
+                diag.debug(
+                    `socket.io instrumentation: applying patch to socket.io@${moduleVersion} StrictEventEmitter`
+                );
                 if (isWrapped(moduleExports?.BroadcastOperator?.prototype?.emit)) {
                     this._unwrap(moduleExports.BroadcastOperator.prototype, 'emit');
                 }
@@ -93,7 +96,7 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                 if (moduleExports === undefined || moduleExports === null) {
                     return moduleExports;
                 }
-                diag.debug(`socket.io instrumentation: applying patch to socket.io Namespace`);
+                diag.debug(`socket.io instrumentation: applying patch to socket.io@${moduleVersion} Namespace`);
                 if (isWrapped(moduleExports?.Namespace?.prototype?.emit)) {
                     this._unwrap(moduleExports.Namespace.prototype, 'emit');
                 }
@@ -106,28 +109,105 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                 }
             }
         );
-        return new InstrumentationNodeModuleDefinition<Io>(
-            'socket.io',
-            ['>=3'],
+        const socketInstrumentationLegacy = new InstrumentationNodeModuleFile<any>(
+            'socket.io/lib/socket.js',
+            ['2'],
             (moduleExports, moduleVersion) => {
                 if (moduleExports === undefined || moduleExports === null) {
                     return moduleExports;
                 }
-                diag.debug(`socket.io instrumentation: applying patch to socket.io Server`);
-                if (isWrapped(moduleExports?.Server?.prototype?.on)) {
-                    this._unwrap(moduleExports.Server.prototype, 'on');
+                diag.debug(`socket.io instrumentation: applying patch to socket.io@${moduleVersion} Socket`);
+                if (isWrapped(moduleExports.prototype?.on)) {
+                    this._unwrap(moduleExports.prototype, 'on');
                 }
-                this._wrap(moduleExports.Server.prototype, 'on', this._patchOn(moduleVersion));
+                this._wrap(moduleExports.prototype, 'on', this._patchOn(moduleVersion));
+                if (isWrapped(moduleExports.prototype?.emit)) {
+                    this._unwrap(moduleExports.prototype, 'emit');
+                }
+                this._wrap(moduleExports.prototype, 'emit', this._patchEmit(moduleVersion));
                 return moduleExports;
             },
-            (moduleExports, moduleVersion) => {
-                if (isWrapped(moduleExports?.Server?.prototype?.on)) {
-                    this._unwrap(moduleExports.Server.prototype, 'on');
+            (moduleExports) => {
+                if (isWrapped(moduleExports.prototype?.on)) {
+                    this._unwrap(moduleExports.prototype, 'on');
+                }
+                if (isWrapped(moduleExports.prototype?.emit)) {
+                    this._unwrap(moduleExports.prototype, 'emit');
                 }
                 return moduleExports;
-            },
-            [broadcastOperatorInstrumentation, namespaceInstrumentation, socketInstrumentation]
+            }
         );
+        const namespaceInstrumentationLegacy = new InstrumentationNodeModuleFile<any>(
+            'socket.io/lib/namespace.js',
+            ['2'],
+            (moduleExports, moduleVersion) => {
+                if (moduleExports === undefined || moduleExports === null) {
+                    return moduleExports;
+                }
+                diag.debug(`socket.io instrumentation: applying patch to socket.io@${moduleVersion} Namespace`);
+                if (isWrapped(moduleExports?.prototype?.emit)) {
+                    this._unwrap(moduleExports.prototype, 'emit');
+                }
+                this._wrap(moduleExports.prototype, 'emit', this._patchEmit(moduleVersion));
+                return moduleExports;
+            },
+            (moduleExports) => {
+                if (isWrapped(moduleExports?.prototype?.emit)) {
+                    this._unwrap(moduleExports.prototype, 'emit');
+                }
+            }
+        );
+
+        return [
+            new InstrumentationNodeModuleDefinition<Io>(
+                'socket.io',
+                ['>=3'],
+                (moduleExports, moduleVersion) => {
+                    if (moduleExports === undefined || moduleExports === null) {
+                        return moduleExports;
+                    }
+                    diag.debug(`socket.io instrumentation: applying patch to socket.io@${moduleVersion} Server`);
+                    if (isWrapped(moduleExports?.Server?.prototype?.on)) {
+                        this._unwrap(moduleExports.Server.prototype, 'on');
+                    }
+                    this._wrap(moduleExports.Server.prototype, 'on', this._patchOn(moduleVersion));
+                    return moduleExports;
+                },
+                (moduleExports, moduleVersion) => {
+                    if (isWrapped(moduleExports?.Server?.prototype?.on)) {
+                        this._unwrap(moduleExports.Server.prototype, 'on');
+                    }
+                    return moduleExports;
+                },
+                [broadcastOperatorInstrumentation, namespaceInstrumentation, socketInstrumentation]
+            ),
+            new InstrumentationNodeModuleDefinition<any>(
+                'socket.io',
+                ['2'],
+                (moduleExports, moduleVersion) => {
+                    if (moduleExports === undefined || moduleExports === null) {
+                        return moduleExports;
+                    }
+                    diag.debug(`socket.io instrumentation: applying patch to socket.io@${moduleVersion} Server`);
+                    if (isWrapped(moduleExports?.prototype?.on)) {
+                        this._unwrap(moduleExports.prototype, 'on');
+                    }
+                    this._wrap(moduleExports.prototype, 'on', this._patchOn(moduleVersion));
+                    return moduleExports;
+                },
+                (moduleExports, moduleVersion) => {
+                    if (isWrapped(moduleExports?.prototype?.on)) {
+                        this._unwrap(moduleExports.prototype, 'on');
+                    }
+                    return moduleExports;
+                },
+                [namespaceInstrumentationLegacy, socketInstrumentationLegacy]
+            ),
+        ];
+    }
+
+    override setConfig(config: SocketIoInstrumentationConfig = {}) {
+        return super.setConfig(normalizeConfig(config));
     }
 
     private _patchOn(moduleVersion: string) {
@@ -135,6 +215,9 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
         return (original: Function) => {
             return function (ev: any, originalListener: Function) {
                 if (!self._config.traceReserved && reservedEvents.includes(ev)) {
+                    return original.apply(this, arguments);
+                }
+                if (self._config.onIgnoreEventList.includes(ev)) {
                     return original.apply(this, arguments);
                 }
                 const wrappedListener = function (...args: any[]) {
@@ -206,6 +289,9 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                 if (!self._config.traceReserved && reservedEvents.includes(ev)) {
                     return original.apply(this, arguments);
                 }
+                if (self._config.emitIgnoreEventList.includes(ev)) {
+                    return original.apply(this, arguments);
+                }
                 const messagingSystem = 'socket.io';
                 const eventName = ev;
                 const attributes: any = {
@@ -214,11 +300,19 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
                     [SocketIoInstrumentationAttributes.SOCKET_IO_EVENT_NAME]: eventName,
                 };
 
-                let rooms = this.rooms || this._rooms || this.sockets?._rooms;
-                if (rooms?.size) {
-                    attributes[SocketIoInstrumentationAttributes.SOCKET_IO_ROOMS] = rooms = Array.from<string>(rooms);
+                let rooms = this.rooms || this._rooms || this.sockets?._rooms || this.sockets?.rooms || [];
+                // Some of the attributes above are of Set type. Convert it.
+                if (!Array.isArray(rooms)) {
+                    rooms = Array.from<string>(rooms);
                 }
-                const namespace = this.name || this.adapter?.nsp?.name;
+                // only for v2: this.id is only set for v2. That's to mimic later versions which have this.id in the rooms Set.
+                if (rooms.length === 0 && this.id) {
+                    rooms.push(this.id);
+                }
+                if (rooms.length) {
+                    attributes[SocketIoInstrumentationAttributes.SOCKET_IO_ROOMS] = rooms;
+                }
+                const namespace = this.name || this.adapter?.nsp?.name || this.sockets?.name;
                 if (namespace) {
                     attributes[SocketIoInstrumentationAttributes.SOCKET_IO_NAMESPACE] = namespace;
                     attributes[SemanticAttributes.MESSAGING_DESTINATION] = namespace;
@@ -250,3 +344,14 @@ export class SocketIoInstrumentation extends InstrumentationBase<Io> {
         };
     }
 }
+
+const normalizeConfig = (config?: SocketIoInstrumentationConfig) => {
+    config = Object.assign({}, config);
+    if (!Array.isArray(config.emitIgnoreEventList)) {
+        config.emitIgnoreEventList = [];
+    }
+    if (!Array.isArray(config.onIgnoreEventList)) {
+        config.onIgnoreEventList = [];
+    }
+    return config;
+};

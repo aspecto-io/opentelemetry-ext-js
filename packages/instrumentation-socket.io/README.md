@@ -34,7 +34,9 @@ socket.io instrumentation has few options available to choose from. You can set 
 | Options        | Type                                   | Description                                                                                     |
 | -------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `emitHook` | `SocketIoHookFunction` | hook for adding custom attributes before socket.io emits the event |
+| `emitIgnoreEventList` | `string[]` | names of emitted events to ignore tracing for |
 | `onHook` | `SocketIoHookFunction` | hook for adding custom attributes before the event listener (callback) is invoked |
+| `onIgnoreEventList` | `string[]` | names of listened events to ignore tracing for |
 | `traceReserved` | `boolean` | set to true if you want to trace socket.io reserved events (see https://socket.io/docs/v4/emit-cheatsheet/#Reserved-events) |
 | `filterHttpTransport`| `HttpTransportInstrumentationConfig` | set if you want to filter out the HTTP traces when using HTTP polling as the transport (see below)
 
