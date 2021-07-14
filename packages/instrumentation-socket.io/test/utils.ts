@@ -32,7 +32,7 @@ export const createServer = (callback: (server: Server, port: number) => void) =
 
 export const createServerInstance = (server?: http.Server) => {
     if (isV2) {
-        return (socketIo as any)(server);
+        return (socketIo as any)(server, { serveClient: false });
     }
     return new Server(server);
 };
