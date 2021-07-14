@@ -245,7 +245,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
                             ...channel?.connection?.[CONNECTION_ATTRIBUTES],
                             [SemanticAttributes.MESSAGING_DESTINATION]: exchange,
                             [SemanticAttributes.MESSAGING_DESTINATION_KIND]: MessagingDestinationKindValues.TOPIC,
-                            ['messaging.rabbitmq.routing_key']: msg?.fields?.routingKey,
+                            [SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]: msg?.fields?.routingKey,
                             [SemanticAttributes.MESSAGING_OPERATION]: MessagingOperationValues.PROCESS,
                         },
                     },
@@ -312,7 +312,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
                     ...this.connection[CONNECTION_ATTRIBUTES],
                     [SemanticAttributes.MESSAGING_DESTINATION]: exchange,
                     [SemanticAttributes.MESSAGING_DESTINATION_KIND]: MessagingDestinationKindValues.TOPIC,
-                    ['messaging.rabbitmq.routing_key']: routingKey,
+                    [SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]: routingKey,
                 },
             });
 

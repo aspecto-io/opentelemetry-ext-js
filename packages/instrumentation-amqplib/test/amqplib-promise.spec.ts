@@ -100,7 +100,7 @@ describe('amqplib instrumentation promise model', function () {
         expect(publishSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toEqual(
             MessagingDestinationKindValues.TOPIC
         );
-        expect(publishSpan.attributes['messaging.rabbitmq.routing_key']).toEqual(queueName);
+        expect(publishSpan.attributes[SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]).toEqual(queueName);
         expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
         expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
         expect(publishSpan.attributes[SemanticAttributes.MESSAGING_URL]).toEqual(url);
@@ -114,7 +114,7 @@ describe('amqplib instrumentation promise model', function () {
         expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toEqual(
             MessagingDestinationKindValues.TOPIC
         );
-        expect(consumeSpan.attributes['messaging.rabbitmq.routing_key']).toEqual(queueName);
+        expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]).toEqual(queueName);
         expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
         expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
         expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_URL]).toEqual(url);
@@ -368,7 +368,7 @@ describe('amqplib instrumentation promise model', function () {
             expect(publishSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toEqual(
                 MessagingDestinationKindValues.TOPIC
             );
-            expect(publishSpan.attributes['messaging.rabbitmq.routing_key']).toEqual(routingKey);
+            expect(publishSpan.attributes[SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]).toEqual(routingKey);
             expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
             expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
 
@@ -379,7 +379,7 @@ describe('amqplib instrumentation promise model', function () {
             expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toEqual(
                 MessagingDestinationKindValues.TOPIC
             );
-            expect(consumeSpan.attributes['messaging.rabbitmq.routing_key']).toEqual(routingKey);
+            expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]).toEqual(routingKey);
             expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
             expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
 
