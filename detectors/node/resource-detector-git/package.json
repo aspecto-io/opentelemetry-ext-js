@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-resource-detector-git",
-    "version": "0.23.0",
+    "version": "0.23.1",
     "description": "open telemetry resource detector for git",
     "keywords": [
         "opentelemetry"

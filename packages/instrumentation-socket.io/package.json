@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-socket.io",
-    "version": "0.23.0",
+    "version": "0.23.1",
     "description": "open telemetry instrumentation for the `socket.io` package",
     "keywords": [
         "socket.io",
