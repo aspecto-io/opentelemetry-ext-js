@@ -2,7 +2,7 @@ import 'mocha';
 import expect from 'expect';
 import { SpanStatusCode } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { ExtendedDatabaseAttribute, TypeormInstrumentation } from '../src';
+import { ExtendedDatabaseAttribute, TypeormInstrumentation, TypeormInstrumentationConfig } from '../src';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 const instrumentation = new TypeormInstrumentation();
 import * as typeorm from 'typeorm';
@@ -49,7 +49,11 @@ describe('QueryBuilder', () => {
         await connection.close();
     });
 
-    it('parameters', async () => {
+    it('collectParameters', async () => {
+        const config: TypeormInstrumentationConfig = {
+            collectParameters: true,
+        };
+        instrumentation.setConfig(config);
         const connectionOptions = defaultOptions as any;
         const connection = await typeorm.createConnection(connectionOptions);
         await getQueryBuilder(connection)
