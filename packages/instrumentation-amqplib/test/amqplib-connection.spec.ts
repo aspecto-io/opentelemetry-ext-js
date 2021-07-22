@@ -4,6 +4,7 @@ import { TEST_RABBITMQ_HOST, TEST_RABBITMQ_PORT } from './config';
 import { AmqplibInstrumentation } from '../src';
 
 const instrumentation = new AmqplibInstrumentation();
+instrumentation.enable();
 import amqp from 'amqplib';
 import { getTestSpans } from '../../instrumentation-testing-utils/dist/src';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
