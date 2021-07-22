@@ -469,5 +469,4 @@ describe('amqplib instrumentation promise model', function () {
             getTestSpans().forEach((s) => expect(s.attributes[attributeNameFromHook]).toEqual(hookAttributeValue));
         });
     });
-
 });
