@@ -3,7 +3,6 @@ import { ResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { registerInstrumentationTestingProvider } from './otel-default-provider';
 import { resetMemoryExporter } from './otel-provider-api';
 
-export * from './instrumentation-singelton';
 export * from './otel-provider-api';
 export * from './otel-default-provider';
 
