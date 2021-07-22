@@ -25,7 +25,7 @@
     "scripts": {
         "build": "tsc",
         "prepare": "yarn run build",
-        "test": "mocha",
+        "test": "mocha --parallel",
         "test:jaeger": "OTEL_EXPORTER_JAEGER_AGENT_HOST=localhost mocha",
         "watch": "tsc -w",
         "version:update": "node ../../scripts/version-update.js",
@@ -66,7 +66,6 @@
         "extension": [
             "ts"
         ],
-        "parallel": true,
         "spec": "test/**/*.spec.ts",
         "require": [
             "ts-node/register",
