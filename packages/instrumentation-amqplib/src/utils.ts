@@ -20,7 +20,9 @@ const getPort = (portFromUrl: number, resolvedProtocol: string): number => {
 const getProtocol = (protocolFromUrl: string): string => {
     const resolvedProtocol = protocolFromUrl || 'amqp';
     // the substr removed the ':' part of the protocol ('amqp:' -> 'amqp')
-    const noEndingColon = resolvedProtocol.endsWith(':') ? resolvedProtocol.substr(0, protocolFromUrl.length - 1) : resolvedProtocol;
+    const noEndingColon = resolvedProtocol.endsWith(':')
+        ? resolvedProtocol.substr(0, protocolFromUrl.length - 1)
+        : resolvedProtocol;
     // upper cases to match spec
     return noEndingColon.toUpperCase();
 };
@@ -81,7 +83,6 @@ export const getConnectionAttributesFromUrl = (
         Object.assign(attributes, {
             ...extractConnectionAttributeOrLog(url, SemanticAttributes.NET_PEER_PORT, port, 'port'),
         });
-
     } else {
         attributes[SemanticAttributes.MESSAGING_URL] = url;
         try {

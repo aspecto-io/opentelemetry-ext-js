@@ -5,10 +5,8 @@ import { getTestSpans } from '../../instrumentation-testing-utils/dist/src';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 
 describe('amqplib instrumentation connection', function () {
-
     describe('connect with url object', () => {
-
-        it('should extract connection attributes form url options', async function() {
+        it('should extract connection attributes form url options', async function () {
             const testName = this.test.title;
             const conn = await amqp.connect({
                 protocol: 'amqp',
@@ -27,13 +25,12 @@ describe('amqplib instrumentation connection', function () {
                 expect(publishSpan.attributes[SemanticAttributes.MESSAGING_URL]).toBeUndefined(); // no url string if value supplied as object
                 expect(publishSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual(TEST_RABBITMQ_HOST);
                 expect(publishSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(TEST_RABBITMQ_PORT);
-
             } finally {
                 await conn.close();
             }
         });
 
-        it('should use default protocol', async function() {
+        it('should use default protocol', async function () {
             const testName = this.test.title;
             const conn = await amqp.connect({
                 hostname: TEST_RABBITMQ_HOST,
@@ -50,8 +47,8 @@ describe('amqplib instrumentation connection', function () {
             }
         });
 
-        it('should use default host', async function() {
-            if(TEST_RABBITMQ_HOST !== 'localhost') {
+        it('should use default host', async function () {
+            if (TEST_RABBITMQ_HOST !== 'localhost') {
                 return;
             }
 
@@ -70,11 +67,10 @@ describe('amqplib instrumentation connection', function () {
                 await conn.close();
             }
         });
-
     });
 
     describe('connect with url string', () => {
-        it('should extract connection attributes form url options', async function() {
+        it('should extract connection attributes form url options', async function () {
             const testName = this.test.title;
             const url = `amqp://${TEST_RABBITMQ_HOST}:${TEST_RABBITMQ_PORT}`;
             const conn = await amqp.connect(url);
@@ -90,11 +86,9 @@ describe('amqplib instrumentation connection', function () {
                 expect(publishSpan.attributes[SemanticAttributes.MESSAGING_URL]).toEqual(url);
                 expect(publishSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual(TEST_RABBITMQ_HOST);
                 expect(publishSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(TEST_RABBITMQ_PORT);
-
             } finally {
                 await conn.close();
             }
         });
-
     });
 });
