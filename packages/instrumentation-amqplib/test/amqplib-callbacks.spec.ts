@@ -4,6 +4,7 @@ import { AmqplibInstrumentation } from '../src';
 
 const instrumentation = new AmqplibInstrumentation();
 instrumentation.enable();
+
 import amqpCallback from 'amqplib/callback_api';
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { SpanKind, context } from '@opentelemetry/api';
@@ -25,12 +26,10 @@ describe('amqplib instrumentation callback model', function () {
     });
     after((done) => {
         conn.close(() => done());
-        instrumentation.disable();
     });
 
     let channel: amqpCallback.Channel;
     beforeEach((done) => {
-        instrumentation.enable();
         conn.createChannel(
             context.bind(context.active(), (err, c) => {
                 channel = c;
@@ -54,7 +53,6 @@ describe('amqplib instrumentation callback model', function () {
     });
 
     afterEach((done) => {
-        instrumentation.disable();
         try {
             channel.close((err) => {
                 done();

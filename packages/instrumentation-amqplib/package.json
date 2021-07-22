@@ -25,8 +25,8 @@
     "scripts": {
         "build": "tsc",
         "prepare": "yarn run build",
-        "test": "mocha --require opentelemetry-instrumentation-testing-utils",
-        "test:jaeger": "OTEL_EXPORTER_JAEGER_AGENT_HOST=localhost mocha --require opentelemetry-instrumentation-testing-utils",
+        "test": "mocha",
+        "test:jaeger": "OTEL_EXPORTER_JAEGER_AGENT_HOST=localhost mocha",
         "watch": "tsc -w",
         "version:update": "node ../../scripts/version-update.js",
         "test-all-versions": "tav",
@@ -66,9 +66,11 @@
         "extension": [
             "ts"
         ],
+        "parallel": true,
         "spec": "test/**/*.spec.ts",
         "require": [
             "ts-node/register",
+            "opentelemetry-instrumentation-testing-utils",
             "opentelemetry-instrumentation-mocha"
         ]
     }

@@ -6,7 +6,6 @@ import { AmqplibInstrumentation, EndOperation, PublishParams } from '../src';
 
 const instrumentation = new AmqplibInstrumentation();
 instrumentation.enable();
-instrumentation.disable();
 
 import amqp from 'amqplib';
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
@@ -26,12 +25,10 @@ describe('amqplib instrumentation promise model', function () {
     const url = `amqp://${TEST_RABBITMQ_HOST}:${TEST_RABBITMQ_PORT}`;
     let conn: amqp.Connection;
     before(async () => {
-        instrumentation.enable();
         conn = await amqp.connect(url);
     });
     after(async () => {
         await conn.close();
-        instrumentation.disable();
     });
 
     let endHookSpy;
@@ -473,31 +470,4 @@ describe('amqplib instrumentation promise model', function () {
         });
     });
 
-    describe('connection properties', () => {
-        it('connect by url object', async () => {
-            const objConnection = await amqp.connect({ port: TEST_RABBITMQ_PORT });
-            const channel = await objConnection.createChannel();
-            channel.sendToQueue(queueName, Buffer.from(msgPayload));
-            await asyncConsume(channel, queueName, [null], {
-                noAck: true,
-            });
-
-            objConnection.close();
-
-            expect(getTestSpans().length).toBe(2);
-            getTestSpans().forEach((s) => {
-                expect(s.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual(TEST_RABBITMQ_HOST);
-                expect(s.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(TEST_RABBITMQ_PORT);
-            });
-        });
-
-        it('invalid connection url', async () => {
-            try {
-                await amqp.connect('foobar://the.protocol.is.not.valid');
-            } catch (err) {
-                // make sure we are not throwing from instrumentation when invalid url is used
-                expect(err.message).toEqual('Expected amqp: or amqps: as the protocol; got foobar:');
-            }
-        });
-    });
 });
