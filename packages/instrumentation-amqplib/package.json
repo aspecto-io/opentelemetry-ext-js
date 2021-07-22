@@ -25,7 +25,7 @@
     "scripts": {
         "build": "tsc",
         "prepare": "yarn run build",
-        "test": "mocha --parallel",
+        "test": "mocha --parallel -j 2",
         "test:jaeger": "OTEL_EXPORTER_JAEGER_AGENT_HOST=localhost mocha",
         "watch": "tsc -w",
         "version:update": "node ../../scripts/version-update.js",
