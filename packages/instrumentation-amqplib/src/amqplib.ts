@@ -69,7 +69,9 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
 
     private patchConnect(moduleExports: any) {
         moduleExports = this.unpatchConnect(moduleExports);
-        this._wrap(moduleExports, 'connect', this.getConnectPatch.bind(this));
+        if (!isWrapped(moduleExports.connect)) {
+            this._wrap(moduleExports, 'connect', this.getConnectPatch.bind(this));
+        }
         return moduleExports;
     }
 
@@ -81,22 +83,42 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
     }
 
     private patchChannelModel(moduleExports: any, moduleVersion: string) {
-        this._wrap(moduleExports.Channel.prototype, 'publish', this.getPublishPatch.bind(this, moduleVersion));
-        this._wrap(moduleExports.Channel.prototype, 'consume', this.getConsumePatch.bind(this, moduleVersion));
-        this._wrap(moduleExports.Channel.prototype, 'ack', this.getAckPatch.bind(this, false, EndOperation.Ack));
-        this._wrap(moduleExports.Channel.prototype, 'nack', this.getAckPatch.bind(this, true, EndOperation.Nack));
-        this._wrap(moduleExports.Channel.prototype, 'reject', this.getAckPatch.bind(this, true, EndOperation.Reject));
-        this._wrap(
-            moduleExports.Channel.prototype,
-            'ackAll',
-            this.getAckAllPatch.bind(this, false, EndOperation.AckAll)
-        );
-        this._wrap(
-            moduleExports.Channel.prototype,
-            'nackAll',
-            this.getAckAllPatch.bind(this, true, EndOperation.NackAll)
-        );
-        this._wrap(moduleExports.Channel.prototype, 'emit', this.getChannelEmitPatch.bind(this));
+        if (!isWrapped(moduleExports.Channel.prototype.publish)) {
+            this._wrap(moduleExports.Channel.prototype, 'publish', this.getPublishPatch.bind(this, moduleVersion));
+        }
+        if (!isWrapped(moduleExports.Channel.prototype.consume)) {
+            this._wrap(moduleExports.Channel.prototype, 'consume', this.getConsumePatch.bind(this, moduleVersion));
+        }
+        if (!isWrapped(moduleExports.Channel.prototype.ack)) {
+            this._wrap(moduleExports.Channel.prototype, 'ack', this.getAckPatch.bind(this, false, EndOperation.Ack));
+        }
+        if (!isWrapped(moduleExports.Channel.prototype.nack)) {
+            this._wrap(moduleExports.Channel.prototype, 'nack', this.getAckPatch.bind(this, true, EndOperation.Nack));
+        }
+        if (!isWrapped(moduleExports.Channel.prototype.reject)) {
+            this._wrap(
+                moduleExports.Channel.prototype,
+                'reject',
+                this.getAckPatch.bind(this, true, EndOperation.Reject)
+            );
+        }
+        if (!isWrapped(moduleExports.Channel.prototype.ackAll)) {
+            this._wrap(
+                moduleExports.Channel.prototype,
+                'ackAll',
+                this.getAckAllPatch.bind(this, false, EndOperation.AckAll)
+            );
+        }
+        if (!isWrapped(moduleExports.Channel.prototype.nackAll)) {
+            this._wrap(
+                moduleExports.Channel.prototype,
+                'nackAll',
+                this.getAckAllPatch.bind(this, true, EndOperation.NackAll)
+            );
+        }
+        if (!isWrapped(moduleExports.Channel.prototype.emit)) {
+            this._wrap(moduleExports.Channel.prototype, 'emit', this.getChannelEmitPatch.bind(this));
+        }
         return moduleExports;
     }
 
