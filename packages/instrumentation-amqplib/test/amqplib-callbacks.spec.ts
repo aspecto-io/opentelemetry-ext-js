@@ -1,15 +1,15 @@
 import 'mocha';
 import expect from 'expect';
 import { AmqplibInstrumentation } from '../src';
+import { getTestSpans, registerInstrumentation } from 'opentelemetry-instrumentation-testing-utils';
 
-const instrumentation = new AmqplibInstrumentation();
-instrumentation.enable();
+const instrumentation = registerInstrumentation(new AmqplibInstrumentation());
+
 import amqpCallback from 'amqplib/callback_api';
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { SpanKind, context } from '@opentelemetry/api';
 import { asyncConsume } from './utils';
 import { TEST_RABBITMQ_HOST, TEST_RABBITMQ_PORT } from './config';
-import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
 const msgPayload = 'payload from test';
 const queueName = 'queue-name-from-unittest';
@@ -25,12 +25,10 @@ describe('amqplib instrumentation callback model', function () {
     });
     after((done) => {
         conn.close(() => done());
-        instrumentation.disable();
     });
 
     let channel: amqpCallback.Channel;
     beforeEach((done) => {
-        instrumentation.enable();
         conn.createChannel(
             context.bind(context.active(), (err, c) => {
                 channel = c;
@@ -54,7 +52,6 @@ describe('amqplib instrumentation callback model', function () {
     });
 
     afterEach((done) => {
-        instrumentation.disable();
         try {
             channel.close((err) => {
                 done();

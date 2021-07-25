@@ -3,17 +3,15 @@ import expect from 'expect';
 import sinon from 'sinon';
 import lodash from 'lodash';
 import { AmqplibInstrumentation, EndOperation, PublishParams } from '../src';
+import { getTestSpans, registerInstrumentation } from '../../instrumentation-testing-utils/dist/src';
 
-const instrumentation = new AmqplibInstrumentation();
-instrumentation.enable();
-instrumentation.disable();
+const instrumentation = registerInstrumentation(new AmqplibInstrumentation());
 
 import amqp from 'amqplib';
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { Span, SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import { asyncConsume } from './utils';
 import { TEST_RABBITMQ_HOST, TEST_RABBITMQ_PORT } from './config';
-import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
 const msgPayload = 'payload from test';
 const queueName = 'queue-name-from-unittest';
@@ -26,12 +24,10 @@ describe('amqplib instrumentation promise model', function () {
     const url = `amqp://${TEST_RABBITMQ_HOST}:${TEST_RABBITMQ_PORT}`;
     let conn: amqp.Connection;
     before(async () => {
-        instrumentation.enable();
         conn = await amqp.connect(url);
     });
     after(async () => {
         await conn.close();
-        instrumentation.disable();
     });
 
     let endHookSpy;
@@ -63,7 +59,6 @@ describe('amqplib instrumentation promise model', function () {
         instrumentation.setConfig({
             consumeEndHook: endHookSpy,
         });
-        instrumentation.enable();
 
         channel = await conn.createChannel();
         await channel.assertQueue(queueName, { durable: false });
@@ -81,7 +76,6 @@ describe('amqplib instrumentation promise model', function () {
                 });
             } catch {}
         }
-        instrumentation.disable();
     });
 
     it('simple publish and consume from queue', async () => {
@@ -324,12 +318,10 @@ describe('amqplib instrumentation promise model', function () {
         });
 
         it('not acking the message trigger timeout', async () => {
-            instrumentation.disable();
             instrumentation.setConfig({
                 consumeEndHook: endHookSpy,
                 consumeTimeoutMs: 1,
             });
-            instrumentation.enable();
 
             lodash.times(1, () => channel.sendToQueue(queueName, Buffer.from(msgPayload)));
 
@@ -391,11 +383,9 @@ describe('amqplib instrumentation promise model', function () {
 
     it('moduleVersionAttributeName works with publish and consume', async () => {
         const VERSION_ATTR = 'module.version';
-        instrumentation.disable();
         instrumentation.setConfig({
             moduleVersionAttributeName: VERSION_ATTR,
         });
-        instrumentation.enable();
 
         channel.sendToQueue(queueName, Buffer.from(msgPayload));
 
@@ -412,7 +402,6 @@ describe('amqplib instrumentation promise model', function () {
             const hookAttributeValue = 'attribute value from hook';
             const attributeNameFromEndHook = 'attribute.name.from.endhook';
             const endHookAttributeValue = 'attribute value from end hook';
-            instrumentation.disable();
             instrumentation.setConfig({
                 publishHook: (span: Span, publishParams: PublishParams): void => {
                     span.setAttribute(attributeNameFromHook, hookAttributeValue);
@@ -434,7 +423,6 @@ describe('amqplib instrumentation promise model', function () {
                     expect(endOperation).toEqual(EndOperation.AutoAck);
                 },
             });
-            instrumentation.enable();
 
             channel.sendToQueue(queueName, Buffer.from(msgPayload));
 
@@ -450,7 +438,6 @@ describe('amqplib instrumentation promise model', function () {
         it('hooks throw should not affect user flow or span creation', async () => {
             const attributeNameFromHook = 'attribute.name.from.hook';
             const hookAttributeValue = 'attribute value from hook';
-            instrumentation.disable();
             instrumentation.setConfig({
                 publishHook: (span: Span, publishParams: PublishParams): void => {
                     span.setAttribute(attributeNameFromHook, hookAttributeValue);
@@ -461,7 +448,6 @@ describe('amqplib instrumentation promise model', function () {
                     throw new Error('error from hook');
                 },
             });
-            instrumentation.enable();
 
             channel.sendToQueue(queueName, Buffer.from(msgPayload));
 
@@ -470,34 +456,6 @@ describe('amqplib instrumentation promise model', function () {
             });
             expect(getTestSpans().length).toBe(2);
             getTestSpans().forEach((s) => expect(s.attributes[attributeNameFromHook]).toEqual(hookAttributeValue));
-        });
-    });
-
-    describe('connection properties', () => {
-        it('connect by url object', async () => {
-            const objConnection = await amqp.connect({ port: TEST_RABBITMQ_PORT });
-            const channel = await objConnection.createChannel();
-            channel.sendToQueue(queueName, Buffer.from(msgPayload));
-            await asyncConsume(channel, queueName, [null], {
-                noAck: true,
-            });
-
-            objConnection.close();
-
-            expect(getTestSpans().length).toBe(2);
-            getTestSpans().forEach((s) => {
-                expect(s.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual(TEST_RABBITMQ_HOST);
-                expect(s.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(TEST_RABBITMQ_PORT);
-            });
-        });
-
-        it('invalid connection url', async () => {
-            try {
-                await amqp.connect('foobar://the.protocol.is.not.valid');
-            } catch (err) {
-                // make sure we are not throwing from instrumentation when invalid url is used
-                expect(err.message).toEqual('Expected amqp: or amqps: as the protocol; got foobar:');
-            }
         });
     });
 });
