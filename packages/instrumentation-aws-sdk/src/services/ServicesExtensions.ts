@@ -8,8 +8,8 @@ export class ServicesExtensions implements ServiceExtension {
     services: Map<string, ServiceExtension> = new Map();
 
     constructor() {
-        this.services.set('sqs', new SqsServiceExtension());
-        this.services.set('dynamodb', new DynamodbServiceExtension());
+        this.services.set('SQS', new SqsServiceExtension());
+        this.services.set('DynamoDB', new DynamodbServiceExtension());
     }
 
     requestPreSpanHook(request: NormalizedRequest): RequestMetadata {
