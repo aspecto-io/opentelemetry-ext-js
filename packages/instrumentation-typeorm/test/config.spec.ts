@@ -95,7 +95,9 @@ describe('TypeormInstrumentationConfig', () => {
         instrumentation.setConfig(config);
         const connectionOptions = defaultOptions as any;
         const connection = await typeorm.createConnection(connectionOptions);
-        await connection.getRepository(User).createQueryBuilder('user')
+        await connection
+            .getRepository(User)
+            .createQueryBuilder('user')
             .where('user.id = :userId', { userId: '1' })
             .andWhere('user.firstName = :firstName', { firstName: 'bob' })
             .andWhere('user.lastName = :lastName', { lastName: 'dow' })
