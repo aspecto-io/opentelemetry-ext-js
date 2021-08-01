@@ -29,7 +29,7 @@ The instrumentations in this repo are:
 - strictly complies with [open telemetry semantic conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions)
 - up to date with latest SDK version
 
-**Compatible with [SDK v0.23.0](https://github.com/open-telemetry/opentelemetry-js/releases/tag/v0.23.0)**
+**Compatible with [SDK v0.24.0](https://github.com/open-telemetry/opentelemetry-js/releases/tag/v0.24.0)**
 ## Instrumentations
 | Instrumentation Package | Instrumented Lib | NPM |
 | --- | --- | --- |
@@ -54,10 +54,11 @@ The instrumentations in this repo are:
 | [Git](./detectors/node/resource-detector-git)  | Synchronous | [![NPM version](https://img.shields.io/npm/v/opentelemetry-resource-detector-git.svg)](https://www.npmjs.com/package/opentelemetry-resource-detector-git) [![git detector downloads](https://img.shields.io/npm/dm/opentelemetry-resource-detector-git.svg)]()
 
 
-## Compatability Table
+## Compatibility Table
 
 | Instrumentations Version | OpenTelemetry Version |
 | --- | --- |
+| 0.24.x | 0.24.0 |
 | 0.23.x | 0.23.0 |
 | 0.22.x | 0.22.0 |
 | 0.21.x | 0.21.0 |

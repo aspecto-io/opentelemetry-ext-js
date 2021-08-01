@@ -1,4 +1,3 @@
-import path from 'path';
 import { executeGitCommand, readFileFromGitDir } from './fecth-git-data';
 
 const extractBranchNameFromRef = (ref: string): string | undefined => {

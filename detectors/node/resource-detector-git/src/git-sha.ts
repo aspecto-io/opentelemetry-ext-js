@@ -1,5 +1,3 @@
-import fs from 'fs';
-import path from 'path';
 import { executeGitCommand, readFileFromGitDir } from './fecth-git-data';
 import { gitSha1Regex } from './types';
 

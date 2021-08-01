@@ -1,5 +1,5 @@
 import { Resource } from '@opentelemetry/resources';
-import { ResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { getInstrumentation } from './instrumentation-singelton';
 import { registerInstrumentationTestingProvider } from './otel-default-provider';
 import { resetMemoryExporter } from './otel-provider-api';
@@ -23,7 +23,7 @@ export const mochaHooks = {
         }
         registerInstrumentationTestingProvider({
             resource: new Resource({
-                [ResourceAttributes.SERVICE_NAME]: serviceName,
+                [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
             }),
         });
         done();
