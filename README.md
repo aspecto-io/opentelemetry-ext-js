@@ -45,6 +45,7 @@ The instrumentations in this repo are:
 |[opentelemetry-instrumentation-socket.io](./packages/instrumentation-socket.io) | [`socket.io`](https://github.com/socketio/socket.io) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-socket.io.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-socket.io) [![socket.io downloads](https://img.shields.io/npm/dm/opentelemetry-instrumentation-socket.io.svg)]()
 |[opentelemetry-instrumentation-node-cache](./packages/instrumentation-node-cache) | [`node-cache`](https://www.npmjs.com/package/node-cache) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-node-cache.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-node-cache) [![node-cache downloads](https://img.shields.io/npm/dm/opentelemetry-instrumentation-node-cache.svg)]()
 
+
 ## Resource Detectors
 | Detector | Synchronicity | NPM |
 | --- | --- | --- |
