@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-sequelize",
-    "version": "0.23.0",
+    "version": "0.24.0",
     "description": "open telemetry instrumentation for the `sequelize` module",
     "keywords": [
         "sequelize",
@@ -54,7 +54,7 @@
         "mocha": "^8.4.0",
         "mysql2": "^2.2.5",
         "opentelemetry-instrumentation-mocha": "0.0.1-rc.5",
-        "opentelemetry-instrumentation-testing-utils": "^0.23.0",
+        "opentelemetry-instrumentation-testing-utils": "^0.24.0",
         "pg": "^8.4.2",
         "sequelize": "^5.22.0",
         "sqlite3": "^5.0.2",

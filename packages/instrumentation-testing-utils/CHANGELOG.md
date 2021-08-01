@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.24.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-testing-utils@0.23.0...opentelemetry-instrumentation-testing-utils@0.24.0) (2021-08-01)
+
+
+### Bug Fixes
+
+* **instrumentation-amqplib:** connection attributes for object url ([#159](https://github.com/aspecto-io/opentelemetry-ext-js/issues/159)) ([243e19b](https://github.com/aspecto-io/opentelemetry-ext-js/commit/243e19bcebb5f95df5b4a68cbf675aa6351ca3fb))
+
+
+
+
+
 # [0.23.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-testing-utils@0.22.1...opentelemetry-instrumentation-testing-utils@0.23.0) (2021-07-05)
 
 
