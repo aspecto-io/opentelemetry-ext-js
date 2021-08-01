@@ -1,4 +1,4 @@
-import { ResourceAttributes as ResourceAttributesKeys } from '@opentelemetry/semantic-conventions';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { Resource, defaultServiceName, ResourceAttributes } from '@opentelemetry/resources';
 import { SyncDetector, syncDetectorToDetector } from 'opentelemetry-resource-detector-sync-api';
 import { v4 as uuidv4 } from 'uuid';
@@ -12,12 +12,12 @@ class ServiceSyncDetector implements SyncDetector {
     detect(): Resource {
         const packageJson = this.loadJsonFile('package.json');
         const attributes: ResourceAttributes = {
-            [ResourceAttributesKeys.SERVICE_INSTANCE_ID]: instanceId,
-            [ResourceAttributesKeys.SERVICE_NAME]: this.getServiceName(packageJson),
+            [SemanticResourceAttributes.SERVICE_INSTANCE_ID]: instanceId,
+            [SemanticResourceAttributes.SERVICE_NAME]: this.getServiceName(packageJson),
         };
         const serviceVersion = packageJson?.version;
         if (serviceVersion) {
-            attributes[ResourceAttributesKeys.SERVICE_VERSION] = serviceVersion;
+            attributes[SemanticResourceAttributes.SERVICE_VERSION] = serviceVersion;
         }
         return new Resource(attributes);
     }

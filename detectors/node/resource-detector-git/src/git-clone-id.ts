@@ -1,4 +1,3 @@
-import child_process from 'child_process';
 import { v4 as uuidv4 } from 'uuid';
 import { executeGitCommand } from './fecth-git-data';
 

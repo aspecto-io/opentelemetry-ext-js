@@ -33,7 +33,7 @@
         "@opentelemetry/api": "^1.0.1"
     },
     "dependencies": {
-        "@opentelemetry/resources": "^0.23.0"
+        "@opentelemetry/resources": "^0.24.0"
     },
     "devDependencies": {
         "ts-node": "^9.1.1",
