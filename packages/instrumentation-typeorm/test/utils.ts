@@ -25,11 +25,3 @@ export const defaultOptions: typeorm.ConnectionOptions = {
     synchronize: true,
     entities: [User],
 };
-
-export const getQueryBuilder = (connection: typeorm.Connection) => {
-    const testQueryRunner = {
-        connection,
-        query: (query: string, parameters?: any[]) => Promise.resolve([]),
-    } as typeorm.QueryRunner;
-    return new typeorm.SelectQueryBuilder<any>(connection, testQueryRunner).from(User, 'users');
-};

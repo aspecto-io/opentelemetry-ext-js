@@ -2,11 +2,11 @@ import 'mocha';
 import expect from 'expect';
 import { SpanStatusCode } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { TypeormInstrumentation, TypeormInstrumentationConfig } from '../src';
+import { TypeormInstrumentation } from '../src';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 const instrumentation = new TypeormInstrumentation();
 import * as typeorm from 'typeorm';
-import { getQueryBuilder, defaultOptions } from './utils';
+import { defaultOptions, User } from './utils';
 
 describe('QueryBuilder', () => {
     beforeEach(() => {
@@ -20,8 +20,9 @@ describe('QueryBuilder', () => {
     it('getManyAndCount', async () => {
         const connectionOptions = defaultOptions as any;
         const connection = await typeorm.createConnection(connectionOptions);
-        const users = await getQueryBuilder(connection).where('user.id = :userId', { userId: '1' }).getManyAndCount();
-        expect(users.length).toBeGreaterThan(0);
+        const queryBuilder = connection.getRepository(User).createQueryBuilder('user');
+        const users = await queryBuilder.where('user.id = :userId', { userId: '1' }).getManyAndCount();
+        expect(users.length).toBe(2);
         const typeOrmSpans = getTestSpans();
         expect(typeOrmSpans.length).toBe(1);
         expect(typeOrmSpans[0].status.code).toBe(SpanStatusCode.UNSET);
@@ -33,7 +34,7 @@ describe('QueryBuilder', () => {
         expect(attributes[SemanticAttributes.DB_NAME]).toBe(connectionOptions.database);
         expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
         expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
-            'SELECT * FROM "user" "users" WHERE user.id = :userId'
+            'SELECT "user"."id" AS "user_id", "user"."firstName" AS "user_firstName", "user"."lastName" AS "user_lastName" FROM "user" "user" WHERE "user"."id" = :userId'
         );
         await connection.close();
     });

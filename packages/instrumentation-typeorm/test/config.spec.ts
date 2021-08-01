@@ -7,7 +7,7 @@ import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
 const instrumentation = new TypeormInstrumentation();
 import * as typeorm from 'typeorm';
-import { defaultOptions, getQueryBuilder, User } from './utils';
+import { defaultOptions, User } from './utils';
 import { SpanStatusCode } from '@opentelemetry/api';
 
 describe('TypeormInstrumentationConfig', () => {
@@ -95,7 +95,7 @@ describe('TypeormInstrumentationConfig', () => {
         instrumentation.setConfig(config);
         const connectionOptions = defaultOptions as any;
         const connection = await typeorm.createConnection(connectionOptions);
-        await getQueryBuilder(connection)
+        await connection.getRepository(User).createQueryBuilder('user')
             .where('user.id = :userId', { userId: '1' })
             .andWhere('user.firstName = :firstName', { firstName: 'bob' })
             .andWhere('user.lastName = :lastName', { lastName: 'dow' })
@@ -111,7 +111,7 @@ describe('TypeormInstrumentationConfig', () => {
         expect(attributes[SemanticAttributes.DB_NAME]).toBe(connectionOptions.database);
         expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
         expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
-            'SELECT * FROM "user" "users" WHERE user.id = :userId AND user.firstName = :firstName AND user.lastName = :lastName'
+            'SELECT "user"."id" AS "user_id", "user"."firstName" AS "user_firstName", "user"."lastName" AS "user_lastName" FROM "user" "user" WHERE "user"."id" = :userId AND "user"."firstName" = :firstName AND "user"."lastName" = :lastName'
         );
         expect(attributes[ExtendedDatabaseAttribute.DB_STATEMENT_PARAMETERS]).toBe(
             JSON.stringify({ userId: '1', firstName: 'bob', lastName: 'dow' })
