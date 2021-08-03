@@ -53,8 +53,8 @@ Both V2 and V3 instrumentations are collecting the following attributes:
 | Attribute Name | Type | Description | Example |
 | -------------- | ---- | ----------- | ------- |
 | `rpc.system` | string | Always equals "aws-api" | 
-| `rpc.method` | string | The name of the operation corresponding to the request, normalized to camelCase | `putObject` |
-| `rpc.service` | string | The name of the service to which a request is made, as returned by the AWS SDK, normalized to lower case | `s3` | 
+| `rpc.method` | string | The name of the operation corresponding to the request | `PutObject` |
+| `rpc.service` | string | The name of the service to which a request is made, as returned by the AWS SDK | `S3`, `DynamoDB` |
 | `aws.region` | string | Region name for the request | "eu-west-1" |
 
 ### V2 attributes

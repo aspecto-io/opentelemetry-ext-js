@@ -18,7 +18,7 @@ const responseMockSuccess = {
     error: null,
 };
 
-describe('sqs', () => {
+describe('SQS', () => {
     before(() => {
         AWS.config.credentials = {
             accessKeyId: 'test key id',
