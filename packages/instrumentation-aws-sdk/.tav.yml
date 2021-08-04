@@ -6,11 +6,11 @@
     - yarn test
 
 '@aws-sdk/client-s3':
-  versions: ">=3.0.0"
+  versions: ">=3.0.1"
   commands:
     - yarn test
 
 '@aws-sdk/client-sqs':
-  versions: ">=3.0.0"
+  versions: ">=3.0.1"
   commands:
     - yarn test
