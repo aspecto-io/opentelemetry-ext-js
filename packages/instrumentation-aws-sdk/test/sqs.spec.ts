@@ -49,7 +49,7 @@ describe('SQS', () => {
             const childSpan = trace
                 .getTracerProvider()
                 .getTracer('default')
-                .startSpan('child span of sqs.receiveMessage');
+                .startSpan('child span of SQS.ReceiveMessage');
             childSpan.end();
         };
 

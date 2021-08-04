@@ -170,7 +170,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
         const operation = (request as any).operation;
         const service = (request as any).service;
         const serviceIdentifier = service?.serviceIdentifier;
-        const name = metadata.spanName ?? this._getSpanName(serviceIdentifier, operation);
+        const name = metadata.spanName ?? `${normalizedRequest.serviceName}.${normalizedRequest.commandName}`;
 
         const newSpan = this.tracer.startSpan(name, {
             kind: metadata.spanKind ?? SpanKind.CLIENT,
@@ -443,10 +443,6 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
             return requestMetadata.isIncoming ? bindPromise(origPromise, activeContextWithSpan) : origPromise;
         };
     }
-
-    private _getSpanName = (serviceIdentifier: string, operation: string) => {
-        return `aws.${serviceIdentifier ?? 'request'}.${operation}`;
-    };
 
     private _callOriginalFunction<T>(originalFunction: (...args: any[]) => T): T {
         if (this._config?.suppressInternalInstrumentation) {

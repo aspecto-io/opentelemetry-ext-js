@@ -86,7 +86,7 @@ describe('instrumentation-aws-sdk-v2', () => {
                 expect(spanCreateBucket.attributes[AttributeNames.AWS_REQUEST_ID]).toBe(responseMockSuccess.requestId);
                 expect(spanCreateBucket.attributes[AttributeNames.AWS_REGION]).toBe('us-east-1');
 
-                expect(spanCreateBucket.name).toBe('aws.s3.createBucket');
+                expect(spanCreateBucket.name).toBe('S3.CreateBucket');
 
                 expect(spanPutObject.attributes[AttributeNames.AWS_OPERATION]).toBe('putObject');
                 expect(spanPutObject.attributes[AttributeNames.AWS_SIGNATURE_VERSION]).toBe('s3');
@@ -95,7 +95,7 @@ describe('instrumentation-aws-sdk-v2', () => {
                 expect(spanPutObject.attributes[AttributeNames.AWS_SERVICE_NAME]).toBe('Amazon S3');
                 expect(spanPutObject.attributes[AttributeNames.AWS_REQUEST_ID]).toBe(responseMockSuccess.requestId);
                 expect(spanPutObject.attributes[AttributeNames.AWS_REGION]).toBe('us-east-1');
-                expect(spanPutObject.name).toBe('aws.s3.putObject');
+                expect(spanPutObject.name).toBe('S3.PutObject');
             });
 
             it('adds proper number of spans with correct attributes if both, promise and callback were used', async () => {
