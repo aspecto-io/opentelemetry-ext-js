@@ -54,7 +54,7 @@ Both V2 and V3 instrumentations are collecting the following attributes:
 | -------------- | ---- | ----------- | ------- |
 | `rpc.system` | string | Always equals "aws-api" | 
 | `rpc.method` | string | The name of the operation corresponding to the request | `PutObject` |
-| `rpc.service` | string | The name of the service to which a request is made, as returned by the AWS SDK | `S3`, `DynamoDB` |
+| `rpc.service` | string | The name of the service to which a request is made, as returned by the AWS SDK | `S3`, `DynamoDB`, `Route 53` |
 | `aws.region` | string | Region name for the request | "eu-west-1" |
 
 ### V2 attributes
