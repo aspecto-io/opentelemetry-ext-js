@@ -57,7 +57,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
     protected init(): InstrumentationModuleDefinition<typeof AWS>[] {
         const v3MiddlewareStackFile = new InstrumentationNodeModuleFile(
             `@aws-sdk/middleware-stack/dist/cjs/MiddlewareStack.js`,
-            ['^3.0.0'],
+            ['^3.1.0'],
             this.patchV3ConstructStack.bind(this),
             this.unpatchV3ConstructStack.bind(this)
         );
@@ -67,7 +67,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
         // so we are patching the MiddlewareStack.js file directly to get around it.
         const v3MiddlewareStack = new InstrumentationNodeModuleDefinition<typeof AWS>(
             '@aws-sdk/middleware-stack',
-            ['^3.0.0'],
+            ['^3.1.0'],
             undefined,
             undefined,
             [v3MiddlewareStackFile]
@@ -75,7 +75,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
 
         const v3SmithyClient = new InstrumentationNodeModuleDefinition<typeof AWS>(
             '@aws-sdk/smithy-client',
-            ['^3.0.0'],
+            ['^3.1.0'],
             this.patchV3SmithyClient.bind(this),
             this.unpatchV3SmithyClient.bind(this)
         );
