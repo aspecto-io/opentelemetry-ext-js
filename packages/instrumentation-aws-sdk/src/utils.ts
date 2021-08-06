@@ -4,8 +4,8 @@ import { Context, SpanAttributes, context } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { AttributeNames } from './enums';
 
-const toCamelCase = (str: string): string =>
-    typeof str === 'string' ? str.charAt(0).toLowerCase() + str.slice(1) : str;
+const toPascalCase = (str: string): string =>
+    typeof str === 'string' ? str.charAt(0).toUpperCase() + str.slice(1) : str;
 
 export const removeSuffixFromStringIfExists = (str: string, suffixToRemove: string): string => {
     const suffixLength = suffixToRemove.length;
@@ -15,8 +15,8 @@ export const removeSuffixFromStringIfExists = (str: string, suffixToRemove: stri
 export const normalizeV2Request = (awsV2Request: Request<any, any>): NormalizedRequest => {
     const service = (awsV2Request as any)?.service;
     return {
-        serviceName: service?.serviceIdentifier?.toLowerCase(),
-        commandName: toCamelCase((awsV2Request as any).operation),
+        serviceName: service?.api?.serviceId.replace(/\s+/g, ''),
+        commandName: toPascalCase((awsV2Request as any)?.operation),
         commandInput: (awsV2Request as any).params,
         region: service?.config?.region,
     };
@@ -28,10 +28,9 @@ export const normalizeV3Request = (
     commandInput: Record<string, any>,
     region: string
 ): NormalizedRequest => {
-    const commandName = toCamelCase(removeSuffixFromStringIfExists(commandNameWithSuffix, 'Command'));
     return {
-        serviceName: serviceName?.toLowerCase(),
-        commandName,
+        serviceName: serviceName.replace(/\s+/g, ''),
+        commandName: removeSuffixFromStringIfExists(commandNameWithSuffix, 'Command'),
         commandInput,
         region,
     };

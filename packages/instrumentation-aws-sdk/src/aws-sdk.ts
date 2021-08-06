@@ -57,7 +57,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
     protected init(): InstrumentationModuleDefinition<typeof AWS>[] {
         const v3MiddlewareStackFile = new InstrumentationNodeModuleFile(
             `@aws-sdk/middleware-stack/dist/cjs/MiddlewareStack.js`,
-            ['^3.0.0'],
+            ['^3.1.0'],
             this.patchV3ConstructStack.bind(this),
             this.unpatchV3ConstructStack.bind(this)
         );
@@ -67,7 +67,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
         // so we are patching the MiddlewareStack.js file directly to get around it.
         const v3MiddlewareStack = new InstrumentationNodeModuleDefinition<typeof AWS>(
             '@aws-sdk/middleware-stack',
-            ['^3.0.0'],
+            ['^3.1.0'],
             undefined,
             undefined,
             [v3MiddlewareStackFile]
@@ -75,7 +75,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
 
         const v3SmithyClient = new InstrumentationNodeModuleDefinition<typeof AWS>(
             '@aws-sdk/smithy-client',
-            ['^3.0.0'],
+            ['^3.1.0'],
             this.patchV3SmithyClient.bind(this),
             this.unpatchV3SmithyClient.bind(this)
         );
@@ -170,7 +170,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
         const operation = (request as any).operation;
         const service = (request as any).service;
         const serviceIdentifier = service?.serviceIdentifier;
-        const name = metadata.spanName ?? this._getSpanName(serviceIdentifier, operation);
+        const name = metadata.spanName ?? `${normalizedRequest.serviceName}.${normalizedRequest.commandName}`;
 
         const newSpan = this.tracer.startSpan(name, {
             kind: metadata.spanKind ?? SpanKind.CLIENT,
@@ -443,10 +443,6 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
             return requestMetadata.isIncoming ? bindPromise(origPromise, activeContextWithSpan) : origPromise;
         };
     }
-
-    private _getSpanName = (serviceIdentifier: string, operation: string) => {
-        return `aws.${serviceIdentifier ?? 'request'}.${operation}`;
-    };
 
     private _callOriginalFunction<T>(originalFunction: (...args: any[]) => T): T {
         if (this._config?.suppressInternalInstrumentation) {

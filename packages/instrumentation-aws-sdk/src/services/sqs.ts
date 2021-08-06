@@ -60,7 +60,7 @@ export class SqsServiceExtension implements ServiceExtension {
         let isIncoming = false;
 
         switch (request.commandName) {
-            case 'receiveMessage':
+            case 'ReceiveMessage':
                 {
                     isIncoming = true;
                     spanKind = SpanKind.CONSUMER;
@@ -73,8 +73,8 @@ export class SqsServiceExtension implements ServiceExtension {
                 }
                 break;
 
-            case 'sendMessage':
-            case 'sendMessageBatch':
+            case 'SendMessage':
+            case 'SendMessageBatch':
                 spanKind = SpanKind.PRODUCER;
                 spanName = `${queueName} send`;
                 break;
@@ -90,7 +90,7 @@ export class SqsServiceExtension implements ServiceExtension {
 
     requestPostSpanHook = (request: NormalizedRequest) => {
         switch (request.commandName) {
-            case 'sendMessage':
+            case 'SendMessage':
                 {
                     const origMessageAttributes = request.commandInput['MessageAttributes'] ?? {};
                     if (origMessageAttributes) {
@@ -100,7 +100,7 @@ export class SqsServiceExtension implements ServiceExtension {
                 }
                 break;
 
-            case 'sendMessageBatch':
+            case 'SendMessageBatch':
                 {
                     request.commandInput?.Entries?.forEach((messageParams: SQS.SendMessageBatchRequestEntry) => {
                         messageParams.MessageAttributes = this.InjectPropagationContext(

@@ -15,7 +15,7 @@ const responseMockSuccess = {
     error: null,
 };
 
-describe('dynamodb', () => {
+describe('DynamoDB', () => {
     before(() => {
         AWS.config.credentials = {
             accessKeyId: 'test key id',
@@ -62,7 +62,7 @@ describe('dynamodb', () => {
                 const attrs = spans[0].attributes;
                 expect(attrs[SemanticAttributes.DB_SYSTEM]).toStrictEqual('dynamodb');
                 expect(attrs[SemanticAttributes.DB_NAME]).toStrictEqual('test-table');
-                expect(attrs[SemanticAttributes.DB_OPERATION]).toStrictEqual('query');
+                expect(attrs[SemanticAttributes.DB_OPERATION]).toStrictEqual('Query');
                 expect(JSON.parse(attrs[SemanticAttributes.DB_STATEMENT] as string)).toEqual(params);
                 expect(err).toBeFalsy();
                 done();

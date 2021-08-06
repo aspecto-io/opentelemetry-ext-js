@@ -18,7 +18,7 @@ const responseMockSuccess = {
     error: null,
 };
 
-describe('sqs', () => {
+describe('SQS', () => {
     before(() => {
         AWS.config.credentials = {
             accessKeyId: 'test key id',
@@ -49,7 +49,7 @@ describe('sqs', () => {
             const childSpan = trace
                 .getTracerProvider()
                 .getTracer('default')
-                .startSpan('child span of sqs.receiveMessage');
+                .startSpan('child span of SQS.ReceiveMessage');
             childSpan.end();
         };
 
