@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.24.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-aws-sdk@0.24.0...opentelemetry-instrumentation-aws-sdk@0.24.1) (2021-08-06)
+
+
+### Bug Fixes
+
+* Use AWS SDK Instrument spec for common attributes ([#162](https://github.com/aspecto-io/opentelemetry-ext-js/issues/162)) ([5a73bfb](https://github.com/aspecto-io/opentelemetry-ext-js/commit/5a73bfb89a8e4957bf444322f472d43f1160c40f))
+
+
+
+
+
 # [0.24.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-aws-sdk@0.23.0...opentelemetry-instrumentation-aws-sdk@0.24.0) (2021-08-01)
 
 **Note:** Version bump only for package opentelemetry-instrumentation-aws-sdk
