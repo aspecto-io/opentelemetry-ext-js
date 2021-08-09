@@ -2,7 +2,6 @@ import { Span, SpanKind, Tracer } from '@opentelemetry/api';
 import { RequestMetadata, ServiceExtension } from './ServiceExtension';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { AwsSdkInstrumentationConfig, NormalizedRequest, NormalizedResponse } from '../types';
-import type { Request } from 'aws-sdk';
 
 export class DynamodbServiceExtension implements ServiceExtension {
     requestPreSpanHook(normalizedRequest: NormalizedRequest): RequestMetadata {
@@ -36,10 +35,12 @@ export class DynamodbServiceExtension implements ServiceExtension {
         const operation = response.request.commandName;
 
         if (operation === 'BatchGetItem') {
-            span.setAttribute(
-                SemanticAttributes.AWS_DYNAMODB_CONSUMED_CAPACITY,
-                response.data.ConsumedCapacity.map((x: Object) => JSON.stringify(x))
-            );
+            if ('ConsumedCapacity' in response.data) {
+                span.setAttribute(
+                    SemanticAttributes.AWS_DYNAMODB_CONSUMED_CAPACITY,
+                    response.data.ConsumedCapacity.map((x: { [DictionaryKey: string]: any }) => JSON.stringify(x))
+                );
+            }
         }
     }
 }
