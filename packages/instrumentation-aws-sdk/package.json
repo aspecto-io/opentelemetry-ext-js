@@ -45,6 +45,7 @@
         "opentelemetry-propagation-utils": "^0.24.0"
     },
     "devDependencies": {
+        "@aws-sdk/client-dynamodb": "^3.24.0",
         "@aws-sdk/client-s3": "3.13.1",
         "@aws-sdk/client-sqs": "3.13.1",
         "@aws-sdk/types": "3.13.1",
