@@ -14,6 +14,9 @@ const client = new Client({ node: esMockUrl });
 describe('elasticsearch instrumentation', () => {
     before(() => {
         instrumentation.enable();
+
+        // Handle Elasticsearch product check
+        esNock.get('/').reply(200, { version: { number: '7.14.0' } }, { 'x-elastic-product': 'Elasticsearch' });
     });
 
     after(() => {
