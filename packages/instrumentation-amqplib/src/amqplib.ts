@@ -221,7 +221,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         };
     }
 
-    private getConsumePatch(
+    protected getConsumePatch(
         moduleVersion: string,
         original: (
             queue: string,
@@ -316,7 +316,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         };
     }
 
-    private getPublishPatch(
+    protected getPublishPatch(
         moduleVersion: string,
         original: (exchange: string, routingKey: string, content: Buffer, options?: amqp.Options.Publish) => boolean
     ) {
