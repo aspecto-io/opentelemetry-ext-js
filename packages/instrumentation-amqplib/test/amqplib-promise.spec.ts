@@ -490,9 +490,11 @@ describe('amqplib instrumentation promise model', function () {
             }
         });
 
-        it('simple publish and consume from queue', async () => {
-            const hadSpaceInBuffer = confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload));
-            expect(hadSpaceInBuffer).toBeTruthy();
+        it('simple publish with confirm and consume from queue', async () => {
+            await new Promise<void>(resolve => {
+                const hadSpaceInBuffer = confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload), {}, err => resolve());
+                expect(hadSpaceInBuffer).toBeTruthy();
+            });
 
             await asyncConsume(
                 confirmChannel,

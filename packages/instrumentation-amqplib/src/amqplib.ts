@@ -1,4 +1,4 @@
-import { context, diag, propagation, Span, SpanKind, SpanStatusCode, trace } from '@opentelemetry/api';
+import { context, diag, propagation, trace, Span, SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import {
     InstrumentationBase,
     InstrumentationModuleDefinition,
@@ -8,9 +8,9 @@ import {
     safeExecuteInTheMiddle,
 } from '@opentelemetry/instrumentation';
 import {
-    MessagingDestinationKindValues,
-    MessagingOperationValues,
     SemanticAttributes,
+    MessagingOperationValues,
+    MessagingDestinationKindValues,
 } from '@opentelemetry/semantic-conventions';
 import type amqp from 'amqplib';
 import { AmqplibInstrumentationConfig, DEFAULT_CONFIG, EndOperation } from './types';
@@ -23,8 +23,6 @@ import {
     normalizeExchange,
 } from './utils';
 import { VERSION } from './version';
-import { Replies } from 'amqplib/properties';
-import { Options } from 'amqplib';
 
 export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
     protected override _config: AmqplibInstrumentationConfig;
@@ -338,7 +336,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
             routingKey: string,
             content: Buffer,
             options?: amqp.Options.Publish,
-            callback?: (err: any, ok: Replies.Empty) => void
+            callback?: (err: any, ok: amqp.Replies.Empty) => void
         ) => boolean
     ) {
         const self = this;
@@ -347,7 +345,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
             routingKey: string,
             content: Buffer,
             options?: amqp.Options.Publish,
-            callback?: (err: any, ok: Replies.Empty) => void
+            callback?: (err: any, ok: amqp.Replies.Empty) => void
         ): boolean {
             const channel = this;
             const { span, modifiedOptions } = self.createPublishSpan(
@@ -371,7 +369,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
                 );
             }
 
-            const patchedOnConfirm = function (err: any, ok: Replies.Empty) {
+            const patchedOnConfirm = function (err: any, ok: amqp.Replies.Empty) {
                 // should we wrap with context and end span after this callback or end span right away?
                 context.with(trace.setSpan(context.active(), span), () => {
                     callback?.call(this, err, ok);
@@ -465,7 +463,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         routingKey: string,
         channel,
         moduleVersion: string,
-        options?: Options.Publish
+        options?: amqp.Options.Publish
     ) {
         const normalizedExchange = normalizeExchange(exchange);
 
