@@ -13,6 +13,10 @@ export interface AmqplibPublishCustomAttributeFunction {
     (span: Span, publishParams: PublishParams): void;
 }
 
+export interface AmqplibConfirmEndCustomAttributeFunction {
+    (span: Span, publishParams: PublishParams, confirmError: any): void;
+}
+
 export interface AmqplibConsumerCustomAttributeFunction {
     (span: Span, msg: amqp.ConsumeMessage | null): void;
 }
@@ -34,8 +38,14 @@ export interface AmqplibConsumerEndCustomAttributeFunction {
 }
 
 export interface AmqplibInstrumentationConfig extends InstrumentationConfig {
-    /** hook for adding custom attributes before publish message is sent */
+    /** hook for adding custom attributes before publish message is sent through normal channel */
     publishHook?: AmqplibPublishCustomAttributeFunction;
+
+    /** hook for adding custom attributes before publish message is sent through confirm channel */
+    publishConfirmHook?: AmqplibPublishCustomAttributeFunction;
+
+    /** hook for adding custom attributes after publish message is confirmed by the broker */
+    publishConfirmEndHook?: AmqplibConfirmEndCustomAttributeFunction;
 
     /** hook for adding custom attributes before consumer message is processed */
     consumeHook?: AmqplibConsumerCustomAttributeFunction;

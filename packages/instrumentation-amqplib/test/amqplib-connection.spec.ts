@@ -2,7 +2,7 @@ import 'mocha';
 import expect from 'expect';
 import { TEST_RABBITMQ_HOST, TEST_RABBITMQ_PORT } from './config';
 import { AmqplibInstrumentation } from '../src';
-import { getTestSpans, registerInstrumentation } from '../../instrumentation-testing-utils/dist/src';
+import { getTestSpans, registerInstrumentation } from 'opentelemetry-instrumentation-testing-utils';
 
 const instrumentation = registerInstrumentation(new AmqplibInstrumentation());
 import amqp from 'amqplib';
