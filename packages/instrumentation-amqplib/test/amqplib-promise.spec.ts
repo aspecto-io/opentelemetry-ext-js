@@ -10,7 +10,7 @@ const instrumentation = registerInstrumentation(new AmqplibInstrumentation());
 import amqp from 'amqplib';
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { Span, SpanKind, SpanStatusCode } from '@opentelemetry/api';
-import { asyncConsume } from './utils';
+import { asyncConfirmPublish, asyncConfirmSend, asyncConsume } from './utils';
 import { TEST_RABBITMQ_HOST, TEST_RABBITMQ_PORT } from './config';
 
 const msgPayload = 'payload from test';
@@ -491,10 +491,7 @@ describe('amqplib instrumentation promise model', function () {
         });
 
         it('simple publish with confirm and consume from queue', async () => {
-            await new Promise<void>(resolve => {
-                const hadSpaceInBuffer = confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload), {}, err => resolve());
-                expect(hadSpaceInBuffer).toBeTruthy();
-            });
+            await asyncConfirmSend(confirmChannel, queueName, msgPayload);
 
             await asyncConsume(
                 confirmChannel,
@@ -543,7 +540,7 @@ describe('amqplib instrumentation promise model', function () {
 
         describe('ending consume spans', () => {
             it('message acked sync', async () => {
-                confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload));
+                await asyncConfirmSend(confirmChannel, queueName, msgPayload);
 
                 await asyncConsume(confirmChannel, queueName, [(msg) => confirmChannel.ack(msg)]);
                 // assert consumed message span has ended
@@ -552,7 +549,7 @@ describe('amqplib instrumentation promise model', function () {
             });
 
             it('message acked async', async () => {
-                confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload));
+                await asyncConfirmSend(confirmChannel, queueName, msgPayload);
 
                 // start async timer and ack the message after the callback returns
                 await new Promise<void>((resolve) => {
@@ -570,7 +567,7 @@ describe('amqplib instrumentation promise model', function () {
             });
 
             it('message nack no requeue', async () => {
-                confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload));
+                await asyncConfirmSend(confirmChannel, queueName, msgPayload);
 
                 await asyncConsume(confirmChannel, queueName, [(msg) => confirmChannel.nack(msg, false, false)]);
                 await new Promise((resolve) => setTimeout(resolve, 20)); // just make sure we don't get it again
@@ -583,7 +580,7 @@ describe('amqplib instrumentation promise model', function () {
             });
 
             it('message nack requeue, then acked', async () => {
-                confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload));
+                await asyncConfirmSend(confirmChannel, queueName, msgPayload);
 
                 // @ts-ignore
                 await asyncConsume(confirmChannel, queueName, [
@@ -600,7 +597,7 @@ describe('amqplib instrumentation promise model', function () {
             });
 
             it('ack allUpTo 2 msgs sync', async () => {
-                lodash.times(3, () => confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload)));
+                await Promise.all(lodash.times(3, () => asyncConfirmSend(confirmChannel, queueName, msgPayload)));
 
                 // @ts-ignore
                 await asyncConsume(confirmChannel, queueName, [
@@ -614,7 +611,7 @@ describe('amqplib instrumentation promise model', function () {
             });
 
             it('nack allUpTo 2 msgs sync', async () => {
-                lodash.times(3, () => confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload)));
+                await Promise.all(lodash.times(3, () => asyncConfirmSend(confirmChannel, queueName, msgPayload)));
 
                 // @ts-ignore
                 await asyncConsume(confirmChannel, queueName, [
@@ -632,7 +629,7 @@ describe('amqplib instrumentation promise model', function () {
             });
 
             it('ack not in received order', async () => {
-                lodash.times(3, () => confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload)));
+                await Promise.all(lodash.times(3, () => asyncConfirmSend(confirmChannel, queueName, msgPayload)));
 
                 // @ts-ignore
                 const msgs = await asyncConsume(confirmChannel, queueName, [null, null, null]);
@@ -645,7 +642,7 @@ describe('amqplib instrumentation promise model', function () {
             });
 
             it('ackAll', async () => {
-                lodash.times(2, () => confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload)));
+                await Promise.all(lodash.times(2, () => asyncConfirmSend(confirmChannel, queueName, msgPayload)));
 
                 // @ts-ignore
                 await asyncConsume(confirmChannel, queueName, [null, () => confirmChannel.ackAll()]);
@@ -655,7 +652,7 @@ describe('amqplib instrumentation promise model', function () {
             });
 
             it('nackAll', async () => {
-                lodash.times(2, () => confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload)));
+                await Promise.all(lodash.times(2, () => asyncConfirmSend(confirmChannel, queueName, msgPayload)));
 
                 // @ts-ignore
                 await asyncConsume(confirmChannel, queueName, [null, () => confirmChannel.nackAll(false)]);
@@ -669,7 +666,7 @@ describe('amqplib instrumentation promise model', function () {
             });
 
             it('reject', async () => {
-                lodash.times(1, () => confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload)));
+                await Promise.all(lodash.times(1, () => asyncConfirmSend(confirmChannel, queueName, msgPayload)));
 
                 // @ts-ignore
                 await asyncConsume(confirmChannel, queueName, [(msg) => confirmChannel.reject(msg, false)]);
@@ -680,7 +677,7 @@ describe('amqplib instrumentation promise model', function () {
             });
 
             it('reject with requeue', async () => {
-                lodash.times(1, () => confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload)));
+                await Promise.all(lodash.times(1, () => asyncConfirmSend(confirmChannel, queueName, msgPayload)));
 
                 // @ts-ignore
                 await asyncConsume(confirmChannel, queueName, [
@@ -696,7 +693,7 @@ describe('amqplib instrumentation promise model', function () {
             });
 
             it('closing channel should end all open spans on it', async () => {
-                lodash.times(1, () => confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload)));
+                await Promise.all(lodash.times(1, () => asyncConfirmSend(confirmChannel, queueName, msgPayload)));
 
                 await new Promise<void>((resolve) =>
                     asyncConsume(confirmChannel, queueName, [
@@ -715,29 +712,29 @@ describe('amqplib instrumentation promise model', function () {
             });
 
             it('error on channel should end all open spans on it', (done) => {
-                lodash.times(2, () => confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload)));
-
-                confirmChannel.on('close', () => {
-                    expect(getTestSpans().length).toBe(4);
-                    // second consume ended with valid ack, previous message not acked when channel is errored.
-                    // since we first ack the second message, it appear first in the finished spans array
-                    expect(getTestSpans()[2].status.code).toEqual(SpanStatusCode.OK);
-                    expect(getTestSpans()[3].status.code).toEqual(SpanStatusCode.ERROR);
-                    expect(getTestSpans()[3].status.message).toEqual('channel error');
-                    expectConsumeEndSpyStatus([EndOperation.Ack, EndOperation.ChannelError]);
-                    done();
+                Promise.all(lodash.times(2, () => asyncConfirmSend(confirmChannel, queueName, msgPayload))).then(() => {
+                    confirmChannel.on('close', () => {
+                        expect(getTestSpans().length).toBe(4);
+                        // second consume ended with valid ack, previous message not acked when channel is errored.
+                        // since we first ack the second message, it appear first in the finished spans array
+                        expect(getTestSpans()[2].status.code).toEqual(SpanStatusCode.OK);
+                        expect(getTestSpans()[3].status.code).toEqual(SpanStatusCode.ERROR);
+                        expect(getTestSpans()[3].status.message).toEqual('channel error');
+                        expectConsumeEndSpyStatus([EndOperation.Ack, EndOperation.ChannelError]);
+                        done();
+                    });
+                    asyncConsume(confirmChannel, queueName, [
+                        null,
+                        (msg) => {
+                            try {
+                                confirmChannel.ack(msg);
+                                confirmChannel[CHANNEL_CLOSED_IN_TEST] = true;
+                                // ack the same msg again, this is not valid and should close the channel
+                                confirmChannel.ack(msg);
+                            } catch {}
+                        },
+                    ]);
                 });
-                asyncConsume(confirmChannel, queueName, [
-                    null,
-                    (msg) => {
-                        try {
-                            confirmChannel.ack(msg);
-                            confirmChannel[CHANNEL_CLOSED_IN_TEST] = true;
-                            // ack the same msg again, this is not valid and should close the channel
-                            confirmChannel.ack(msg);
-                        } catch {}
-                    },
-                ]);
             });
 
             it('not acking the message trigger timeout', async () => {
@@ -746,7 +743,7 @@ describe('amqplib instrumentation promise model', function () {
                     consumeTimeoutMs: 1,
                 });
 
-                lodash.times(1, () => confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload)));
+                await Promise.all(lodash.times(1, () => asyncConfirmSend(confirmChannel, queueName, msgPayload)));
 
                 await asyncConsume(confirmChannel, queueName, [null]);
 
@@ -767,7 +764,7 @@ describe('amqplib instrumentation promise model', function () {
                 const { queue: queueName } = await confirmChannel.assertQueue('', { durable: false });
                 await confirmChannel.bindQueue(queueName, exchangeName, '#');
 
-                confirmChannel.publish(exchangeName, routingKey, Buffer.from(msgPayload));
+                await asyncConfirmPublish(confirmChannel, exchangeName, routingKey, msgPayload);
 
                 await asyncConsume(confirmChannel, queueName, [null], {
                     noAck: true,
@@ -809,7 +806,7 @@ describe('amqplib instrumentation promise model', function () {
                 moduleVersionAttributeName: VERSION_ATTR,
             });
 
-            confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload));
+            await asyncConfirmSend(confirmChannel, queueName, msgPayload);
 
             await asyncConsume(
                 confirmChannel,
@@ -859,7 +856,7 @@ describe('amqplib instrumentation promise model', function () {
                     },
                 });
 
-                confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload));
+                await asyncConfirmSend(confirmChannel, queueName, msgPayload);
 
                 await asyncConsume(confirmChannel, queueName, [null], {
                     noAck: true,
@@ -893,7 +890,7 @@ describe('amqplib instrumentation promise model', function () {
                     },
                 });
 
-                confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload));
+                await asyncConfirmSend(confirmChannel, queueName, msgPayload);
 
                 await asyncConsume(confirmChannel, queueName, [null], {
                     noAck: true,

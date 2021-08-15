@@ -8,7 +8,7 @@ const instrumentation = registerInstrumentation(new AmqplibInstrumentation());
 import amqpCallback from 'amqplib/callback_api';
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { SpanKind, context } from '@opentelemetry/api';
-import { asyncConsume } from './utils';
+import { asyncConfirmSend, asyncConsume } from './utils';
 import { TEST_RABBITMQ_HOST, TEST_RABBITMQ_PORT } from './config';
 
 const msgPayload = 'payload from test';
@@ -163,71 +163,74 @@ describe('amqplib instrumentation callback model', function () {
         });
 
         it('simple publish and consume from queue callback', (done) => {
-            const hadSpaceInBuffer = confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload));
-            expect(hadSpaceInBuffer).toBeTruthy();
+            asyncConfirmSend(confirmChannel, queueName, msgPayload).then(() => {
+                asyncConsume(confirmChannel, queueName, [(msg) => expect(msg.content.toString()).toEqual(msgPayload)], {
+                    noAck: true,
+                }).then(() => {
+                    const [publishSpan, consumeSpan] = getTestSpans();
 
-            asyncConsume(confirmChannel, queueName, [(msg) => expect(msg.content.toString()).toEqual(msgPayload)], {
-                noAck: true,
-            }).then(() => {
-                const [publishSpan, consumeSpan] = getTestSpans();
+                    // assert publish span
+                    expect(publishSpan.kind).toEqual(SpanKind.PRODUCER);
+                    expect(publishSpan.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('rabbitmq');
+                    expect(publishSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual(''); // according to spec: "This will be an empty string if the default exchange is used"
+                    expect(publishSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toEqual(
+                        MessagingDestinationKindValues.QUEUE
+                    );
+                    expect(publishSpan.attributes[SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]).toEqual(
+                        queueName
+                    );
+                    expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
+                    expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
+                    expect(publishSpan.attributes[SemanticAttributes.MESSAGING_URL]).toEqual(url);
+                    expect(publishSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual(TEST_RABBITMQ_HOST);
+                    expect(publishSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(TEST_RABBITMQ_PORT);
 
-                // assert publish span
-                expect(publishSpan.kind).toEqual(SpanKind.PRODUCER);
-                expect(publishSpan.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('rabbitmq');
-                expect(publishSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual(''); // according to spec: "This will be an empty string if the default exchange is used"
-                expect(publishSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toEqual(
-                    MessagingDestinationKindValues.QUEUE
-                );
-                expect(publishSpan.attributes[SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]).toEqual(queueName);
-                expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
-                expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
-                expect(publishSpan.attributes[SemanticAttributes.MESSAGING_URL]).toEqual(url);
-                expect(publishSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual(TEST_RABBITMQ_HOST);
-                expect(publishSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(TEST_RABBITMQ_PORT);
+                    // assert consume span
+                    expect(consumeSpan.kind).toEqual(SpanKind.CONSUMER);
+                    expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('rabbitmq');
+                    expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual(''); // according to spec: "This will be an empty string if the default exchange is used"
+                    expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toEqual(
+                        MessagingDestinationKindValues.QUEUE
+                    );
+                    expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]).toEqual(
+                        queueName
+                    );
+                    expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
+                    expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
+                    expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_URL]).toEqual(url);
+                    expect(consumeSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual(TEST_RABBITMQ_HOST);
+                    expect(consumeSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(TEST_RABBITMQ_PORT);
 
-                // assert consume span
-                expect(consumeSpan.kind).toEqual(SpanKind.CONSUMER);
-                expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('rabbitmq');
-                expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual(''); // according to spec: "This will be an empty string if the default exchange is used"
-                expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toEqual(
-                    MessagingDestinationKindValues.QUEUE
-                );
-                expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]).toEqual(queueName);
-                expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
-                expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
-                expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_URL]).toEqual(url);
-                expect(consumeSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual(TEST_RABBITMQ_HOST);
-                expect(consumeSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(TEST_RABBITMQ_PORT);
+                    // assert context propagation
+                    expect(consumeSpan.spanContext().traceId).toEqual(publishSpan.spanContext().traceId);
+                    expect(consumeSpan.parentSpanId).toEqual(publishSpan.spanContext().spanId);
 
-                // assert context propagation
-                expect(consumeSpan.spanContext().traceId).toEqual(publishSpan.spanContext().traceId);
-                expect(consumeSpan.parentSpanId).toEqual(publishSpan.spanContext().spanId);
-
-                done();
+                    done();
+                });
             });
         });
 
         it('end span with ack sync', (done) => {
-            confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload));
-
-            asyncConsume(confirmChannel, queueName, [(msg) => confirmChannel.ack(msg)]).then(() => {
-                // assert consumed message span has ended
-                expect(getTestSpans().length).toBe(2);
-                done();
+            asyncConfirmSend(confirmChannel, queueName, msgPayload).then(() => {
+                asyncConsume(confirmChannel, queueName, [(msg) => confirmChannel.ack(msg)]).then(() => {
+                    // assert consumed message span has ended
+                    expect(getTestSpans().length).toBe(2);
+                    done();
+                });
             });
         });
 
         it('end span with ack async', (done) => {
-            confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload));
-
-            asyncConsume(confirmChannel, queueName, [
-                (msg) =>
-                    setTimeout(() => {
-                        confirmChannel.ack(msg);
-                        expect(getTestSpans().length).toBe(2);
-                        done();
-                    }, 1),
-            ]);
+            asyncConfirmSend(confirmChannel, queueName, msgPayload).then(() => {
+                asyncConsume(confirmChannel, queueName, [
+                    (msg) =>
+                        setTimeout(() => {
+                            confirmChannel.ack(msg);
+                            expect(getTestSpans().length).toBe(2);
+                            done();
+                        }, 1),
+                ]);
+            });
         });
     });
 });
