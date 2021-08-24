@@ -93,7 +93,7 @@ describe('amqplib instrumentation promise model', function () {
             expect(publishSpan.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('rabbitmq');
             expect(publishSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual(''); // according to spec: "This will be an empty string if the default exchange is used"
             expect(publishSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toEqual(
-                MessagingDestinationKindValues.QUEUE
+                MessagingDestinationKindValues.TOPIC
             );
             expect(publishSpan.attributes[SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]).toEqual(queueName);
             expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
@@ -107,7 +107,7 @@ describe('amqplib instrumentation promise model', function () {
             expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('rabbitmq');
             expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual(''); // according to spec: "This will be an empty string if the default exchange is used"
             expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toEqual(
-                MessagingDestinationKindValues.QUEUE
+                MessagingDestinationKindValues.TOPIC
             );
             expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]).toEqual(queueName);
             expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
@@ -177,7 +177,7 @@ describe('amqplib instrumentation promise model', function () {
                 const [_, rejectedConsumerSpan, successConsumerSpan] = getTestSpans();
                 expect(rejectedConsumerSpan.status.code).toEqual(SpanStatusCode.ERROR);
                 expect(rejectedConsumerSpan.status.message).toEqual('nack called on message with requeue');
-                expect(successConsumerSpan.status.code).toEqual(SpanStatusCode.OK);
+                expect(successConsumerSpan.status.code).toEqual(SpanStatusCode.UNSET);
                 expectConsumeEndSpyStatus([EndOperation.Nack, EndOperation.Ack]);
             });
 
@@ -303,7 +303,7 @@ describe('amqplib instrumentation promise model', function () {
                     expect(getTestSpans().length).toBe(4);
                     // second consume ended with valid ack, previous message not acked when channel is errored.
                     // since we first ack the second message, it appear first in the finished spans array
-                    expect(getTestSpans()[2].status.code).toEqual(SpanStatusCode.OK);
+                    expect(getTestSpans()[2].status.code).toEqual(SpanStatusCode.UNSET);
                     expect(getTestSpans()[3].status.code).toEqual(SpanStatusCode.ERROR);
                     expect(getTestSpans()[3].status.message).toEqual('channel error');
                     expectConsumeEndSpyStatus([EndOperation.Ack, EndOperation.ChannelError]);
@@ -362,7 +362,7 @@ describe('amqplib instrumentation promise model', function () {
                 expect(publishSpan.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('rabbitmq');
                 expect(publishSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual(exchangeName);
                 expect(publishSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toEqual(
-                    MessagingDestinationKindValues.QUEUE
+                    MessagingDestinationKindValues.TOPIC
                 );
                 expect(publishSpan.attributes[SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]).toEqual(routingKey);
                 expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
@@ -373,7 +373,7 @@ describe('amqplib instrumentation promise model', function () {
                 expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('rabbitmq');
                 expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual(exchangeName);
                 expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toEqual(
-                    MessagingDestinationKindValues.QUEUE
+                    MessagingDestinationKindValues.TOPIC
                 );
                 expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]).toEqual(routingKey);
                 expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
@@ -508,7 +508,7 @@ describe('amqplib instrumentation promise model', function () {
             expect(publishSpan.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('rabbitmq');
             expect(publishSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual(''); // according to spec: "This will be an empty string if the default exchange is used"
             expect(publishSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toEqual(
-                MessagingDestinationKindValues.QUEUE
+                MessagingDestinationKindValues.TOPIC
             );
             expect(publishSpan.attributes[SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]).toEqual(queueName);
             expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
@@ -522,7 +522,7 @@ describe('amqplib instrumentation promise model', function () {
             expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('rabbitmq');
             expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual(''); // according to spec: "This will be an empty string if the default exchange is used"
             expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toEqual(
-                MessagingDestinationKindValues.QUEUE
+                MessagingDestinationKindValues.TOPIC
             );
             expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]).toEqual(queueName);
             expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
@@ -533,8 +533,26 @@ describe('amqplib instrumentation promise model', function () {
 
             // assert context propagation
             expect(consumeSpan.spanContext().traceId).toEqual(publishSpan.spanContext().traceId);
-            expect(consumeSpan.parentSpanId).toEqual(publishSpan.spanContext().spanId);
 
+            expectConsumeEndSpyStatus([EndOperation.AutoAck]);
+        });
+
+        it('confirm throw should not affect span end', async () => {
+            const confirmUserError = new Error('callback error');
+            await asyncConfirmSend(confirmChannel, queueName, msgPayload, () => {
+                throw confirmUserError;
+            }).catch((reject) => expect(reject).toEqual(confirmUserError));
+
+            await asyncConsume(
+                confirmChannel,
+                queueName,
+                [(msg) => expect(msg.content.toString()).toEqual(msgPayload)],
+                {
+                    noAck: true,
+                }
+            );
+
+            expect(getTestSpans()).toHaveLength(2);
             expectConsumeEndSpyStatus([EndOperation.AutoAck]);
         });
 
@@ -592,7 +610,7 @@ describe('amqplib instrumentation promise model', function () {
                 const [_, rejectedConsumerSpan, successConsumerSpan] = getTestSpans();
                 expect(rejectedConsumerSpan.status.code).toEqual(SpanStatusCode.ERROR);
                 expect(rejectedConsumerSpan.status.message).toEqual('nack called on message with requeue');
-                expect(successConsumerSpan.status.code).toEqual(SpanStatusCode.OK);
+                expect(successConsumerSpan.status.code).toEqual(SpanStatusCode.UNSET);
                 expectConsumeEndSpyStatus([EndOperation.Nack, EndOperation.Ack]);
             });
 
@@ -717,7 +735,7 @@ describe('amqplib instrumentation promise model', function () {
                         expect(getTestSpans().length).toBe(4);
                         // second consume ended with valid ack, previous message not acked when channel is errored.
                         // since we first ack the second message, it appear first in the finished spans array
-                        expect(getTestSpans()[2].status.code).toEqual(SpanStatusCode.OK);
+                        expect(getTestSpans()[2].status.code).toEqual(SpanStatusCode.UNSET);
                         expect(getTestSpans()[3].status.code).toEqual(SpanStatusCode.ERROR);
                         expect(getTestSpans()[3].status.message).toEqual('channel error');
                         expectConsumeEndSpyStatus([EndOperation.Ack, EndOperation.ChannelError]);
@@ -777,7 +795,7 @@ describe('amqplib instrumentation promise model', function () {
                 expect(publishSpan.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('rabbitmq');
                 expect(publishSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual(exchangeName);
                 expect(publishSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toEqual(
-                    MessagingDestinationKindValues.QUEUE
+                    MessagingDestinationKindValues.TOPIC
                 );
                 expect(publishSpan.attributes[SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]).toEqual(routingKey);
                 expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
@@ -788,7 +806,7 @@ describe('amqplib instrumentation promise model', function () {
                 expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_SYSTEM]).toEqual('rabbitmq');
                 expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toEqual(exchangeName);
                 expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_DESTINATION_KIND]).toEqual(
-                    MessagingDestinationKindValues.QUEUE
+                    MessagingDestinationKindValues.TOPIC
                 );
                 expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]).toEqual(routingKey);
                 expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
@@ -829,13 +847,14 @@ describe('amqplib instrumentation promise model', function () {
                 const attributeNameFromConsumeEndHook = 'attribute.name.from.consume.endhook';
                 const consumeEndHookAttributeValue = 'attribute value from consume end hook';
                 instrumentation.setConfig({
-                    publishConfirmHook: (span: Span, publishParams: PublishParams): void => {
+                    publishHook: (span: Span, publishParams: PublishParams, isConfirmChannel: boolean): void => {
                         span.setAttribute(attributeNameFromHook, hookAttributeValue);
                         expect(publishParams.exchange).toEqual('');
                         expect(publishParams.routingKey).toEqual(queueName);
                         expect(publishParams.content.toString()).toEqual(msgPayload);
+                        expect(isConfirmChannel).toBe(true);
                     },
-                    publishConfirmEndHook: (span, publishParams) => {
+                    publishConfirmHook: (span, publishParams) => {
                         span.setAttribute(attributeNameFromConfirmEndHook, confirmEndHookAttributeValue);
                         expect(publishParams.exchange).toEqual('');
                         expect(publishParams.routingKey).toEqual(queueName);
@@ -876,11 +895,11 @@ describe('amqplib instrumentation promise model', function () {
                 const attributeNameFromHook = 'attribute.name.from.hook';
                 const hookAttributeValue = 'attribute value from hook';
                 instrumentation.setConfig({
-                    publishConfirmHook: (span: Span, publishParams: PublishParams): void => {
+                    publishHook: (span: Span, publishParams: PublishParams, isConfirmChannel: boolean): void => {
                         span.setAttribute(attributeNameFromHook, hookAttributeValue);
                         throw new Error('error from hook');
                     },
-                    publishConfirmEndHook: (span: Span, publishParams: PublishParams): void => {
+                    publishConfirmHook: (span: Span, publishParams: PublishParams): void => {
                         span.setAttribute(attributeNameFromHook, hookAttributeValue);
                         throw new Error('error from hook');
                     },

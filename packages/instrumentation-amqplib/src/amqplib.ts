@@ -1,4 +1,4 @@
-import { context, diag, propagation, trace, Span, SpanKind, SpanStatusCode } from '@opentelemetry/api';
+import { context, diag, propagation, trace, Span, SpanKind, SpanStatusCode, Context } from '@opentelemetry/api';
 import {
     InstrumentationBase,
     InstrumentationModuleDefinition,
@@ -19,6 +19,8 @@ import {
     CHANNEL_SPANS_NOT_ENDED,
     CONNECTION_ATTRIBUTES,
     getConnectionAttributesFromUrl,
+    IS_CONFIRM_CHANNEL,
+    isConfirmChannel,
     MESSAGE_STORED_SPAN,
     normalizeExchange,
 } from './utils';
@@ -276,7 +278,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
                         attributes: {
                             ...channel?.connection?.[CONNECTION_ATTRIBUTES],
                             [SemanticAttributes.MESSAGING_DESTINATION]: exchange,
-                            [SemanticAttributes.MESSAGING_DESTINATION_KIND]: MessagingDestinationKindValues.QUEUE,
+                            [SemanticAttributes.MESSAGING_DESTINATION_KIND]: MessagingDestinationKindValues.TOPIC,
                             [SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]: msg?.fields?.routingKey,
                             [SemanticAttributes.MESSAGING_OPERATION]: MessagingOperationValues.PROCESS,
                             [SemanticAttributes.MESSAGING_MESSAGE_ID]: msg?.properties.messageId,
@@ -320,7 +322,6 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
 
                 if (options?.noAck) {
                     self.callConsumeEndHook(span, msg, false, EndOperation.AutoAck);
-                    span.setStatus({ code: SpanStatusCode.OK });
                     span.end();
                 }
             };
@@ -348,21 +349,22 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
             callback?: (err: any, ok: amqp.Replies.Empty) => void
         ): boolean {
             const channel = this;
-            const { span, modifiedOptions } = self.createPublishSpan(
-                exchange,
+            const { markedContext, span, modifiedOptions } = self.createPublishSpan(
                 self,
+                exchange,
                 routingKey,
                 channel,
                 moduleVersion,
-                options
+                options,
+                true
             );
 
-            if (self._config.publishConfirmHook) {
+            if (self._config.publishHook) {
                 safeExecuteInTheMiddle(
-                    () => self._config.publishConfirmHook(span, { exchange, routingKey, content, options }),
+                    () => self._config.publishHook(span, { exchange, routingKey, content, options }, true),
                     (e) => {
                         if (e) {
-                            diag.error('amqplib instrumentation: publishConfirmHook error', e);
+                            diag.error('amqplib instrumentation: publishHook error', e);
                         }
                     },
                     true
@@ -370,17 +372,21 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
             }
 
             const patchedOnConfirm = function (err: any, ok: amqp.Replies.Empty) {
-                // should we wrap with context and end span after this callback or end span right away?
-                context.with(trace.setSpan(context.active(), span), () => {
-                    callback?.call(this, err, ok);
+                let callbackError;
+                context.with(trace.setSpan(markedContext, span), () => {
+                    try {
+                        callback?.call(this, err, ok);
+                    } catch (e) {
+                        callbackError = e;
+                    }
                 });
 
-                if (self._config.publishConfirmEndHook) {
+                if (self._config.publishConfirmHook) {
                     safeExecuteInTheMiddle(
-                        () => self._config.publishConfirmEndHook(span, { exchange, routingKey, content, options }, err),
+                        () => self._config.publishConfirmHook(span, { exchange, routingKey, content, options }, err),
                         (e) => {
                             if (e) {
-                                diag.error('amqplib instrumentation: publishConfirmEndHook error', e);
+                                diag.error('amqplib instrumentation: publishConfirmHook error', e);
                             }
                         },
                         true
@@ -392,18 +398,19 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
                         code: SpanStatusCode.ERROR,
                         message: "message confirmation has been nack'ed",
                     });
-                } else {
-                    span.setStatus({ code: SpanStatusCode.OK });
                 }
                 span.end();
+                if (callbackError) {
+                    throw callbackError;
+                }
             };
 
             // calling confirm channel publish function is storing the message in queue and registering the callback for broker confirm.
             // span ends in the patched callback.
             const argumentsCopy = [...arguments];
             argumentsCopy[3] = modifiedOptions;
-            argumentsCopy[4] = patchedOnConfirm;
-            return original.apply(this, argumentsCopy);
+            argumentsCopy[4] = context.bind(trace.setSpan(markedContext, span), patchedOnConfirm);
+            return context.with(markedContext, original.bind(this, ...argumentsCopy));
         };
     }
 
@@ -418,15 +425,14 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
             content: Buffer,
             options?: amqp.Options.Publish
         ): boolean {
-            const isConfirmChannel = !!this.waitForConfirms; // duck typing, can we reliably check for CC in a cleaner way?
-            if (isConfirmChannel) {
+            if (isConfirmChannel(context.active())) {
                 // work already done
                 return original.apply(this, arguments);
             } else {
                 const channel = this;
                 const { span, modifiedOptions } = self.createPublishSpan(
-                    exchange,
                     self,
+                    exchange,
                     routingKey,
                     channel,
                     moduleVersion,
@@ -435,7 +441,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
 
                 if (self._config.publishHook) {
                     safeExecuteInTheMiddle(
-                        () => self._config.publishHook(span, { exchange, routingKey, content, options }),
+                        () => self._config.publishHook(span, { exchange, routingKey, content, options }, false),
                         (e) => {
                             if (e) {
                                 diag.error('amqplib instrumentation: publishHook error', e);
@@ -450,7 +456,6 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
                 const argumentsCopy = [...arguments];
                 argumentsCopy[3] = modifiedOptions;
                 const originalRes = original.apply(this, argumentsCopy);
-                span.setStatus({ code: SpanStatusCode.OK });
                 span.end();
                 return originalRes;
             }
@@ -458,12 +463,13 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
     }
 
     private createPublishSpan(
-        exchange: string,
         self: this,
+        exchange: string,
         routingKey: string,
         channel,
         moduleVersion: string,
-        options?: amqp.Options.Publish
+        options?: amqp.Options.Publish,
+        isConfirmChannel?: boolean
     ) {
         const normalizedExchange = normalizeExchange(exchange);
 
@@ -472,7 +478,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
             attributes: {
                 ...channel.connection[CONNECTION_ATTRIBUTES],
                 [SemanticAttributes.MESSAGING_DESTINATION]: exchange,
-                [SemanticAttributes.MESSAGING_DESTINATION_KIND]: MessagingDestinationKindValues.QUEUE,
+                [SemanticAttributes.MESSAGING_DESTINATION_KIND]: MessagingDestinationKindValues.TOPIC,
                 [SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]: routingKey,
                 [SemanticAttributes.MESSAGING_MESSAGE_ID]: options?.messageId,
                 [SemanticAttributes.MESSAGING_CONVERSATION_ID]: options?.correlationId,
@@ -483,8 +489,14 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         }
         const modifiedOptions = options ?? {};
         modifiedOptions.headers = modifiedOptions.headers ?? {};
-        propagation.inject(trace.setSpan(context.active(), span), modifiedOptions.headers);
-        return { span, modifiedOptions };
+
+        let markedContext = context.active();
+        if (isConfirmChannel) {
+            markedContext = markedContext.setValue(IS_CONFIRM_CHANNEL, true);
+        }
+        propagation.inject(trace.setSpan(markedContext, span), modifiedOptions.headers);
+
+        return { markedContext, span, modifiedOptions };
     }
 
     private endConsumerSpan(message: amqp.Message, isRejected: boolean, operation: EndOperation, requeue: boolean) {
@@ -498,8 +510,6 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
                         ? `${operation} called on message ${requeue ? 'with' : 'without'} requeue`
                         : operation,
             });
-        } else {
-            storedSpan.setStatus({ code: SpanStatusCode.OK });
         }
         this.callConsumeEndHook(storedSpan, message, isRejected, operation);
         storedSpan.end();

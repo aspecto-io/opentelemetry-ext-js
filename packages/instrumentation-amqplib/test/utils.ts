@@ -5,10 +5,18 @@ import expect from 'expect';
 export const asyncConfirmSend = (
     confirmChannel: amqp.ConfirmChannel | amqpCallback.ConfirmChannel,
     queueName: string,
-    msgPayload: string
+    msgPayload: string,
+    callback?: () => void
 ): Promise<void> => {
-    return new Promise<void>((resolve) => {
-        const hadSpaceInBuffer = confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload), {}, (err) => resolve());
+    return new Promise<void>((resolve, reject) => {
+        const hadSpaceInBuffer = confirmChannel.sendToQueue(queueName, Buffer.from(msgPayload), {}, (err) => {
+            try {
+                callback?.();
+                resolve();
+            } catch (e) {
+                reject(e);
+            }
+        });
         expect(hadSpaceInBuffer).toBeTruthy();
     });
 };
@@ -17,12 +25,18 @@ export const asyncConfirmPublish = (
     confirmChannel: amqp.ConfirmChannel | amqpCallback.ConfirmChannel,
     exchange: string,
     routingKey: string,
-    msgPayload: string
+    msgPayload: string,
+    callback?: () => void
 ): Promise<void> => {
-    return new Promise<void>((resolve) => {
-        const hadSpaceInBuffer = confirmChannel.publish(exchange, routingKey, Buffer.from(msgPayload), {}, (err) =>
-            resolve()
-        );
+    return new Promise<void>((resolve, reject) => {
+        const hadSpaceInBuffer = confirmChannel.publish(exchange, routingKey, Buffer.from(msgPayload), {}, (err) => {
+            try {
+                callback?.();
+                resolve();
+            } catch (e) {
+                reject(e);
+            }
+        });
         expect(hadSpaceInBuffer).toBeTruthy();
     });
 };
