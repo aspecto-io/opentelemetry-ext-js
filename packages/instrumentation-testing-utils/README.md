@@ -29,7 +29,7 @@ As command line argument option to mocha:
         "test": "mocha --require opentelemetry-instrumentation-testing-utils",
         "test:jaeger": "OTEL_EXPORTER_JAEGER_AGENT_HOST=localhost mocha --require opentelemetry-instrumentation-testing-utils",
     },
-``
+```
 
 Or by using config file / package.json config:
 ```js
