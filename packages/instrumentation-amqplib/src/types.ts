@@ -14,7 +14,7 @@ export interface AmqplibPublishCustomAttributeFunction {
 }
 
 export interface AmqplibConsumerCustomAttributeFunction {
-    (span: Span, msg: amqp.ConsumeMessage | null): void;
+    (span: Span, msg: amqp.ConsumeMessage): void;
 }
 
 export enum EndOperation {
@@ -30,7 +30,7 @@ export enum EndOperation {
 }
 
 export interface AmqplibConsumerEndCustomAttributeFunction {
-    (span: Span, msg: amqp.ConsumeMessage | null, rejected: boolean, endOperation: EndOperation): void;
+    (span: Span, msg: amqp.ConsumeMessage, rejected: boolean, endOperation: EndOperation): void;
 }
 
 export interface AmqplibInstrumentationConfig extends InstrumentationConfig {
