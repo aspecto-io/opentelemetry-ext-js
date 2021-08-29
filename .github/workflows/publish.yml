@@ -30,7 +30,7 @@ jobs:
       - name: Configure CI Git User
         run: |
           git config --global user.name '@aspecto-system'
-          git config --global user.email 'aspecto-system@users.noreply.github.com'
+          git config --global user.email 'michael@aspecto.io'
 
       - name: Install Packages
         run: yarn install
