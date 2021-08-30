@@ -9,7 +9,7 @@ export const CHANNEL_CONSUME_TIMEOUT_TIMER: unique symbol = Symbol(
 );
 export const CONNECTION_ATTRIBUTES: unique symbol = Symbol('opentelemetry.amqplib.connection.attributes');
 
-export const IS_CONFIRM_CHANNEL: symbol = createContextKey('opentelemetry.amqplib.channel.is-confirm-channel');
+const IS_CONFIRM_CHANNEL_CONTEXT_KEY: symbol = createContextKey('opentelemetry.amqplib.channel.is-confirm-channel');
 
 export const normalizeExchange = (exchangeName: string) => (exchangeName !== '' ? exchangeName : '<default>');
 
@@ -114,6 +114,14 @@ export const getConnectionAttributesFromUrl = (
     return attributes;
 };
 
-export const isConfirmChannel = (context: Context) => {
-    return context.getValue(IS_CONFIRM_CHANNEL) === true;
+export const markConfirmChannelTracing = (context: Context) => {
+    return context.setValue(IS_CONFIRM_CHANNEL_CONTEXT_KEY, true);
+};
+
+export const unmarkConfirmChannelTracing = (context: Context) => {
+    return context.deleteValue(IS_CONFIRM_CHANNEL_CONTEXT_KEY);
+};
+
+export const isConfirmChannelTracing = (context: Context) => {
+    return context.getValue(IS_CONFIRM_CHANNEL_CONTEXT_KEY) === true;
 };

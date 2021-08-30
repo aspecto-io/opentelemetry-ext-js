@@ -7,10 +7,11 @@ export interface PublishParams {
     routingKey: string;
     content: Buffer;
     options?: amqp.Options.Publish;
+    isConfirmChannel?: boolean;
 }
 
 export interface AmqplibPublishCustomAttributeFunction {
-    (span: Span, publishParams: PublishParams, isConfirmChannel: boolean): void;
+    (span: Span, publishParams: PublishParams): void;
 }
 
 export interface AmqplibConfirmCustomAttributeFunction {

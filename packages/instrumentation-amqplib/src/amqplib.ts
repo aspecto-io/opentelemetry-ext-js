@@ -19,10 +19,11 @@ import {
     CHANNEL_SPANS_NOT_ENDED,
     CONNECTION_ATTRIBUTES,
     getConnectionAttributesFromUrl,
-    IS_CONFIRM_CHANNEL,
-    isConfirmChannel,
+    isConfirmChannelTracing,
+    markConfirmChannelTracing,
     MESSAGE_STORED_SPAN,
     normalizeExchange,
+    unmarkConfirmChannelTracing,
 } from './utils';
 import { VERSION } from './version';
 
@@ -349,19 +350,25 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
             callback?: (err: any, ok: amqp.Replies.Empty) => void
         ): boolean {
             const channel = this;
-            const { markedContext, span, modifiedOptions } = self.createPublishSpan(
+            const { span, modifiedOptions } = self.createPublishSpan(
                 self,
                 exchange,
                 routingKey,
                 channel,
                 moduleVersion,
-                options,
-                true
+                options
             );
 
             if (self._config.publishHook) {
                 safeExecuteInTheMiddle(
-                    () => self._config.publishHook(span, { exchange, routingKey, content, options }, true),
+                    () =>
+                        self._config.publishHook(span, {
+                            exchange,
+                            routingKey,
+                            content,
+                            options,
+                            isConfirmChannel: true,
+                        }),
                     (e) => {
                         if (e) {
                             diag.error('amqplib instrumentation: publishHook error', e);
@@ -372,41 +379,41 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
             }
 
             const patchedOnConfirm = function (err: any, ok: amqp.Replies.Empty) {
-                let callbackError;
-                context.with(trace.setSpan(markedContext, span), () => {
-                    try {
+                try {
+                    context.with(unmarkConfirmChannelTracing(context.active()), () => {
                         callback?.call(this, err, ok);
-                    } catch (e) {
-                        callbackError = e;
-                    }
-                });
-
-                if (self._config.publishConfirmHook) {
-                    safeExecuteInTheMiddle(
-                        () => self._config.publishConfirmHook(span, { exchange, routingKey, content, options }, err),
-                        (e) => {
-                            if (e) {
-                                diag.error('amqplib instrumentation: publishConfirmHook error', e);
-                            }
-                        },
-                        true
-                    );
-                }
-
-                if (err) {
-                    span.setStatus({
-                        code: SpanStatusCode.ERROR,
-                        message: "message confirmation has been nack'ed",
                     });
-                }
-                span.end();
-                if (callbackError) {
-                    throw callbackError;
+                } finally {
+                    if (self._config.publishConfirmHook) {
+                        safeExecuteInTheMiddle(
+                            () =>
+                                self._config.publishConfirmHook(
+                                    span,
+                                    { exchange, routingKey, content, options, isConfirmChannel: true },
+                                    err
+                                ),
+                            (e) => {
+                                if (e) {
+                                    diag.error('amqplib instrumentation: publishConfirmHook error', e);
+                                }
+                            },
+                            true
+                        );
+                    }
+
+                    if (err) {
+                        span.setStatus({
+                            code: SpanStatusCode.ERROR,
+                            message: "message confirmation has been nack'ed",
+                        });
+                    }
+                    span.end();
                 }
             };
 
             // calling confirm channel publish function is storing the message in queue and registering the callback for broker confirm.
             // span ends in the patched callback.
+            const markedContext = markConfirmChannelTracing(context.active());
             const argumentsCopy = [...arguments];
             argumentsCopy[3] = modifiedOptions;
             argumentsCopy[4] = context.bind(trace.setSpan(markedContext, span), patchedOnConfirm);
@@ -425,7 +432,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
             content: Buffer,
             options?: amqp.Options.Publish
         ): boolean {
-            if (isConfirmChannel(context.active())) {
+            if (isConfirmChannelTracing(context.active())) {
                 // work already done
                 return original.apply(this, arguments);
             } else {
@@ -441,7 +448,14 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
 
                 if (self._config.publishHook) {
                     safeExecuteInTheMiddle(
-                        () => self._config.publishHook(span, { exchange, routingKey, content, options }, false),
+                        () =>
+                            self._config.publishHook(span, {
+                                exchange,
+                                routingKey,
+                                content,
+                                options,
+                                isConfirmChannel: false,
+                            }),
                         (e) => {
                             if (e) {
                                 diag.error('amqplib instrumentation: publishHook error', e);
@@ -468,8 +482,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         routingKey: string,
         channel,
         moduleVersion: string,
-        options?: amqp.Options.Publish,
-        isConfirmChannel?: boolean
+        options?: amqp.Options.Publish
     ) {
         const normalizedExchange = normalizeExchange(exchange);
 
@@ -490,13 +503,9 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         const modifiedOptions = options ?? {};
         modifiedOptions.headers = modifiedOptions.headers ?? {};
 
-        let markedContext = context.active();
-        if (isConfirmChannel) {
-            markedContext = markedContext.setValue(IS_CONFIRM_CHANNEL, true);
-        }
-        propagation.inject(trace.setSpan(markedContext, span), modifiedOptions.headers);
+        propagation.inject(context.active(), modifiedOptions.headers);
 
-        return { markedContext, span, modifiedOptions };
+        return { span, modifiedOptions };
     }
 
     private endConsumerSpan(message: amqp.Message, isRejected: boolean, operation: EndOperation, requeue: boolean) {
