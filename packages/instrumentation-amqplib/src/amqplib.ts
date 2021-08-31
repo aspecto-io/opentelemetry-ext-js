@@ -380,9 +380,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
 
             const patchedOnConfirm = function (err: any, ok: amqp.Replies.Empty) {
                 try {
-                    context.with(unmarkConfirmChannelTracing(context.active()), () => {
-                        callback?.call(this, err, ok);
-                    });
+                    callback?.call(this, err, ok);
                 } finally {
                     if (self._config.publishConfirmHook) {
                         safeExecuteInTheMiddle(
@@ -416,7 +414,8 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
             const markedContext = markConfirmChannelTracing(context.active());
             const argumentsCopy = [...arguments];
             argumentsCopy[3] = modifiedOptions;
-            argumentsCopy[4] = context.bind(trace.setSpan(markedContext, span), patchedOnConfirm);
+            //can unmark be here?
+            argumentsCopy[4] = context.bind(unmarkConfirmChannelTracing(trace.setSpan(markedContext, span)), patchedOnConfirm);
             return context.with(markedContext, original.bind(this, ...argumentsCopy));
         };
     }
@@ -503,7 +502,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         const modifiedOptions = options ?? {};
         modifiedOptions.headers = modifiedOptions.headers ?? {};
 
-        propagation.inject(context.active(), modifiedOptions.headers);
+        propagation.inject(trace.setSpan(context.active(), span), modifiedOptions.headers);
 
         return { span, modifiedOptions };
     }
