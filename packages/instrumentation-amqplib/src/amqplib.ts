@@ -269,9 +269,16 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
             }
 
             const patchedOnMessage = function (msg: amqp.ConsumeMessage | null) {
-                const headers = msg.properties.headers;
+                // msg is expected to be null for signaling consumer cancel notification
+                // https://www.rabbitmq.com/consumer-cancel.html
+                // in this case, we do not start a span, as this is not a real message.
+                if (!msg) {
+                    return onMessage.call(this, msg);
+                }
+
+                const headers = msg.properties.headers ?? {};
                 const parentContext = propagation.extract(context.active(), headers);
-                const exchange = msg?.fields?.exchange;
+                const exchange = msg.fields?.exchange;
                 const span = self.tracer.startSpan(
                     `${queue} process`,
                     {
@@ -280,7 +287,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
                             ...channel?.connection?.[CONNECTION_ATTRIBUTES],
                             [SemanticAttributes.MESSAGING_DESTINATION]: exchange,
                             [SemanticAttributes.MESSAGING_DESTINATION_KIND]: MessagingDestinationKindValues.TOPIC,
-                            [SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]: msg?.fields?.routingKey,
+                            [SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]: msg.fields?.routingKey,
                             [SemanticAttributes.MESSAGING_OPERATION]: MessagingOperationValues.PROCESS,
                             [SemanticAttributes.MESSAGING_MESSAGE_ID]: msg?.properties.messageId,
                             [SemanticAttributes.MESSAGING_CONVERSATION_ID]: msg?.properties.correlationId,
@@ -415,7 +422,10 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
             const argumentsCopy = [...arguments];
             argumentsCopy[3] = modifiedOptions;
             //can unmark be here?
-            argumentsCopy[4] = context.bind(unmarkConfirmChannelTracing(trace.setSpan(markedContext, span)), patchedOnConfirm);
+            argumentsCopy[4] = context.bind(
+                unmarkConfirmChannelTracing(trace.setSpan(markedContext, span)),
+                patchedOnConfirm
+            );
             return context.with(markedContext, original.bind(this, ...argumentsCopy));
         };
     }
@@ -536,12 +546,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         });
     }
 
-    private callConsumeEndHook(
-        span: Span,
-        msg: amqp.ConsumeMessage | null,
-        rejected: boolean,
-        endOperation: EndOperation
-    ) {
+    private callConsumeEndHook(span: Span, msg: amqp.ConsumeMessage, rejected: boolean, endOperation: EndOperation) {
         if (!this._config.consumeEndHook) return;
 
         safeExecuteInTheMiddle(

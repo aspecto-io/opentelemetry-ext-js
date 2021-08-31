@@ -7,7 +7,7 @@ import { getTestSpans, registerInstrumentation } from 'opentelemetry-instrumenta
 
 const instrumentation = registerInstrumentation(new AmqplibInstrumentation());
 
-import amqp from 'amqplib';
+import amqp, { ConsumeMessage } from 'amqplib';
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { Span, SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import { asyncConfirmPublish, asyncConfirmSend, asyncConsume } from './utils';
@@ -460,6 +460,17 @@ describe('amqplib instrumentation promise model', function () {
                 });
                 expect(getTestSpans().length).toBe(2);
                 getTestSpans().forEach((s) => expect(s.attributes[attributeNameFromHook]).toEqual(hookAttributeValue));
+            });
+        });
+
+        describe('delete queue', () => {
+            it('consumer receives null msg when a queue is deleted in broker', async () => {
+                const queueNameForDeletion = 'queue-to-be-deleted';
+                await channel.assertQueue(queueNameForDeletion, { durable: false });
+                await channel.purgeQueue(queueNameForDeletion);
+
+                await channel.consume(queueNameForDeletion, (msg: ConsumeMessage | null) => {}, { noAck: true });
+                await channel.deleteQueue(queueNameForDeletion);
             });
         });
     });
