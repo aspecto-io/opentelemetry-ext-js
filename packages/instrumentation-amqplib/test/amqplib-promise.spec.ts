@@ -847,12 +847,12 @@ describe('amqplib instrumentation promise model', function () {
                 const attributeNameFromConsumeEndHook = 'attribute.name.from.consume.endhook';
                 const consumeEndHookAttributeValue = 'attribute value from consume end hook';
                 instrumentation.setConfig({
-                    publishHook: (span: Span, publishParams: PublishParams, isConfirmChannel: boolean): void => {
+                    publishHook: (span: Span, publishParams: PublishParams) => {
                         span.setAttribute(attributeNameFromHook, hookAttributeValue);
                         expect(publishParams.exchange).toEqual('');
                         expect(publishParams.routingKey).toEqual(queueName);
                         expect(publishParams.content.toString()).toEqual(msgPayload);
-                        expect(isConfirmChannel).toBe(true);
+                        expect(publishParams.isConfirmChannel).toBe(true);
                     },
                     publishConfirmHook: (span, publishParams) => {
                         span.setAttribute(attributeNameFromConfirmEndHook, confirmEndHookAttributeValue);
@@ -860,7 +860,7 @@ describe('amqplib instrumentation promise model', function () {
                         expect(publishParams.routingKey).toEqual(queueName);
                         expect(publishParams.content.toString()).toEqual(msgPayload);
                     },
-                    consumeHook: (span: Span, msg: amqp.ConsumeMessage | null): void => {
+                    consumeHook: (span: Span, msg: amqp.ConsumeMessage | null) => {
                         span.setAttribute(attributeNameFromHook, hookAttributeValue);
                         expect(msg.content.toString()).toEqual(msgPayload);
                     },
@@ -895,7 +895,7 @@ describe('amqplib instrumentation promise model', function () {
                 const attributeNameFromHook = 'attribute.name.from.hook';
                 const hookAttributeValue = 'attribute value from hook';
                 instrumentation.setConfig({
-                    publishHook: (span: Span, publishParams: PublishParams, isConfirmChannel: boolean): void => {
+                    publishHook: (span: Span, publishParams: PublishParams): void => {
                         span.setAttribute(attributeNameFromHook, hookAttributeValue);
                         throw new Error('error from hook');
                     },

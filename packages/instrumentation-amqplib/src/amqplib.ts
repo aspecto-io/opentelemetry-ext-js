@@ -1,4 +1,4 @@
-import { context, diag, propagation, trace, Span, SpanKind, SpanStatusCode, Context } from '@opentelemetry/api';
+import { context, diag, propagation, trace, Span, SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import {
     InstrumentationBase,
     InstrumentationModuleDefinition,
