@@ -421,7 +421,6 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
             const markedContext = markConfirmChannelTracing(context.active());
             const argumentsCopy = [...arguments];
             argumentsCopy[3] = modifiedOptions;
-            //can unmark be here?
             argumentsCopy[4] = context.bind(
                 unmarkConfirmChannelTracing(trace.setSpan(markedContext, span)),
                 patchedOnConfirm
