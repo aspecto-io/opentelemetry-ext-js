@@ -19,8 +19,11 @@ import {
     CHANNEL_SPANS_NOT_ENDED,
     CONNECTION_ATTRIBUTES,
     getConnectionAttributesFromUrl,
+    isConfirmChannelTracing,
+    markConfirmChannelTracing,
     MESSAGE_STORED_SPAN,
     normalizeExchange,
+    unmarkConfirmChannelTracing,
 } from './utils';
 import { VERSION } from './version';
 
@@ -119,6 +122,13 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         if (!isWrapped(moduleExports.Channel.prototype.emit)) {
             this._wrap(moduleExports.Channel.prototype, 'emit', this.getChannelEmitPatch.bind(this));
         }
+        if (!isWrapped(moduleExports.ConfirmChannel.prototype.publish)) {
+            this._wrap(
+                moduleExports.ConfirmChannel.prototype,
+                'publish',
+                this.getConfirmedPublishPatch.bind(this, moduleVersion)
+            );
+        }
         return moduleExports;
     }
 
@@ -146,6 +156,9 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         }
         if (isWrapped(moduleExports.Channel.prototype.emit)) {
             this._unwrap(moduleExports.Channel.prototype, 'emit');
+        }
+        if (isWrapped(moduleExports.ConfirmChannel.prototype.publish)) {
+            this._unwrap(moduleExports.ConfirmChannel.prototype, 'publish');
         }
         return moduleExports;
     }
@@ -276,6 +289,8 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
                             [SemanticAttributes.MESSAGING_DESTINATION_KIND]: MessagingDestinationKindValues.TOPIC,
                             [SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]: msg.fields?.routingKey,
                             [SemanticAttributes.MESSAGING_OPERATION]: MessagingOperationValues.PROCESS,
+                            [SemanticAttributes.MESSAGING_MESSAGE_ID]: msg?.properties.messageId,
+                            [SemanticAttributes.MESSAGING_CONVERSATION_ID]: msg?.properties.correlationId,
                         },
                     },
                     parentContext
@@ -323,6 +338,97 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
         };
     }
 
+    protected getConfirmedPublishPatch(
+        moduleVersion: string,
+        original: (
+            exchange: string,
+            routingKey: string,
+            content: Buffer,
+            options?: amqp.Options.Publish,
+            callback?: (err: any, ok: amqp.Replies.Empty) => void
+        ) => boolean
+    ) {
+        const self = this;
+        return function confirmedPublish(
+            exchange: string,
+            routingKey: string,
+            content: Buffer,
+            options?: amqp.Options.Publish,
+            callback?: (err: any, ok: amqp.Replies.Empty) => void
+        ): boolean {
+            const channel = this;
+            const { span, modifiedOptions } = self.createPublishSpan(
+                self,
+                exchange,
+                routingKey,
+                channel,
+                moduleVersion,
+                options
+            );
+
+            if (self._config.publishHook) {
+                safeExecuteInTheMiddle(
+                    () =>
+                        self._config.publishHook(span, {
+                            exchange,
+                            routingKey,
+                            content,
+                            options,
+                            isConfirmChannel: true,
+                        }),
+                    (e) => {
+                        if (e) {
+                            diag.error('amqplib instrumentation: publishHook error', e);
+                        }
+                    },
+                    true
+                );
+            }
+
+            const patchedOnConfirm = function (err: any, ok: amqp.Replies.Empty) {
+                try {
+                    callback?.call(this, err, ok);
+                } finally {
+                    if (self._config.publishConfirmHook) {
+                        safeExecuteInTheMiddle(
+                            () =>
+                                self._config.publishConfirmHook(
+                                    span,
+                                    { exchange, routingKey, content, options, isConfirmChannel: true },
+                                    err
+                                ),
+                            (e) => {
+                                if (e) {
+                                    diag.error('amqplib instrumentation: publishConfirmHook error', e);
+                                }
+                            },
+                            true
+                        );
+                    }
+
+                    if (err) {
+                        span.setStatus({
+                            code: SpanStatusCode.ERROR,
+                            message: "message confirmation has been nack'ed",
+                        });
+                    }
+                    span.end();
+                }
+            };
+
+            // calling confirm channel publish function is storing the message in queue and registering the callback for broker confirm.
+            // span ends in the patched callback.
+            const markedContext = markConfirmChannelTracing(context.active());
+            const argumentsCopy = [...arguments];
+            argumentsCopy[3] = modifiedOptions;
+            argumentsCopy[4] = context.bind(
+                unmarkConfirmChannelTracing(trace.setSpan(markedContext, span)),
+                patchedOnConfirm
+            );
+            return context.with(markedContext, original.bind(this, ...argumentsCopy));
+        };
+    }
+
     protected getPublishPatch(
         moduleVersion: string,
         original: (exchange: string, routingKey: string, content: Buffer, options?: amqp.Options.Publish) => boolean
@@ -334,51 +440,80 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
             content: Buffer,
             options?: amqp.Options.Publish
         ): boolean {
-            const normalizedExchange = normalizeExchange(exchange);
-            const span = self.tracer.startSpan(`${normalizedExchange} -> ${routingKey} send`, {
-                kind: SpanKind.PRODUCER,
-                attributes: {
-                    ...this.connection[CONNECTION_ATTRIBUTES],
-                    [SemanticAttributes.MESSAGING_DESTINATION]: exchange,
-                    [SemanticAttributes.MESSAGING_DESTINATION_KIND]: MessagingDestinationKindValues.TOPIC,
-                    [SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]: routingKey,
-                },
-            });
-
-            if (self._config.moduleVersionAttributeName) {
-                span.setAttribute(self._config.moduleVersionAttributeName, moduleVersion);
-            }
-
-            const modifiedOptions = options ?? {};
-            modifiedOptions.headers = modifiedOptions.headers ?? {};
-            propagation.inject(trace.setSpan(context.active(), span), modifiedOptions.headers);
-
-            if (self._config.publishHook) {
-                safeExecuteInTheMiddle(
-                    () => self._config.publishHook(span, { exchange, routingKey, content, options }),
-                    (e) => {
-                        if (e) {
-                            diag.error('amqplib instrumentation: publishHook error', e);
-                        }
-                    },
-                    true
+            if (isConfirmChannelTracing(context.active())) {
+                // work already done
+                return original.apply(this, arguments);
+            } else {
+                const channel = this;
+                const { span, modifiedOptions } = self.createPublishSpan(
+                    self,
+                    exchange,
+                    routingKey,
+                    channel,
+                    moduleVersion,
+                    options
                 );
-            }
 
-            // calling original publish function is only storing the message in queue.
-            // it does not send it and waits for an ack, so the span duration is expected to be very short.
-            const argumentsCopy = [...arguments];
-            argumentsCopy[3] = modifiedOptions;
-            const originalRes = original.apply(this, argumentsCopy);
-            if (!originalRes) {
-                span.setStatus({
-                    code: SpanStatusCode.ERROR,
-                    message: 'write buffer is full, message should be published again after drain event',
-                });
+                if (self._config.publishHook) {
+                    safeExecuteInTheMiddle(
+                        () =>
+                            self._config.publishHook(span, {
+                                exchange,
+                                routingKey,
+                                content,
+                                options,
+                                isConfirmChannel: false,
+                            }),
+                        (e) => {
+                            if (e) {
+                                diag.error('amqplib instrumentation: publishHook error', e);
+                            }
+                        },
+                        true
+                    );
+                }
+
+                // calling normal channel publish function is only storing the message in queue.
+                // it does not send it and waits for an ack, so the span duration is expected to be very short.
+                const argumentsCopy = [...arguments];
+                argumentsCopy[3] = modifiedOptions;
+                const originalRes = original.apply(this, argumentsCopy);
+                span.end();
+                return originalRes;
             }
-            span.end();
-            return originalRes;
         };
+    }
+
+    private createPublishSpan(
+        self: this,
+        exchange: string,
+        routingKey: string,
+        channel,
+        moduleVersion: string,
+        options?: amqp.Options.Publish
+    ) {
+        const normalizedExchange = normalizeExchange(exchange);
+
+        const span = self.tracer.startSpan(`${normalizedExchange} -> ${routingKey} send`, {
+            kind: SpanKind.PRODUCER,
+            attributes: {
+                ...channel.connection[CONNECTION_ATTRIBUTES],
+                [SemanticAttributes.MESSAGING_DESTINATION]: exchange,
+                [SemanticAttributes.MESSAGING_DESTINATION_KIND]: MessagingDestinationKindValues.TOPIC,
+                [SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]: routingKey,
+                [SemanticAttributes.MESSAGING_MESSAGE_ID]: options?.messageId,
+                [SemanticAttributes.MESSAGING_CONVERSATION_ID]: options?.correlationId,
+            },
+        });
+        if (self._config.moduleVersionAttributeName) {
+            span.setAttribute(self._config.moduleVersionAttributeName, moduleVersion);
+        }
+        const modifiedOptions = options ?? {};
+        modifiedOptions.headers = modifiedOptions.headers ?? {};
+
+        propagation.inject(trace.setSpan(context.active(), span), modifiedOptions.headers);
+
+        return { span, modifiedOptions };
     }
 
     private endConsumerSpan(message: amqp.Message, isRejected: boolean, operation: EndOperation, requeue: boolean) {

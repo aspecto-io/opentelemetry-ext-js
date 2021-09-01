@@ -1,4 +1,4 @@
-import { diag, SpanAttributes, SpanAttributeValue } from '@opentelemetry/api';
+import { Context, createContextKey, diag, SpanAttributes, SpanAttributeValue } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import type amqp from 'amqplib';
 
@@ -8,6 +8,8 @@ export const CHANNEL_CONSUME_TIMEOUT_TIMER: unique symbol = Symbol(
     'opentelemetry.amqplib.channel.consumer-timeout-timer'
 );
 export const CONNECTION_ATTRIBUTES: unique symbol = Symbol('opentelemetry.amqplib.connection.attributes');
+
+const IS_CONFIRM_CHANNEL_CONTEXT_KEY: symbol = createContextKey('opentelemetry.amqplib.channel.is-confirm-channel');
 
 export const normalizeExchange = (exchangeName: string) => (exchangeName !== '' ? exchangeName : '<default>');
 
@@ -110,4 +112,16 @@ export const getConnectionAttributesFromUrl = (
         }
     }
     return attributes;
+};
+
+export const markConfirmChannelTracing = (context: Context) => {
+    return context.setValue(IS_CONFIRM_CHANNEL_CONTEXT_KEY, true);
+};
+
+export const unmarkConfirmChannelTracing = (context: Context) => {
+    return context.deleteValue(IS_CONFIRM_CHANNEL_CONTEXT_KEY);
+};
+
+export const isConfirmChannelTracing = (context: Context) => {
+    return context.getValue(IS_CONFIRM_CHANNEL_CONTEXT_KEY) === true;
 };

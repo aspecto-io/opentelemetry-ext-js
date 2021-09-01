@@ -7,14 +7,23 @@ export interface PublishParams {
     routingKey: string;
     content: Buffer;
     options?: amqp.Options.Publish;
+    isConfirmChannel?: boolean;
 }
 
 export interface AmqplibPublishCustomAttributeFunction {
     (span: Span, publishParams: PublishParams): void;
 }
 
+export interface AmqplibConfirmCustomAttributeFunction {
+    (span: Span, publishParams: PublishParams, confirmError: any): void;
+}
+
 export interface AmqplibConsumerCustomAttributeFunction {
     (span: Span, msg: amqp.ConsumeMessage): void;
+}
+
+export interface AmqplibConsumerEndCustomAttributeFunction {
+    (span: Span, msg: amqp.ConsumeMessage, rejected: boolean, endOperation: EndOperation): void;
 }
 
 export enum EndOperation {
@@ -29,13 +38,12 @@ export enum EndOperation {
     InstrumentationTimeout = 'instrumentation timeout',
 }
 
-export interface AmqplibConsumerEndCustomAttributeFunction {
-    (span: Span, msg: amqp.ConsumeMessage, rejected: boolean, endOperation: EndOperation): void;
-}
-
 export interface AmqplibInstrumentationConfig extends InstrumentationConfig {
     /** hook for adding custom attributes before publish message is sent */
     publishHook?: AmqplibPublishCustomAttributeFunction;
+
+    /** hook for adding custom attributes after publish message is confirmed by the broker */
+    publishConfirmHook?: AmqplibConfirmCustomAttributeFunction;
 
     /** hook for adding custom attributes before consumer message is processed */
     consumeHook?: AmqplibConsumerCustomAttributeFunction;
