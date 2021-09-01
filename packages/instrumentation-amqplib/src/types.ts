@@ -23,7 +23,7 @@ export interface AmqplibConsumerCustomAttributeFunction {
 }
 
 export interface AmqplibConsumerEndCustomAttributeFunction {
-    (span: Span, msg: amqp.ConsumeMessage | null, rejected: boolean, endOperation: EndOperation): void;
+    (span: Span, msg: amqp.ConsumeMessage, rejected: boolean, endOperation: EndOperation): void;
 }
 
 export enum EndOperation {
@@ -36,10 +36,6 @@ export enum EndOperation {
     ChannelClosed = 'channel closed',
     ChannelError = 'channel error',
     InstrumentationTimeout = 'instrumentation timeout',
-}
-
-export interface AmqplibConsumerEndCustomAttributeFunction {
-    (span: Span, msg: amqp.ConsumeMessage, rejected: boolean, endOperation: EndOperation): void;
 }
 
 export interface AmqplibInstrumentationConfig extends InstrumentationConfig {
