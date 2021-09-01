@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.24.2](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-aws-sdk@0.24.1...opentelemetry-instrumentation-aws-sdk@0.24.2) (2021-09-01)
+
+
+### Features
+
+* Add spec defined attributes for DynamoDB `BatchGetItem` ([#166](https://github.com/aspecto-io/opentelemetry-ext-js/issues/166)) ([7f1a3e6](https://github.com/aspecto-io/opentelemetry-ext-js/commit/7f1a3e6ce416a7531b4baf3866a86c9a19968685))
+
+
+
+
+
 ## [0.24.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-aws-sdk@0.24.0...opentelemetry-instrumentation-aws-sdk@0.24.1) (2021-08-06)
 
 

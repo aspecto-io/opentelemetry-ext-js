@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.24.1](https://github.com/aspecto-io/opentelemetry-amqplib/compare/opentelemetry-instrumentation-amqplib@0.24.0...opentelemetry-instrumentation-amqplib@0.24.1) (2021-09-01)
+
+
+### Bug Fixes
+
+* **instrumentation-amqplib:** consumer cancel notification throws exception ([#176](https://github.com/aspecto-io/opentelemetry-amqplib/issues/176)) ([9f582ef](https://github.com/aspecto-io/opentelemetry-amqplib/commit/9f582efd0c212dc5d58da8ea94c83c66d023e8f4))
+
+
+### Features
+
+* Allow extend function from external ([#172](https://github.com/aspecto-io/opentelemetry-amqplib/issues/172)) ([ce0e882](https://github.com/aspecto-io/opentelemetry-amqplib/commit/ce0e8820aa3c0dcd5f8f22fe7972bf9e641c1822))
+* amqp ConfirmChannel instrumentation ([#174](https://github.com/aspecto-io/opentelemetry-amqplib/issues/174)) ([5fb5f41](https://github.com/aspecto-io/opentelemetry-amqplib/commit/5fb5f411b31b0badf6a9e3eaf83d9c5313a524d9))
+
+
+
+
+
 # [0.24.0](https://github.com/aspecto-io/opentelemetry-amqplib/compare/opentelemetry-instrumentation-amqplib@0.23.0...opentelemetry-instrumentation-amqplib@0.24.0) (2021-08-01)
 
 

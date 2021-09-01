@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-mongoose",
-    "version": "0.24.0",
+    "version": "0.24.1",
     "description": "open telemetry instrumentation for the `mongoose` module",
     "keywords": [
         "mongoose",
@@ -58,7 +58,7 @@
         "mongodb": "^3.6.4",
         "mongoose": "5.11.15",
         "opentelemetry-instrumentation-mocha": "0.0.1-rc.5",
-        "opentelemetry-instrumentation-testing-utils": "^0.24.0",
+        "opentelemetry-instrumentation-testing-utils": "^0.24.1",
         "ts-node": "^9.1.1",
         "typescript": "4.3.4"
     },
