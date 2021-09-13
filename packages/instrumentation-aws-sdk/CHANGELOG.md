@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.24.3](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-aws-sdk@0.24.2...opentelemetry-instrumentation-aws-sdk@0.24.3) (2021-09-13)
+
+
+### Bug Fixes
+
+* **aws-sdk:** handle clientConfig undefined getting service id ([#181](https://github.com/aspecto-io/opentelemetry-ext-js/issues/181)) ([dac21d0](https://github.com/aspecto-io/opentelemetry-ext-js/commit/dac21d0c083ebf35c5bd2312c42161a23498818b))
+
+
+
+
+
 ## [0.24.2](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-aws-sdk@0.24.1...opentelemetry-instrumentation-aws-sdk@0.24.2) (2021-09-01)
 
 
