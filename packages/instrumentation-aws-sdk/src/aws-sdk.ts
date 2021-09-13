@@ -311,7 +311,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
                 const clientConfig = command[storedV3ClientConfig];
                 const regionPromise = clientConfig?.region?.();
                 const serviceName =
-                    clientConfig.serviceId ?? removeSuffixFromStringIfExists(awsExecutionContext.clientName, 'Client');
+                    clientConfig?.serviceId ?? removeSuffixFromStringIfExists(awsExecutionContext.clientName, 'Client');
                 const commandName = awsExecutionContext.commandName ?? command.constructor?.name;
                 const normalizedRequest = normalizeV3Request(serviceName, commandName, command.input, undefined);
                 const requestMetadata = self.servicesExtensions.requestPreSpanHook(normalizedRequest);
