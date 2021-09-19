@@ -2,7 +2,7 @@ import 'mocha';
 import { AwsInstrumentation } from '../src';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { context, SpanKind, SpanStatusCode, trace } from '@opentelemetry/api';
-import { ReadableSpan, Span } from '@opentelemetry/tracing';
+import { ReadableSpan, Span } from '@opentelemetry/sdk-trace-base';
 import { mockAwsSend } from './testing-utils';
 import { Message } from 'aws-sdk/clients/sqs';
 import expect from 'expect';

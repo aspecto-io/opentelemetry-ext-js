@@ -1,6 +1,6 @@
 import 'mocha';
 import expect from 'expect';
-import { Span } from '@opentelemetry/tracing';
+import { Span } from '@opentelemetry/sdk-trace-base';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { ExtendedDatabaseAttribute, TypeormInstrumentation, TypeormInstrumentationConfig } from '../src';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';

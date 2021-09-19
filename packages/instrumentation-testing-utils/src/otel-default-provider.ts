@@ -1,6 +1,6 @@
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
-import { NodeTracerProvider, NodeTracerConfig } from '@opentelemetry/node';
-import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/tracing';
+import { NodeTracerProvider, NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
+import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { getTestMemoryExporter, setTestMemoryExporter } from './otel-provider-api';
 
 export const registerInstrumentationTestingProvider = (config?: NodeTracerConfig): NodeTracerProvider => {

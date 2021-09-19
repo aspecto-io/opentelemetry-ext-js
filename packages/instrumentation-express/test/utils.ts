@@ -1,5 +1,5 @@
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import type { ReadableSpan } from '@opentelemetry/tracing';
+import type { ReadableSpan } from '@opentelemetry/sdk-trace-base';
 import expect from 'expect';
 import { ExpressInstrumentationAttributes } from '../src/types';
 import type express from 'express';
