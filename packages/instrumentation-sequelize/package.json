@@ -42,18 +42,18 @@
         "@opentelemetry/api": "^1.0.1"
     },
     "dependencies": {
-        "@opentelemetry/core": "^0.24.0",
-        "@opentelemetry/instrumentation": "^0.24.0",
-        "@opentelemetry/semantic-conventions": "^0.24.0"
+        "@opentelemetry/core": "^0.25.0",
+        "@opentelemetry/instrumentation": "^0.25.0",
+        "@opentelemetry/semantic-conventions": "^0.25.0"
     },
     "devDependencies": {
         "@opentelemetry/api": "^1.0.2",
-        "@opentelemetry/tracing": "^0.24.0",
+        "@opentelemetry/sdk-trace-base": "^0.25.0",
         "@types/mocha": "^8.2.2",
         "expect": "^26.6.2",
         "mocha": "^8.4.0",
         "mysql2": "^2.2.5",
-        "opentelemetry-instrumentation-mocha": "0.0.1-rc.5",
+        "opentelemetry-instrumentation-mocha": "0.0.1-rc.6",
         "opentelemetry-instrumentation-testing-utils": "^0.24.1",
         "pg": "^8.4.2",
         "sequelize": "^5.22.0",

@@ -1,7 +1,7 @@
 import 'mocha';
 import expect from 'expect';
 import { KafkaJsInstrumentation, KafkaJsInstrumentationConfig } from '../src';
-import { ReadableSpan } from '@opentelemetry/tracing';
+import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
 import { propagation, SpanKind, SpanStatusCode, Span } from '@opentelemetry/api';
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';

@@ -14,7 +14,7 @@ npm install --save opentelemetry-instrumentation-neo4j
 For further automatic instrumentation instruction see the [@opentelemetry/instrumentation](https://github.com/open-telemetry/opentelemetry-js/tree/main/packages/opentelemetry-instrumentation) package.
 
 ```js
-const { NodeTracerProvider } = require('@opentelemetry/node');
+const { NodeTracerProvider } = require('@opentelemetry/sdk-trace-node');
 const { registerInstrumentations } = require('@opentelemetry/instrumentation');
 const { Neo4jInstrumentation } = require('opentelemetry-instrumentation-neo4j');
 

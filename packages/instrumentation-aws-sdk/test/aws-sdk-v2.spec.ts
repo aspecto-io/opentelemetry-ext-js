@@ -1,6 +1,6 @@
 import 'mocha';
 import { AwsInstrumentation } from '../src';
-import { ReadableSpan, Span } from '@opentelemetry/tracing';
+import { ReadableSpan, Span } from '@opentelemetry/sdk-trace-base';
 import { SpanStatusCode } from '@opentelemetry/api';
 import { AttributeNames } from '../src/enums';
 import { mockAwsSend } from './testing-utils';

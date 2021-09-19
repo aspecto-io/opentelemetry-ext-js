@@ -2,7 +2,7 @@ import 'mocha';
 import expect from 'expect';
 import { SequelizeInstrumentation } from '../src';
 import { extractTableFromQuery } from '../src/utils';
-import { ReadableSpan, Span } from '@opentelemetry/tracing';
+import { ReadableSpan, Span } from '@opentelemetry/sdk-trace-base';
 import { context, diag, SpanStatusCode, DiagConsoleLogger, ROOT_CONTEXT } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';

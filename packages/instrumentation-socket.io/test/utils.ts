@@ -3,7 +3,7 @@ import http from 'http';
 import { AddressInfo } from 'net';
 
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { ReadableSpan } from '@opentelemetry/tracing';
+import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
 import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
 import expect from 'expect';

@@ -3,7 +3,7 @@ import expect from 'expect';
 
 import { ExpressInstrumentation } from '../src';
 import { AddressInfo } from 'net';
-import { ReadableSpan } from '@opentelemetry/tracing';
+import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
 
 const instrumentation = new ExpressInstrumentation();
 

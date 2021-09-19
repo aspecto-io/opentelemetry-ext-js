@@ -14,7 +14,7 @@ npm install --save opentelemetry-instrumentation-node-cache
 For further automatic instrumentation instruction see the [@opentelemetry/instrumentation](https://github.com/open-telemetry/opentelemetry-js/tree/main/packages/opentelemetry-instrumentation) package.
 
 ```js
-const { NodeTracerProvider } = require('@opentelemetry/node');
+const { NodeTracerProvider } = require('@opentelemetry/sdk-trace-node');
 const { registerInstrumentations } = require('@opentelemetry/instrumentation');
 const { NodeCacheInstrumentation } = require('opentelemetry-instrumentation-node-cache');
 

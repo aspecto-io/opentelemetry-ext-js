@@ -1,4 +1,4 @@
-import { InMemorySpanExporter, ReadableSpan } from '@opentelemetry/tracing';
+import { InMemorySpanExporter, ReadableSpan } from '@opentelemetry/sdk-trace-base';
 
 const OTEL_TESTING_MEMORY_EXPORTER = Symbol.for('opentelemetry.testing.memory_exporter');
 

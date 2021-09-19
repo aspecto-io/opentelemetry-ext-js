@@ -4,7 +4,7 @@ process.env.AWS_SECRET_ACCESS_KEY = 'testing';
 
 import 'mocha';
 import { AwsInstrumentation, NormalizedRequest, NormalizedResponse } from '../src';
-import { ReadableSpan, Span } from '@opentelemetry/tracing';
+import { ReadableSpan, Span } from '@opentelemetry/sdk-trace-base';
 import { context, SpanStatusCode, trace } from '@opentelemetry/api';
 import {
     MessagingDestinationKindValues,
