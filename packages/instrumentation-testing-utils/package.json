@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-testing-utils",
-    "version": "0.24.1",
+    "version": "0.25.0",
     "description": "utils for testing opentelemetry js instrumentation libraries",
     "keywords": [
         "opentelemetry",
@@ -34,8 +34,8 @@
     },
     "dependencies": {
         "@opentelemetry/exporter-jaeger": "^0.25.0",
-        "@opentelemetry/sdk-trace-node": "^0.25.0",
-        "@opentelemetry/sdk-trace-base": "^0.25.0"
+        "@opentelemetry/sdk-trace-base": "^0.25.0",
+        "@opentelemetry/sdk-trace-node": "^0.25.0"
     },
     "devDependencies": {
         "@opentelemetry/api": "^1.0.2",
