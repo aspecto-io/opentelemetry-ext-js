@@ -1,7 +1,7 @@
 # OpenTelemetry Sequelize Instrumentation for Node.js
 [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-sequelize.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-sequelize)
 
-This module provides automatic instrumentation for [`Sequelize`](https://sequelize.org/).  
+This module provides automatic instrumentation for [`Sequelize`](https://sequelize.org/).
 > _Tested and worked on versions v4, v5 and v6 of Sequelize._
 
 ## Installation
@@ -41,6 +41,7 @@ Sequelize instrumentation has few options available to choose from. You can set 
 
 | Options        | Type                                   | Description                                                                                     |
 | -------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `queryHook` | `SequelizeQueryHook` | Hook called before query is run, which allows to add custom attributes to span.      |
 | `responseHook` | `SequelizeResponseCustomAttributesFunction` | Hook called before response is returned, which allows to add custom attributes to span.      |
 | `ignoreOrphanedSpans` | `boolean` | Set to true if you only want to trace operation which has parent spans |
 | `moduleVersionAttributeName` | `string` | If passed, a span attribute will be added to all spans with key of the provided `moduleVersionAttributeName` and value of the patched module version |

@@ -292,6 +292,71 @@ describe('instrumentation-sequelize', () => {
     });
 
     describe('config', () => {
+        describe('queryHook', () => {
+            it('able to collect query', async () => {
+                instrumentation.disable();
+                const instance = new sequelize.Sequelize(`postgres://john@$localhost:1111/my-name`, { logging: false });
+                instance.define('User', { firstName: { type: sequelize.DataTypes.STRING } });
+
+                const response = { john: 'doe' };
+                sequelize.Sequelize.prototype.query = () => {
+                    return new Promise((resolve) => resolve(response));
+                };
+                instrumentation.setConfig({
+                    queryHook: (span: Span, {sql, option}: {sql: any, option: any}) => {
+                        span.setAttribute('test-sql', 'any');
+                        span.setAttribute('test-option', 'any');
+                    },
+                });
+                instrumentation.enable();
+
+                await instance.models.User.findAll();
+                const spans = getSequelizeSpans();
+                const attributes = spans[0].attributes;
+
+                expect(attributes['test-sql']).toBe('any');
+                expect(attributes['test-option']).toBe('any');
+            });
+
+            it('query hook which throws does not affect span', async () => {
+                instrumentation.disable();
+                const instance = new sequelize.Sequelize(`postgres://john@$localhost:1111/my-name`, { logging: false });
+                instance.define('User', { firstName: { type: sequelize.DataTypes.STRING } });
+
+                const response = { john: 'doe' };
+                sequelize.Sequelize.prototype.query = () => {
+                    return new Promise((resolve) => resolve(response));
+                };
+                const mockedLogger = (() => {
+                    let message: string;
+                    let error: Error;
+                    return {
+                        error: (_message: string, _err: Error) => {
+                            message = _message;
+                            error = _err;
+                        },
+                        debug: () => {},
+                        getMessage: () => message,
+                        getError: () => error,
+                    };
+                })();
+
+                instrumentation.setConfig({
+                    queryHook: () => {
+                        throw new Error('Throwing');
+                    },
+                });
+                instrumentation.enable();
+                diag.setLogger(mockedLogger as any);
+                await instance.models.User.findAll();
+                const spans = getSequelizeSpans();
+                expect(spans.length).toBe(1);
+                expect(mockedLogger.getMessage()).toBe('sequelize instrumentation: queryHook error');
+                expect(mockedLogger.getError().message).toBe('Throwing');
+                diag.setLogger(new DiagConsoleLogger());
+            });
+        });
+
         describe('responseHook', () => {
             it('able to collect response', async () => {
                 instrumentation.disable();
