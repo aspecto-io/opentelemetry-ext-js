@@ -1,11 +1,12 @@
 import { Span } from '@opentelemetry/api';
 import { InstrumentationConfig } from '@opentelemetry/instrumentation';
+import { Sequelize } from 'sequelize';
 
 export interface SequelizeQueryHookParams {
   /** The type of sql parameter depends on the database dialect. */
-  sql: any,
+  sql: Parameters<Sequelize['query']>[0];
   /** The type of option parameter depends on the database dialect. */
-  option: any,
+  option: Parameters<Sequelize['query']>[1];
 };
 
 export type SequelizeQueryHook = (span: Span, params: SequelizeQueryHookParams) => void;
