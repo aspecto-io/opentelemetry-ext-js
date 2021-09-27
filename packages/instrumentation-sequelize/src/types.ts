@@ -1,6 +1,6 @@
 import { Span } from '@opentelemetry/api';
 import { InstrumentationConfig } from '@opentelemetry/instrumentation';
-import { Sequelize } from 'sequelize';
+import type { Sequelize } from 'sequelize';
 
 export interface SequelizeQueryHookParams {
     /** The type of sql parameter depends on the database dialect. */
