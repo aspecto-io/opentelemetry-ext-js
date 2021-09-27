@@ -142,6 +142,16 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
 
             const activeContextWithSpan = trace.setSpan(context.active(), newSpan);
 
+            if (self._config?.queryHook) {
+                safeExecuteInTheMiddle(
+                    () => self._config.queryHook(newSpan, { sql, option }),
+                    (e: Error) => {
+                        if (e) diag.error('sequelize instrumentation: queryHook error', e);
+                    },
+                    true
+                );
+            }
+
             return context
                 .with(
                     self._config.suppressInternalInstrumentation
