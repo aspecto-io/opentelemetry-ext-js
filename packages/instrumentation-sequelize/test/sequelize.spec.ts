@@ -376,6 +376,28 @@ describe('instrumentation-sequelize', () => {
             });
         });
 
+        describe('suppressSqlQuery', () => {
+            it('does not add SQL query into the span when suppressSqlQuery option is true', async () => {
+                instrumentation.disable();
+                const instance = new sequelize.Sequelize(`postgres://john@$localhost:1111/my-name`, { logging: false });
+                instance.define('User', { firstName: { type: sequelize.DataTypes.STRING } });
+                instrumentation.setConfig({
+                    suppressSqlQuery: true,
+                });
+                instrumentation.enable();
+
+                await instance.models.User.findAll().catch(() => {});
+
+                const spans = getSequelizeSpans();
+                expect(spans.length).toBe(1);
+                const attributes = spans[0].attributes;
+
+                expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('SELECT');
+                expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('Users');
+                expect(attributes[SemanticAttributes.DB_STATEMENT]).toBeUndefined();
+            });
+        });
+
         it('moduleVersionAttributeName', async () => {
             instrumentation.disable();
             const instance = new sequelize.Sequelize(`postgres://john@$localhost:1111/my-name`, { logging: false });

@@ -122,7 +122,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
                 [SemanticAttributes.NET_TRANSPORT]: self._getNetTransport(config?.protocol),
                 [SemanticAttributes.DB_NAME]: config?.database,
                 [SemanticAttributes.DB_OPERATION]: operation,
-                [SemanticAttributes.DB_STATEMENT]: statement,
+                [SemanticAttributes.DB_STATEMENT]: self._getDbStatement(statement),
                 [SemanticAttributes.DB_SQL_TABLE]: tableName,
                 // [SemanticAttributes.NET_PEER_IP]: '?', // Part of protocol
             };
@@ -181,5 +181,11 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
             default:
                 return undefined;
         }
+    }
+
+    private _getDbStatement(statement: string): string | undefined {
+        return this._config.suppressSqlQuery !== true
+            ? statement
+            : undefined;
     }
 }

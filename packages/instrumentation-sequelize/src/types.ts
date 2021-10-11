@@ -21,4 +21,9 @@ export interface SequelizeInstrumentationConfig extends InstrumentationConfig {
      * cause the instrumentation to suppress instrumentation of underlying operations.
      */
     suppressInternalInstrumentation?: boolean;
+
+    /**
+     * Disables output of full SQL query into the span attribute
+     */
+    suppressSqlQuery?: boolean;
 }
