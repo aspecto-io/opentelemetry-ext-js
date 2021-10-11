@@ -1,5 +1,5 @@
 {
-    "name": "opentelemetry-propagation-utils",
+    "name": "@general/opentelemetry-propagation-utils",
     "version": "0.24.0",
     "description": "open telemetry propagation utils",
     "keywords": [

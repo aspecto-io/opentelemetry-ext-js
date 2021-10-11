@@ -1,5 +1,5 @@
 {
-    "name": "opentelemetry-instrumentation-aws-sdk",
+    "name": "@general/opentelemetry-instrumentation-aws-sdk",
     "version": "0.25.0",
     "description": "open telemetry instrumentation for the `aws-sdk` package",
     "keywords": [
@@ -42,7 +42,7 @@
         "@opentelemetry/core": "^0.25.0",
         "@opentelemetry/instrumentation": "^0.25.0",
         "@opentelemetry/semantic-conventions": "^0.25.0",
-        "opentelemetry-propagation-utils": "^0.24.0"
+        "@general/opentelemetry-propagation-utils": "^0.24.0"
     },
     "devDependencies": {
         "@aws-sdk/client-dynamodb": "^3.24.0",

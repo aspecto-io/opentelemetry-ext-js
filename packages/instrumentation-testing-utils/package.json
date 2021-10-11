@@ -1,5 +1,5 @@
 {
-    "name": "opentelemetry-instrumentation-testing-utils",
+    "name": "@general/opentelemetry-instrumentation-testing-utils",
     "version": "0.25.0",
     "description": "utils for testing opentelemetry js instrumentation libraries",
     "keywords": [

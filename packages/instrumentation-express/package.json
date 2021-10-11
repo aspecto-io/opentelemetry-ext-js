@@ -1,5 +1,5 @@
 {
-    "name": "opentelemetry-instrumentation-express",
+    "name": "@general/opentelemetry-instrumentation-express",
     "version": "0.25.0",
     "description": "enhanced open telemetry instrumentation for the `express` web framework",
     "author": "Aspecto.io",

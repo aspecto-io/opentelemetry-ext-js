@@ -1,5 +1,5 @@
 {
-    "name": "opentelemetry-resource-detector-sync-api",
+    "name": "@general/opentelemetry-resource-detector-sync-api",
     "version": "0.25.0",
     "description": "open telemetry api for sync resource detectors",
     "keywords": [

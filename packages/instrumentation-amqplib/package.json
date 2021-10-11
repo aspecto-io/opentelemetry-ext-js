@@ -1,5 +1,5 @@
 {
-    "name": "opentelemetry-instrumentation-amqplib",
+    "name": "@general/opentelemetry-instrumentation-amqplib",
     "version": "0.25.0",
     "description": "open telemetry instrumentation for the `amqplib` package",
     "keywords": [
