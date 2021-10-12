@@ -13,8 +13,8 @@ npm install --save opentelemetry-resource-detector-deployment
 
 ### Synchronous SDK Initialization
 ```js
-import { detectSyncResources } from 'opentelemetry-resource-detector-sync-api';
-import { deploymentSyncDetector } from 'opentelemetry-resource-detector-deployment';
+import { detectSyncResources } from '@general/opentelemetry-resource-detector-sync-api';
+import { deploymentSyncDetector } from '@general/opentelemetry-resource-detector-deployment';
 
 const resource = detectSyncResources({
     detectors: [deploymentSyncDetector, /* add other sync detectors here */],
@@ -25,7 +25,7 @@ const tracerProvider = new NodeTracerProvider({ resource });
 ### Asynchronous SDK Initialization
 ```js
 import { detectResources } from '@opentelemetry/resources';
-import { deploymentDetector } from 'opentelemetry-resource-detector-deployment';
+import { deploymentDetector } from '@general/opentelemetry-resource-detector-deployment';
 
 ( async () => {
     const resource = await detectResources({

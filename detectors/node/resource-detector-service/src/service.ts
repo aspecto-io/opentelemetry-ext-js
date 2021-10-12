@@ -1,6 +1,6 @@
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { Resource, defaultServiceName, ResourceAttributes } from '@opentelemetry/resources';
-import { SyncDetector, syncDetectorToDetector } from 'opentelemetry-resource-detector-sync-api';
+import { SyncDetector, syncDetectorToDetector } from '@general/opentelemetry-resource-detector-sync-api';
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
 

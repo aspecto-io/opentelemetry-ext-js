@@ -10,7 +10,7 @@ import {
     context,
     ROOT_CONTEXT,
 } from '@opentelemetry/api';
-import { pubsubPropagation } from 'opentelemetry-propagation-utils';
+import { pubsubPropagation } from '@general/opentelemetry-propagation-utils';
 import { RequestMetadata, ServiceExtension } from './ServiceExtension';
 import type { SQS } from 'aws-sdk';
 import { AwsSdkInstrumentationConfig, NormalizedRequest, NormalizedResponse } from '../types';
