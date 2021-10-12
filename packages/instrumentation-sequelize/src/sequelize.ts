@@ -184,8 +184,6 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
     }
 
     private _getDbStatement(statement: string): string | undefined {
-        return this._config?.suppressSqlQuery !== true
-            ? statement
-            : undefined;
+        return this._config?.suppressSqlQuery !== true ? statement : undefined;
     }
 }
