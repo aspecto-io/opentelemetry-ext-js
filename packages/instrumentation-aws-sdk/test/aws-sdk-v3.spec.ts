@@ -26,7 +26,7 @@ instrumentation.disable();
 
 import nock from 'nock';
 
-describe('instrumentation-aws-sdk-v3', () => {
+describe.skip('instrumentation-aws-sdk-v3', () => {
     const s3Client = new S3({ region });
     beforeEach(() => {
         instrumentation.enable();

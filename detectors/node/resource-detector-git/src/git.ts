@@ -1,5 +1,5 @@
 import { Resource, ResourceAttributes } from '@opentelemetry/resources';
-import { SyncDetector, syncDetectorToDetector } from 'opentelemetry-resource-detector-sync-api';
+import { SyncDetector, syncDetectorToDetector } from '@general/opentelemetry-resource-detector-sync-api';
 import { GitResourceAttributes, postInstallFileName } from './types';
 import { getHeadSha } from './git-sha';
 import { getCloneId } from './git-clone-id';
