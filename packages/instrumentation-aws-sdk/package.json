@@ -26,11 +26,10 @@
         "prepare": "yarn run build",
         "test": "mocha --require opentelemetry-instrumentation-testing-utils",
         "test:jaeger": "OTEL_EXPORTER_JAEGER_AGENT_HOST=localhost mocha --require opentelemetry-instrumentation-testing-utils",
-        "test:ci": "yarn test-all-versions",
+        "test:ci": "mocha --require opentelemetry-instrumentation-testing-utils",
         "watch": "tsc -w",
         "version:update": "node ../../scripts/version-update.js",
-        "version": "yarn run version:update",
-        "test-all-versions": "tav"
+        "version": "yarn run version:update"
     },
     "bugs": {
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
@@ -42,7 +41,7 @@
         "@opentelemetry/core": "^0.25.0",
         "@opentelemetry/instrumentation": "^0.25.0",
         "@opentelemetry/semantic-conventions": "^0.25.0",
-        "@general/opentelemetry-propagation-utils": "^0.24.0"
+        "opentelemetry-propagation-utils": "^0.24.0"
     },
     "devDependencies": {
         "@aws-sdk/client-dynamodb": "^3.24.0",

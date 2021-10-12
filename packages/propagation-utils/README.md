@@ -14,7 +14,7 @@ yarn add opentelemetry-propagation-utils
 To make sure each message handled by pubsub creates a new `process` span, and propagates to any internal operation, do as follow:
 
 ```ts
-import { pubsubPropagation } from '@general/opentelemetry-propagation-utils';
+import { pubsubPropagation } from 'opentelemetry-propagation-utils';
 import { Span, propagation, trace, Context } from '@opentelemetry/api';
 
 const patch = (message: Message[], rootSpan: Span) => {
