@@ -197,11 +197,13 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
 
         Error.captureStackTrace(stackContainer);
 
-        return stackContainer.stack
-            .split('\n')
-            // Skip "Error:" line and current method
-            .slice(2)
-            .map(s => s.trim())
-            .join('\n');
+        return (
+            stackContainer.stack
+                .split('\n')
+                // Skip "Error:" line and current method
+                .slice(2)
+                .map((s) => s.trim())
+                .join('\n')
+        );
     }
 }

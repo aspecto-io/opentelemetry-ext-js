@@ -34,5 +34,5 @@ export interface SequelizeInstrumentationConfig extends InstrumentationConfig {
 }
 
 export enum SequelizeAttributes {
-    RUNTIME_STACKTRACE = 'runtime.stacktrace'
+    RUNTIME_STACKTRACE = 'runtime.stacktrace',
 }
