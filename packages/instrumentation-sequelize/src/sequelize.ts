@@ -2,7 +2,7 @@ import { context, Span, SpanKind, SpanStatusCode, trace, diag } from '@opentelem
 import { suppressTracing } from '@opentelemetry/core';
 import { NetTransportValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import * as sequelize from 'sequelize';
-import { SequelizeInstrumentationConfig } from './types';
+import { SequelizeAttributes, SequelizeInstrumentationConfig } from './types';
 import { VERSION } from './version';
 import { extractTableFromQuery } from './utils';
 import {
@@ -91,7 +91,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
 
     private _createQueryPatch(original: Function) {
         const self = this;
-        return function (sql: any, option: any) {
+        return function query(sql: any, option: any) {
             if (self._config?.ignoreOrphanedSpans && !trace.getSpan(context.active())) {
                 return original.apply(this, arguments);
             }
@@ -125,6 +125,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
                 [SemanticAttributes.DB_STATEMENT]: self._getDbStatement(statement),
                 [SemanticAttributes.DB_SQL_TABLE]: tableName,
                 // [SemanticAttributes.NET_PEER_IP]: '?', // Part of protocol
+                [SequelizeAttributes.RUNTIME_STACKTRACE]: self._getStacktrace(),
             };
 
             if (self._config.moduleVersionAttributeName) {
@@ -185,5 +186,22 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
 
     private _getDbStatement(statement: string): string | undefined {
         return this._config?.suppressSqlQuery !== true ? statement : undefined;
+    }
+
+    private _getStacktrace(): string | undefined {
+        if (this._config.captureStackTrace !== true) {
+            return undefined;
+        }
+
+        const stackContainer: { stack?: string } = {};
+
+        Error.captureStackTrace(stackContainer);
+
+        return stackContainer.stack
+            .split('\n')
+            // Skip "Error:" line and current method
+            .slice(2)
+            .map(s => s.trim())
+            .join('\n');
     }
 }

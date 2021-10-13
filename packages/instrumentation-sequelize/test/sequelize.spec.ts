@@ -1,6 +1,6 @@
 import 'mocha';
 import expect from 'expect';
-import { SequelizeInstrumentation } from '../src';
+import { SequelizeAttributes, SequelizeInstrumentation } from '../src';
 import { extractTableFromQuery } from '../src/utils';
 import { ReadableSpan, Span } from '@opentelemetry/sdk-trace-base';
 import { context, diag, SpanStatusCode, DiagConsoleLogger, ROOT_CONTEXT } from '@opentelemetry/api';
@@ -395,6 +395,26 @@ describe('instrumentation-sequelize', () => {
                 expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('SELECT');
                 expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('Users');
                 expect(attributes[SemanticAttributes.DB_STATEMENT]).toBeUndefined();
+            });
+        });
+
+        describe('captureStacktrace', () => {
+            it('adds stack trace to the span when captureStacktrace option is true', async () => {
+                instrumentation.disable();
+                const instance = new sequelize.Sequelize(`postgres://john@$localhost:1111/my-name`, { logging: false });
+                instance.define('User', { firstName: { type: sequelize.DataTypes.STRING } });
+                instrumentation.setConfig({
+                    captureStackTrace: true,
+                });
+                instrumentation.enable();
+
+                await instance.models.User.findAll().catch(() => {});
+
+                const spans = getSequelizeSpans();
+                expect(spans.length).toBe(1);
+                const attributes = spans[0].attributes;
+
+                expect(attributes[SequelizeAttributes.RUNTIME_STACKTRACE]).toBeDefined();
             });
         });
 
