@@ -26,4 +26,13 @@ export interface SequelizeInstrumentationConfig extends InstrumentationConfig {
      * Disables output of full SQL query into the span attribute
      */
     suppressSqlQuery?: boolean;
+
+    /**
+     * Capture runtime stack trace for each span in `runtime.stacktrace` attribute
+     */
+    captureStackTrace?: boolean;
+}
+
+export enum SequelizeAttributes {
+    RUNTIME_STACKTRACE = 'runtime.stacktrace',
 }
