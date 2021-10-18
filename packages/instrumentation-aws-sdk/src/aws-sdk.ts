@@ -57,7 +57,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
     protected init(): InstrumentationModuleDefinition<typeof AWS>[] {
         const v3MiddlewareStackFileOldVersions = new InstrumentationNodeModuleFile(
             `@aws-sdk/middleware-stack/dist/cjs/MiddlewareStack.js`,
-            ['>=3.1.0, <3.36.0'],
+            ['>=3.1.0 <3.36.0'],
             this.patchV3ConstructStack.bind(this),
             this.unpatchV3ConstructStack.bind(this)
         );
