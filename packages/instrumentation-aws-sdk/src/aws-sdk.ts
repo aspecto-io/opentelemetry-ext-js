@@ -312,7 +312,6 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
             _handler: unknown,
             awsExecutionContext: HandlerExecutionContext
         ): AwsV3MiddlewareHandler<any, any> {
-            console.log('_getV3MiddlewareStackResolvePatch');
             const origHandler = original.apply(this, arguments);
             const patchedHandler = function (command: AwsV3Command<any, any, any, any, any>): Promise<any> {
                 const clientConfig = command[storedV3ClientConfig];
