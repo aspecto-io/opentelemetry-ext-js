@@ -53,7 +53,7 @@
         "@opentelemetry/sdk-trace-base": "^0.25.0",
         "@types/mocha": "^8.2.2",
         "@types/node": "^14.0.0",
-        "aws-sdk": "^2.780.0",
+        "aws-sdk": "^2.1008.0",
         "expect": "^26.6.2",
         "mocha": "^8.4.0",
         "nock": "^13.0.11",
