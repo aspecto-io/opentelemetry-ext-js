@@ -55,9 +55,15 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
     }
 
     protected init(): InstrumentationModuleDefinition<typeof AWS>[] {
-        const v3MiddlewareStackFile = new InstrumentationNodeModuleFile(
+        const v3MiddlewareStackFileOldVersions = new InstrumentationNodeModuleFile(
             `@aws-sdk/middleware-stack/dist/cjs/MiddlewareStack.js`,
-            ['^3.1.0'],
+            ['>=3.1.0, <3.36.0'],
+            this.patchV3ConstructStack.bind(this),
+            this.unpatchV3ConstructStack.bind(this)
+        );
+        const v3MiddlewareStackFileNewVersions = new InstrumentationNodeModuleFile(
+            `@aws-sdk/middleware-stack/dist-cjs/MiddlewareStack.js`,
+            ['>=3.36.0'],
             this.patchV3ConstructStack.bind(this),
             this.unpatchV3ConstructStack.bind(this)
         );
@@ -70,7 +76,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
             ['^3.1.0'],
             undefined,
             undefined,
-            [v3MiddlewareStackFile]
+            [v3MiddlewareStackFileOldVersions, v3MiddlewareStackFileNewVersions]
         );
 
         const v3SmithyClient = new InstrumentationNodeModuleDefinition<typeof AWS>(
@@ -306,6 +312,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
             _handler: unknown,
             awsExecutionContext: HandlerExecutionContext
         ): AwsV3MiddlewareHandler<any, any> {
+            console.log('_getV3MiddlewareStackResolvePatch');
             const origHandler = original.apply(this, arguments);
             const patchedHandler = function (command: AwsV3Command<any, any, any, any, any>): Promise<any> {
                 const clientConfig = command[storedV3ClientConfig];
