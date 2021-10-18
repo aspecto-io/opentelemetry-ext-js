@@ -88,14 +88,14 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
 
         const v2Request = new InstrumentationNodeModuleFile<typeof AWS.Request>(
             'aws-sdk/lib/core.js',
-            ['^2.17.0'],
+            ['^2.308.0'],
             this.patchV2.bind(this),
             this.unpatchV2.bind(this)
         );
 
         const v2Module = new InstrumentationNodeModuleDefinition<typeof AWS>(
             'aws-sdk',
-            ['^2.17.0'],
+            ['^2.308.0'],
             undefined,
             undefined,
             [v2Request]
