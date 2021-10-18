@@ -55,9 +55,15 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
     }
 
     protected init(): InstrumentationModuleDefinition<typeof AWS>[] {
-        const v3MiddlewareStackFile = new InstrumentationNodeModuleFile(
+        const v3MiddlewareStackFileOldVersions = new InstrumentationNodeModuleFile(
             `@aws-sdk/middleware-stack/dist/cjs/MiddlewareStack.js`,
-            ['^3.1.0'],
+            ['>=3.1.0 <3.35.0'],
+            this.patchV3ConstructStack.bind(this),
+            this.unpatchV3ConstructStack.bind(this)
+        );
+        const v3MiddlewareStackFileNewVersions = new InstrumentationNodeModuleFile(
+            `@aws-sdk/middleware-stack/dist-cjs/MiddlewareStack.js`,
+            ['>=3.35.0'],
             this.patchV3ConstructStack.bind(this),
             this.unpatchV3ConstructStack.bind(this)
         );
@@ -70,7 +76,7 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
             ['^3.1.0'],
             undefined,
             undefined,
-            [v3MiddlewareStackFile]
+            [v3MiddlewareStackFileOldVersions, v3MiddlewareStackFileNewVersions]
         );
 
         const v3SmithyClient = new InstrumentationNodeModuleDefinition<typeof AWS>(
@@ -82,14 +88,14 @@ export class AwsInstrumentation extends InstrumentationBase<typeof AWS> {
 
         const v2Request = new InstrumentationNodeModuleFile<typeof AWS.Request>(
             'aws-sdk/lib/core.js',
-            ['^2.17.0'],
+            ['^2.308.0'],
             this.patchV2.bind(this),
             this.unpatchV2.bind(this)
         );
 
         const v2Module = new InstrumentationNodeModuleDefinition<typeof AWS>(
             'aws-sdk',
-            ['^2.17.0'],
+            ['^2.308.0'],
             undefined,
             undefined,
             [v2Request]

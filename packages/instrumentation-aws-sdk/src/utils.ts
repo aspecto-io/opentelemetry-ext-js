@@ -15,7 +15,7 @@ export const removeSuffixFromStringIfExists = (str: string, suffixToRemove: stri
 export const normalizeV2Request = (awsV2Request: Request<any, any>): NormalizedRequest => {
     const service = (awsV2Request as any)?.service;
     return {
-        serviceName: service?.api?.serviceId.replace(/\s+/g, ''),
+        serviceName: service?.api?.serviceId?.replace(/\s+/g, ''),
         commandName: toPascalCase((awsV2Request as any)?.operation),
         commandInput: (awsV2Request as any).params,
         region: service?.config?.region,
