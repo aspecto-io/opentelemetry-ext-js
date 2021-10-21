@@ -35,6 +35,9 @@ jobs:
         image: rabbitmq:3
         ports:
           - 22221:5672
+        env:
+          RABBITMQ_DEFAULT_USER: username
+          RABBITMQ_DEFAULT_PASS: password
         
 
     steps:
