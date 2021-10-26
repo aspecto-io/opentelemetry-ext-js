@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.26.0](https://github.com/aspecto-io/opentelemetry-amqplib/compare/opentelemetry-instrumentation-amqplib@0.25.0...opentelemetry-instrumentation-amqplib@0.26.0) (2021-10-26)
+
+
+### Features
+
+* **amqplib:** censor URL password ([#186](https://github.com/aspecto-io/opentelemetry-amqplib/issues/186)) ([#188](https://github.com/aspecto-io/opentelemetry-amqplib/issues/188)) ([6dbea02](https://github.com/aspecto-io/opentelemetry-amqplib/commit/6dbea0279b7661848473aad58898e6eb2e03ecf0))
+
+
+
+
+
 # [0.25.0](https://github.com/aspecto-io/opentelemetry-amqplib/compare/opentelemetry-instrumentation-amqplib@0.24.1...opentelemetry-instrumentation-amqplib@0.25.0) (2021-09-19)
 
 **Note:** Version bump only for package opentelemetry-instrumentation-amqplib

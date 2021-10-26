@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.26.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-aws-sdk@0.25.0...opentelemetry-instrumentation-aws-sdk@0.26.0) (2021-10-26)
+
+
+### Bug Fixes
+
+* **aws-sdk:** new dist folder name ([#187](https://github.com/aspecto-io/opentelemetry-ext-js/issues/187)) ([241b888](https://github.com/aspecto-io/opentelemetry-ext-js/commit/241b88826ebf6efcac7dd46caca2af69a570d13e))
+
+
+
+
+
 # [0.25.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-aws-sdk@0.24.3...opentelemetry-instrumentation-aws-sdk@0.25.0) (2021-09-19)
 
 **Note:** Version bump only for package opentelemetry-instrumentation-aws-sdk

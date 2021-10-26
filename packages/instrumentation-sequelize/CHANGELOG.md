@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.26.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-sequelize@0.25.0...opentelemetry-instrumentation-sequelize@0.26.0) (2021-10-26)
+
+
+### Features
+
+* sequelize config queryHook ([#185](https://github.com/aspecto-io/opentelemetry-ext-js/issues/185)) ([a58547a](https://github.com/aspecto-io/opentelemetry-ext-js/commit/a58547a574f16b8c7ecb0df01a9b60be39ce3daa))
+
+
+
+
+
 # [0.25.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-sequelize@0.24.1...opentelemetry-instrumentation-sequelize@0.25.0) (2021-09-19)
 
 **Note:** Version bump only for package opentelemetry-instrumentation-sequelize
