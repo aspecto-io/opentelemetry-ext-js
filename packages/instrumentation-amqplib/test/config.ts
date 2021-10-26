@@ -3,3 +3,5 @@
 // 2. services in github actions workflow
 export const TEST_RABBITMQ_HOST = 'localhost';
 export const TEST_RABBITMQ_PORT = 22221;
+export const TEST_RABBITMQ_USER = 'username';
+export const TEST_RABBITMQ_PASS = 'password';

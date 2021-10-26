@@ -7,15 +7,16 @@ const instrumentation = registerInstrumentation(new AmqplibInstrumentation());
 
 import amqpCallback from 'amqplib/callback_api';
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { SpanKind, context } from '@opentelemetry/api';
+import { context, SpanKind } from '@opentelemetry/api';
 import { asyncConfirmSend, asyncConsume } from './utils';
-import { TEST_RABBITMQ_HOST, TEST_RABBITMQ_PORT } from './config';
+import { TEST_RABBITMQ_HOST, TEST_RABBITMQ_PASS, TEST_RABBITMQ_PORT, TEST_RABBITMQ_USER } from './config';
 
 const msgPayload = 'payload from test';
 const queueName = 'queue-name-from-unittest';
 
 describe('amqplib instrumentation callback model', function () {
-    const url = `amqp://${TEST_RABBITMQ_HOST}:${TEST_RABBITMQ_PORT}`;
+    const url = `amqp://${TEST_RABBITMQ_USER}:${TEST_RABBITMQ_PASS}@${TEST_RABBITMQ_HOST}:${TEST_RABBITMQ_PORT}`;
+    const censoredUrl = `amqp://${TEST_RABBITMQ_USER}:***@${TEST_RABBITMQ_HOST}:${TEST_RABBITMQ_PORT}`;
     let conn: amqpCallback.Connection;
     before((done) => {
         amqpCallback.connect(url, (err, connection) => {
@@ -79,7 +80,7 @@ describe('amqplib instrumentation callback model', function () {
                 expect(publishSpan.attributes[SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]).toEqual(queueName);
                 expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
                 expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
-                expect(publishSpan.attributes[SemanticAttributes.MESSAGING_URL]).toEqual(url);
+                expect(publishSpan.attributes[SemanticAttributes.MESSAGING_URL]).toEqual(censoredUrl);
                 expect(publishSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual(TEST_RABBITMQ_HOST);
                 expect(publishSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(TEST_RABBITMQ_PORT);
 
@@ -93,7 +94,7 @@ describe('amqplib instrumentation callback model', function () {
                 expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]).toEqual(queueName);
                 expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
                 expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
-                expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_URL]).toEqual(url);
+                expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_URL]).toEqual(censoredUrl);
                 expect(consumeSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual(TEST_RABBITMQ_HOST);
                 expect(consumeSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(TEST_RABBITMQ_PORT);
 
@@ -181,7 +182,7 @@ describe('amqplib instrumentation callback model', function () {
                     );
                     expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
                     expect(publishSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
-                    expect(publishSpan.attributes[SemanticAttributes.MESSAGING_URL]).toEqual(url);
+                    expect(publishSpan.attributes[SemanticAttributes.MESSAGING_URL]).toEqual(censoredUrl);
                     expect(publishSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual(TEST_RABBITMQ_HOST);
                     expect(publishSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(TEST_RABBITMQ_PORT);
 
@@ -197,7 +198,7 @@ describe('amqplib instrumentation callback model', function () {
                     );
                     expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL]).toEqual('AMQP');
                     expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_PROTOCOL_VERSION]).toEqual('0.9.1');
-                    expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_URL]).toEqual(url);
+                    expect(consumeSpan.attributes[SemanticAttributes.MESSAGING_URL]).toEqual(censoredUrl);
                     expect(consumeSpan.attributes[SemanticAttributes.NET_PEER_NAME]).toEqual(TEST_RABBITMQ_HOST);
                     expect(consumeSpan.attributes[SemanticAttributes.NET_PEER_PORT]).toEqual(TEST_RABBITMQ_PORT);
 

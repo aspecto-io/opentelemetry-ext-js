@@ -13,6 +13,10 @@ const IS_CONFIRM_CHANNEL_CONTEXT_KEY: symbol = createContextKey('opentelemetry.a
 
 export const normalizeExchange = (exchangeName: string) => (exchangeName !== '' ? exchangeName : '<default>');
 
+const censorPassword = (url: string): string => {
+    return url.replace(/:[^:@/]*@/, ':***@');
+};
+
 const getPort = (portFromUrl: number, resolvedProtocol: string): number => {
     // we are using the resolved protocol which is upper case
     // this code mimic the behavior of the amqplib which is used to set connection params
@@ -86,27 +90,33 @@ export const getConnectionAttributesFromUrl = (
             ...extractConnectionAttributeOrLog(url, SemanticAttributes.NET_PEER_PORT, port, 'port'),
         });
     } else {
-        attributes[SemanticAttributes.MESSAGING_URL] = url;
+        const censoredUrl = censorPassword(url);
+        attributes[SemanticAttributes.MESSAGING_URL] = censoredUrl;
         try {
-            const urlParts = new URL(url);
+            const urlParts = new URL(censoredUrl);
 
             const protocol = getProtocol(urlParts.protocol);
             Object.assign(attributes, {
-                ...extractConnectionAttributeOrLog(url, SemanticAttributes.MESSAGING_PROTOCOL, protocol, 'protocol'),
+                ...extractConnectionAttributeOrLog(
+                    censoredUrl,
+                    SemanticAttributes.MESSAGING_PROTOCOL,
+                    protocol,
+                    'protocol'
+                ),
             });
 
             const hostname = getHostname(urlParts.hostname);
             Object.assign(attributes, {
-                ...extractConnectionAttributeOrLog(url, SemanticAttributes.NET_PEER_NAME, hostname, 'hostname'),
+                ...extractConnectionAttributeOrLog(censoredUrl, SemanticAttributes.NET_PEER_NAME, hostname, 'hostname'),
             });
 
             const port = getPort(parseInt(urlParts.port), protocol);
             Object.assign(attributes, {
-                ...extractConnectionAttributeOrLog(url, SemanticAttributes.NET_PEER_PORT, port, 'port'),
+                ...extractConnectionAttributeOrLog(censoredUrl, SemanticAttributes.NET_PEER_PORT, port, 'port'),
             });
         } catch (err) {
             diag.error('amqplib instrumentation: error while extracting connection details from connection url', {
-                url,
+                censoredUrl,
                 err,
             });
         }
