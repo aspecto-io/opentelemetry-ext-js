@@ -18,7 +18,7 @@ const { registerInstrumentations } = require('@opentelemetry/instrumentation');
 const { SocketIoInstrumentation } = require('opentelemetry-instrumentation-socket.io);
 
 registerInstrumentations({
-  traceProvider,
+  tracerProvider,
   instrumentations: [
     new SocketIoInstrumentation({
       // see under for available configuration
