@@ -17,7 +17,7 @@ const { NodeTracerProvider } = require('@opentelemetry/sdk-trace-node');
 const { registerInstrumentations } = require('@opentelemetry/instrumentation');
 const { AwsInstrumentation } = require('opentelemetry-instrumentation-aws-sdk');
 
-const traceProvider = new NodeTracerProvider({
+const tracerProvider = new NodeTracerProvider({
   // be sure to disable old plugin
   plugins: {
     'aws-sdk': { enabled: false, path: 'opentelemetry-plugin-aws-sdk' }

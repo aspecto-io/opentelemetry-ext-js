@@ -18,7 +18,7 @@ const { NodeTracerProvider } = require('@opentelemetry/sdk-trace-node');
 const { registerInstrumentations } = require('@opentelemetry/instrumentation');
 const { KafkaJsInstrumentation } = require('opentelemetry-instrumentation-kafkajs');
 
-const traceProvider = new NodeTracerProvider({
+const tracerProvider = new NodeTracerProvider({
   // be sure to disable old plugin
   plugins: {
     kafkajs: { enabled: false, path: 'opentelemetry-plugin-kafkajs' }
@@ -26,7 +26,7 @@ const traceProvider = new NodeTracerProvider({
 });
 
 registerInstrumentations({
-  traceProvider,
+  tracerProvider,
   instrumentations: [
     new KafkaJsInstrumentation({
       // see under for available configuration
