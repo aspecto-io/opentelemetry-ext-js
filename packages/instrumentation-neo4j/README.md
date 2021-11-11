@@ -19,7 +19,7 @@ const { registerInstrumentations } = require('@opentelemetry/instrumentation');
 const { Neo4jInstrumentation } = require('opentelemetry-instrumentation-neo4j');
 
 registerInstrumentations({
-  traceProvider,
+  tracerProvider,
   instrumentations: [
     new Neo4jInstrumentation({
       // see under for available configuration

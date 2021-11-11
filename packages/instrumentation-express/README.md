@@ -21,11 +21,11 @@ const { NodeTracerProvider } = require('@opentelemetry/sdk-trace-node');
 const { registerInstrumentations } = require('@opentelemetry/instrumentation');
 const { ExpressInstrumentation } = require('opentelemetry-instrumentation-express');
 
-const traceProvider = new NodeTracerProvider();
-traceProvider.register();
+const tracerProvider = new NodeTracerProvider();
+tracerProvider.register();
 
 registerInstrumentations({
-  traceProvider,
+  tracerProvider,
   instrumentations: [
     new ExpressInstrumentation()
   ]

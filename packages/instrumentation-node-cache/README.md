@@ -19,7 +19,7 @@ const { registerInstrumentations } = require('@opentelemetry/instrumentation');
 const { NodeCacheInstrumentation } = require('opentelemetry-instrumentation-node-cache');
 
 registerInstrumentations({
-  traceProvider,
+  tracerProvider,
   instrumentations: [
     new NodeCacheInstrumentation({
       // see under for available configuration
