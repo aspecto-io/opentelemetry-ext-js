@@ -1,6 +1,6 @@
 import { Span } from '@opentelemetry/api';
 import { InstrumentationConfig } from '@opentelemetry/instrumentation';
-import type AWS from 'aws-sdk';
+import type { SQS } from 'aws-sdk';
 
 /**
  * These are normalized request and response, which are used by both sdk v2 and v3.
@@ -32,7 +32,7 @@ export interface AwsSdkResponseCustomAttributeFunction {
 }
 
 export interface AwsSdkSqsProcessCustomAttributeFunction {
-    (span: Span, message: AWS.SQS.Message): void;
+    (span: Span, message: SQS.Message): void;
 }
 
 export interface AwsSdkInstrumentationConfig extends InstrumentationConfig {
