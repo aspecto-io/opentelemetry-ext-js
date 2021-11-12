@@ -18,7 +18,7 @@ const { registerInstrumentations } = require('@opentelemetry/instrumentation');
 const { AmqplibInstrumentation } = require('opentelemetry-instrumentation-amqplib');
 
 registerInstrumentations({
-  traceProvider,
+  tracerProvider,
   instrumentations: [
     new AmqplibInstrumentation({
       // see under for available configuration

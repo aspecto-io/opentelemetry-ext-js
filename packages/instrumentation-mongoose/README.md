@@ -19,7 +19,7 @@ const { registerInstrumentations } = require('@opentelemetry/instrumentation');
 const { MongooseInstrumentation } = require('opentelemetry-instrumentation-mongoose');
 
 registerInstrumentations({
-  traceProvider,
+  tracerProvider,
   instrumentations: [
     new MongooseInstrumentation({
       // see under for available configuration

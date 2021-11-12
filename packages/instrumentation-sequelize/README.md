@@ -18,7 +18,7 @@ const { NodeTracerProvider } = require('@opentelemetry/sdk-trace-node');
 const { registerInstrumentations } = require('@opentelemetry/instrumentation');
 const { SequelizeInstrumentation } = require('opentelemetry-instrumentation-sequelize');
 
-const traceProvider = new NodeTracerProvider({
+const tracerProvider = new NodeTracerProvider({
   // be sure to disable old plugin
   plugins: {
     sequelize: { enabled: false, path: 'opentelemetry-plugin-sequelize' }
@@ -26,7 +26,7 @@ const traceProvider = new NodeTracerProvider({
 });
 
 registerInstrumentations({
-  traceProvider,
+  tracerProvider,
   instrumentations: [
     new SequelizeInstrumentation({
       // see under for available configuration

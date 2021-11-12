@@ -18,7 +18,7 @@ const { registerInstrumentations } = require('@opentelemetry/instrumentation');
 const { ElasticsearchInstrumentation } = require('opentelemetry-instrumentation-elasticsearch');
 
 registerInstrumentations({
-  traceProvider,
+  tracerProvider,
   instrumentations: [
     new ElasticsearchInstrumentation({
       // Config example (all optional)
