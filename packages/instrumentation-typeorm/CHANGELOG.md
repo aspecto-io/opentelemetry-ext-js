@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.26.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-typeorm@0.26.0...opentelemetry-instrumentation-typeorm@0.26.1) (2021-11-29)
+
+
+### Features
+
+* adding support for typeorm raw queries ([#198](https://github.com/aspecto-io/opentelemetry-ext-js/issues/198)) ([1ea8daf](https://github.com/aspecto-io/opentelemetry-ext-js/commit/1ea8daf9d7f2fa94fcb8afd84be1c62728487a05))
+
+
+
+
+
 # [0.26.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-typeorm@0.25.0...opentelemetry-instrumentation-typeorm@0.26.0) (2021-10-26)
 
 **Note:** Version bump only for package opentelemetry-instrumentation-typeorm

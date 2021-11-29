@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.26.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-node-cache@0.26.0...opentelemetry-instrumentation-node-cache@0.26.1) (2021-11-29)
+
+**Note:** Version bump only for package opentelemetry-instrumentation-node-cache
+
+
+
+
+
 # [0.26.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-node-cache@0.25.0...opentelemetry-instrumentation-node-cache@0.26.0) (2021-10-26)
 
 **Note:** Version bump only for package opentelemetry-instrumentation-node-cache
