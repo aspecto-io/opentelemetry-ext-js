@@ -25,3 +25,12 @@ export const defaultOptions: typeorm.ConnectionOptions = {
     synchronize: true,
     entities: [User],
 };
+
+export const rawQueryOptions: typeorm.ConnectionOptions = {
+    type: 'sqlite',
+    database: ':memory:',
+    dropSchema: true,
+    synchronize: true,
+    entities: [User],
+    name: 'rawQuery',
+};
