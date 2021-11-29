@@ -7,7 +7,7 @@ import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
 const instrumentation = new TypeormInstrumentation();
 import * as typeorm from 'typeorm';
-import { defaultOptions } from './utils';
+import { rawQueryOptions } from './utils';
 
 describe('Connection', () => {
     after(() => {
@@ -22,8 +22,8 @@ describe('Connection', () => {
 
     describe('single connection', () => {
         it('raw query', async () => {
-            const options = defaultOptions;
-            const connection = await typeorm.createConnection(defaultOptions);
+            const options = rawQueryOptions;
+            const connection = await typeorm.createConnection(rawQueryOptions);
             const query = 'select * from user';
             await connection.query(query);
             const typeOrmSpans = getTestSpans();
