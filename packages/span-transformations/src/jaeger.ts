@@ -26,7 +26,7 @@ const getOtelKindFromJaegerKind = (jaegerKind: string) => {
     }
 };
 
-export const convertJaegerSpanToOtel = (jaegerSpan): ReadableSpan => {
+export const convertJaegerSpanToOtelReadableSpan = (jaegerSpan): ReadableSpan => {
     const durationMillis = jaegerSpan.duration / 1000;
     const startDateMillis = jaegerSpan.startTime / 1000;
     const endDateMillis = timeInputToHrTime(new Date(startDateMillis + durationMillis));

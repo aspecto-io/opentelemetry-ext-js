@@ -2,13 +2,13 @@
 import 'mocha';
 import expect from 'expect';
 
-const { convertJaegerSpanToOtel } = require('..');
+const { convertJaegerSpanToOtelReadableSpan } = require('..');
 const jaegerProtoSpan = require('./json/jaegerProtoSpan.json');
 const jaegerSpanConvertedToOtel = require('./json/jaegerProtoConvertedToOTEL.json');
 
 describe('jaeger conversions', () => {
     it('needs to convert jaeger proto to OTEL format correctly', () => {
-        const converted = convertJaegerSpanToOtel(jaegerProtoSpan);
+        const converted = convertJaegerSpanToOtelReadableSpan(jaegerProtoSpan);
         expect(converted.kind).toEqual(jaegerSpanConvertedToOtel.kind);
         expect(converted.attributes).toEqual(jaegerSpanConvertedToOtel.attributes);
         expect(converted.instrumentationLibrary).toEqual(jaegerSpanConvertedToOtel.instrumentationLibrary);
