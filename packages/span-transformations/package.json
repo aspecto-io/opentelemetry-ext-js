@@ -11,7 +11,10 @@
         "test": "test"
     },
     "files": [
-        "src"
+        "dist/**/*.js",
+        "dist/**/*.js.map",
+        "dist/**/*.d.ts",
+        "README.md"
     ],
     "repository": {
         "type": "git",
