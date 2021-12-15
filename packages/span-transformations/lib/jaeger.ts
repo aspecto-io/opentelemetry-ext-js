@@ -48,9 +48,4 @@ export const convertJaegerSpanToOtel = (jaegerSpan): ReadableSpan => {
         status: getJaegerValueForTag('otel.status_code', jaegerSpan.tags),
         resource: jaegerSpan.processID,
     }
-    // convertedSpan.name = jaegerSpan.operationName;
-    // convertedSpan.kind =
-    // convertedSpan.attributes = convertJaegerTagsToAttributes(jaegerSpan.tags);
-    // convertedSpan.duration = jaegerSpan.duration;
-    // convertedSpan.startTime = jaegerSpan.startTime;
 }

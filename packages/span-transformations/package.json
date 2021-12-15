@@ -5,10 +5,10 @@
   "author": "Aspecto (aspecto.io)",
   "homepage": "",
   "license": "ISC",
-  "main": "lib/span-transformations.js",
+  "main": "dist/lib/index.js",
   "directories": {
     "lib": "lib",
-    "test": "__tests__"
+    "test": "test"
   },
   "files": [
     "lib"
@@ -21,11 +21,16 @@
     "build": "tsc",
     "prepare": "yarn run build",
     "watch": "tsc -w",
-    "test": "echo \"Error: run tests from root\" && exit 1"
+    "test": "mocha --recursive \"./test/*.ts\" --require esm"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.0.3",
     "@opentelemetry/core": "^1.0.1",
     "@opentelemetry/sdk-trace-base": "^1.0.1"
+  },
+  "devDependencies": {
+    "expect": "^26.6.2",
+    "mocha": "^8.4.0",
+    "esm": "3.2.5"
   }
 }
