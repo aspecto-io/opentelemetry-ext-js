@@ -1,10 +1,10 @@
 'use strict';
 import 'mocha';
 import expect from 'expect';
+import { convertJaegerSpanToOtel } from '..';
 
 const jaegerProtoSpan = require('./json/jaegerProtoSpan.json');
 const jaegerSpanConvertedToOtel = require('./json/jaegerProtoConvertedToOTEL.json');
-const { convertJaegerSpanToOtel } = require('..');
 
 describe('jaeger conversions', () => {
     it('needs to convert jaeger proto to OTEL format correctly', () => {
