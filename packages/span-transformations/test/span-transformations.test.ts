@@ -1,8 +1,8 @@
 'use strict';
 import 'mocha';
 import expect from 'expect';
-import { convertJaegerSpanToOtel } from '..';
 
+const { convertJaegerSpanToOtel } = require('..');
 const jaegerProtoSpan = require('./json/jaegerProtoSpan.json');
 const jaegerSpanConvertedToOtel = require('./json/jaegerProtoConvertedToOTEL.json');
 
