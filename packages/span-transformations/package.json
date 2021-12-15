@@ -1,36 +1,36 @@
 {
-  "name": "opentelemetry-span-transformations",
-  "version": "0.0.1",
-  "description": "Convert spans between different formats",
-  "author": "Aspecto (aspecto.io)",
-  "homepage": "",
-  "license": "ISC",
-  "main": "dist/lib/index.js",
-  "directories": {
-    "lib": "lib",
-    "test": "test"
-  },
-  "files": [
-    "lib"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git@github.com-aspectom:aspecto-io/opentelemetry-ext-js.git"
-  },
-  "scripts": {
-    "build": "tsc",
-    "prepare": "yarn run build",
-    "watch": "tsc -w",
-    "test": "mocha --recursive \"./test/*.ts\" --require esm"
-  },
-  "dependencies": {
-    "@opentelemetry/api": "^1.0.3",
-    "@opentelemetry/core": "^1.0.1",
-    "@opentelemetry/sdk-trace-base": "^1.0.1"
-  },
-  "devDependencies": {
-    "expect": "^26.6.2",
-    "mocha": "^8.4.0",
-    "esm": "3.2.5"
-  }
+    "name": "opentelemetry-span-transformations",
+    "version": "0.0.1",
+    "description": "Convert spans between different formats",
+    "author": "Aspecto (aspecto.io)",
+    "homepage": "",
+    "license": "ISC",
+    "main": "dist/lib/index.js",
+    "directories": {
+        "lib": "lib",
+        "test": "test"
+    },
+    "files": [
+        "lib"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git@github.com-aspectom:aspecto-io/opentelemetry-ext-js.git"
+    },
+    "scripts": {
+        "build": "tsc",
+        "prepare": "yarn run build",
+        "watch": "tsc -w",
+        "test": "mocha --recursive \"./test/*.ts\" --require esm"
+    },
+    "dependencies": {
+        "@opentelemetry/api": "^1.0.3",
+        "@opentelemetry/core": "^1.0.1",
+        "@opentelemetry/sdk-trace-base": "^1.0.1"
+    },
+    "devDependencies": {
+        "expect": "^26.6.2",
+        "mocha": "^8.4.0",
+        "esm": "3.2.5"
+    }
 }

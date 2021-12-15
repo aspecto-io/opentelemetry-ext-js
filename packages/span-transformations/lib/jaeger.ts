@@ -9,7 +9,7 @@ const convertJaegerTagsToAttributes = (tags): SpanAttributes => {
         spanAttributes[key] = value;
     });
     return spanAttributes;
-}
+};
 
 const getOtelKindFromJaegerKind = (jaegerKind: string) => {
     switch (jaegerKind) {
@@ -24,10 +24,10 @@ const getOtelKindFromJaegerKind = (jaegerKind: string) => {
         default:
             return SpanKind.INTERNAL;
     }
-}
+};
 
 export const convertJaegerSpanToOtel = (jaegerSpan): ReadableSpan => {
-    const durationMillis =  jaegerSpan.duration / 1000;
+    const durationMillis = jaegerSpan.duration / 1000;
     const startDateMillis = jaegerSpan.startTime / 1000;
     const endDateMillis = timeInputToHrTime(new Date(startDateMillis + durationMillis));
     return {
@@ -47,5 +47,5 @@ export const convertJaegerSpanToOtel = (jaegerSpan): ReadableSpan => {
         ended: true,
         status: getJaegerValueForTag('otel.status_code', jaegerSpan.tags),
         resource: jaegerSpan.processID,
-    }
-}
+    };
+};
