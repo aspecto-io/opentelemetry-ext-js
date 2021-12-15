@@ -5,13 +5,13 @@
     "author": "Aspecto (aspecto.io)",
     "homepage": "",
     "license": "ISC",
-    "main": "dist/lib/index.js",
+    "main": "dist/src/index.js",
     "directories": {
-        "lib": "lib",
+        "lib": "src",
         "test": "test"
     },
     "files": [
-        "lib"
+        "src"
     ],
     "repository": {
         "type": "git",
