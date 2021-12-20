@@ -35,6 +35,7 @@
     "devDependencies": {
         "expect": "^26.6.2",
         "mocha": "^8.4.0",
-        "esm": "3.2.5"
+        "esm": "3.2.5",
+        "typescript": "4.3.4"
     }
 }

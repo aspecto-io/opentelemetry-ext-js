@@ -26,26 +26,46 @@ const getOtelKindFromJaegerKind = (jaegerKind: string) => {
     }
 };
 
+const getParentSpanID = (jaegerSpan) => {
+    let parentSpanId = '';
+    try {
+        parentSpanId = jaegerSpan.references?.filter(({ refType }) => refType === "CHILD_OF")[0].spanID;
+    }
+    catch (ex) {
+        console.error('Failed to get parent span ID', ex);
+    }
+
+    return parentSpanId;
+}
+
 export const convertJaegerSpanToOtelReadableSpan = (jaegerSpan): ReadableSpan => {
     const durationMillis = jaegerSpan.duration / 1000;
     const startDateMillis = jaegerSpan.startTime / 1000;
     const endDateMillis = timeInputToHrTime(new Date(startDateMillis + durationMillis));
+
     return {
         name: jaegerSpan.operationName,
         kind: getOtelKindFromJaegerKind(getJaegerValueForTag('span.kind', jaegerSpan.tags)),
         attributes: convertJaegerTagsToAttributes(jaegerSpan.tags),
+        parentSpanId: getParentSpanID(jaegerSpan),
         duration: timeInputToHrTime(durationMillis),
         startTime: timeInputToHrTime(startDateMillis),
         endTime: endDateMillis,
         links: [],
-        spanContext: () => null,
+        spanContext: () => ({
+            traceId: jaegerSpan.traceID,
+            spanId: jaegerSpan.spanID,
+            traceFlags: jaegerSpan.flags
+        }),
         instrumentationLibrary: {
             name: getJaegerValueForTag('otel.library.name', jaegerSpan.tags),
             version: getJaegerValueForTag('otel.library.version', jaegerSpan.tags),
         },
         events: [],
         ended: true,
-        status: getJaegerValueForTag('otel.status_code', jaegerSpan.tags),
+        status: {
+            code: getJaegerValueForTag('otel.status_code', jaegerSpan.tags),
+        },
         resource: jaegerSpan.processID,
     };
 };

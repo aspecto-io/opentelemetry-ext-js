@@ -1,5 +1,6 @@
 {
     "name": "HTTPS GET",
+    "parentSpanId": "5829e11727e620e1",
     "kind": 2,
     "attributes": {
         "http.url": "https://jsonplaceholder.typicode.com/todos/1",
@@ -36,6 +37,8 @@
     "instrumentationLibrary": { "name": "@opentelemetry/instrumentation-http", "version": "0.27.0" },
     "events": [],
     "ended": true,
-    "status": "OK",
+    "status": {
+        "code": "OK"
+    },
     "resource": "p1"
 }
