@@ -29,14 +29,13 @@ const getOtelKindFromJaegerKind = (jaegerKind: string) => {
 const getParentSpanID = (jaegerSpan) => {
     let parentSpanId = '';
     try {
-        parentSpanId = jaegerSpan.references?.filter(({ refType }) => refType === "CHILD_OF")[0].spanID;
-    }
-    catch (ex) {
+        parentSpanId = jaegerSpan.references?.filter(({ refType }) => refType === 'CHILD_OF')[0].spanID;
+    } catch (ex) {
         console.error('Failed to get parent span ID', ex);
     }
 
     return parentSpanId;
-}
+};
 
 export const convertJaegerSpanToOtelReadableSpan = (jaegerSpan): ReadableSpan => {
     const durationMillis = jaegerSpan.duration / 1000;
@@ -55,7 +54,7 @@ export const convertJaegerSpanToOtelReadableSpan = (jaegerSpan): ReadableSpan =>
         spanContext: () => ({
             traceId: jaegerSpan.traceID,
             spanId: jaegerSpan.spanID,
-            traceFlags: jaegerSpan.flags
+            traceFlags: jaegerSpan.flags,
         }),
         instrumentationLibrary: {
             name: getJaegerValueForTag('otel.library.name', jaegerSpan.tags),

@@ -11,9 +11,9 @@ describe('jaeger conversions', () => {
         const converted = convertJaegerSpanToOtelReadableSpan(jaegerProtoSpan);
         expect(converted.kind).toEqual(jaegerSpanConvertedToOtel.kind);
         expect(converted.spanContext()).toEqual({
-            traceId: "096cb59a7500438fd7be37575fecb1fa",
-            spanId: "ca0ea597b91a47e5",
-            traceFlags: 1
+            traceId: '096cb59a7500438fd7be37575fecb1fa',
+            spanId: 'ca0ea597b91a47e5',
+            traceFlags: 1,
         });
         expect(converted.parentSpanId).toEqual(jaegerSpanConvertedToOtel.parentSpanId);
         expect(converted.attributes).toEqual(jaegerSpanConvertedToOtel.attributes);
