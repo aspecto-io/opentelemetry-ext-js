@@ -40,5 +40,5 @@
     "status": {
         "code": 1
     },
-    "resource": {"attributes": {"service.name": "tomservice"}}
+    "resource": { "attributes": { "service.name": "tomservice" } }
 }

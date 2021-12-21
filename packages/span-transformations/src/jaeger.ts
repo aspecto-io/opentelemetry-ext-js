@@ -4,7 +4,8 @@ import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
 import { Resource } from '@opentelemetry/resources';
 import { JaegerSpan, JaegerTag } from './interfaces/jaeger';
 
-const getJaegerValueForTag = (jaegerTagKey: string, tags: JaegerTag[]) => tags.find(({ key }) => jaegerTagKey === key)?.value;
+const getJaegerValueForTag = (jaegerTagKey: string, tags: JaegerTag[]) =>
+    tags.find(({ key }) => jaegerTagKey === key)?.value;
 const convertJaegerTagsToAttributes = (tags): SpanAttributes => {
     const spanAttributes: SpanAttributes = {};
     tags.forEach(({ key, value }) => {
@@ -28,18 +29,19 @@ const getOtelKindFromJaegerKind = (jaegerKind: string) => {
     }
 };
 
-const getParentSpanID = (jaegerSpan: JaegerSpan) => jaegerSpan.references?.find(({ refType }) => refType === 'CHILD_OF')?.spanID;
+const getParentSpanID = (jaegerSpan: JaegerSpan) =>
+    jaegerSpan.references?.find(({ refType }) => refType === 'CHILD_OF')?.spanID;
 
 const getSpanStatusCodeByStatusText = (status: string) => {
     switch (status?.toUpperCase()) {
-        case "OK":
+        case 'OK':
             return SpanStatusCode.OK;
-        case "ERROR":
+        case 'ERROR':
             return SpanStatusCode.ERROR;
         default:
             return SpanStatusCode.UNSET;
     }
-}
+};
 
 export const convertJaegerSpanToOtelReadableSpan = (jaegerSpan: JaegerSpan): ReadableSpan => {
     const durationMillis = jaegerSpan.duration / 1000;
@@ -70,7 +72,7 @@ export const convertJaegerSpanToOtelReadableSpan = (jaegerSpan: JaegerSpan): Rea
             code: getSpanStatusCodeByStatusText(getJaegerValueForTag('otel.status_code', jaegerSpan.tags)),
         },
         resource: new Resource({
-            'service.name': getJaegerValueForTag('service.name', jaegerSpan.tags)
+            'service.name': getJaegerValueForTag('service.name', jaegerSpan.tags),
         }),
     };
 };
