@@ -38,7 +38,7 @@
     "events": [],
     "ended": true,
     "status": {
-        "code": "OK"
+        "code": 1
     },
     "resource": {"attributes": {"service.name": "tomservice"}}
 }

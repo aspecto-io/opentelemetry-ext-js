@@ -1,9 +1,10 @@
-import { SpanAttributes, SpanKind } from '@opentelemetry/api';
+import { SpanAttributes, SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import { timeInputToHrTime } from '@opentelemetry/core';
 import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
 import { Resource } from '@opentelemetry/resources';
+import { JaegerSpan, JaegerTag } from './interfaces/jaeger';
 
-const getJaegerValueForTag = (jaegerTagKey, tags) => tags.filter(({ key }) => jaegerTagKey === key)?.[0]?.value;
+const getJaegerValueForTag = (jaegerTagKey: string, tags: JaegerTag[]) => tags.find(({ key }) => jaegerTagKey === key)?.value;
 const convertJaegerTagsToAttributes = (tags): SpanAttributes => {
     const spanAttributes: SpanAttributes = {};
     tags.forEach(({ key, value }) => {
@@ -27,18 +28,20 @@ const getOtelKindFromJaegerKind = (jaegerKind: string) => {
     }
 };
 
-const getParentSpanID = (jaegerSpan) => {
-    let parentSpanId = '';
-    try {
-        parentSpanId = jaegerSpan.references?.filter(({ refType }) => refType === 'CHILD_OF')[0].spanID;
-    } catch (ex) {
-        console.error('Failed to get parent span ID', ex);
+const getParentSpanID = (jaegerSpan: JaegerSpan) => jaegerSpan.references?.find(({ refType }) => refType === 'CHILD_OF')?.spanID;
+
+const getSpanStatusCodeByStatusText = (status: string) => {
+    switch (status?.toUpperCase()) {
+        case "OK":
+            return SpanStatusCode.OK;
+        case "ERROR":
+            return SpanStatusCode.ERROR;
+        default:
+            return SpanStatusCode.UNSET;
     }
+}
 
-    return parentSpanId;
-};
-
-export const convertJaegerSpanToOtelReadableSpan = (jaegerSpan): ReadableSpan => {
+export const convertJaegerSpanToOtelReadableSpan = (jaegerSpan: JaegerSpan): ReadableSpan => {
     const durationMillis = jaegerSpan.duration / 1000;
     const startDateMillis = jaegerSpan.startTime / 1000;
     const endDateMillis = timeInputToHrTime(new Date(startDateMillis + durationMillis));
@@ -64,7 +67,7 @@ export const convertJaegerSpanToOtelReadableSpan = (jaegerSpan): ReadableSpan =>
         events: [],
         ended: true,
         status: {
-            code: getJaegerValueForTag('otel.status_code', jaegerSpan.tags),
+            code: getSpanStatusCodeByStatusText(getJaegerValueForTag('otel.status_code', jaegerSpan.tags)),
         },
         resource: new Resource({
             'service.name': getJaegerValueForTag('service.name', jaegerSpan.tags)
