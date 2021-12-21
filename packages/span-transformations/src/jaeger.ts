@@ -1,6 +1,7 @@
 import { SpanAttributes, SpanKind } from '@opentelemetry/api';
 import { timeInputToHrTime } from '@opentelemetry/core';
 import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
+import { Resource } from '@opentelemetry/resources';
 
 const getJaegerValueForTag = (jaegerTagKey, tags) => tags.filter(({ key }) => jaegerTagKey === key)?.[0]?.value;
 const convertJaegerTagsToAttributes = (tags): SpanAttributes => {
@@ -65,6 +66,8 @@ export const convertJaegerSpanToOtelReadableSpan = (jaegerSpan): ReadableSpan =>
         status: {
             code: getJaegerValueForTag('otel.status_code', jaegerSpan.tags),
         },
-        resource: jaegerSpan.processID,
+        resource: new Resource({
+            'service.name': getJaegerValueForTag('service.name', jaegerSpan.tags)
+        }),
     };
 };
