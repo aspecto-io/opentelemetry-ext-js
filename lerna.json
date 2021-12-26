@@ -1,10 +1,5 @@
 {
-    "packages": [
-        "packages/*",
-        "detectors/*",
-        "detectors/node/*",
-        "propagators/*"
-    ],
+    "packages": ["packages/*", "detectors/*", "detectors/node/*", "propagators/*"],
     "version": "independent",
     "npmClient": "yarn",
     "useWorkspaces": true
