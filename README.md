@@ -56,7 +56,7 @@ The instrumentations in this repo are:
 ## Propagators
 | Propagator | Description | NPM |
 | --- | --- | --- |
-| [Selective](./propagators/propagator-selective) | Selective control on `inject` / `extract` enabled on another propagator | [![NPM version](https://img.shields.io/npm/v/opentelemetry-propagator-selective.svg)](https://www.npmjs.com/package/opentelemetry-resource-detector-service) [![propagator selective downloads](https://img.shields.io/npm/dm/opentelemetry-propagator-selective.svg)]() |
+| [Selective](./propagators/propagator-selective) | Selective control on `inject` / `extract` enabled on another propagator | [![NPM version](https://img.shields.io/npm/v/opentelemetry-propagator-selective.svg)](https://www.npmjs.com/package/opentelemetry-propagator-selective) [![propagator selective downloads](https://img.shields.io/npm/dm/opentelemetry-propagator-selective.svg)]() |
 
 
 
