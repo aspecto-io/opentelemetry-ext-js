@@ -8,7 +8,6 @@ import {
     defaultTextMapGetter,
     defaultTextMapSetter,
     createContextKey,
-    propagation,
 } from '@opentelemetry/api';
 
 import * as ps from '../src';
@@ -43,7 +42,7 @@ describe('SelectivePropagator', () => {
         it('should inject when enabled', () => {
             mock.expects('inject').once();
             const selectivePropagator = new ps.SelectivePropagator(noopPropagator, {
-                shouldInject: true,
+                injectEnabled: true,
             });
             selectivePropagator.inject(ROOT_CONTEXT, {}, defaultTextMapSetter);
         });
@@ -51,7 +50,7 @@ describe('SelectivePropagator', () => {
         it('should not inject when disabled', () => {
             mock.expects('inject').never();
             const selectivePropagator = new ps.SelectivePropagator(noopPropagator, {
-                shouldInject: false,
+                extractEnabled: false,
             });
             selectivePropagator.inject(ROOT_CONTEXT, {}, defaultTextMapSetter);
         });

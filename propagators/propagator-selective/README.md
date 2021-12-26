@@ -17,14 +17,14 @@ import { SelectivePropagator } from 'opentelemetry-propagator-selective';
 import { B3Propagator } from '@opentelemetry/propagator-b3';
 import { propagation } from '@opentelemetry/api';
 
-const b3ExtractOnly = new SelectivePropagator(new B3Propagator(), { shouldExtract: true, shouldInject: false});
+const b3ExtractOnly = new SelectivePropagator(new B3Propagator(), { extractEnabled: true, injectEnabled: false});
 propagation.setGlobalPropagator(b3ExtractOnly);
 ```
 
 You can use any propagator compatible with the `TextMapPropagator` interface.
 
 ## Configuration
-- You can set `shouldInject` and `shouldExtract` to boolean values to set which operations are valid. 
+- You can set `extractEnabled` and `injectEnabled` to boolean values to set which operations are valid. 
 - It is possible to set both to true or both to false. 
 - If not set, default is to not `inject` / `extract`
 

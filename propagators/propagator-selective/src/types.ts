@@ -1,4 +1,4 @@
 export interface SelectivePropagatorConfig {
-    shouldExtract?: boolean;
-    shouldInject?: boolean;
+    extractEnabled?: boolean;
+    injectEnabled?: boolean;
 }
