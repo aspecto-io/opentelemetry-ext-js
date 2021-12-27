@@ -1,0 +1,150 @@
+{
+    "traceID": "096cb59a7500438fd7be37575fecb1fa",
+    "spanID": "ca0ea597b91a47e5",
+    "flags": 1,
+    "operationName": "HTTPS GET",
+    "references": [
+        {
+            "refType": "CHILD_OF",
+            "traceID": "096cb59a7500438fd7be37575fecb1fa",
+            "spanID": "5829e11727e620e1"
+        }
+    ],
+    "startTime": 1639471827900476,
+    "duration": 302388,
+    "tags": [
+        {
+            "key": "http.url",
+            "type": "string",
+            "value": "https://jsonplaceholder.typicode.com/todos/1"
+        },
+        {
+            "key": "http.method",
+            "type": "string",
+            "value": "GET"
+        },
+        {
+            "key": "http.target",
+            "type": "string",
+            "value": "/todos/1"
+        },
+        {
+            "key": "net.peer.name",
+            "type": "string",
+            "value": "jsonplaceholder.typicode.com"
+        },
+        {
+            "key": "net.peer.ip",
+            "type": "string",
+            "value": "104.21.4.48"
+        },
+        {
+            "key": "net.peer.port",
+            "type": "float64",
+            "value": 443
+        },
+        {
+            "key": "http.host",
+            "type": "string",
+            "value": "jsonplaceholder.typicode.com:443"
+        },
+        {
+            "key": "http.response_content_length_uncompressed",
+            "type": "float64",
+            "value": 83
+        },
+        {
+            "key": "http.status_code",
+            "type": "float64",
+            "value": 200
+        },
+        {
+            "key": "http.status_text",
+            "type": "string",
+            "value": "OK"
+        },
+        {
+            "key": "http.flavor",
+            "type": "string",
+            "value": "1.1"
+        },
+        {
+            "key": "net.transport",
+            "type": "string",
+            "value": "ip_tcp"
+        },
+        {
+            "key": "http.path",
+            "type": "string",
+            "value": "/todos/1"
+        },
+        {
+            "key": "http.request.headers",
+            "type": "string",
+            "value": "{\"accept\":\"application/json, text/plain, */*\",\"user-agent\":\"axios/0.21.1\",\"traceparent\":\"00-096cb59a7500438fd7be37575fecb1fa-ca0ea597b91a47e5-01\",\"host\":\"jsonplaceholder.typicode.com\"}"
+        },
+        {
+            "key": "http.response.headers",
+            "type": "string",
+            "value": "{\"date\":\"Tue, 14 Dec 2021 09:51:02 GMT\",\"content-type\":\"application/json; charset=utf-8\",\"content-length\":\"83\",\"connection\":\"close\",\"x-powered-by\":\"Express\",\"x-ratelimit-limit\":\"1000\",\"x-ratelimit-remaining\":\"999\",\"x-ratelimit-reset\":\"1631494143\",\"vary\":\"Origin, Accept-Encoding\",\"access-control-allow-credentials\":\"true\",\"cache-control\":\"max-age=43200\",\"pragma\":\"no-cache\",\"expires\":\"-1\",\"x-content-type-options\":\"nosniff\",\"etag\":\"W/\\\"53-hfEnumeNh6YirfjyjaujcOPPT+s\\\"\",\"via\":\"1.1 vegur\",\"cf-cache-status\":\"HIT\",\"age\":\"7759\",\"accept-ranges\":\"bytes\",\"expect-ct\":\"max-age=604800, report-uri=\\\"https://report-uri.cloudflare.com/cdn-cgi/beacon/expect-ct\\\"\",\"report-to\":\"{\\\"endpoints\\\":[{\\\"url\\\":\\\"https:\\\\/\\\\/a.nel.cloudflare.com\\\\/report\\\\/v3?s=9YGUNJFP76CJ7wZTcltDe7f9EuCOAL8OqOButi%2FRZdLWw9GkNAFLox42W9DoCxVGJb4HzHlLVZbrFBPLtRnPY3nMZLACx%2Bm9Bh8pX3UFe5MWt6lclQeaE0lEqKtvic29q0h%2Fsd1%2BG3KIjZmgbvBh\\\"}],\\\"group\\\":\\\"cf-nel\\\",\\\"max_age\\\":604800}\",\"nel\":\"{\\\"success_fraction\\\":0,\\\"report_to\\\":\\\"cf-nel\\\",\\\"max_age\\\":604800}\",\"server\":\"cloudflare\",\"cf-ray\":\"6bd688092ae9c286-FRA\",\"alt-svc\":\"h3=\\\":443\\\"; ma=86400, h3-29=\\\":443\\\"; ma=86400, h3-28=\\\":443\\\"; ma=86400, h3-27=\\\":443\\\"; ma=86400\"}"
+        },
+        {
+            "key": "http.request.body",
+            "type": "string",
+            "value": ""
+        },
+        {
+            "key": "http.response.body",
+            "type": "string",
+            "value": "{\n  \"userId\": 1,\n  \"id\": 1,\n  \"title\": \"delectus aut autem\",\n  \"completed\": false\n}"
+        },
+        {
+            "key": "otel.status_code",
+            "type": "string",
+            "value": "OK"
+        },
+        {
+            "key": "span.kind",
+            "type": "string",
+            "value": "client"
+        },
+        {
+            "key": "service.name",
+            "type": "string",
+            "value": "tomservice"
+        },
+        {
+            "key": "telemetry.sdk.language",
+            "type": "string",
+            "value": "nodejs"
+        },
+        {
+            "key": "telemetry.sdk.name",
+            "type": "string",
+            "value": "opentelemetry"
+        },
+        {
+            "key": "telemetry.sdk.version",
+            "type": "string",
+            "value": "1.0.1"
+        },
+        {
+            "key": "otel.library.name",
+            "type": "string",
+            "value": "@opentelemetry/instrumentation-http"
+        },
+        {
+            "key": "otel.library.version",
+            "type": "string",
+            "value": "0.27.0"
+        },
+        {
+            "key": "internal.span.format",
+            "type": "string",
+            "value": "proto"
+        }
+    ],
+    "logs": [],
+    "processID": "p1",
+    "warnings": null
+}
