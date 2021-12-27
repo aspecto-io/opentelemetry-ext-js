@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-propagator-selective",
-    "version": "0.27.0",
+    "version": "0.28.0",
     "description": "selective control on inject / extract enabled on another propagator",
     "keywords": [
         "opentelemetry",
@@ -30,7 +30,6 @@
     "peerDependencies": {
         "@opentelemetry/api": "^1.0.0"
     },
-    "dependencies": {},
     "devDependencies": {
         "@opentelemetry/api": "1.0.0",
         "expect": "^26.6.2",

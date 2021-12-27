@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.27.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-neo4j@0.26.1...opentelemetry-instrumentation-neo4j@0.27.0) (2021-12-27)
+
+**Note:** Version bump only for package opentelemetry-instrumentation-neo4j
+
+
+
+
+
 ## [0.26.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-neo4j@0.26.0...opentelemetry-instrumentation-neo4j@0.26.1) (2021-11-29)
 
 **Note:** Version bump only for package opentelemetry-instrumentation-neo4j

@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.27.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-testing-utils@0.26.0...opentelemetry-instrumentation-testing-utils@0.27.0) (2021-12-27)
+
+**Note:** Version bump only for package opentelemetry-instrumentation-testing-utils
+
+
+
+
+
 # [0.26.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-testing-utils@0.25.0...opentelemetry-instrumentation-testing-utils@0.26.0) (2021-10-26)
 
 **Note:** Version bump only for package opentelemetry-instrumentation-testing-utils

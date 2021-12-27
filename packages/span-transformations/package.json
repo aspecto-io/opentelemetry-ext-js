@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-span-transformations",
-    "version": "0.0.1",
+    "version": "0.1.0",
     "description": "Convert spans between different formats",
     "author": "Aspecto (aspecto.io)",
     "homepage": "https://github.com/aspecto-io/opentelemetry-ext-js",
