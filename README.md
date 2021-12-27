@@ -14,9 +14,9 @@
 
 <p>
   <strong>
-    <a href="doc/conventions.md">Conventions<a/>
+    <a href="doc/conventions.md">Conventions</a>
     &nbsp;&nbsp;&bull;&nbsp;&nbsp;
-    <a href="doc/development-guide.md">Development Guide<a/>
+    <a href="doc/development-guide.md">Development Guide</a>
   </strong>
 </p>
 
@@ -29,7 +29,7 @@ The instrumentations in this repo are:
 - strictly complies with [open telemetry semantic conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions)
 - up to date with latest SDK version
 
-**Compatible with [SDK stable v1.0.0](https://github.com/open-telemetry/opentelemetry-js/releases/tag/stable%2Fv1.0.0) and [SDK experimental v0.26.0](https://github.com/open-telemetry/opentelemetry-js/releases/tag/v0.26.0)**
+**Compatible with [SDK stable v1.0.1](https://github.com/open-telemetry/opentelemetry-js/releases/tag/stable%2Fv1.0.1) and [SDK experimental v0.27.0](https://github.com/open-telemetry/opentelemetry-js/releases/tag/experimental%2Fv0.27.0)**
 ## Instrumentations
 | Instrumentation Package | Instrumented Lib | NPM |
 | --- | --- | --- |
@@ -64,6 +64,7 @@ The instrumentations in this repo are:
 
 | Instrumentations Version | OpenTelemetry Core | OpenTelemetry Experimental | 
 | --- | --- | --- |
+| 0.27.x | ^1.0.1 | ^0.27.0 |
 | 0.26.x | ^1.0.0 | ^0.26.0 |
 | 0.25.x | 0.25.0 | --- |
 | 0.24.x | 0.24.0 | --- |
