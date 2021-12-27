@@ -1,0 +1,52 @@
+{
+    "name": "opentelemetry-propagator-selective",
+    "version": "0.27.0",
+    "description": "selective control on inject / extract enabled on another propagator",
+    "keywords": [
+        "opentelemetry",
+        "propagation"
+    ],
+    "homepage": "https://github.com/aspecto-io/opentelemetry-propagator-selective",
+    "license": "Apache-2.0",
+    "main": "dist/src/index.js",
+    "files": [
+        "dist/src/**/*.js",
+        "dist/src/**/*.d.ts",
+        "dist/src/**/*.js.map",
+        "LICENSE",
+        "README.md"
+    ],
+    "scripts": {
+        "build": "tsc",
+        "prepare": "yarn run build",
+        "test": "mocha",
+        "test:jaeger": "OTEL_EXPORTER_JAEGER_AGENT_HOST=localhost mocha",
+        "watch": "tsc -w",
+        "test:ci": "yarn test"
+    },
+    "bugs": {
+        "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
+    },
+    "peerDependencies": {
+        "@opentelemetry/api": "^1.0.0"
+    },
+    "dependencies": {},
+    "devDependencies": {
+        "@opentelemetry/api": "1.0.0",
+        "expect": "^26.6.2",
+        "mocha": "^8.4.0",
+        "sinon": "^12.0.1",
+        "ts-node": "^9.1.1",
+        "typescript": "4.3.4"
+    },
+    "mocha": {
+        "extension": [
+            "ts"
+        ],
+        "spec": "test/**/*.spec.ts",
+        "require": [
+            "ts-node/register",
+            "opentelemetry-instrumentation-mocha"
+        ]
+    }
+}

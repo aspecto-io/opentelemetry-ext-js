@@ -53,6 +53,12 @@ The instrumentations in this repo are:
 | [Deployment](./detectors/node/resource-detector-deployment) | Synchronous | [![NPM version](https://img.shields.io/npm/v/opentelemetry-resource-detector-deployment.svg)](https://www.npmjs.com/package/opentelemetry-resource-detector-deployment)[![deployment detector downloads](https://img.shields.io/npm/dm/opentelemetry-resource-detector-deployment.svg)]()
 | [Git](./detectors/node/resource-detector-git)  | Synchronous | [![NPM version](https://img.shields.io/npm/v/opentelemetry-resource-detector-git.svg)](https://www.npmjs.com/package/opentelemetry-resource-detector-git) [![git detector downloads](https://img.shields.io/npm/dm/opentelemetry-resource-detector-git.svg)]()
 
+## Propagators
+| Propagator | Description | NPM |
+| --- | --- | --- |
+| [Selective](./propagators/propagator-selective) | Selective control on `inject` / `extract` enabled on another propagator | [![NPM version](https://img.shields.io/npm/v/opentelemetry-propagator-selective.svg)](https://www.npmjs.com/package/opentelemetry-propagator-selective) [![propagator selective downloads](https://img.shields.io/npm/dm/opentelemetry-propagator-selective.svg)]() |
+
+
 
 ## Compatibility Table
 
