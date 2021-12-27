@@ -50,7 +50,7 @@ describe('SelectivePropagator', () => {
         it('should not inject when disabled', () => {
             mock.expects('inject').never();
             const selectivePropagator = new ps.SelectivePropagator(noopPropagator, {
-                extractEnabled: false,
+                injectEnabled: false,
             });
             selectivePropagator.inject(ROOT_CONTEXT, {}, defaultTextMapSetter);
         });
@@ -67,7 +67,7 @@ describe('SelectivePropagator', () => {
             const extractedContext = ROOT_CONTEXT.setValue(createContextKey('k'), 'v');
             mock.expects('extract').once().returns(extractedContext);
             const SelectivePropagator = new ps.SelectivePropagator(noopPropagator, {
-                shouldExtract: true,
+                extractEnabled: true,
             });
             const returnedContext = SelectivePropagator.extract(ROOT_CONTEXT, {}, defaultTextMapGetter);
             expect(returnedContext).toBe(extractedContext);
@@ -76,7 +76,7 @@ describe('SelectivePropagator', () => {
         it('should not extract when disabled', () => {
             mock.expects('extract').never();
             const SelectivePropagator = new ps.SelectivePropagator(noopPropagator, {
-                shouldExtract: false,
+                extractEnabled: false,
             });
             const origContext = ROOT_CONTEXT;
             const returnedContext = SelectivePropagator.extract(ROOT_CONTEXT, {}, defaultTextMapGetter);
