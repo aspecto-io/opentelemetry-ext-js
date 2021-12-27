@@ -14,8 +14,9 @@ packages/**/package-lock.json
 package-lock.json
 yarn.lock
 
-# VsCode configs
+# IDE configs
 .vscode/
+.idea
 
 # typescript
 *.tsbuildinfo
