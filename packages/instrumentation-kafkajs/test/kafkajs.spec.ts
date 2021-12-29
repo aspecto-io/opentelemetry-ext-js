@@ -4,9 +4,9 @@ import { KafkaJsInstrumentation, KafkaJsInstrumentationConfig } from '../src';
 import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
 import { propagation, SpanKind, SpanStatusCode, Span } from '@opentelemetry/api';
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
+import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 
-const instrumentation = new KafkaJsInstrumentation();
+const instrumentation = registerInstrumentationTesting(new KafkaJsInstrumentation());
 
 import * as kafkajs from 'kafkajs';
 import {
