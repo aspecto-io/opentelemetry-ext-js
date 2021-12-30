@@ -1,9 +1,9 @@
 import 'mocha';
 import expect from 'expect';
 import { TypeormInstrumentation } from '../src';
-import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
+import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 
-const instrumentation = new TypeormInstrumentation();
+const instrumentation = registerInstrumentationTesting(new TypeormInstrumentation());
 import { defaultOptions, User } from './utils';
 import * as typeorm from 'typeorm';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';

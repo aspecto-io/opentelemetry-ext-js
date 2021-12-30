@@ -1,10 +1,10 @@
 import 'mocha';
 import nock from 'nock';
 import { expect } from 'chai';
-import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
+import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 import { ElasticsearchInstrumentation } from '../src/elasticsearch';
 
-const instrumentation = new ElasticsearchInstrumentation();
+const instrumentation = registerInstrumentationTesting(new ElasticsearchInstrumentation());
 
 import { Client } from '@elastic/elasticsearch';
 const esMockUrl = 'http://localhost:9200';

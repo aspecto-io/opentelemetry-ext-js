@@ -5,12 +5,12 @@ import { extractTableFromQuery } from '../src/utils';
 import { ReadableSpan, Span } from '@opentelemetry/sdk-trace-base';
 import { context, diag, SpanStatusCode, DiagConsoleLogger, ROOT_CONTEXT } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
+import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 
 // should be available in node_modules from sequelize installation
 const Promise = require('bluebird');
 
-const instrumentation = new SequelizeInstrumentation();
+const instrumentation = registerInstrumentationTesting(new SequelizeInstrumentation());
 import * as sequelize from 'sequelize';
 
 describe('instrumentation-sequelize', () => {

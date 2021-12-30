@@ -7,9 +7,9 @@ import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { normalizeResponse } from './test-utils';
 import { map, mergeMap } from 'rxjs/operators';
 import { concat } from 'rxjs';
-import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
+import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 
-const instrumentation = new Neo4jInstrumentation();
+const instrumentation = registerInstrumentationTesting(new Neo4jInstrumentation());
 instrumentation.enable();
 instrumentation.disable();
 

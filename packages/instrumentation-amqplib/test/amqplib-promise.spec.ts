@@ -3,9 +3,9 @@ import expect from 'expect';
 import sinon from 'sinon';
 import lodash from 'lodash';
 import { AmqplibInstrumentation, EndOperation, PublishParams } from '../src';
-import { getTestSpans, registerInstrumentation } from 'opentelemetry-instrumentation-testing-utils';
+import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 
-const instrumentation = registerInstrumentation(new AmqplibInstrumentation());
+const instrumentation = registerInstrumentationTesting(new AmqplibInstrumentation());
 
 import amqp, { ConsumeMessage } from 'amqplib';
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';

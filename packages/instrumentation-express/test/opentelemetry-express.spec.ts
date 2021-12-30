@@ -6,9 +6,10 @@ import { AddressInfo } from 'net';
 import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
+import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 import * as bodyParser from 'body-parser';
 
-const instrumentation = new ExpressInstrumentation();
+const instrumentation = registerInstrumentationTesting(new ExpressInstrumentation());
 // add http instrumentation so we can test proper assignment of route attribute.
 const httpInstrumentation = new HttpInstrumentation();
 httpInstrumentation.enable();
@@ -21,7 +22,6 @@ import express from 'express';
 import * as http from 'http';
 import { getExpressSpans } from './utils';
 import { ExpressRequestHookInformation } from '../src/types';
-import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
 
 describe('opentelemetry-express', () => {
     let app: express.Application;

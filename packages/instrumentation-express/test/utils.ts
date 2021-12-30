@@ -3,7 +3,7 @@ import type { ReadableSpan } from '@opentelemetry/sdk-trace-base';
 import expect from 'expect';
 import { ExpressInstrumentationAttributes } from '../src/types';
 import type express from 'express';
-import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
+import { getTestSpans } from '@opentelemetry/contrib-test-utils';
 
 export interface expectRouteAttributesAdvancedOptions {
     expectedParams?: Record<string, string>;

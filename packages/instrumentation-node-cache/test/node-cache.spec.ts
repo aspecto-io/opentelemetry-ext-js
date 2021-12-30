@@ -1,14 +1,16 @@
 import 'mocha';
 import expect from 'expect';
-import { getTestSpans, resetMemoryExporter } from 'opentelemetry-instrumentation-testing-utils';
+import { getTestSpans, resetMemoryExporter, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 import { NodeCacheInstrumentation } from '../src';
 import { context, ROOT_CONTEXT } from '@opentelemetry/api';
 
 const DB_RESPONSE = 'db.response';
-const instrumentation = new NodeCacheInstrumentation({
-    responseHook: (span, { response }) =>
-        span.setAttribute(DB_RESPONSE, typeof response === 'object' ? JSON.stringify(response) : response),
-});
+const instrumentation = registerInstrumentationTesting(
+    new NodeCacheInstrumentation({
+        responseHook: (span, { response }) =>
+            span.setAttribute(DB_RESPONSE, typeof response === 'object' ? JSON.stringify(response) : response),
+    })
+);
 instrumentation.enable();
 
 import NodeCache from 'node-cache';

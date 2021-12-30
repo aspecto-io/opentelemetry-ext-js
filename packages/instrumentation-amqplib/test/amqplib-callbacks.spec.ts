@@ -1,9 +1,9 @@
 import 'mocha';
 import expect from 'expect';
 import { AmqplibInstrumentation } from '../src';
-import { getTestSpans, registerInstrumentation } from 'opentelemetry-instrumentation-testing-utils';
+import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 
-const instrumentation = registerInstrumentation(new AmqplibInstrumentation());
+const instrumentation = registerInstrumentationTesting(new AmqplibInstrumentation());
 
 import amqpCallback from 'amqplib/callback_api';
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';

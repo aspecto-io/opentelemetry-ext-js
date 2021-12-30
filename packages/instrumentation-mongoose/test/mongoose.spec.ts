@@ -3,11 +3,13 @@ import expect from 'expect';
 import { context, ROOT_CONTEXT } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { MongooseInstrumentation } from '../src';
-import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
+import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 
-const instrumentation = new MongooseInstrumentation({
-    dbStatementSerializer: (_operation: string, payload) => JSON.stringify(payload),
-});
+const instrumentation = registerInstrumentationTesting(
+    new MongooseInstrumentation({
+        dbStatementSerializer: (_operation: string, payload) => JSON.stringify(payload),
+    })
+);
 
 import mongoose from 'mongoose';
 import User, { IUser, loadUsers } from './user';
