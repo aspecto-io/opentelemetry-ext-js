@@ -3,9 +3,9 @@ import expect from 'expect';
 import { Span } from '@opentelemetry/sdk-trace-base';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { ExtendedDatabaseAttribute, TypeormInstrumentation, TypeormInstrumentationConfig } from '../src';
-import { getTestSpans } from '@opentelemetry/contrib-test-utils';
+import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 
-const instrumentation = new TypeormInstrumentation();
+const instrumentation = registerInstrumentationTesting(new TypeormInstrumentation());
 import * as typeorm from 'typeorm';
 import { defaultOptions, User } from './utils';
 import { SpanStatusCode } from '@opentelemetry/api';

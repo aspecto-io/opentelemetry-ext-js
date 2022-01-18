@@ -5,11 +5,7 @@ import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { MongooseInstrumentation } from '../src';
 import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 
-const instrumentation = registerInstrumentationTesting(
-    new MongooseInstrumentation({
-        dbStatementSerializer: (_operation: string, payload) => JSON.stringify(payload),
-    })
-);
+const instrumentation = registerInstrumentationTesting(new MongooseInstrumentation());
 
 import mongoose from 'mongoose';
 import User, { IUser, loadUsers } from './user';
@@ -24,6 +20,7 @@ describe('mongoose instrumentation', () => {
             useFindAndModify: false,
             useCreateIndex: true,
         });
+        await User.collection.drop().catch();
     });
 
     after(async () => {
@@ -31,6 +28,10 @@ describe('mongoose instrumentation', () => {
     });
 
     beforeEach(async () => {
+        instrumentation.disable();
+        instrumentation.setConfig({
+            dbStatementSerializer: (_operation: string, payload) => JSON.stringify(payload),
+        });
         instrumentation.enable();
         await loadUsers();
         await User.createIndexes();
@@ -402,7 +403,7 @@ describe('mongoose instrumentation', () => {
 
     describe('responseHook', () => {
         const RESPONSE = 'db.response';
-        before(() => {
+        beforeEach(() => {
             instrumentation.disable();
             instrumentation.setConfig({
                 responseHook: (span, response) => span.setAttribute(RESPONSE, JSON.stringify(response)),
@@ -505,7 +506,7 @@ describe('mongoose instrumentation', () => {
 
     describe('moduleVersionAttributeName config', () => {
         const VERSION_ATTR = 'module.version';
-        before(() => {
+        beforeEach(() => {
             instrumentation.disable();
             instrumentation.setConfig({
                 moduleVersionAttributeName: VERSION_ATTR,
@@ -549,7 +550,7 @@ describe('mongoose instrumentation', () => {
     });
 
     describe('requireParentSpan', () => {
-        before(() => {
+        beforeEach(() => {
             instrumentation.disable();
             instrumentation.setConfig({
                 requireParentSpan: true,
