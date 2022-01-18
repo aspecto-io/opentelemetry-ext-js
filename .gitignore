@@ -9,10 +9,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # lock files
-packages/**/yarn.lock
 packages/**/package-lock.json
 package-lock.json
-yarn.lock
 
 # VsCode configs
 .vscode/
