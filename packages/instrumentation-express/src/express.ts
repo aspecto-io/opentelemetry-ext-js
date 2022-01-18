@@ -234,7 +234,7 @@ export class ExpressInstrumentation extends InstrumentationBase<typeof express> 
                     }
                 }
 
-                oldResEnd.apply(res, arguments);
+                const origRes = oldResEnd.apply(res, arguments);
 
                 span.setAttributes(routeAttributes);
                 if (plugin._config.includeHttpAttributes) {
@@ -248,6 +248,8 @@ export class ExpressInstrumentation extends InstrumentationBase<typeof express> 
                 }
 
                 span.end();
+
+                return origRes;
             };
 
             next();
