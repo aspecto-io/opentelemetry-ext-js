@@ -2,9 +2,9 @@ import 'mocha';
 import expect from 'expect';
 import { TEST_RABBITMQ_HOST, TEST_RABBITMQ_PASS, TEST_RABBITMQ_PORT, TEST_RABBITMQ_USER } from './config';
 import { AmqplibInstrumentation } from '../src';
-import { getTestSpans, registerInstrumentation } from 'opentelemetry-instrumentation-testing-utils';
+import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 
-const instrumentation = registerInstrumentation(new AmqplibInstrumentation());
+const instrumentation = registerInstrumentationTesting(new AmqplibInstrumentation());
 import amqp from 'amqplib';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 

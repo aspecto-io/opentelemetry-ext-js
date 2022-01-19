@@ -4,8 +4,9 @@ import expect from 'expect';
 import { ExpressInstrumentation } from '../src';
 import { AddressInfo } from 'net';
 import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
+import { registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 
-const instrumentation = new ExpressInstrumentation();
+const instrumentation = registerInstrumentationTesting(new ExpressInstrumentation());
 
 import axios from 'axios';
 import express from 'express';
@@ -49,7 +50,7 @@ describe('opentelemetry-express-layers', () => {
         });
     };
 
-    before(() => {
+    beforeEach(() => {
         instrumentation.enable();
     });
 

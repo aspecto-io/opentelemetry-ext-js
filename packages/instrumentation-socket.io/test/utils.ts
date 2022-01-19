@@ -4,7 +4,7 @@ import { AddressInfo } from 'net';
 
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
-import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
+import { getTestSpans } from '@opentelemetry/contrib-test-utils';
 
 import expect from 'expect';
 import { Server, Socket } from 'socket.io';

@@ -1,14 +1,11 @@
 import 'mocha';
 import expect from 'expect';
-import { getTestSpans, resetMemoryExporter } from 'opentelemetry-instrumentation-testing-utils';
+import { getTestSpans, resetMemoryExporter, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 import { NodeCacheInstrumentation } from '../src';
 import { context, ROOT_CONTEXT } from '@opentelemetry/api';
 
 const DB_RESPONSE = 'db.response';
-const instrumentation = new NodeCacheInstrumentation({
-    responseHook: (span, { response }) =>
-        span.setAttribute(DB_RESPONSE, typeof response === 'object' ? JSON.stringify(response) : response),
-});
+const instrumentation = registerInstrumentationTesting(new NodeCacheInstrumentation());
 instrumentation.enable();
 
 import NodeCache from 'node-cache';
@@ -26,6 +23,10 @@ describe('node-cache instrumentation', () => {
     beforeEach(async () => {
         resetMemoryExporter();
         cache = new NodeCache();
+        instrumentation.setConfig({
+            responseHook: (span, { response }) =>
+                span.setAttribute(DB_RESPONSE, typeof response === 'object' ? JSON.stringify(response) : response),
+        });
         instrumentation.enable();
     });
 
@@ -171,7 +172,7 @@ describe('node-cache instrumentation', () => {
     });
 
     describe('requireParentSpan', () => {
-        before(() => {
+        beforeEach(() => {
             instrumentation.disable();
             instrumentation.setConfig({
                 requireParentSpan: true,
@@ -190,7 +191,7 @@ describe('node-cache instrumentation', () => {
 
     describe('moduleVersionAttributeName', () => {
         const VERSION_ATTR_NAME = 'ver';
-        before(() => {
+        beforeEach(() => {
             instrumentation.disable();
             instrumentation.setConfig({
                 requestHook: (span, { moduleVersion }) => {
@@ -208,7 +209,7 @@ describe('node-cache instrumentation', () => {
     });
 
     describe('requestHook', () => {
-        before(() => {
+        beforeEach(() => {
             instrumentation.disable();
             instrumentation.setConfig({
                 requestHook: (span, { operation, args }) => {

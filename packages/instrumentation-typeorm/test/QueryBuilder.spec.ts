@@ -3,8 +3,8 @@ import expect from 'expect';
 import { SpanStatusCode } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { TypeormInstrumentation } from '../src';
-import { getTestSpans } from 'opentelemetry-instrumentation-testing-utils';
-const instrumentation = new TypeormInstrumentation();
+import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
+const instrumentation = registerInstrumentationTesting(new TypeormInstrumentation());
 import * as typeorm from 'typeorm';
 import { defaultOptions, User } from './utils';
 
