@@ -20,7 +20,6 @@ describe('mongoose instrumentation', () => {
             useFindAndModify: false,
             useCreateIndex: true,
         });
-        await User.collection.drop().catch();
     });
 
     after(async () => {
