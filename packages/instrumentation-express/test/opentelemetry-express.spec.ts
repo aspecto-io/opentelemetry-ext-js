@@ -1,6 +1,6 @@
 import 'mocha';
 import expect from 'expect';
-import { SpanKind } from '@opentelemetry/api';
+import { SpanKind, trace } from '@opentelemetry/api';
 import { ExpressInstrumentation } from '../src';
 import { AddressInfo } from 'net';
 import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
@@ -27,6 +27,10 @@ describe('opentelemetry-express', () => {
     let app: express.Application;
 
     before(() => {
+        // registerInstrumentationTesting currently support only 1 instrumentation
+        // test memory exporter initialized at beforeAll hook
+        httpInstrumentation.setTracerProvider(trace.getTracerProvider());
+
         instrumentation.enable();
         httpInstrumentation.enable();
         app = express();
