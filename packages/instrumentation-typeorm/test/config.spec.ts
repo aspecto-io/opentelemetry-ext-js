@@ -11,7 +11,8 @@ import { defaultOptions, User } from './utils';
 import { SpanStatusCode } from '@opentelemetry/api';
 
 describe('TypeormInstrumentationConfig', () => {
-    it('responseHook', async () => {
+    it('responseHook', async function() {
+        this.timeout(3_000);
         instrumentation.disable();
         const config: TypeormInstrumentationConfig = {
             responseHook: (span: Span, response: any) => {
