@@ -1,0 +1,19 @@
+version: "3"
+services:
+  # Collector
+  collector:
+    image: otel/opentelemetry-collector:0.41.0
+    command: ["--config=/conf/otelcol-config.yaml"]
+    volumes:
+      - ./otelcol-config.yaml:/conf/otelcol-config.yaml
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    depends_on:
+      - jaeger-all-in-one
+
+  # Jaeger
+  jaeger-all-in-one:
+    image: jaegertracing/all-in-one:1.30
+    ports:
+      - "16686:16686"
