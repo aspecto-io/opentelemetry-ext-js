@@ -25,7 +25,7 @@ publishSubscribeRouter.get('/:exchangeName', async (req: express.Request, res: e
     await channel.consume(
         queueName,
         (msg: ConsumeMessage | null) => {
-            if(msg) {
+            if (msg) {
                 receivedMessages.push(msg.content.toString());
             }
         },

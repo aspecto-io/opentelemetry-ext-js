@@ -14,7 +14,9 @@ const instrument = () => {
     });
 
     const provider = new NodeTracerProvider({ resource });
-    provider.addSpanProcessor(new SimpleSpanProcessor(new OTLPTraceExporter({ url: 'http://localhost:4318/v1/trace'})));
+    provider.addSpanProcessor(
+        new SimpleSpanProcessor(new OTLPTraceExporter({ url: 'http://localhost:4318/v1/trace' }))
+    );
     provider.register();
 };
 

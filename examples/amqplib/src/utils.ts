@@ -9,7 +9,10 @@ export const connectToAmqp = async () => {
         amqpConn = await amqp.connect(url);
         console.log(`connection to amqp server established`);
     } catch (err) {
-        console.log('failed to connect to amqp server. make sure you have one running. run `yarn docker:start` to start it in docker container', err);
+        console.log(
+            'failed to connect to amqp server. make sure you have one running. run `yarn docker:start` to start it in docker container',
+            err
+        );
         throw err;
     }
 };

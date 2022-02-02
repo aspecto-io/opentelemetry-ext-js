@@ -26,7 +26,7 @@ workQueuesRouter.get('/:queueName', async (req: express.Request, res: express.Re
     const receivedMessages: string[] = [];
     await channel.consume(queueName, async (msg: ConsumeMessage | null) => {
         if (!msg) return;
-        
+
         const body = msg.content.toString();
         const secs = body.split('.').length - 1;
         // this is not in the examples
