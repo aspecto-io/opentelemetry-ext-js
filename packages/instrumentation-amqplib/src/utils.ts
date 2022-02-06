@@ -1,4 +1,4 @@
-import { Context, createContextKey, diag, SpanAttributes, SpanAttributeValue } from '@opentelemetry/api';
+import { Context, createContextKey, diag, SpanAttributes, SpanAttributeValue, Link } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import type amqp from 'amqplib';
 
@@ -135,3 +135,13 @@ export const unmarkConfirmChannelTracing = (context: Context) => {
 export const isConfirmChannelTracing = (context: Context) => {
     return context.getValue(IS_CONFIRM_CHANNEL_CONTEXT_KEY) === true;
 };
+
+// those are attributes that are 
+export const extractConsumerMessageAttributes = (msg: amqp.ConsumeMessage): SpanAttributes => {
+    return {
+        ['messagin.rabbitmq.exchange_name']: msg.fields?.exchange,
+        [SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]: msg.fields?.routingKey,
+        [SemanticAttributes.MESSAGING_MESSAGE_ID]: msg.properties.messageId,
+        [SemanticAttributes.MESSAGING_CONVERSATION_ID]: msg.properties.correlationId,
+    };
+}

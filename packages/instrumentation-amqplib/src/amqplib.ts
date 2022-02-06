@@ -1,4 +1,4 @@
-import { context, diag, propagation, trace, Span, SpanKind, SpanStatusCode } from '@opentelemetry/api';
+import { context, diag, propagation, trace, Span, SpanKind, SpanStatusCode, Link } from '@opentelemetry/api';
 import {
     InstrumentationBase,
     InstrumentationModuleDefinition,
@@ -18,6 +18,7 @@ import {
     CHANNEL_CONSUME_TIMEOUT_TIMER,
     CHANNEL_SPANS_NOT_ENDED,
     CONNECTION_ATTRIBUTES,
+    extractConsumerMessageAttributes,
     getConnectionAttributesFromUrl,
     isConfirmChannelTracing,
     markConfirmChannelTracing,
@@ -277,23 +278,28 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
                 }
 
                 const headers = msg.properties.headers ?? {};
-                const parentContext = propagation.extract(context.active(), headers);
-                const exchange = msg.fields?.exchange;
+                const senderContext = propagation.extract(context.active(), headers);
+                const msgAttributes = extractConsumerMessageAttributes(msg);
+                
+                const senderLink: Link = {
+                    context: trace.getSpanContext(senderContext),
+                    attributes : msgAttributes,
+                }
+                const links = [senderLink];
+
                 const span = self.tracer.startSpan(
-                    `${queue} process`,
+                    `${queue} deliver`,
                     {
                         kind: SpanKind.CONSUMER,
                         attributes: {
                             ...channel?.connection?.[CONNECTION_ATTRIBUTES],
-                            [SemanticAttributes.MESSAGING_DESTINATION]: exchange,
-                            [SemanticAttributes.MESSAGING_DESTINATION_KIND]: MessagingDestinationKindValues.TOPIC,
-                            [SemanticAttributes.MESSAGING_RABBITMQ_ROUTING_KEY]: msg.fields?.routingKey,
-                            [SemanticAttributes.MESSAGING_OPERATION]: MessagingOperationValues.PROCESS,
-                            [SemanticAttributes.MESSAGING_MESSAGE_ID]: msg?.properties.messageId,
-                            [SemanticAttributes.MESSAGING_CONVERSATION_ID]: msg?.properties.correlationId,
+                            [SemanticAttributes.MESSAGING_DESTINATION]: queue,
+                            [SemanticAttributes.MESSAGING_DESTINATION_KIND]: MessagingDestinationKindValues.QUEUE,
+                            [SemanticAttributes.MESSAGING_OPERATION]: 'deliver',
                         },
+                        links, 
                     },
-                    parentContext
+                    context.active()
                 );
 
                 if (self._config.moduleVersionAttributeName) {
@@ -494,7 +500,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
     ) {
         const normalizedExchange = normalizeExchange(exchange);
 
-        const span = self.tracer.startSpan(`${normalizedExchange} -> ${routingKey} send`, {
+        const span = self.tracer.startSpan(`${normalizedExchange} publish`, {
             kind: SpanKind.PRODUCER,
             attributes: {
                 ...channel.connection[CONNECTION_ATTRIBUTES],
