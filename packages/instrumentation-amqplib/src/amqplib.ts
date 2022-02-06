@@ -352,7 +352,7 @@ export class AmqplibInstrumentation extends InstrumentationBase<typeof amqp> {
 
                 const senderLink: Link = {
                     context: senderSpanContext,
-                    attributes: msgAttributes,
+                    attributes: { ...msgAttributes, [SemanticAttributes.MESSAGING_OPERATION]: 'send' },
                 };
                 const links = [senderLink];
 
