@@ -1,15 +1,31 @@
-import { Context, createContextKey, diag, SpanAttributes, SpanAttributeValue, Link } from '@opentelemetry/api';
+import {
+    Context,
+    createContextKey,
+    diag,
+    SpanAttributes,
+    SpanAttributeValue,
+    Link,
+    SpanContext,
+} from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import type amqp from 'amqplib';
 
-export const MESSAGE_STORED_SPAN: unique symbol = Symbol('opentelemetry.amqplib.message.stored-span');
-export const CHANNEL_SPANS_NOT_ENDED: unique symbol = Symbol('opentelemetry.amqplib.channel.spans-not-ended');
+export const MESSAGE_SETTLE_INFO: unique symbol = Symbol('opentelemetry.amqplib.message.settle-info');
+export const CHANNEL_MESSAGES_NOT_SETTLED: unique symbol = Symbol('opentelemetry.amqplib.channel.messages-not-settled');
 export const CHANNEL_CONSUME_TIMEOUT_TIMER: unique symbol = Symbol(
     'opentelemetry.amqplib.channel.consumer-timeout-timer'
 );
 export const CONNECTION_ATTRIBUTES: unique symbol = Symbol('opentelemetry.amqplib.connection.attributes');
 
 const IS_CONFIRM_CHANNEL_CONTEXT_KEY: symbol = createContextKey('opentelemetry.amqplib.channel.is-confirm-channel');
+
+export interface MsgInfoForSettlement {
+    deliverContext: SpanContext;
+    senderContext: SpanContext;
+    msgAttributes: SpanAttributes;
+    msg: amqp.Message;
+    timeOfConsume: Date;
+}
 
 export const normalizeExchange = (exchangeName: string) => (exchangeName !== '' ? exchangeName : '<default>');
 
@@ -136,7 +152,7 @@ export const isConfirmChannelTracing = (context: Context) => {
     return context.getValue(IS_CONFIRM_CHANNEL_CONTEXT_KEY) === true;
 };
 
-// those are attributes that are 
+// those are attributes in the scope of a single message
 export const extractConsumerMessageAttributes = (msg: amqp.ConsumeMessage): SpanAttributes => {
     return {
         ['messagin.rabbitmq.exchange_name']: msg.fields?.exchange,
@@ -144,4 +160,24 @@ export const extractConsumerMessageAttributes = (msg: amqp.ConsumeMessage): Span
         [SemanticAttributes.MESSAGING_MESSAGE_ID]: msg.properties.messageId,
         [SemanticAttributes.MESSAGING_CONVERSATION_ID]: msg.properties.correlationId,
     };
+};
+
+export const getSettlementLinks = (message: amqp.Message): Link[] => {
+    const settlementInfo: MsgInfoForSettlement = message[MESSAGE_SETTLE_INFO];
+    if (!settlementInfo) return [];
+    delete message[MESSAGE_SETTLE_INFO];
+    const deliverLink = {
+        context: settlementInfo.deliverContext,
+        attributes: {
+            ...settlementInfo.msgAttributes,
+            [SemanticAttributes.MESSAGING_OPERATION]: 'deliver',
+        }
+    }
+    const senderLink = {
+        context: settlementInfo.senderContext,
+        attributes: {
+            [SemanticAttributes.MESSAGING_OPERATION]: 'send',
+        }
+    }
+    return [deliverLink, senderLink];
 }

@@ -22,10 +22,6 @@ export interface AmqplibConsumerCustomAttributeFunction {
     (span: Span, msg: amqp.ConsumeMessage): void;
 }
 
-export interface AmqplibConsumerEndCustomAttributeFunction {
-    (span: Span, msg: amqp.ConsumeMessage, rejected: boolean, endOperation: EndOperation): void;
-}
-
 export enum EndOperation {
     AutoAck = 'auto ack',
     Ack = 'ack',
@@ -47,9 +43,6 @@ export interface AmqplibInstrumentationConfig extends InstrumentationConfig {
 
     /** hook for adding custom attributes before consumer message is processed */
     consumeHook?: AmqplibConsumerCustomAttributeFunction;
-
-    /** hook for adding custom attributes after consumer message is acked to server */
-    consumeEndHook?: AmqplibConsumerEndCustomAttributeFunction;
 
     /**
      * If passed, a span attribute will be added to all spans with key of the provided "moduleVersionAttributeName"
