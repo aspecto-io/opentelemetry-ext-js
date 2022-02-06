@@ -171,13 +171,13 @@ export const getSettlementLinks = (message: amqp.Message): Link[] => {
         attributes: {
             ...settlementInfo.msgAttributes,
             [SemanticAttributes.MESSAGING_OPERATION]: 'deliver',
-        }
-    }
+        },
+    };
     const senderLink = {
         context: settlementInfo.senderContext,
         attributes: {
             [SemanticAttributes.MESSAGING_OPERATION]: 'send',
-        }
-    }
+        },
+    };
     return [deliverLink, senderLink];
-}
+};
