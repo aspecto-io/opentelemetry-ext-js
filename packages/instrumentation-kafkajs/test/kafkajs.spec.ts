@@ -381,6 +381,9 @@ describe('instrumentation-kafkajs', () => {
                 topic: 'topic-name-1',
                 partition: 0,
                 message: createKafkaMessage('123'),
+                heartbeat: () => {
+                    return Promise.resolve();
+                },
             };
         };
 
@@ -698,6 +701,9 @@ describe('instrumentation-kafkajs', () => {
 
             expect(messagesSent.length).toBe(1);
             const consumerPayload: EachMessagePayload = {
+                heartbeat: () => {
+                    return Promise.resolve();
+                },
                 topic: 'topic-name-1',
                 partition: 0,
                 message: {
