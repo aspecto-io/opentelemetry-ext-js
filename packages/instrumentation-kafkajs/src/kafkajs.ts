@@ -150,7 +150,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
                 propagatedContext
             );
 
-            const eachMessagePromise = context.with(trace.setSpan(context.active(), span), () => {
+            const eachMessagePromise = context.with(trace.setSpan(propagatedContext, span), () => {
                 return original.apply(this, arguments);
             });
             return self._endSpansOnPromise([span], eachMessagePromise);
