@@ -1,6 +1,6 @@
 {
     "name": "otel-example-instrumentation",
-    "version": "0.0.0",
+    "version": "0.0.1",
     "description": "Basic instrumentation for the otel examples",
     "main": "instrument.js",
     "license": "Apache-2.0",
