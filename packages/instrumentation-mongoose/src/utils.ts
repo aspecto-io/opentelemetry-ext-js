@@ -80,8 +80,8 @@ export function handlePromiseResponse(
     responseHook?: MongooseResponseCustomAttributesFunction
 ): any {
     if (!(execResponse instanceof Promise)) {
-        span.end();
         applyResponseHook(span, execResponse, responseHook);
+        span.end();
         return execResponse;
     }
 
