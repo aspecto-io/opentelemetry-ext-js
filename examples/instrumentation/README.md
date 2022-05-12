@@ -1,1 +1,0 @@
-Basic setup of OpenTelemetry Tracing to use in examples
