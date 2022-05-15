@@ -1,4 +1,4 @@
 'typeorm':
-  versions: ">0.2.28 <0.3.4" # TODO.yaniv set >0.2.28
+  versions: ">0.2.28 <0.3.0" # TODO.yaniv set >0.2.28
   commands:
     - yarn test
