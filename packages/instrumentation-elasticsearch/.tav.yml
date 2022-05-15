@@ -1,4 +1,4 @@
 '@elastic/elasticsearch':
-  versions: "<8"
+  versions: "<8" # TODO.yaniv set *
   commands:
     - yarn test
