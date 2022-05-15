@@ -9,7 +9,8 @@
     commands:
       - yarn test
 
-  - versions: "^4"
-    peerDependencies: socket.io-client@^4
-    commands:
-      - yarn test
+  # - versions: "^4"
+  #   peerDependencies: socket.io-client@^4
+  #   commands:
+  #     - yarn test
+  # TODO.yaniv out-comment
