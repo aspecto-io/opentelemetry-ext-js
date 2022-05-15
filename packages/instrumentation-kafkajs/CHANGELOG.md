@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.27.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-kafkajs@0.27.0...opentelemetry-instrumentation-kafkajs@0.27.1) (2022-04-13)
+
+
+### Bug Fixes
+
+* **kafkajs:** baggage not set on consumer callback context ([#216](https://github.com/aspecto-io/opentelemetry-ext-js/issues/216)) ([2e82475](https://github.com/aspecto-io/opentelemetry-ext-js/commit/2e8247578b4b9efe980868177abdd2e793ea18ee))
+
+
+### Features
+
+* add amqplib example ([#209](https://github.com/aspecto-io/opentelemetry-ext-js/issues/209)) ([ea1334a](https://github.com/aspecto-io/opentelemetry-ext-js/commit/ea1334a0c812d20ae0e3d9d9c5e8163b5b268ed3))
+
+
+
+
+
 # [0.27.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-kafkajs@0.26.1...opentelemetry-instrumentation-kafkajs@0.27.0) (2021-12-27)
 
 **Note:** Version bump only for package opentelemetry-instrumentation-kafkajs

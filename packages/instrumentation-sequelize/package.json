@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-sequelize",
-    "version": "0.27.0",
+    "version": "0.27.1",
     "description": "open telemetry instrumentation for the `sequelize` module",
     "keywords": [
         "sequelize",
@@ -48,13 +48,13 @@
     },
     "devDependencies": {
         "@opentelemetry/api": "1.0.2",
+        "@opentelemetry/contrib-test-utils": "^0.28.0",
         "@opentelemetry/sdk-trace-base": "1.0.1",
         "@types/mocha": "^8.2.2",
         "expect": "^26.6.2",
         "mocha": "^8.4.0",
         "mysql2": "^2.2.5",
         "opentelemetry-instrumentation-mocha": "0.0.1-rc.7",
-        "@opentelemetry/contrib-test-utils": "^0.28.0",
         "pg": "^8.4.2",
         "sequelize": "^5.22.0",
         "sqlite3": "^5.0.2",

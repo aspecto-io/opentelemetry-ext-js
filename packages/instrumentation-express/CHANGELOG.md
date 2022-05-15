@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.27.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-express@0.27.0...opentelemetry-instrumentation-express@0.27.1) (2022-04-13)
+
+
+### Bug Fixes
+
+* **express:** return original response ([#206](https://github.com/aspecto-io/opentelemetry-ext-js/issues/206)) ([9a96678](https://github.com/aspecto-io/opentelemetry-ext-js/commit/9a966786f6b02eabff9ca25737025abb52702175))
+
+
+### Features
+
+* add amqplib example ([#209](https://github.com/aspecto-io/opentelemetry-ext-js/issues/209)) ([ea1334a](https://github.com/aspecto-io/opentelemetry-ext-js/commit/ea1334a0c812d20ae0e3d9d9c5e8163b5b268ed3))
+
+
+
+
+
 # [0.27.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-express@0.26.1...opentelemetry-instrumentation-express@0.27.0) (2021-12-27)
 
 **Note:** Version bump only for package opentelemetry-instrumentation-express

@@ -53,12 +53,10 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
     }
 
     protected init(): InstrumentationModuleDefinition<typeof kafkaJs> {
-        const module = new InstrumentationNodeModuleDefinition<typeof kafkaJs>(
-            KafkaJsInstrumentation.component,
-            ['*'],
-            this.patch.bind(this),
-            this.unpatch.bind(this)
-        );
+        const module: InstrumentationModuleDefinition<typeof kafkaJs> = new InstrumentationNodeModuleDefinition<
+            typeof kafkaJs
+        >(KafkaJsInstrumentation.component, ['*'], this.patch.bind(this), this.unpatch.bind(this));
+        module.includePrerelease = true;
         return module;
     }
 
@@ -150,7 +148,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
                 propagatedContext
             );
 
-            const eachMessagePromise = context.with(trace.setSpan(context.active(), span), () => {
+            const eachMessagePromise = context.with(trace.setSpan(propagatedContext, span), () => {
                 return original.apply(this, arguments);
             });
             return self._endSpansOnPromise([span], eachMessagePromise);

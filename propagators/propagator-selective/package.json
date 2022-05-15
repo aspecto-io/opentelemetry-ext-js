@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-propagator-selective",
-    "version": "0.28.0",
+    "version": "0.28.1",
     "description": "selective control on inject / extract enabled on another propagator",
     "keywords": [
         "opentelemetry",
