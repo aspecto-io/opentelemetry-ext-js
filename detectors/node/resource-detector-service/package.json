@@ -33,7 +33,7 @@
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
     },
     "peerDependencies": {
-        "@opentelemetry/api": "^1.0.1"
+        "@opentelemetry/api": "^1.0.0"
     },
     "dependencies": {
         "@opentelemetry/resources": "^1.0.0",
@@ -42,7 +42,7 @@
         "uuid": "^8.3.2"
     },
     "devDependencies": {
-        "@opentelemetry/api": "^1.0.2",
+        "@opentelemetry/api": "^1.0.0",
         "@types/mocha": "^8.2.2",
         "expect": "^26.6.2",
         "mocha": "^8.4.0",
