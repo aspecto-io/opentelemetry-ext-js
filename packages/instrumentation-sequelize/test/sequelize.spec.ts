@@ -15,7 +15,7 @@ import * as sequelize from 'sequelize';
 
 describe('instrumentation-sequelize', () => {
     const getSequelizeSpans = (): ReadableSpan[] => {
-        return getTestSpans().filter((s) => s.instrumentationLibrary.name.includes('sequelize'));
+        return getTestSpans().filter((s) => s.instrumentationLibrary.name.includes('sequelize')) as ReadableSpan[];
     };
 
     beforeEach(() => {

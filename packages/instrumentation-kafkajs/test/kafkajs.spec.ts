@@ -126,7 +126,7 @@ describe('instrumentation-kafkajs', () => {
                 expect(span.attributes[SemanticAttributes.MESSAGING_DESTINATION]).toStrictEqual('topic-name-1');
 
                 expect(messagesSent.length).toBe(1);
-                expectKafkaHeadersToMatchSpanContext(messagesSent[0], span);
+                expectKafkaHeadersToMatchSpanContext(messagesSent[0], span as ReadableSpan);
             });
 
             it('send two messages', async () => {
@@ -148,8 +148,8 @@ describe('instrumentation-kafkajs', () => {
                 expect(spans[1].name).toStrictEqual('topic-name-1');
 
                 expect(messagesSent.length).toBe(2);
-                expectKafkaHeadersToMatchSpanContext(messagesSent[0], spans[0]);
-                expectKafkaHeadersToMatchSpanContext(messagesSent[1], spans[1]);
+                expectKafkaHeadersToMatchSpanContext(messagesSent[0], spans[0] as ReadableSpan);
+                expectKafkaHeadersToMatchSpanContext(messagesSent[1], spans[1] as ReadableSpan);
             });
 
             it('send batch', async () => {
@@ -185,7 +185,7 @@ describe('instrumentation-kafkajs', () => {
 
                 expect(messagesSent.length).toBe(3);
                 for (let i = 0; i < 3; i++) {
-                    expectKafkaHeadersToMatchSpanContext(messagesSent[i], spans[i]);
+                    expectKafkaHeadersToMatchSpanContext(messagesSent[i], spans[i] as ReadableSpan);
                 }
             });
         });
