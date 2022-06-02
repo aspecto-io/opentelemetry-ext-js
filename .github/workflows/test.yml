@@ -40,7 +40,7 @@ jobs:
         run: git fetch
 
       - name: Install Dependencies
-        run: npm install --no-scripts
+        run: npm install --ignore-scripts --no-workspaces
 
       - name: Build
         run: npm run build:ci
