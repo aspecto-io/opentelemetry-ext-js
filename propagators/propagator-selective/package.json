@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-propagator-selective",
-    "version": "0.28.1",
+    "version": "0.29.0",
     "description": "selective control on inject / extract enabled on another propagator",
     "keywords": [
         "opentelemetry",
@@ -32,9 +32,9 @@
     },
     "devDependencies": {
         "@opentelemetry/api": "^1.0.0",
+        "@types/mocha": "^8.2.2",
         "expect": "^26.6.2",
         "mocha": "^8.4.0",
-        "@types/mocha": "^8.2.2",
         "sinon": "^12.0.1",
         "ts-node": "^9.1.1",
         "typescript": "4.3.4"

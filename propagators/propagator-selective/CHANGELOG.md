@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.29.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-propagator-selective@0.28.1...opentelemetry-propagator-selective@0.29.0) (2022-06-02)
+
+
+### Features
+
+* support core experimental versions ^0.28.0 ([#228](https://github.com/aspecto-io/opentelemetry-ext-js/issues/228)) ([6eaec0e](https://github.com/aspecto-io/opentelemetry-ext-js/commit/6eaec0e6509edf066c6feb63504d4e9dd309c5ae))
+
+
+
+
+
 ## [0.28.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-propagator-selective@0.28.0...opentelemetry-propagator-selective@0.28.1) (2022-04-13)
 
 

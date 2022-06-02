@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.28.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-socket.io@0.27.1...opentelemetry-instrumentation-socket.io@0.28.0) (2022-06-02)
+
+
+### Features
+
+* support core experimental versions ^0.28.0 ([#228](https://github.com/aspecto-io/opentelemetry-ext-js/issues/228)) ([6eaec0e](https://github.com/aspecto-io/opentelemetry-ext-js/commit/6eaec0e6509edf066c6feb63504d4e9dd309c5ae))
+
+
+
+
+
 ## [0.27.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-socket.io@0.27.0...opentelemetry-instrumentation-socket.io@0.27.1) (2022-04-13)
 
 

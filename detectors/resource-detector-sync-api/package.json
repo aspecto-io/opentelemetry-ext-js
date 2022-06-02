@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-resource-detector-sync-api",
-    "version": "0.26.0",
+    "version": "0.27.0",
     "description": "open telemetry api for sync resource detectors",
     "keywords": [
         "opentelemetry"
@@ -36,8 +36,8 @@
         "@opentelemetry/resources": "^1.0.0"
     },
     "devDependencies": {
+        "@opentelemetry/api": "^1.0.0",
         "ts-node": "^9.1.1",
-        "typescript": "4.3.4",
-        "@opentelemetry/api": "^1.0.0"
+        "typescript": "4.3.4"
     }
 }

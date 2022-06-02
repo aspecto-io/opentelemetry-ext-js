@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-node-cache",
-    "version": "0.27.1",
+    "version": "0.28.0",
     "description": "open telemetry instrumentation for the `node-cache`",
     "keywords": [
         "node-cache",

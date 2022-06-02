@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.2.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-span-transformations@0.1.1...opentelemetry-span-transformations@0.2.0) (2022-06-02)
+
+
+### Features
+
+* support core experimental versions ^0.28.0 ([#228](https://github.com/aspecto-io/opentelemetry-ext-js/issues/228)) ([6eaec0e](https://github.com/aspecto-io/opentelemetry-ext-js/commit/6eaec0e6509edf066c6feb63504d4e9dd309c5ae))
+
+
+
+
+
 ## [0.1.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-span-transformations@0.1.0...opentelemetry-span-transformations@0.1.1) (2022-04-13)
 
 
