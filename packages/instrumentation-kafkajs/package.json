@@ -23,7 +23,7 @@
     },
     "scripts": {
         "build": "tsc",
-        "prepare": "yarn run build",
+        "prepare": "npm run build",
         "test": "mocha --require @opentelemetry/contrib-test-utils",
         "test:jaeger": "OTEL_EXPORTER_JAEGER_AGENT_HOST=localhost mocha --require @opentelemetry/contrib-test-utils",
         "test:ci": "yarn test",

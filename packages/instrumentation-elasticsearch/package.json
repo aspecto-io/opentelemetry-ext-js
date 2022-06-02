@@ -29,7 +29,7 @@
     },
     "scripts": {
         "build": "tsc",
-        "prepare": "yarn run build",
+        "prepare": "npm run build",
         "watch": "tsc -w",
         "version:update": "node ../../scripts/version-update.js",
         "version": "yarn run version:update",
