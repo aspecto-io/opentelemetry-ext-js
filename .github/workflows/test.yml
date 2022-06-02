@@ -45,7 +45,7 @@ jobs:
           node-version: 14
 
       - name: Install Dependencies
-        run: npm install --ignore-scripts --no-workspaces
+        run: npm install
 
       - name: Build
         run: npm run build:ci
