@@ -34,6 +34,7 @@
         "@opentelemetry/api": "^1.0.0",
         "expect": "^26.6.2",
         "mocha": "^8.4.0",
+        "@types/mocha": "^8.2.2",
         "sinon": "^12.0.1",
         "ts-node": "^9.1.1",
         "typescript": "4.3.4"
