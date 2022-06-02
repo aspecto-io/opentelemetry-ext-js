@@ -40,10 +40,10 @@ jobs:
         run: git fetch
 
       - name: Install Dependencies
-        run: yarn
+        run: npm install --no-scripts
 
       - name: Build
-        run: yarn build:ci
+        run: npm run build:ci
 
       - name: Test
-        run: yarn test:ci:changed
+        run: npm run test:ci:changed
