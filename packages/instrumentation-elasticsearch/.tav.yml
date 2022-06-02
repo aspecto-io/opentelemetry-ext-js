@@ -1,4 +1,4 @@
 '@elastic/elasticsearch':
-  versions: "*"
+  versions: ">=5 <8"
   commands:
     - yarn test

@@ -41,7 +41,7 @@ export class ElasticsearchInstrumentation extends InstrumentationBase<typeof ela
             ({ path, operationClassName }) =>
                 new InstrumentationNodeModuleFile<any>(
                     `@elastic/elasticsearch/api/${path}`,
-                    ['*'],
+                    ['>=5 <8'],
                     this.patch.bind(this, operationClassName),
                     this.unpatch.bind(this)
                 )

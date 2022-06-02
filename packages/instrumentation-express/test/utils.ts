@@ -74,5 +74,5 @@ export const errorMiddleware = (_req: express.Request, res: express.Response, ne
 };
 
 export const getExpressSpans = (): ReadableSpan[] => {
-    return getTestSpans().filter((s) => s.instrumentationLibrary.name?.endsWith('express'));
+    return getTestSpans().filter((s) => s.instrumentationLibrary.name?.endsWith('express')) as ReadableSpan[];
 };

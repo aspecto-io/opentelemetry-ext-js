@@ -1,4 +1,4 @@
-import { Span, SpanKind, SpanStatusCode, trace, context, diag, createContextKey, Context } from '@opentelemetry/api';
+import { Span, SpanKind, SpanStatusCode, trace, context, diag } from '@opentelemetry/api';
 import { suppressTracing } from '@opentelemetry/core';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { ExtendedDatabaseAttribute, TypeormInstrumentationConfig } from './types';
@@ -49,14 +49,14 @@ const entityManagerMethods: EntityManagerMethods[] = [
     ...functionsUsingQueryBuilder,
 ];
 
-export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> {
+export class TypeormInstrumentation extends InstrumentationBase<any> {
     protected override _config!: TypeormInstrumentationConfig;
     constructor(config: TypeormInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-typeorm', VERSION, Object.assign({}, config));
     }
 
-    protected init(): InstrumentationModuleDefinition<typeof typeorm> {
-        const selectQueryBuilder = new InstrumentationNodeModuleFile<typeof typeorm>(
+    protected init(): InstrumentationModuleDefinition<any> {
+        const selectQueryBuilder = new InstrumentationNodeModuleFile<any>(
             'typeorm/query-builder/SelectQueryBuilder.js',
             ['>0.2.28'],
             (moduleExports, moduleVersion) => {
@@ -83,9 +83,9 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
             }
         );
 
-        const connection = new InstrumentationNodeModuleFile<typeof typeorm>(
+        const connection = new InstrumentationNodeModuleFile<any>(
             'typeorm/connection/Connection.js',
-            ['>0.2.28'],
+            ['>0.2.28 <0.3.0'],
             (moduleExports, moduleVersion) => {
                 if (isWrapped(moduleExports.Connection.prototype?.[rawQueryFuncName])) {
                     this._unwrap(moduleExports.Connection.prototype, rawQueryFuncName);
@@ -102,7 +102,26 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
             }
         );
 
-        const entityManager = new InstrumentationNodeModuleFile<typeof typeorm>(
+        const dataSource = new InstrumentationNodeModuleFile<any>(
+            'typeorm/data-source/DataSource.js',
+            ['>=0.3.0'],
+            (moduleExports, moduleVersion) => {
+                if (isWrapped(moduleExports.DataSource.prototype?.[rawQueryFuncName])) {
+                    this._unwrap(moduleExports.DataSource.prototype, rawQueryFuncName);
+                }
+                this._wrap(moduleExports.DataSource.prototype, rawQueryFuncName, this._patchRawQuery(moduleVersion));
+
+                return moduleExports;
+            },
+            (moduleExports) => {
+                if (isWrapped(moduleExports.DataSource.prototype?.[rawQueryFuncName])) {
+                    this._unwrap(moduleExports.DataSource.prototype, rawQueryFuncName);
+                }
+                return moduleExports;
+            }
+        );
+
+        const entityManager = new InstrumentationNodeModuleFile<any>(
             'typeorm/entity-manager/EntityManager.js',
             ['>0.2.28'],
             (moduleExports, moduleVersion) => {
@@ -129,10 +148,11 @@ export class TypeormInstrumentation extends InstrumentationBase<typeof typeorm> 
             }
         );
 
-        const module = new InstrumentationNodeModuleDefinition<typeof typeorm>('typeorm', ['>0.2.28'], null, null, [
+        const module = new InstrumentationNodeModuleDefinition<any>('typeorm', ['>0.2.28'], null, null, [
             selectQueryBuilder,
             entityManager,
             connection,
+            dataSource,
         ]);
         return module;
     }

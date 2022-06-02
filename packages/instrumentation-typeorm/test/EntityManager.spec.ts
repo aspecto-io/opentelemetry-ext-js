@@ -120,7 +120,7 @@ describe('EntityManager', () => {
     });
 
     describe('multiple connections', () => {
-        const options2: typeorm.ConnectionOptions = {
+        const options2: any = {
             name: 'connection2',
             type: 'sqlite',
             database: 'connection2.db',

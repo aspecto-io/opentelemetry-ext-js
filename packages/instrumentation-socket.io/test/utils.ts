@@ -38,7 +38,7 @@ export const createServerInstance = (server?: http.Server) => {
 };
 
 export const getSocketIoSpans = (): ReadableSpan[] =>
-    getTestSpans().filter((s) => s.attributes[SemanticAttributes.MESSAGING_SYSTEM] === 'socket.io');
+    getTestSpans().filter((s) => s.attributes[SemanticAttributes.MESSAGING_SYSTEM] === 'socket.io') as ReadableSpan[];
 
 export const expectSpan = (spanName: string, callback?: (span: ReadableSpan) => void, spanCount?: number) => {
     const spans = getSocketIoSpans();

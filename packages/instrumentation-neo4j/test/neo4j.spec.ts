@@ -14,6 +14,7 @@ instrumentation.enable();
 instrumentation.disable();
 
 import neo4j, { Driver } from 'neo4j-driver';
+import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
 
 /**
  * Tests require neo4j to run, and expose bolt port of 11011
@@ -75,7 +76,7 @@ describe('neo4j instrumentation', function () {
             expect((res.records[0].toObject() as any).n.labels).toEqual(['MyLabel']);
 
             const span = getSingleSpan();
-            assertSpan(span);
+            assertSpan(span as ReadableSpan);
             expect(span.name).toBe('CREATE neo4j');
             expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('CREATE');
             expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe('CREATE (n:MyLabel) RETURN n');
@@ -88,7 +89,7 @@ describe('neo4j instrumentation', function () {
                 .subscribe({
                     onCompleted: () => {
                         const span = getSingleSpan();
-                        assertSpan(span);
+                        assertSpan(span as ReadableSpan);
                         expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('CREATE');
                         expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe('CREATE (n:MyLabel) RETURN n');
                         done();
@@ -129,7 +130,7 @@ describe('neo4j instrumentation', function () {
                 .subscribe({
                     onKeys: (keys) => {
                         const span = getSingleSpan();
-                        assertSpan(span);
+                        assertSpan(span as ReadableSpan);
                         expect(keys).toEqual(['n']);
                         done();
                     },
@@ -151,7 +152,7 @@ describe('neo4j instrumentation', function () {
                     },
                     onCompleted: () => {
                         const span = getSingleSpan();
-                        assertSpan(span);
+                        assertSpan(span as ReadableSpan);
                         expect(span.attributes['test']).toBe('cool');
                         done();
                     },
@@ -167,7 +168,7 @@ describe('neo4j instrumentation', function () {
             const spans = getTestSpans();
             expect(spans.length).toBe(3);
             for (let span of spans) {
-                assertSpan(span);
+                assertSpan(span as ReadableSpan);
                 expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('MATCH');
             }
         });
@@ -228,7 +229,7 @@ describe('neo4j instrumentation', function () {
             expect(res.records.length).toBe(1);
 
             const span = getSingleSpan();
-            assertSpan(span);
+            assertSpan(span as ReadableSpan);
             expect(JSON.parse(span.attributes['db.response'] as string)).toEqual([
                 {
                     b: { labels: ['Meeseeks'], properties: { purpose: 'help' } },
@@ -253,7 +254,7 @@ describe('neo4j instrumentation', function () {
                 .subscribe({
                     onCompleted: () => {
                         const span = getSingleSpan();
-                        assertSpan(span);
+                        assertSpan(span as ReadableSpan);
                         expect(JSON.parse(span.attributes['db.response'] as string)).toEqual([
                             {
                                 b: { labels: ['Meeseeks'], properties: { purpose: 'help' } },
@@ -276,7 +277,7 @@ describe('neo4j instrumentation', function () {
             instrumentation.enable();
             await driver.session().run('CREATE (n:MyLabel) RETURN n');
             const span = getSingleSpan();
-            assertSpan(span);
+            assertSpan(span as ReadableSpan);
         });
     });
 
@@ -286,7 +287,7 @@ describe('neo4j instrumentation', function () {
                 return txc.run('MATCH (person:Person) RETURN person.name AS name');
             });
             const span = getSingleSpan();
-            assertSpan(span);
+            assertSpan(span as ReadableSpan);
             expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('MATCH');
             expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe(
                 'MATCH (person:Person) RETURN person.name AS name'
@@ -298,7 +299,7 @@ describe('neo4j instrumentation', function () {
                 return txc.run('MATCH (person:Person) RETURN person.name AS name');
             });
             const span = getSingleSpan();
-            assertSpan(span);
+            assertSpan(span as ReadableSpan);
             expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('MATCH');
             expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe(
                 'MATCH (person:Person) RETURN person.name AS name'
@@ -325,7 +326,7 @@ describe('neo4j instrumentation', function () {
                 .subscribe({
                     complete: () => {
                         const span = getSingleSpan();
-                        assertSpan(span);
+                        assertSpan(span as ReadableSpan);
                         done();
                     },
                 });
@@ -343,7 +344,7 @@ describe('neo4j instrumentation', function () {
                     next: () => {},
                     complete: () => {
                         const span = getSingleSpan();
-                        assertSpan(span);
+                        assertSpan(span as ReadableSpan);
                         expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe(
                             'MERGE (james:Person {name: $nameParam}) RETURN james.name AS name'
                         );
@@ -369,7 +370,7 @@ describe('neo4j instrumentation', function () {
                 .subscribe({
                     complete: () => {
                         const span = getSingleSpan();
-                        assertSpan(span);
+                        assertSpan(span as ReadableSpan);
                         expect(span.attributes['db.response']).toBe(`[{"n":{"labels":["MyLabel"],"properties":{}}}]`);
                         done();
                     },
@@ -391,7 +392,7 @@ describe('neo4j instrumentation', function () {
                     next: () => {},
                     complete: () => {
                         const span = getSingleSpan();
-                        assertSpan(span);
+                        assertSpan(span as ReadableSpan);
                         expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe(
                             'MATCH (person:Person) RETURN person.name AS name'
                         );
@@ -414,7 +415,7 @@ describe('neo4j instrumentation', function () {
                     next: () => {},
                     complete: () => {
                         const span = getSingleSpan();
-                        assertSpan(span);
+                        assertSpan(span as ReadableSpan);
                         expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe(
                             'MATCH (person:Person) RETURN person.name AS name'
                         );
@@ -485,7 +486,7 @@ describe('neo4j instrumentation', function () {
             await routingDriver.session().run('CREATE (n:MyLabel) RETURN n');
 
             const span = getSingleSpan();
-            assertSpan(span);
+            assertSpan(span as ReadableSpan);
         });
     });
 });
