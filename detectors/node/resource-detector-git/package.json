@@ -22,7 +22,7 @@
     "scripts": {
         "postinstall": "node dist/src/persist-on-post-install.js || exit 0",
         "build": "tsc",
-        "prepare": "npm run build",
+        "prepare": "yarn build",
         "test": "mocha",
         "test:jaeger": "OTEL_EXPORTER_JAEGER_AGENT_HOST=localhost mocha",
         "watch": "tsc -w",

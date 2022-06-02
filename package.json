@@ -4,8 +4,8 @@
     "scripts": {
         "watch": "lerna run watch --parallel",
         "test": "lerna run test",
-        "test:ci:changed": "lerna run test:ci --since origin/master",
-        "test:ci:all": "lerna run test:ci",
+        "test:ci:changed": "lerna run test:ci --since origin/master --parallel",
+        "test:ci:all": "lerna run test:ci --parallel",
         "build": "lerna run build",
         "build:ci": "lerna run build",
         "postinstall": "lerna bootstrap",

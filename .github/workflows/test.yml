@@ -45,10 +45,10 @@ jobs:
           node-version: 14
 
       - name: Install Dependencies
-        run: npm install
+        run: yarn install
 
       - name: Build
-        run: npm run build:ci
+        run: yarn build:ci
 
       - name: Test
-        run: npm run test:ci:changed
+        run: yarn test:ci:changed

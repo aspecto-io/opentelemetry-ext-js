@@ -27,7 +27,7 @@
     },
     "scripts": {
         "build": "tsc",
-        "prepare": "npm run build",
+        "prepare": "yarn build",
         "watch": "tsc -w"
     },
     "bugs": {
