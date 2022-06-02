@@ -39,6 +39,11 @@ jobs:
       - name: Fetch all history for all tags and branches
         run: git fetch
 
+      - name: Use Node.js 14
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14
+
       - name: Install Dependencies
         run: npm install --ignore-scripts --no-workspaces
 
