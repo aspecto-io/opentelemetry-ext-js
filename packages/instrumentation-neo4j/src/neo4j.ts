@@ -27,7 +27,7 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
 
     protected init(): InstrumentationModuleDefinition<Neo4J>[] {
         return [
-            this.getModuleDefinition('neo4j-driver-core', ['>=4.3.0']),
+            this.getModuleDefinition('neo4j-driver-core', ['>=4.3.0 <5']),
             this.getModuleDefinition('neo4j-driver', ['>=4.0.0 <4.3.0']),
         ];
     }
