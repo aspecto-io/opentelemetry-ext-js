@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.32.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-neo4j@0.29.0...opentelemetry-instrumentation-neo4j@0.32.0) (2022-10-18)
+
+
+### Bug Fixes
+
+* **neo4j:** remove instrumentation for neo4j@v5 which is not supported ([#243](https://github.com/aspecto-io/opentelemetry-ext-js/issues/243)) ([6a5acf9](https://github.com/aspecto-io/opentelemetry-ext-js/commit/6a5acf9ccd1bd0bc247f577f5f61e785bd00d398))
+
+
+### Features
+
+* support core experimental version 0.32.0 ([#240](https://github.com/aspecto-io/opentelemetry-ext-js/issues/240)) ([86d40a1](https://github.com/aspecto-io/opentelemetry-ext-js/commit/86d40a1c70b75ce9cb112bfd2c070bab710cca3e))
+
+
+
+
+
 # [0.29.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-neo4j@0.28.0...opentelemetry-instrumentation-neo4j@0.29.0) (2022-06-28)
 
 

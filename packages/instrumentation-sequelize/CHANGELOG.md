@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.32.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-sequelize@0.29.0...opentelemetry-instrumentation-sequelize@0.32.0) (2022-10-18)
+
+
+### Features
+
+* support core experimental version 0.32.0 ([#240](https://github.com/aspecto-io/opentelemetry-ext-js/issues/240)) ([86d40a1](https://github.com/aspecto-io/opentelemetry-ext-js/commit/86d40a1c70b75ce9cb112bfd2c070bab710cca3e))
+
+
+
+
+
 # [0.29.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-sequelize@0.28.0...opentelemetry-instrumentation-sequelize@0.29.0) (2022-06-28)
 
 
