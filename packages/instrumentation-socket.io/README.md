@@ -15,7 +15,7 @@ For further automatic instrumentation instruction see the [@opentelemetry/instru
 ```js
 const { NodeTracerProvider } = require('@opentelemetry/sdk-trace-node');
 const { registerInstrumentations } = require('@opentelemetry/instrumentation');
-const { SocketIoInstrumentation } = require('opentelemetry-instrumentation-socket.io);
+const { SocketIoInstrumentation } = require('opentelemetry-instrumentation-socket.io');
 
 registerInstrumentations({
   tracerProvider,
