@@ -1,9 +1,9 @@
 # Migrate Instrumentation Library to contrib Repo
 
 ## Copy Other Instrumentation as Template
-Copy existing instrumentation from `plugins/node` directory (you can use `instrumentation-mongoose` as tamplate)
+Copy existing instrumentation from `plugins/node` directory (you can use `instrumentation-mongoose` as template)
 
-- update `package.json` to your instrumentation library (including `name`, `dependencies`, `sciprts`, `homepage`, `keywords` and anything else that might be related
+- update `package.json` to your instrumentation library (including `name`, `dependencies`, `scripts`, `homepage`, `keywords` and anything else that might be related
 
 - update `README.md`. use the contrib template as it's different from `ext-js` template, and just update all the text and links according to your instrumentation.
 
@@ -18,7 +18,7 @@ Copy instrumentation files to `src` and `test` directories and apply changes to 
 
 You should apply the following changes to the files:
 - Don't use `moduleVersionAttributeName` from config. Store the value in an hook to make it accessible.
-- Use `fooInfo` for hooks configuration. e.g don't use many parameters to hook function signature, use just one paraameter and store everything inside.
+- Use `fooInfo` for hooks configuration. e.g don't use many parameters to hook function signature, use just one parameter and store everything inside.
 - Document any breaking changes in the README
 - use the new package name in instrumentation constructor
 
