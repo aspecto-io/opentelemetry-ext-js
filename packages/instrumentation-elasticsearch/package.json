@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-elasticsearch",
-    "version": "0.32.0",
+    "version": "0.34.0",
     "description": "open telemetry instrumentation for the `elasticsearch` module",
     "keywords": [
         "elasticsearch",
