@@ -34,7 +34,7 @@ describe('neo4j instrumentation', function () {
     };
 
     before(async () => {
-        driver = neo4j.driver('bolt://localhost:11011', neo4j.auth.basic('neo4j', '123'), {
+        driver = neo4j.driver('bolt://localhost:11011', neo4j.auth.basic('neo4j', 'test'), {
             disableLosslessIntegers: true,
         });
 
@@ -468,7 +468,7 @@ describe('neo4j instrumentation', function () {
 
         before(() => {
             if (shouldCheck) {
-                routingDriver = neo4j.driver('neo4j://localhost:11011', neo4j.auth.basic('neo4j', '123'));
+                routingDriver = neo4j.driver('neo4j://localhost:11011', neo4j.auth.basic('neo4j', 'test'));
             }
         });
 
