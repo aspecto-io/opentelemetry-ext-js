@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.35.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-sequelize@0.34.0...opentelemetry-instrumentation-sequelize@0.35.0) (2023-03-01)
+
+**Note:** Version bump only for package opentelemetry-instrumentation-sequelize
+
+
+
+
+
 # [0.34.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-sequelize@0.32.0...opentelemetry-instrumentation-sequelize@0.34.0) (2022-11-21)
 
 
