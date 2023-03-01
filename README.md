@@ -29,21 +29,21 @@ The instrumentations in this repo are:
 - strictly complies with [open telemetry semantic conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions)
 - up to date with latest SDK version
 
-**Compatible with [SDK stable ^1.8.0](https://github.com/open-telemetry/opentelemetry-js/tree/stable/v1.8.0) and [SDK experimental ^0.34.0](https://github.com/open-telemetry/opentelemetry-js/tree/experimental/v0.34.0)**
+**Compatible with [SDK stable ^1.8.0](https://github.com/open-telemetry/opentelemetry-js/tree/stable/v1.8.0) and [SDK experimental ^0.35.0](https://github.com/open-telemetry/opentelemetry-js/tree/experimental/v0.35.0)**
 ## Instrumentations
-| Instrumentation Package                                                                 | Instrumented Lib                                                                 | NPM |
-|-----------------------------------------------------------------------------------------|----------------------------------------------------------------------------------| --- |
-| [opentelemetry-instrumentation-kafkajs](./packages/instrumentation-kafkajs)             | [`kafkajs`](https://kafka.js.org)                                                | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-kafkajs.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-kafkajs) [![kafka-js downloads](https://img.shields.io/npm/dm/opentelemetry-instrumentation-kafkajs.svg)]()|
-| opentelemetry-instrumentation-aws-sdk                                                   | [`aws-sdk`](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/)                | Deprecated in favor of [@opentelemetry/instrumentation-aws-sdk](https://www.npmjs.com/package/@opentelemetry/instrumentation-aws-sdk) 
-| [opentelemetry-instrumentation-typeorm](./packages/instrumentation-typeorm)             | [`TypeORM`](https://typeorm.io/)                                                 | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-typeorm.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-typeorm) [![typeorm downloads](https://img.shields.io/npm/dm/opentelemetry-instrumentation-typeorm.svg)]() |
-| [opentelemetry-instrumentation-sequelize](./packages/instrumentation-sequelize)         | [`Sequelize`](https://sequelize.org/)                                            | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-sequelize.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-sequelize) [![sequelize downloads](https://img.shields.io/npm/dm/opentelemetry-instrumentation-sequelize.svg)]() |
-| opentelemetry-instrumentation-mongoose                                                  | [`mongoose`](https://mongoosejs.com/)                                            | Deprecated in favor of [@opentelemetry/instrumentation-mongoose](https://www.npmjs.com/package/@opentelemetry/instrumentation-mongoose) |
+| Instrumentation Package                                                               | Instrumented Lib                                                                 | NPM |
+|---------------------------------------------------------------------------------------|----------------------------------------------------------------------------------| --- |
+| [opentelemetry-instrumentation-kafkajs](./packages/instrumentation-kafkajs)           | [`kafkajs`](https://kafka.js.org)                                                | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-kafkajs.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-kafkajs) [![kafka-js downloads](https://img.shields.io/npm/dm/opentelemetry-instrumentation-kafkajs.svg)]()|
+| opentelemetry-instrumentation-aws-sdk                                                 | [`aws-sdk`](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/)                | Deprecated in favor of [@opentelemetry/instrumentation-aws-sdk](https://www.npmjs.com/package/@opentelemetry/instrumentation-aws-sdk) 
+| [opentelemetry-instrumentation-typeorm](./packages/instrumentation-typeorm)           | [`TypeORM`](https://typeorm.io/)                                                 | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-typeorm.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-typeorm) [![typeorm downloads](https://img.shields.io/npm/dm/opentelemetry-instrumentation-typeorm.svg)]() |
+| [opentelemetry-instrumentation-sequelize](./packages/instrumentation-sequelize)       | [`Sequelize`](https://sequelize.org/)                                            | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-sequelize.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-sequelize) [![sequelize downloads](https://img.shields.io/npm/dm/opentelemetry-instrumentation-sequelize.svg)]() |
+| opentelemetry-instrumentation-mongoose                                                | [`mongoose`](https://mongoosejs.com/)                                            | Deprecated in favor of [@opentelemetry/instrumentation-mongoose](https://www.npmjs.com/package/@opentelemetry/instrumentation-mongoose) |
 | [opentelemetry-instrumentation-elasticsearch](./packages/instrumentation-elasticsearch) | [`@elastic/elasticsearch`](https://www.npmjs.com/package/@elastic/elasticsearch) | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-elasticsearch.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-elasticsearch) [![elasticsearch downloads](https://img.shields.io/npm/dm/opentelemetry-instrumentation-elasticsearch.svg)]() |
-| [opentelemetry-instrumentation-neo4j](./packages/instrumentation-neo4j)                 | [`neo4j-driver`](https://github.com/neo4j/neo4j-javascript-driver/)              | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-neo4j.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-neo4j) [![neo4j downloads](https://img.shields.io/npm/dm/opentelemetry-instrumentation-neo4j.svg)]() |
-| opentelemetry-instrumentation-amqplib                                                   | [`amqplib`](https://github.com/squaremo/amqp.node) (RabbitMQ)                    | Deprecated in favor of [@opentelemetry/instrumentation-amqplib](https://www.npmjs.com/package/@opentelemetry/instrumentation-amqplib) | 
-| [opentelemetry-instrumentation-express](./packages/instrumentation-express)             | [`express`](https://github.com/expressjs/express)                                | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-express.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-express) [![express downloads](https://img.shields.io/npm/dm/opentelemetry-instrumentation-express.svg)]() |
-| [opentelemetry-instrumentation-socket.io]                                               | [`socket.io`](https://github.com/socketio/socket.io)                             | Deprecated in favor of [@opentelemetry/instrumentation-socket.io](https://www.npmjs.com/package/opentelemetry-instrumentation-socket.io) |
-| [opentelemetry-instrumentation-node-cache](./packages/instrumentation-node-cache)       | [`node-cache`](https://www.npmjs.com/package/node-cache)                         | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-node-cache.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-node-cache) [![node-cache downloads](https://img.shields.io/npm/dm/opentelemetry-instrumentation-node-cache.svg)]()
+| [opentelemetry-instrumentation-neo4j](./packages/instrumentation-neo4j)               | [`neo4j-driver`](https://github.com/neo4j/neo4j-javascript-driver/)              | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-neo4j.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-neo4j) [![neo4j downloads](https://img.shields.io/npm/dm/opentelemetry-instrumentation-neo4j.svg)]() |
+| opentelemetry-instrumentation-amqplib                                                 | [`amqplib`](https://github.com/squaremo/amqp.node) (RabbitMQ)                    | Deprecated in favor of [@opentelemetry/instrumentation-amqplib](https://www.npmjs.com/package/@opentelemetry/instrumentation-amqplib) | 
+| [opentelemetry-instrumentation-express](./packages/instrumentation-express)           | [`express`](https://github.com/expressjs/express)                                | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-express.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-express) [![express downloads](https://img.shields.io/npm/dm/opentelemetry-instrumentation-express.svg)]() |
+| opentelemetry-instrumentation-socket.io                                               | [`socket.io`](https://github.com/socketio/socket.io)                             | Deprecated in favor of [@opentelemetry/instrumentation-socket.io](https://www.npmjs.com/package/opentelemetry-instrumentation-socket.io) |
+| [opentelemetry-instrumentation-node-cache](./packages/instrumentation-node-cache)     | [`node-cache`](https://www.npmjs.com/package/node-cache)                         | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-node-cache.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-node-cache) [![node-cache downloads](https://img.shields.io/npm/dm/opentelemetry-instrumentation-node-cache.svg)]()
 
 
 ## Resource Detectors
@@ -63,21 +63,22 @@ The instrumentations in this repo are:
 ## Compatibility Table
 
 | Instrumentations Version | OpenTelemetry Core | OpenTelemetry Experimental | 
-| --- | --- | --- |
-| 0.34.x | ^1.8.0 | ^0.34.0 |
-| 0.32.x | ^1.0.0 | ^0.32.0 |
-| 0.29.x | ^1.0.0 | ^0.29.0 |
-| 0.28.x | ^1.0.0 | ^0.28.0 |
-| 0.27.x | ^1.0.1 | ^0.27.0 |
-| 0.26.x | ^1.0.0 | ^0.26.0 |
-| 0.25.x | 0.25.0 | --- |
-| 0.24.x | 0.24.0 | --- |
-| 0.23.x | 0.23.0 | --- |
-| 0.22.x | 0.22.0 | --- |
-| 0.21.x | 0.21.0 | --- |
-| 0.5.x | 0.20.0 | --- |
-| 0.4.x | 0.19.0 | --- |
-| 0.3.x | 0.18.0 | --- |
-| 0.2.x | 0.17.0 | --- |
-| 0.1.x | 0.16.0 | --- |
-| 0.0.x | 0.15.0 | --- |
+|--------------------------| --- |----------------------------|
+| 0.35.x                   | ^1.8.0 | ^0.35.0                    |
+| 0.34.x                   | ^1.8.0 | ^0.34.0                    |
+| 0.32.x                   | ^1.0.0 | ^0.32.0                    |
+| 0.29.x                   | ^1.0.0 | ^0.29.0                    |
+| 0.28.x                   | ^1.0.0 | ^0.28.0                    |
+| 0.27.x                   | ^1.0.1 | ^0.27.0                    |
+| 0.26.x                   | ^1.0.0 | ^0.26.0                    |
+| 0.25.x                   | 0.25.0 | ---                        |
+| 0.24.x                   | 0.24.0 | ---                        |
+| 0.23.x                   | 0.23.0 | ---                        |
+| 0.22.x                   | 0.22.0 | ---                        |
+| 0.21.x                   | 0.21.0 | ---                        |
+| 0.5.x                    | 0.20.0 | ---                        |
+| 0.4.x                    | 0.19.0 | ---                        |
+| 0.3.x                    | 0.18.0 | ---                        |
+| 0.2.x                    | 0.17.0 | ---                        |
+| 0.1.x                    | 0.16.0 | ---                        |
+| 0.0.x                    | 0.15.0 | ---                        |
