@@ -15,14 +15,14 @@ const convertJaegerTagsToAttributes = (tags): SpanAttributes => {
 };
 
 const getNumberValue = (attributes: SpanAttributes, key: string): number | undefined => {
-  const value = attributes[key];
+    const value = attributes[key];
 
-  if (typeof value === 'number') {
-    return value;
-  }
+    if (typeof value === 'number') {
+        return value;
+    }
 
-  return undefined;
-}
+    return undefined;
+};
 
 const getOtelKindFromJaegerKind = (jaegerKind: string) => {
     switch (jaegerKind) {
@@ -87,6 +87,6 @@ export const convertJaegerSpanToOtelReadableSpan = (jaegerSpan: JaegerSpan): Rea
         }),
         droppedAttributesCount: getNumberValue(attributes, 'otel.dropped_attributes_count') || 0,
         droppedEventsCount: getNumberValue(attributes, 'otel.dropped_events_count') || 0,
-        droppedLinksCount: getNumberValue(attributes, 'otel.dropped_links_count') || 0
+        droppedLinksCount: getNumberValue(attributes, 'otel.dropped_links_count') || 0,
     };
 };
