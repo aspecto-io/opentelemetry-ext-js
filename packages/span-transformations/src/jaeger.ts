@@ -14,6 +14,16 @@ const convertJaegerTagsToAttributes = (tags): SpanAttributes => {
     return spanAttributes;
 };
 
+const getNumberValue = (attributes: SpanAttributes, key: string): number | undefined => {
+  const value = attributes[key];
+
+  if (typeof value === 'number') {
+    return value;
+  }
+
+  return undefined;
+}
+
 const getOtelKindFromJaegerKind = (jaegerKind: string) => {
     switch (jaegerKind) {
         case 'client':
@@ -47,11 +57,12 @@ export const convertJaegerSpanToOtelReadableSpan = (jaegerSpan: JaegerSpan): Rea
     const durationMillis = jaegerSpan.duration / 1000;
     const startDateMillis = jaegerSpan.startTime / 1000;
     const endDateMillis = timeInputToHrTime(new Date(startDateMillis + durationMillis));
+    const attributes = convertJaegerTagsToAttributes(jaegerSpan.tags);
 
     return {
         name: jaegerSpan.operationName,
         kind: getOtelKindFromJaegerKind(getJaegerValueForTag('span.kind', jaegerSpan.tags)),
-        attributes: convertJaegerTagsToAttributes(jaegerSpan.tags),
+        attributes,
         parentSpanId: getParentSpanID(jaegerSpan),
         duration: timeInputToHrTime(durationMillis),
         startTime: timeInputToHrTime(startDateMillis),
@@ -74,5 +85,8 @@ export const convertJaegerSpanToOtelReadableSpan = (jaegerSpan: JaegerSpan): Rea
         resource: new Resource({
             'service.name': getJaegerValueForTag('service.name', jaegerSpan.tags),
         }),
+        droppedAttributesCount: getNumberValue(attributes, 'otel.dropped_attributes_count') || 0,
+        droppedEventsCount: getNumberValue(attributes, 'otel.dropped_events_count') || 0,
+        droppedLinksCount: getNumberValue(attributes, 'otel.dropped_links_count') || 0
     };
 };
