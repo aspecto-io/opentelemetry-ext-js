@@ -39,7 +39,7 @@
     },
     "dependencies": {
         "@opentelemetry/core": "^1.13.0",
-                "@opentelemetry/instrumentation": "^0.41.0",
+        "@opentelemetry/instrumentation": "^0.41.0",
         "@opentelemetry/semantic-conventions": "^1.13.0",
         "is-promise": "^4.0.0"
     },
