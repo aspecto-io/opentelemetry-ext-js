@@ -1,4 +1,4 @@
-import { SpanAttributes, SpanKind, SpanStatusCode } from '@opentelemetry/api';
+import { Attributes, SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import { timeInputToHrTime } from '@opentelemetry/core';
 import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
 import { Resource } from '@opentelemetry/resources';
@@ -6,15 +6,15 @@ import { JaegerSpan, JaegerTag } from './interfaces/jaeger';
 
 const getJaegerValueForTag = (jaegerTagKey: string, tags: JaegerTag[]) =>
     tags.find(({ key }) => jaegerTagKey === key)?.value;
-const convertJaegerTagsToAttributes = (tags): SpanAttributes => {
-    const spanAttributes: SpanAttributes = {};
+const convertJaegerTagsToAttributes = (tags): Attributes => {
+    const spanAttributes: Attributes = {};
     tags.forEach(({ key, value }) => {
         spanAttributes[key] = value;
     });
     return spanAttributes;
 };
 
-const getNumberValue = (attributes: SpanAttributes, key: string): number | undefined => {
+const getNumberValue = (attributes: Attributes, key: string): number | undefined => {
     const value = attributes[key];
 
     if (typeof value === 'number') {
