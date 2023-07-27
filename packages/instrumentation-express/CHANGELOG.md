@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.35.1](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-express@0.35.0...opentelemetry-instrumentation-express@0.35.1) (2023-07-27)
+
+**Note:** Version bump only for package opentelemetry-instrumentation-express
+
+
+
+
+
 # [0.35.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-instrumentation-express@0.34.0...opentelemetry-instrumentation-express@0.35.0) (2023-03-01)
 
 **Note:** Version bump only for package opentelemetry-instrumentation-express
