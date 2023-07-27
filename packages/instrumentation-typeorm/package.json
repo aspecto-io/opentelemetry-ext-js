@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-typeorm",
-    "version": "0.35.1",
+    "version": "0.39.1",
     "description": "open telemetry instrumentation for the `typeorm` module",
     "keywords": [
         "typeorm",
