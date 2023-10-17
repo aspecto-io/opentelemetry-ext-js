@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-kafkajs",
-    "version": "0.39.1",
+    "version": "0.40.0",
     "description": "open telemetry instrumentation for the `kafkajs` kafka client",
     "keywords": [
         "kafka",

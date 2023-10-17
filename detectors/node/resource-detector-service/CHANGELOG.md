@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.29.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-resource-detector-service@0.28.0...opentelemetry-resource-detector-service@0.29.0) (2023-10-17)
+
+**Note:** Version bump only for package opentelemetry-resource-detector-service
+
+
+
+
+
 # [0.28.0](https://github.com/aspecto-io/opentelemetry-ext-js/compare/opentelemetry-resource-detector-service@0.27.1...opentelemetry-resource-detector-service@0.28.0) (2022-07-11)
 
 **Note:** Version bump only for package opentelemetry-resource-detector-service
