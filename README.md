@@ -29,7 +29,7 @@ The instrumentations in this repo are:
 - strictly complies with [open telemetry semantic conventions](https://github.com/open-telemetry/opentelemetry-specification/tree/main/specification/trace/semantic_conventions)
 - up to date with latest SDK version
 
-**Compatible with [SDK stable ^1.13.0](https://github.com/open-telemetry/opentelemetry-js/tree/v1.13.0) and [SDK experimental ^0.39.1](https://github.com/open-telemetry/opentelemetry-js/tree/experimental/v0.39.1)**
+**Compatible with [SDK stable ^1.17.1](https://github.com/open-telemetry/opentelemetry-js/tree/v1.17.1) and [SDK experimental ^0.44.0](https://github.com/open-telemetry/opentelemetry-js/tree/experimental/v0.44.0)**
 ## Instrumentations
 | Instrumentation Package                                                               | Instrumented Lib                                                                 | NPM |
 |---------------------------------------------------------------------------------------|----------------------------------------------------------------------------------| --- |
