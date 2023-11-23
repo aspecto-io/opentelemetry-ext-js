@@ -8,7 +8,6 @@ import {
     trace,
     context,
     diag,
-    ROOT_CONTEXT,
 } from '@opentelemetry/api';
 import {
     SemanticAttributes,
@@ -137,7 +136,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
         const self = this;
         return function (payload: EachMessagePayload): Promise<void> {
             const propagatedContext: Context = propagation.extract(
-                ROOT_CONTEXT,
+                context.active(),
                 payload.message.headers,
                 bufferTextMapGetter
             );
@@ -163,12 +162,12 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
                 payload.batch.topic,
                 undefined,
                 MessagingOperationValues.RECEIVE,
-                ROOT_CONTEXT
+                context.active()
             );
             return context.with(trace.setSpan(context.active(), receivingSpan), () => {
                 const spans = payload.batch.messages.map((message: KafkaMessage) => {
                     const propagatedContext: Context = propagation.extract(
-                        ROOT_CONTEXT,
+                        context.active(),
                         message.headers,
                         bufferTextMapGetter
                     );
