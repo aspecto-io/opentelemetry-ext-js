@@ -1,14 +1,4 @@
-import {
-    SpanKind,
-    Span,
-    SpanStatusCode,
-    Context,
-    propagation,
-    Link,
-    trace,
-    context,
-    diag,
-} from '@opentelemetry/api';
+import { SpanKind, Span, SpanStatusCode, Context, propagation, Link, trace, context, diag } from '@opentelemetry/api';
 import {
     SemanticAttributes,
     MessagingOperationValues,
