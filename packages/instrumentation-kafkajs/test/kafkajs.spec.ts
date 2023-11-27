@@ -5,6 +5,7 @@ import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
 import { propagation, context, SpanKind, SpanStatusCode, Span } from '@opentelemetry/api';
 import { MessagingDestinationKindValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
+import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 
 const instrumentation = registerInstrumentationTesting(new KafkaJsInstrumentation());
 
@@ -26,6 +27,7 @@ import { DummyPropagation } from './DummyPropagation';
 import { W3CBaggagePropagator, CompositePropagator } from '@opentelemetry/core';
 
 describe('instrumentation-kafkajs', () => {
+    context.setGlobalContextManager(new AsyncHooksContextManager());
     propagation.setGlobalPropagator(
         new CompositePropagator({ propagators: [new DummyPropagation(), new W3CBaggagePropagator()] })
     );
