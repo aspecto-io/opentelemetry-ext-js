@@ -29,4 +29,6 @@ export interface TypeormInstrumentationConfig extends InstrumentationConfig {
     enableInternalInstrumentation?: boolean;
     /** set to `true` if you want to capture the parameter values for parameterized SQL queries (**may leak sensitive information**) */
     collectParameters?: boolean;
+    /** Set to true if you only want to trace operation which has parent spans */
+    requireParentSpan?: boolean;
 }
