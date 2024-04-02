@@ -457,7 +457,7 @@ describe('instrumentation-sequelize', () => {
             });
         });
 
-        it('moduleVersionAttributeName', async (done) => {
+        it('moduleVersionAttributeName', async () => {
             instrumentation.disable();
             const instance = new sequelize.Sequelize(`postgres://john@$localhost:1111/my-name`, { logging: false });
             instance.define('User', { firstName: { type: sequelize.DataTypes.STRING } });
