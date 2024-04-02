@@ -1,4 +1,3 @@
-
 # Dependency directories
 node_modules/
 dist/
@@ -7,12 +6,6 @@ dist/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# lock files
-packages/**/yarn.lock
-packages/**/package-lock.json
-package-lock.json
-yarn.lock
 
 # IDE configs
 .vscode/
@@ -30,7 +23,7 @@ aspecto.log
 post-install-git-resource.json
 
 # created from sequelize unit tests
-memory 
+memory
 
 #local database files
 *.db

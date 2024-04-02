@@ -46,7 +46,7 @@
     },
     "dependencies": {
         "@opentelemetry/core": "^1.17.1",
-        "@opentelemetry/instrumentation": "^0.44.0",
+        "@opentelemetry/instrumentation": "^0.45.1",
         "@opentelemetry/semantic-conventions": "^1.17.1"
     },
     "devDependencies": {
@@ -63,7 +63,7 @@
         "sinon": "^9.2.4",
         "test-all-versions": "^5.0.1",
         "ts-node": "^9.1.1",
-        "typescript": "4.3.4"
+        "typescript": "^5.4.3"
     },
     "mocha": {
         "extension": [

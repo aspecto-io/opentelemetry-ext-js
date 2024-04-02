@@ -386,7 +386,7 @@ export class TypeormInstrumentation extends InstrumentationBase<any> {
 
 const buildStatement = (func: Function, args: any[]) => {
     const paramNames = getParamNames(func);
-    const statement = {};
+    const statement: Record<string,any> = {};
     paramNames.forEach((pName, i) => {
         const value = args[i];
         if (!value) return;

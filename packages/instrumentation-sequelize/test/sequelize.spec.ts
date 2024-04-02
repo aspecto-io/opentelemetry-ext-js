@@ -43,6 +43,10 @@ describe('instrumentation-sequelize', () => {
 
         User.init({ firstName: { type: sequelize.DataTypes.STRING } }, { sequelize: instance });
 
+        after(async () => {
+            await instance.close();
+        });
+
         it('create is instrumented', async () => {
             try {
                 await User.create({ firstName: 'Nir' });
@@ -194,6 +198,10 @@ describe('instrumentation-sequelize', () => {
 
         instance.define('User', { firstName: { type: sequelize.DataTypes.STRING } });
 
+        after(async () => {
+            await instance.close();
+        });
+
         it('create is instrumented', async () => {
             await instance.models.User.create({ firstName: 'Nir' }).catch(() => {});
             const spans = getSequelizeSpans();
@@ -276,6 +284,10 @@ describe('instrumentation-sequelize', () => {
         });
         instance.define('User', { firstName: { type: sequelize.DataTypes.STRING } });
 
+        after(async () => {
+            await instance.close();
+        });
+
         it('create is instrumented', async () => {
             await instance.models.User.create({ firstName: 'Nir' }).catch(() => {});
             const spans = getSequelizeSpans();
@@ -311,6 +323,7 @@ describe('instrumentation-sequelize', () => {
                 instrumentation.enable();
 
                 await instance.models.User.findAll();
+                await instance.close();
                 const spans = getSequelizeSpans();
                 const attributes = spans[0].attributes;
 
@@ -349,11 +362,12 @@ describe('instrumentation-sequelize', () => {
                 instrumentation.enable();
                 diag.setLogger(mockedLogger as any);
                 await instance.models.User.findAll();
+                await instance.close();
                 const spans = getSequelizeSpans();
                 expect(spans.length).toBe(1);
                 expect(mockedLogger.getMessage()).toBe('sequelize instrumentation: queryHook error');
                 expect(mockedLogger.getError().message).toBe('Throwing');
-                diag.setLogger(new DiagConsoleLogger());
+                diag.setLogger(undefined);
             });
         });
 
@@ -375,6 +389,7 @@ describe('instrumentation-sequelize', () => {
                 instrumentation.enable();
 
                 await instance.models.User.findAll();
+                await instance.close();
                 const spans = getSequelizeSpans();
                 const attributes = spans[0].attributes;
 
@@ -412,11 +427,12 @@ describe('instrumentation-sequelize', () => {
                 instrumentation.enable();
                 diag.setLogger(mockedLogger as any);
                 await instance.models.User.findAll();
+                await instance.close();
                 const spans = getSequelizeSpans();
                 expect(spans.length).toBe(1);
                 expect(mockedLogger.getMessage()).toBe('sequelize instrumentation: responseHook error');
                 expect(mockedLogger.getError().message).toBe('Throwing');
-                diag.setLogger(new DiagConsoleLogger());
+                diag.setLogger(undefined);
             });
         });
 
@@ -435,13 +451,13 @@ describe('instrumentation-sequelize', () => {
                         await instance.models.User.create({ firstName: 'Nir' });
                     });
                 } catch {}
-
+                await instance.close();
                 const spans = getSequelizeSpans();
                 expect(spans.length).toBe(0);
             });
         });
 
-        it('moduleVersionAttributeName', async () => {
+        it('moduleVersionAttributeName', async (done) => {
             instrumentation.disable();
             const instance = new sequelize.Sequelize(`postgres://john@$localhost:1111/my-name`, { logging: false });
             instance.define('User', { firstName: { type: sequelize.DataTypes.STRING } });
@@ -454,6 +470,7 @@ describe('instrumentation-sequelize', () => {
             } catch {
                 // Error is thrown but we don't care
             }
+            await instance.close();
             const spans = getSequelizeSpans();
             expect(spans.length).toBe(1);
             expect(spans[0].attributes['module.version']).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);

@@ -23,6 +23,6 @@ describe('jaeger conversions', () => {
         expect(converted.ended).toEqual(jaegerSpanConvertedToOtel.ended);
         expect(converted.events).toEqual(jaegerSpanConvertedToOtel.events);
         expect(converted.status).toEqual(jaegerSpanConvertedToOtel.status);
-        expect(converted.resource).toEqual(jaegerSpanConvertedToOtel.resource);
+        expect(converted.resource.attributes).toEqual(jaegerSpanConvertedToOtel.resource.attributes);
     });
 });

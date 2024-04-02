@@ -1,9 +1,10 @@
 import 'mocha';
 import expect from 'expect';
-import { SpanStatusCode } from '@opentelemetry/api';
+import { SpanStatusCode, trace } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { TypeormInstrumentation } from '../src';
+import { TypeormInstrumentation, TypeormInstrumentationConfig } from '../src';
 import { getTestSpans } from '@opentelemetry/contrib-test-utils';
+import { context, ROOT_CONTEXT } from '@opentelemetry/api';
 
 const instrumentation = new TypeormInstrumentation();
 import * as typeorm from 'typeorm';
@@ -153,6 +154,35 @@ describe('EntityManager', () => {
             expect(sqlite2Span.attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
             await sqlite1.close();
             await sqlite2.close();
+        });
+    });
+
+    describe('requireParentSpan', () => {
+        beforeEach(() => {
+            instrumentation.disable();
+            instrumentation.setConfig({
+                requireParentSpan: true,
+            } as TypeormInstrumentationConfig);
+            instrumentation.enable();
+        });
+
+        it('should not have spans', async () => {
+            const connection = await typeorm.createConnection({
+                name: 'requireParentSpanCon',
+                type: 'sqlite',
+                database: 'requireParentSpan.db',
+                entities: [User],
+                synchronize: true,
+            });
+            const manager = connection.createEntityManager();
+
+            context.with(ROOT_CONTEXT, async () => {
+                const user = new User(56, 'aspecto', 'io');
+                await manager.save(user);
+                await connection.close();
+                const spans = getTestSpans();
+                expect(spans.length).toBe(0);
+            });
         });
     });
 });

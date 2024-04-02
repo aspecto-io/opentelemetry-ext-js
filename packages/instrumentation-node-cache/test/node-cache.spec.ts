@@ -1,7 +1,7 @@
 import 'mocha';
 import expect from 'expect';
 import { getTestSpans, resetMemoryExporter, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
-import { NodeCacheInstrumentation } from '../src';
+import { NodeCacheInstrumentation, NodeCacheInstrumentationConfig } from '../src';
 import { context, ROOT_CONTEXT } from '@opentelemetry/api';
 
 const DB_RESPONSE = 'db.response';
@@ -176,7 +176,7 @@ describe('node-cache instrumentation', () => {
             instrumentation.disable();
             instrumentation.setConfig({
                 requireParentSpan: true,
-            });
+            } as  NodeCacheInstrumentationConfig);
             instrumentation.enable();
         });
 

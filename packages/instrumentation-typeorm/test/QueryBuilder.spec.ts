@@ -1,8 +1,8 @@
 import 'mocha';
 import expect from 'expect';
-import { SpanStatusCode } from '@opentelemetry/api';
+import { context, ROOT_CONTEXT, SpanStatusCode } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { TypeormInstrumentation } from '../src';
+import { TypeormInstrumentation, TypeormInstrumentationConfig } from '../src';
 import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 const instrumentation = registerInstrumentationTesting(new TypeormInstrumentation());
 import * as typeorm from 'typeorm';
@@ -37,5 +37,33 @@ describe('QueryBuilder', () => {
             'SELECT "user"."id" AS "user_id", "user"."firstName" AS "user_firstName", "user"."lastName" AS "user_lastName" FROM "user" "user" WHERE "user"."id" = :userId'
         );
         await connection.close();
+    });
+});
+
+describe('requireParentSpan', () => {
+    beforeEach(() => {
+        instrumentation.disable();
+        instrumentation.setConfig({
+            requireParentSpan: true,
+        } as TypeormInstrumentationConfig);
+        instrumentation.enable();
+    });
+
+    it('should not have spans', async () => {
+        const connection = await typeorm.createConnection({
+            name: 'qbRequireParentSpanCon',
+            type: 'sqlite',
+            database: 'qbRequireParentSpan.db',
+            entities: [User],
+            synchronize: true,
+        });
+
+        context.with(ROOT_CONTEXT, async () => {
+            const queryBuilder = connection.getRepository(User).createQueryBuilder('user');
+            await queryBuilder.where('user.id = :userId', { userId: '1' }).getManyAndCount();
+            await connection.close();
+            const spans = getTestSpans();
+            expect(spans.length).toBe(0);
+        });
     });
 });
