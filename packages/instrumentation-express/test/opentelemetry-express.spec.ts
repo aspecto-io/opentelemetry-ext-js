@@ -114,6 +114,7 @@ describe('opentelemetry-express', () => {
         server.listen(0, async () => {
             const port = (server.address() as AddressInfo).port;
             const requestData = { 'req-data-key': 'req-data-val' };
+
             try {
                 await axios.post(
                     `http://localhost:${port}/toto/tata?req-query-param-key=req-query-param-val`,
@@ -139,13 +140,14 @@ describe('opentelemetry-express', () => {
             expect(span.attributes[SemanticAttributes.HTTP_STATUS_CODE]).toBe(200);
             expect(span.attributes[SemanticAttributes.HTTP_HOST]).toBe(`localhost:${port}`);
             expect(span.attributes[SemanticAttributes.HTTP_FLAVOR]).toBe('1.1');
-            expect(span.attributes[SemanticAttributes.NET_PEER_IP]).toBe('::ffff:127.0.0.1');
+            expect(span.attributes[SemanticAttributes.NET_PEER_IP]).toBe('::1');
 
             server.close();
             done();
         });
     });
 
+    
     it('use empty res.end() to terminate response', (done) => {
         app.get('/toto', (req, res, next) => {
             res.end();
