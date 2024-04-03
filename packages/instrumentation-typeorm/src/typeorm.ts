@@ -52,8 +52,13 @@ const entityManagerMethods: EntityManagerMethods[] = [
 
 export class TypeormInstrumentation extends InstrumentationBase<any> {
     protected override _config!: TypeormInstrumentationConfig;
+
     constructor(config: TypeormInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-typeorm', VERSION, Object.assign({}, config));
+    }
+
+    override setConfig(config: TypeormInstrumentationConfig = {}) {
+        this._config = Object.assign({}, config);
     }
 
     protected init(): InstrumentationModuleDefinition<any> {
@@ -386,7 +391,7 @@ export class TypeormInstrumentation extends InstrumentationBase<any> {
 
 const buildStatement = (func: Function, args: any[]) => {
     const paramNames = getParamNames(func);
-    const statement: Record<string,any> = {};
+    const statement: Record<string, any> = {};
     paramNames.forEach((pName, i) => {
         const value = args[i];
         if (!value) return;

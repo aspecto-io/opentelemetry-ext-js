@@ -147,7 +147,6 @@ describe('opentelemetry-express', () => {
         });
     });
 
-    
     it('use empty res.end() to terminate response', (done) => {
         app.get('/toto', (req, res, next) => {
             res.end();

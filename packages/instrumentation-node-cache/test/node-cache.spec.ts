@@ -176,7 +176,7 @@ describe('node-cache instrumentation', () => {
             instrumentation.disable();
             instrumentation.setConfig({
                 requireParentSpan: true,
-            } as  NodeCacheInstrumentationConfig);
+            });
             instrumentation.enable();
         });
 

@@ -162,7 +162,7 @@ describe('EntityManager', () => {
             instrumentation.disable();
             instrumentation.setConfig({
                 requireParentSpan: true,
-            } as TypeormInstrumentationConfig);
+            });
             instrumentation.enable();
         });
 
