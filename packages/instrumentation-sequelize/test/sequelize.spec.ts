@@ -457,23 +457,25 @@ describe('instrumentation-sequelize', () => {
             });
         });
 
-        it('moduleVersionAttributeName', async () => {
-            instrumentation.disable();
-            const instance = new sequelize.Sequelize(`postgres://john@$localhost:1111/my-name`, { logging: false });
-            instance.define('User', { firstName: { type: sequelize.DataTypes.STRING } });
-            instrumentation.setConfig({
-                moduleVersionAttributeName: 'module.version',
+        describe('ignoreOrphanedSpans', () => {
+            it('sets span attribute module.version from config.moduleVersionAttributeName', async () => {
+                instrumentation.disable();
+                const instance = new sequelize.Sequelize(`postgres://john@$localhost:1111/my-name`, { logging: false });
+                instance.define('User', { firstName: { type: sequelize.DataTypes.STRING } });
+                instrumentation.setConfig({
+                    moduleVersionAttributeName: 'module.version',
+                });
+                instrumentation.enable();
+                try {
+                    await instance.models.User.create({ firstName: 'Nir' });
+                } catch {
+                    // Error is thrown but we don't care
+                }
+                await instance.close();
+                const spans = getSequelizeSpans();
+                expect(spans.length).toBe(1);
+                expect(spans[0].attributes['module.version']).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
             });
-            instrumentation.enable();
-            try {
-                await instance.models.User.create({ firstName: 'Nir' });
-            } catch {
-                // Error is thrown but we don't care
-            }
-            await instance.close();
-            const spans = getSequelizeSpans();
-            expect(spans.length).toBe(1);
-            expect(spans[0].attributes['module.version']).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
         });
     });
 

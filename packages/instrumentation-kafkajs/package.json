@@ -50,7 +50,7 @@
         "kafkajs": "^1.16.0",
         "mocha": "^8.4.0",
         "opentelemetry-instrumentation-mocha": "0.0.7-alpha.1",
-        "ts-node": "^9.1.1",
+        "ts-node": "^10.9.2",
         "typescript": "^5.4.3"
     },
     "mocha": {
