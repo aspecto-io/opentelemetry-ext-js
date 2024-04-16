@@ -457,7 +457,7 @@ describe('instrumentation-sequelize', () => {
             });
         });
 
-        describe('ignoreOrphanedSpans', () => {
+        describe('moduleVersionAttributeName', () => {
             it('sets span attribute module.version from config.moduleVersionAttributeName', async () => {
                 instrumentation.disable();
                 const instance = new sequelize.Sequelize(`postgres://john@$localhost:1111/my-name`, { logging: false });
