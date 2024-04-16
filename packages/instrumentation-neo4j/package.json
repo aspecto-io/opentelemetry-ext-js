@@ -32,7 +32,7 @@
         "test": "mocha --require @opentelemetry/contrib-test-utils",
         "test:jaeger": "OTEL_EXPORTER_JAEGER_AGENT_HOST=localhost mocha --require @opentelemetry/contrib-test-utils",
         "test:ci": "tav",
-        "test:docker:run": "docker run -d -p7474:7474 -p11011:7687 -e NEO4J_AUTH=neo4j/test -e neo4j:4.2.3",
+        "test:docker:run": "docker run -d -p7474:7474 -p11011:7687 -e NEO4J_AUTH=neo4j/test neo4j:4.2.3",
         "watch": "tsc -w",
         "version:update": "node ../../scripts/version-update.js",
         "version": "yarn run version:update"
