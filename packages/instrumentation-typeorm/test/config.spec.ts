@@ -22,7 +22,8 @@ describe('TypeormInstrumentationConfig', () => {
         instrumentation.setConfig(config);
         instrumentation.enable();
 
-        const connection = await typeorm.createConnection(defaultOptions);
+        const options = defaultOptions();
+        const connection = await typeorm.createConnection(options);
         const user = new User(1, 'aspecto', 'io');
         await connection.manager.save(user);
         const typeOrmSpans = getTestSpans();
@@ -31,7 +32,7 @@ describe('TypeormInstrumentationConfig', () => {
 
         expect(attributes['test']).toBe(JSON.stringify(user));
         expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('save');
-        expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(defaultOptions.type);
+        expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(options.type);
         await connection.close();
     });
 
@@ -43,7 +44,7 @@ describe('TypeormInstrumentationConfig', () => {
         instrumentation.setConfig(config);
         instrumentation.enable();
 
-        const connection = await typeorm.createConnection(defaultOptions);
+        const connection = await typeorm.createConnection(defaultOptions());
         const user = new User(1, 'aspecto', 'io');
         await connection.manager.save(user);
         const typeOrmSpans = getTestSpans();
@@ -58,7 +59,7 @@ describe('TypeormInstrumentationConfig', () => {
     it('enableInternalInstrumentation:true', async () => {
         const config: TypeormInstrumentationConfig = { enableInternalInstrumentation: true };
         instrumentation.setConfig(config);
-        const connection = await typeorm.createConnection(defaultOptions);
+        const connection = await typeorm.createConnection(defaultOptions());
         const [users, count] = await connection.manager.findAndCount(User);
         const spans = getTestSpans();
         expect(spans.length).toEqual(2);
@@ -76,15 +77,16 @@ describe('TypeormInstrumentationConfig', () => {
     });
 
     it('enableInternalInstrumentation:false', async () => {
+        const options = defaultOptions();
         const config: TypeormInstrumentationConfig = { enableInternalInstrumentation: false };
         instrumentation.setConfig(config);
-        const connection = await typeorm.createConnection(defaultOptions);
+        const connection = await typeorm.createConnection(options);
         const [users, count] = await connection.manager.findAndCount(User);
         const spans = getTestSpans();
         expect(spans.length).toEqual(1);
         const attributes = spans[0].attributes;
         expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('findAndCount');
-        expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(defaultOptions.type);
+        expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(options.type);
         expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
         await connection.close();
     });
@@ -94,7 +96,7 @@ describe('TypeormInstrumentationConfig', () => {
             collectParameters: true,
         };
         instrumentation.setConfig(config);
-        const connectionOptions = defaultOptions as any;
+        const connectionOptions = defaultOptions();
         const connection = await typeorm.createConnection(connectionOptions);
         await connection
             .getRepository(User)

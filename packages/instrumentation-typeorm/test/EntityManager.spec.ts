@@ -2,11 +2,11 @@ import 'mocha';
 import expect from 'expect';
 import { SpanStatusCode, trace } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { TypeormInstrumentation, TypeormInstrumentationConfig } from '../src';
-import { getTestSpans } from '@opentelemetry/contrib-test-utils';
+import { TypeormInstrumentation } from '../src';
+import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 import { context, ROOT_CONTEXT } from '@opentelemetry/api';
 
-const instrumentation = new TypeormInstrumentation();
+const instrumentation = registerInstrumentationTesting(new TypeormInstrumentation());
 import * as typeorm from 'typeorm';
 import { defaultOptions, User } from './utils';
 
@@ -23,8 +23,8 @@ describe('EntityManager', () => {
 
     describe('single connection', () => {
         it('save using connection.manager', async () => {
-            const options = defaultOptions;
-            const connection = await typeorm.createConnection(defaultOptions);
+            const options = defaultOptions();
+            const connection = await typeorm.createConnection(options);
             const user = new User(1, 'aspecto', 'io');
             await connection.manager.save(user);
             const typeOrmSpans = getTestSpans();
@@ -41,8 +41,8 @@ describe('EntityManager', () => {
         });
 
         it('save', async () => {
-            const options = defaultOptions;
-            const connection = await typeorm.createConnection(defaultOptions);
+            const options = defaultOptions();
+            const connection = await typeorm.createConnection(options);
             const manager = connection.createEntityManager();
             const user = new User(1, 'aspecto', 'io');
             await manager.save(user);
@@ -60,8 +60,8 @@ describe('EntityManager', () => {
         });
 
         it('remove', async () => {
-            const options = defaultOptions;
-            const connection = await typeorm.createConnection(defaultOptions);
+            const options = defaultOptions();
+            const connection = await typeorm.createConnection(options);
             const manager = connection.createEntityManager();
 
             const user = new User(56, 'aspecto', 'io');
@@ -83,8 +83,8 @@ describe('EntityManager', () => {
         });
 
         it('update', async () => {
-            const options = defaultOptions;
-            const connection = await typeorm.createConnection(defaultOptions);
+            const options = defaultOptions();
+            const connection = await typeorm.createConnection(options);
             const manager = connection.createEntityManager();
             const user = new User(56, 'aspecto', 'io');
             await manager.save(user);
@@ -106,7 +106,7 @@ describe('EntityManager', () => {
         });
 
         it('Sets failure status when function throws', async () => {
-            const connection = await typeorm.createConnection(defaultOptions);
+            const connection = await typeorm.createConnection(defaultOptions());
             const manager = connection.createEntityManager();
             try {
                 await manager.find({} as any);
@@ -121,7 +121,8 @@ describe('EntityManager', () => {
     });
 
     describe('multiple connections', () => {
-        const options2: any = {
+        const options1 = defaultOptions();
+        const options2 = {
             name: 'connection2',
             type: 'sqlite',
             database: 'connection2.db',
@@ -130,7 +131,7 @@ describe('EntityManager', () => {
         };
 
         it('appends matching connection details to span', async () => {
-            const [sqlite1, sqlite2] = await typeorm.createConnections([defaultOptions, options2]);
+            const [sqlite1, sqlite2] = await typeorm.createConnections([options1, options2]);
             const manager1 = sqlite1.createEntityManager();
             const manager2 = sqlite2.createEntityManager();
 
@@ -143,8 +144,8 @@ describe('EntityManager', () => {
             const sqlite1Span = spans[0];
             const sqlite2Span = spans[1];
 
-            expect(sqlite1Span.attributes[SemanticAttributes.DB_SYSTEM]).toBe(defaultOptions.type);
-            expect(sqlite1Span.attributes[SemanticAttributes.DB_NAME]).toBe(defaultOptions.database);
+            expect(sqlite1Span.attributes[SemanticAttributes.DB_SYSTEM]).toBe(options1.type);
+            expect(sqlite1Span.attributes[SemanticAttributes.DB_NAME]).toBe(options1.database);
             expect(sqlite1Span.attributes[SemanticAttributes.DB_OPERATION]).toBe('save');
             expect(sqlite1Span.attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
 
@@ -159,11 +160,9 @@ describe('EntityManager', () => {
 
     describe('requireParentSpan', () => {
         beforeEach(() => {
-            instrumentation.disable();
             instrumentation.setConfig({
                 requireParentSpan: true,
             });
-            instrumentation.enable();
         });
 
         it('should not have spans', async () => {
