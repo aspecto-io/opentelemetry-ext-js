@@ -7,6 +7,7 @@ import {
     SEMATTRS_DB_SYSTEM,
     SEMATTRS_NET_PEER_NAME,
     SEMATTRS_NET_PEER_PORT,
+    SEMATTRS_NET_TRANSPORT,
 } from '@opentelemetry/semantic-conventions';
 
 describe('elasticsearch utils', () => {
@@ -104,7 +105,7 @@ describe('elasticsearch utils', () => {
         });
 
         it('should set net.transport', () => {
-            expect(attributes[SEMATTRS_NET_PEER_PORT]).to.equal('IP.TCP');
+            expect(attributes[SEMATTRS_NET_TRANSPORT]).to.equal('IP.TCP');
         });
     });
 
