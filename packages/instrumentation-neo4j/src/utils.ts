@@ -1,4 +1,11 @@
-import { SEMATTRS_DB_NAME, SEMATTRS_DB_USER, SEMATTRS_NET_PEER_NAME, SEMATTRS_NET_PEER_PORT, SEMATTRS_NET_TRANSPORT, SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import {
+    SEMATTRS_DB_NAME,
+    SEMATTRS_DB_USER,
+    SEMATTRS_NET_PEER_NAME,
+    SEMATTRS_NET_PEER_PORT,
+    SEMATTRS_NET_TRANSPORT,
+    SemanticAttributes,
+} from '@opentelemetry/semantic-conventions';
 
 export function getAttributesFromNeo4jSession(session: any) {
     const connectionHolder =

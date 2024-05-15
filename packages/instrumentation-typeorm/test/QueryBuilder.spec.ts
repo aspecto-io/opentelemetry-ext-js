@@ -1,7 +1,16 @@
 import 'mocha';
 import expect from 'expect';
 import { SpanStatusCode } from '@opentelemetry/api';
-import { SEMATTRS_DB_NAME, SEMATTRS_DB_SQL_TABLE, SEMATTRS_DB_STATEMENT, SEMATTRS_DB_SYSTEM, SEMATTRS_DB_USER, SEMATTRS_NET_PEER_NAME, SEMATTRS_NET_PEER_PORT, SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import {
+    SEMATTRS_DB_NAME,
+    SEMATTRS_DB_SQL_TABLE,
+    SEMATTRS_DB_STATEMENT,
+    SEMATTRS_DB_SYSTEM,
+    SEMATTRS_DB_USER,
+    SEMATTRS_NET_PEER_NAME,
+    SEMATTRS_NET_PEER_PORT,
+    SemanticAttributes,
+} from '@opentelemetry/semantic-conventions';
 import { TypeormInstrumentation } from '../src';
 import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 const instrumentation = registerInstrumentationTesting(new TypeormInstrumentation());

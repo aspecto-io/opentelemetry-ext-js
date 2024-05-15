@@ -4,7 +4,17 @@ import { SequelizeInstrumentation } from '../src';
 import { extractTableFromQuery } from '../src/utils';
 import { ReadableSpan, Span } from '@opentelemetry/sdk-trace-base';
 import { context, diag, SpanStatusCode, DiagConsoleLogger, ROOT_CONTEXT } from '@opentelemetry/api';
-import { SEMATTRS_DB_NAME, SEMATTRS_DB_OPERATION, SEMATTRS_DB_SQL_TABLE, SEMATTRS_DB_STATEMENT, SEMATTRS_DB_SYSTEM, SEMATTRS_DB_USER, SEMATTRS_NET_PEER_NAME, SEMATTRS_NET_PEER_PORT, SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import {
+    SEMATTRS_DB_NAME,
+    SEMATTRS_DB_OPERATION,
+    SEMATTRS_DB_SQL_TABLE,
+    SEMATTRS_DB_STATEMENT,
+    SEMATTRS_DB_SYSTEM,
+    SEMATTRS_DB_USER,
+    SEMATTRS_NET_PEER_NAME,
+    SEMATTRS_NET_PEER_PORT,
+    SemanticAttributes,
+} from '@opentelemetry/semantic-conventions';
 import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 
 // should be available in node_modules from sequelize installation
@@ -98,9 +108,7 @@ describe('instrumentation-sequelize', () => {
 
             expect(attributes[SEMATTRS_DB_OPERATION]).toBe('SELECT');
             expect(attributes[SEMATTRS_DB_SQL_TABLE]).toBe('Users');
-            expect(attributes[SEMATTRS_DB_STATEMENT]).toBe(
-                'SELECT count(*) AS "count" FROM "Users" AS "User";'
-            );
+            expect(attributes[SEMATTRS_DB_STATEMENT]).toBe('SELECT count(*) AS "count" FROM "Users" AS "User";');
         });
 
         it('handled complex query', async () => {

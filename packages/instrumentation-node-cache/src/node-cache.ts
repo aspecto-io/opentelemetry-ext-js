@@ -8,7 +8,12 @@ import { NodeCacheInstrumentationConfig } from './types';
 import { VERSION } from './version';
 import { diag, SpanKind, SpanStatusCode, context, trace } from '@opentelemetry/api';
 import { suppressTracing } from '@opentelemetry/core';
-import { SEMATTRS_DB_OPERATION, SEMATTRS_DB_STATEMENT, SEMATTRS_DB_SYSTEM, SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import {
+    SEMATTRS_DB_OPERATION,
+    SEMATTRS_DB_STATEMENT,
+    SEMATTRS_DB_SYSTEM,
+    SemanticAttributes,
+} from '@opentelemetry/semantic-conventions';
 
 type NodeCacheType = typeof NodeCache;
 

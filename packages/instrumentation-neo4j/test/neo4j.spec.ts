@@ -289,9 +289,7 @@ describe('neo4j instrumentation', function () {
             const span = getSingleSpan();
             assertSpan(span as ReadableSpan);
             expect(span.attributes[SEMATTRS_DB_OPERATION]).toBe('MATCH');
-            expect(span.attributes[SEMATTRS_DB_STATEMENT]).toBe(
-                'MATCH (person:Person) RETURN person.name AS name'
-            );
+            expect(span.attributes[SEMATTRS_DB_STATEMENT]).toBe('MATCH (person:Person) RETURN person.name AS name');
         });
 
         it('instruments session writeTransaction', async () => {
@@ -301,9 +299,7 @@ describe('neo4j instrumentation', function () {
             const span = getSingleSpan();
             assertSpan(span as ReadableSpan);
             expect(span.attributes[SEMATTRS_DB_OPERATION]).toBe('MATCH');
-            expect(span.attributes[SEMATTRS_DB_STATEMENT]).toBe(
-                'MATCH (person:Person) RETURN person.name AS name'
-            );
+            expect(span.attributes[SEMATTRS_DB_STATEMENT]).toBe('MATCH (person:Person) RETURN person.name AS name');
         });
 
         it('instruments explicit transactions', async () => {

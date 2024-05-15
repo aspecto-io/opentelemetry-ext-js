@@ -3,7 +3,11 @@ import { stub, assert, spy } from 'sinon';
 import { expect } from 'chai';
 import * as Utils from '../src/utils';
 import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
-import { SEMATTRS_DB_SYSTEM, SEMATTRS_NET_PEER_NAME, SEMATTRS_NET_PEER_PORT } from '@opentelemetry/semantic-conventions';
+import {
+    SEMATTRS_DB_SYSTEM,
+    SEMATTRS_NET_PEER_NAME,
+    SEMATTRS_NET_PEER_PORT,
+} from '@opentelemetry/semantic-conventions';
 
 describe('elasticsearch utils', () => {
     const spanMock = {

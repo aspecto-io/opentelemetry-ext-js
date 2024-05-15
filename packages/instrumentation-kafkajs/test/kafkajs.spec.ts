@@ -3,7 +3,14 @@ import expect from 'expect';
 import { KafkaJsInstrumentation, KafkaJsInstrumentationConfig } from '../src';
 import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
 import { propagation, context, SpanKind, SpanStatusCode, Span } from '@opentelemetry/api';
-import { MessagingDestinationKindValues, SEMATTRS_MESSAGING_DESTINATION, SEMATTRS_MESSAGING_DESTINATION_KIND, SEMATTRS_MESSAGING_OPERATION, SEMATTRS_MESSAGING_SYSTEM, SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import {
+    MessagingDestinationKindValues,
+    SEMATTRS_MESSAGING_DESTINATION,
+    SEMATTRS_MESSAGING_DESTINATION_KIND,
+    SEMATTRS_MESSAGING_OPERATION,
+    SEMATTRS_MESSAGING_SYSTEM,
+    SemanticAttributes,
+} from '@opentelemetry/semantic-conventions';
 import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 
 const instrumentation = registerInstrumentationTesting(new KafkaJsInstrumentation());

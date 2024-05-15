@@ -9,7 +9,12 @@ const instrumentation = registerInstrumentationTesting(new NodeCacheInstrumentat
 instrumentation.enable();
 
 import NodeCache from 'node-cache';
-import { SEMATTRS_DB_OPERATION, SEMATTRS_DB_STATEMENT, SEMATTRS_DB_SYSTEM, SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import {
+    SEMATTRS_DB_OPERATION,
+    SEMATTRS_DB_STATEMENT,
+    SEMATTRS_DB_SYSTEM,
+    SemanticAttributes,
+} from '@opentelemetry/semantic-conventions';
 
 describe('node-cache instrumentation', () => {
     let cache = new NodeCache();

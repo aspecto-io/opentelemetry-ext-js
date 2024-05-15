@@ -122,9 +122,11 @@ export class ElasticsearchInstrumentation extends InstrumentationBase {
                 attributes: {
                     [SEMATTRS_DB_OPERATION]: operation,
                     [AttributeNames.ELASTICSEARCH_INDICES]: getIndexName(params),
-                    [SEMATTRS_DB_STATEMENT]: (
-                        self._config.dbStatementSerializer || defaultDbStatementSerializer
-                    )(operation, params, options),
+                    [SEMATTRS_DB_STATEMENT]: (self._config.dbStatementSerializer || defaultDbStatementSerializer)(
+                        operation,
+                        params,
+                        options
+                    ),
                 },
             });
             self._addModuleVersionIfNeeded(span);

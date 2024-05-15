@@ -2,7 +2,10 @@ import { Context, TextMapGetter, TextMapPropagator, TextMapSetter } from '@opent
 import { SelectivePropagatorConfig } from './types';
 
 export class SelectivePropagator implements TextMapPropagator {
-    constructor(private propagator: TextMapPropagator, private config: SelectivePropagatorConfig = {}) {}
+    constructor(
+        private propagator: TextMapPropagator,
+        private config: SelectivePropagatorConfig = {}
+    ) {}
 
     inject(context: Context, carrier: any, setter: TextMapSetter<any>): void {
         if (!this.config.injectEnabled) return;

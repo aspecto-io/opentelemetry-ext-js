@@ -1,6 +1,13 @@
 import expect from 'expect';
 import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
-import { SEMATTRS_DB_NAME, SEMATTRS_DB_SYSTEM, SEMATTRS_DB_USER, SEMATTRS_NET_PEER_NAME, SEMATTRS_NET_PEER_PORT, SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import {
+    SEMATTRS_DB_NAME,
+    SEMATTRS_DB_SYSTEM,
+    SEMATTRS_DB_USER,
+    SEMATTRS_NET_PEER_NAME,
+    SEMATTRS_NET_PEER_PORT,
+    SemanticAttributes,
+} from '@opentelemetry/semantic-conventions';
 import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
 
 export const assertSpan = (span: ReadableSpan) => {

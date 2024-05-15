@@ -1,6 +1,18 @@
 import { context, Span, SpanKind, SpanStatusCode, trace, diag } from '@opentelemetry/api';
 import { suppressTracing } from '@opentelemetry/core';
-import { NetTransportValues, SEMATTRS_NET_TRANSPORT, SEMATTRS_DB_NAME, SEMATTRS_DB_OPERATION, SEMATTRS_DB_SQL_TABLE, SEMATTRS_DB_STATEMENT, SEMATTRS_DB_SYSTEM, SEMATTRS_DB_USER, SEMATTRS_NET_PEER_NAME, SEMATTRS_NET_PEER_PORT, SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import {
+    NetTransportValues,
+    SEMATTRS_NET_TRANSPORT,
+    SEMATTRS_DB_NAME,
+    SEMATTRS_DB_OPERATION,
+    SEMATTRS_DB_SQL_TABLE,
+    SEMATTRS_DB_STATEMENT,
+    SEMATTRS_DB_SYSTEM,
+    SEMATTRS_DB_USER,
+    SEMATTRS_NET_PEER_NAME,
+    SEMATTRS_NET_PEER_PORT,
+    SemanticAttributes,
+} from '@opentelemetry/semantic-conventions';
 import * as sequelize from 'sequelize';
 import { SequelizeInstrumentationConfig } from './types';
 import { VERSION } from './version';

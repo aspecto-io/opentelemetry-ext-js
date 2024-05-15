@@ -1,6 +1,16 @@
 import { Span, SpanKind, SpanStatusCode, trace, context, diag } from '@opentelemetry/api';
 import { suppressTracing } from '@opentelemetry/core';
-import { SEMATTRS_DB_NAME, SEMATTRS_DB_OPERATION, SEMATTRS_DB_SQL_TABLE, SEMATTRS_DB_STATEMENT, SEMATTRS_DB_SYSTEM, SEMATTRS_DB_USER, SEMATTRS_NET_PEER_NAME, SEMATTRS_NET_PEER_PORT, SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import {
+    SEMATTRS_DB_NAME,
+    SEMATTRS_DB_OPERATION,
+    SEMATTRS_DB_SQL_TABLE,
+    SEMATTRS_DB_STATEMENT,
+    SEMATTRS_DB_SYSTEM,
+    SEMATTRS_DB_USER,
+    SEMATTRS_NET_PEER_NAME,
+    SEMATTRS_NET_PEER_PORT,
+    SemanticAttributes,
+} from '@opentelemetry/semantic-conventions';
 import { ExtendedDatabaseAttribute, TypeormInstrumentationConfig } from './types';
 import { getParamNames, isTypeormInternalTracingSuppressed, suppressTypeormInternalTracing } from './utils';
 import { VERSION } from './version';

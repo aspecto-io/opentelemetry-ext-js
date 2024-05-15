@@ -1,7 +1,12 @@
 import { Tracer, SpanAttributes, SpanStatusCode, diag, Span, SpanKind } from '@opentelemetry/api';
 import { DbStatementSerializer, ResponseHook } from './types';
 import { safeExecuteInTheMiddle } from '@opentelemetry/instrumentation';
-import { SEMATTRS_DB_SYSTEM, SEMATTRS_NET_PEER_NAME, SEMATTRS_NET_PEER_PORT, SEMATTRS_NET_TRANSPORT } from '@opentelemetry/semantic-conventions';
+import {
+    SEMATTRS_DB_SYSTEM,
+    SEMATTRS_NET_PEER_NAME,
+    SEMATTRS_NET_PEER_PORT,
+    SEMATTRS_NET_TRANSPORT,
+} from '@opentelemetry/semantic-conventions';
 import { ApiResponse } from '@elastic/elasticsearch/lib/Transport';
 
 interface StartSpanPayload {

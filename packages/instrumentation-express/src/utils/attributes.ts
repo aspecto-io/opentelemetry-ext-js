@@ -1,5 +1,15 @@
 import { SpanAttributes, SpanStatus, SpanStatusCode } from '@opentelemetry/api';
-import { SEMATTRS_HTTP_FLAVOR, SEMATTRS_HTTP_HOST, SEMATTRS_HTTP_METHOD, SEMATTRS_HTTP_ROUTE, SEMATTRS_HTTP_SCHEME, SEMATTRS_HTTP_STATUS_CODE, SEMATTRS_HTTP_TARGET, SEMATTRS_NET_PEER_IP, SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import {
+    SEMATTRS_HTTP_FLAVOR,
+    SEMATTRS_HTTP_HOST,
+    SEMATTRS_HTTP_METHOD,
+    SEMATTRS_HTTP_ROUTE,
+    SEMATTRS_HTTP_SCHEME,
+    SEMATTRS_HTTP_STATUS_CODE,
+    SEMATTRS_HTTP_TARGET,
+    SEMATTRS_NET_PEER_IP,
+    SemanticAttributes,
+} from '@opentelemetry/semantic-conventions';
 import { ExpressConsumedRouteState, ExpressInstrumentationAttributes } from '../types';
 import type express from 'express';
 

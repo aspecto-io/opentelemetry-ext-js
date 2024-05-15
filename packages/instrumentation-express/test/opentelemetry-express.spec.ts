@@ -4,7 +4,16 @@ import { SpanKind, trace } from '@opentelemetry/api';
 import { ExpressInstrumentation } from '../src';
 import { AddressInfo } from 'net';
 import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
-import { SEMATTRS_HTTP_FLAVOR, SEMATTRS_HTTP_HOST, SEMATTRS_HTTP_METHOD, SEMATTRS_HTTP_ROUTE, SEMATTRS_HTTP_SCHEME, SEMATTRS_HTTP_STATUS_CODE, SEMATTRS_HTTP_TARGET, SEMATTRS_NET_PEER_IP } from '@opentelemetry/semantic-conventions';
+import {
+    SEMATTRS_HTTP_FLAVOR,
+    SEMATTRS_HTTP_HOST,
+    SEMATTRS_HTTP_METHOD,
+    SEMATTRS_HTTP_ROUTE,
+    SEMATTRS_HTTP_SCHEME,
+    SEMATTRS_HTTP_STATUS_CODE,
+    SEMATTRS_HTTP_TARGET,
+    SEMATTRS_NET_PEER_IP,
+} from '@opentelemetry/semantic-conventions';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 import * as bodyParser from 'body-parser';
@@ -132,9 +141,7 @@ describe('opentelemetry-express', () => {
 
             // HTTP Attributes
             expect(span.attributes[SEMATTRS_HTTP_METHOD]).toBe('POST');
-            expect(span.attributes[SEMATTRS_HTTP_TARGET]).toBe(
-                '/toto/tata?req-query-param-key=req-query-param-val'
-            );
+            expect(span.attributes[SEMATTRS_HTTP_TARGET]).toBe('/toto/tata?req-query-param-key=req-query-param-val');
             expect(span.attributes[SEMATTRS_HTTP_SCHEME]).toBe('http');
             expect(span.attributes[SEMATTRS_HTTP_STATUS_CODE]).toBe(200);
             expect(span.attributes[SEMATTRS_HTTP_HOST]).toBe(`localhost:${port}`);
