@@ -43,7 +43,7 @@
     },
     "devDependencies": {
         "@opentelemetry/api": "^1.8.0",
-        "@opentelemetry/contrib-test-utils": "^0.34.2",
+        "@opentelemetry/contrib-test-utils": "^0.39.0",
         "@opentelemetry/sdk-trace-base": "^1.24.1",
         "@types/mocha": "^8.2.2",
         "expect": "^26.6.2",

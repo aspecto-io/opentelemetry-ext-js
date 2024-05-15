@@ -1,7 +1,7 @@
 import 'mocha';
 import expect from 'expect';
 import { SpanStatusCode } from '@opentelemetry/api';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import { SEMATTRS_DB_NAME, SEMATTRS_DB_OPERATION, SEMATTRS_DB_STATEMENT, SEMATTRS_DB_SYSTEM, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { TypeormInstrumentation } from '../src';
 import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 
@@ -31,10 +31,10 @@ describe('Connection', () => {
             expect(typeOrmSpans.length).toBe(1);
             expect(typeOrmSpans[0].status.code).toBe(SpanStatusCode.UNSET);
             const attributes = typeOrmSpans[0].attributes;
-            expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(options.type);
-            expect(attributes[SemanticAttributes.DB_NAME]).toBe(options.database);
-            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('SELECT');
-            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(query);
+            expect(attributes[SEMATTRS_DB_SYSTEM]).toBe(options.type);
+            expect(attributes[SEMATTRS_DB_NAME]).toBe(options.database);
+            expect(attributes[SEMATTRS_DB_OPERATION]).toBe('SELECT');
+            expect(attributes[SEMATTRS_DB_STATEMENT]).toBe(query);
             await connection.close();
         });
     });

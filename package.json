@@ -8,17 +8,17 @@
         "test:ci:all": "lerna run test:ci --parallel",
         "build": "lerna run build",
         "build:ci": "lerna run build",
-        "postinstall": "lerna bootstrap",
         "prettier": "prettier --config .prettierrc.yml --write --ignore-unknown \"**/*\"",
-        "prettier:check": "npx prettier@2.3.2 --config .prettierrc.yml --check --ignore-unknown \"**/*\"",
+        "prettier:check": "npx prettier@3.2.5 --config .prettierrc.yml --check --ignore-unknown \"**/*\"",
         "version:update": "lerna run version:update",
         "version": "git add packages/**/version.ts",
         "publish:ci": "lerna publish --yes --allow-branch master --create-release github --conventionalCommits",
         "publish:ci:prerelease": "lerna publish --yes --no-git-tag-version --no-push --no-changelog --dist-tag alpha"
     },
     "devDependencies": {
-        "lerna": "^3.22.1",
-        "prettier": "2.3.2"
+        "@types/node": "^20.12.12",
+        "lerna": "^8.1.3",
+        "prettier": "3.2.5"
     },
     "workspaces": [
         "packages/*",

@@ -1,5 +1,5 @@
 import { SpanStatusCode, diag, trace, context, SpanKind } from '@opentelemetry/api';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import { SEMATTRS_DB_NAME, SEMATTRS_DB_OPERATION, SEMATTRS_DB_STATEMENT, SEMATTRS_DB_SYSTEM, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { VERSION } from './version';
 import type * as neo4j from 'neo4j-driver';
 import {
@@ -67,12 +67,12 @@ export class Neo4jInstrumentation extends InstrumentationBase {
 
                 const connectionAttributes = getAttributesFromNeo4jSession(this);
                 const operation = query.trim().split(/\s+/)[0];
-                const span = self.tracer.startSpan(`${operation} ${connectionAttributes[SemanticAttributes.DB_NAME]}`, {
+                const span = self.tracer.startSpan(`${operation} ${connectionAttributes[SEMATTRS_DB_NAME]}`, {
                     attributes: {
                         ...connectionAttributes,
-                        [SemanticAttributes.DB_SYSTEM]: 'neo4j',
-                        [SemanticAttributes.DB_OPERATION]: operation,
-                        [SemanticAttributes.DB_STATEMENT]: query,
+                        [SEMATTRS_DB_SYSTEM]: 'neo4j',
+                        [SEMATTRS_DB_OPERATION]: operation,
+                        [SEMATTRS_DB_STATEMENT]: query,
                     },
                     kind: SpanKind.CLIENT,
                 });

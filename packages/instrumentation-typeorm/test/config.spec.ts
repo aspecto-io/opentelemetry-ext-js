@@ -1,7 +1,7 @@
 import 'mocha';
 import expect from 'expect';
 import { Span } from '@opentelemetry/sdk-trace-base';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import { SEMATTRS_DB_NAME, SEMATTRS_DB_OPERATION, SEMATTRS_DB_SQL_TABLE, SEMATTRS_DB_STATEMENT, SEMATTRS_DB_SYSTEM, SEMATTRS_DB_USER, SEMATTRS_NET_PEER_NAME, SEMATTRS_NET_PEER_PORT, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { ExtendedDatabaseAttribute, TypeormInstrumentation, TypeormInstrumentationConfig } from '../src';
 import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 
@@ -30,8 +30,8 @@ describe('TypeormInstrumentationConfig', () => {
         const attributes = typeOrmSpans[0].attributes;
 
         expect(attributes['test']).toBe(JSON.stringify(user));
-        expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('save');
-        expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(defaultOptions.type);
+        expect(attributes[SEMATTRS_DB_OPERATION]).toBe('save');
+        expect(attributes[SEMATTRS_DB_SYSTEM]).toBe(defaultOptions.type);
         await connection.close();
     });
 
@@ -50,7 +50,7 @@ describe('TypeormInstrumentationConfig', () => {
 
         expect(typeOrmSpans.length).toBe(1);
         const attributes = typeOrmSpans[0].attributes;
-        expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
+        expect(attributes[SEMATTRS_DB_SQL_TABLE]).toBe('user');
         expect(attributes['module.version']).toMatch(/\d{1,4}\.\d{1,4}\.\d{1,5}.*/);
         await connection.close();
     });
@@ -65,13 +65,13 @@ describe('TypeormInstrumentationConfig', () => {
 
         const findAndCountSpan = spans.find((s) => s.name.indexOf('findAndCount') !== -1);
         expect(findAndCountSpan).not.toBeUndefined();
-        expect(findAndCountSpan.attributes[SemanticAttributes.DB_OPERATION]).toBe('findAndCount');
-        expect(findAndCountSpan.attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
+        expect(findAndCountSpan.attributes[SEMATTRS_DB_OPERATION]).toBe('findAndCount');
+        expect(findAndCountSpan.attributes[SEMATTRS_DB_SQL_TABLE]).toBe('user');
 
         const selectSpan = spans.find((s) => s.name.indexOf('select') !== -1);
         expect(selectSpan).not.toBeUndefined();
-        expect(selectSpan.attributes[SemanticAttributes.DB_OPERATION]).toBe('select');
-        expect(selectSpan.attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
+        expect(selectSpan.attributes[SEMATTRS_DB_OPERATION]).toBe('select');
+        expect(selectSpan.attributes[SEMATTRS_DB_SQL_TABLE]).toBe('user');
         await connection.close();
     });
 
@@ -83,9 +83,9 @@ describe('TypeormInstrumentationConfig', () => {
         const spans = getTestSpans();
         expect(spans.length).toEqual(1);
         const attributes = spans[0].attributes;
-        expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('findAndCount');
-        expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(defaultOptions.type);
-        expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
+        expect(attributes[SEMATTRS_DB_OPERATION]).toBe('findAndCount');
+        expect(attributes[SEMATTRS_DB_SYSTEM]).toBe(defaultOptions.type);
+        expect(attributes[SEMATTRS_DB_SQL_TABLE]).toBe('user');
         await connection.close();
     });
 
@@ -107,13 +107,13 @@ describe('TypeormInstrumentationConfig', () => {
         expect(typeOrmSpans.length).toBe(1);
         expect(typeOrmSpans[0].status.code).toBe(SpanStatusCode.UNSET);
         const attributes = typeOrmSpans[0].attributes;
-        expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(connectionOptions.type);
-        expect(attributes[SemanticAttributes.DB_USER]).toBe(connectionOptions.username);
-        expect(attributes[SemanticAttributes.NET_PEER_NAME]).toBe(connectionOptions.host);
-        expect(attributes[SemanticAttributes.NET_PEER_PORT]).toBe(connectionOptions.port);
-        expect(attributes[SemanticAttributes.DB_NAME]).toBe(connectionOptions.database);
-        expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
-        expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
+        expect(attributes[SEMATTRS_DB_SYSTEM]).toBe(connectionOptions.type);
+        expect(attributes[SEMATTRS_DB_USER]).toBe(connectionOptions.username);
+        expect(attributes[SEMATTRS_NET_PEER_NAME]).toBe(connectionOptions.host);
+        expect(attributes[SEMATTRS_NET_PEER_PORT]).toBe(connectionOptions.port);
+        expect(attributes[SEMATTRS_DB_NAME]).toBe(connectionOptions.database);
+        expect(attributes[SEMATTRS_DB_SQL_TABLE]).toBe('user');
+        expect(attributes[SEMATTRS_DB_STATEMENT]).toBe(
             'SELECT "user"."id" AS "user_id", "user"."firstName" AS "user_firstName", "user"."lastName" AS "user_lastName" FROM "user" "user" WHERE "user"."id" = :userId AND "user"."firstName" = :firstName AND "user"."lastName" = :lastName'
         );
         expect(attributes[ExtendedDatabaseAttribute.DB_STATEMENT_PARAMETERS]).toBe(

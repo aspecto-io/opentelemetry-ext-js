@@ -1,4 +1,4 @@
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import { SEMATTRS_HTTP_ROUTE, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import type { ReadableSpan } from '@opentelemetry/sdk-trace-base';
 import expect from 'expect';
 import { ExpressInstrumentationAttributes } from '../src/types';
@@ -17,7 +17,7 @@ export const expectRouteAttributes = (
     options?: expectRouteAttributesAdvancedOptions
 ) => {
     const { expectedParams, configuredRoute } = options ?? {};
-    expect(span.attributes[SemanticAttributes.HTTP_ROUTE]).toEqual(expectedRoute);
+    expect(span.attributes[SEMATTRS_HTTP_ROUTE]).toEqual(expectedRoute);
     expect(span.attributes[ExpressInstrumentationAttributes.EXPRESS_ROUTE_FULL]).toEqual(expectedFullRoute);
     const actualParams = JSON.parse(span.attributes[ExpressInstrumentationAttributes.EXPRESS_ROUTE_PARAMS] as string);
     expect(actualParams).toStrictEqual(expectedParams ?? {});
@@ -29,7 +29,7 @@ export const expectRouteAttributes = (
 };
 
 export const expectRouteFromFinalHandler = (span: ReadableSpan, fullRoute: string) => {
-    expect(span.attributes[SemanticAttributes.HTTP_ROUTE]).toEqual('');
+    expect(span.attributes[SEMATTRS_HTTP_ROUTE]).toEqual('');
     // we need to patch final handler to extract the full url
     expect(span.attributes[ExpressInstrumentationAttributes.EXPRESS_ROUTE_FULL]).toEqual(fullRoute);
     expect(span.attributes[ExpressInstrumentationAttributes.EXPRESS_UNHANDLED]).toEqual(true);

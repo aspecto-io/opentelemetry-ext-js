@@ -8,7 +8,7 @@ import { NodeCacheInstrumentationConfig } from './types';
 import { VERSION } from './version';
 import { diag, SpanKind, SpanStatusCode, context, trace } from '@opentelemetry/api';
 import { suppressTracing } from '@opentelemetry/core';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import { SEMATTRS_DB_OPERATION, SEMATTRS_DB_STATEMENT, SEMATTRS_DB_SYSTEM, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 
 type NodeCacheType = typeof NodeCache;
 
@@ -80,9 +80,9 @@ export class NodeCacheInstrumentation extends InstrumentationBase {
                 const span = self.tracer.startSpan(`node-cache ${opName}`, {
                     kind: SpanKind.INTERNAL,
                     attributes: {
-                        [SemanticAttributes.DB_SYSTEM]: 'node-cache',
-                        [SemanticAttributes.DB_OPERATION]: opName,
-                        [SemanticAttributes.DB_STATEMENT]: toStatement(arguments),
+                        [SEMATTRS_DB_SYSTEM]: 'node-cache',
+                        [SEMATTRS_DB_OPERATION]: opName,
+                        [SEMATTRS_DB_STATEMENT]: toStatement(arguments),
                     },
                 });
 

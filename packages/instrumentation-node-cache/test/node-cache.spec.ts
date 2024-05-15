@@ -9,7 +9,7 @@ const instrumentation = registerInstrumentationTesting(new NodeCacheInstrumentat
 instrumentation.enable();
 
 import NodeCache from 'node-cache';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import { SEMATTRS_DB_OPERATION, SEMATTRS_DB_STATEMENT, SEMATTRS_DB_SYSTEM, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 
 describe('node-cache instrumentation', () => {
     let cache = new NodeCache();
@@ -40,8 +40,8 @@ describe('node-cache instrumentation', () => {
             const span = getSingleSpan();
 
             expect(span.name).toBe('node-cache set');
-            expect(span.attributes[SemanticAttributes.DB_SYSTEM]).toBe('node-cache');
-            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('set');
+            expect(span.attributes[SEMATTRS_DB_SYSTEM]).toBe('node-cache');
+            expect(span.attributes[SEMATTRS_DB_OPERATION]).toBe('set');
             expect(span.attributes[DB_RESPONSE]).toBe(true);
         });
 
@@ -52,9 +52,9 @@ describe('node-cache instrumentation', () => {
             const span = getSingleSpan();
 
             expect(span.name).toBe('node-cache get');
-            expect(span.attributes[SemanticAttributes.DB_SYSTEM]).toBe('node-cache');
-            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('get');
-            expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe('get some-key');
+            expect(span.attributes[SEMATTRS_DB_SYSTEM]).toBe('node-cache');
+            expect(span.attributes[SEMATTRS_DB_OPERATION]).toBe('get');
+            expect(span.attributes[SEMATTRS_DB_STATEMENT]).toBe('get some-key');
             expect(span.attributes[DB_RESPONSE]).toBe('some-value');
         });
 
@@ -63,9 +63,9 @@ describe('node-cache instrumentation', () => {
             const span = getSingleSpan();
 
             expect(span.name).toBe('node-cache has');
-            expect(span.attributes[SemanticAttributes.DB_SYSTEM]).toBe('node-cache');
-            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('has');
-            expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe('has some-key');
+            expect(span.attributes[SEMATTRS_DB_SYSTEM]).toBe('node-cache');
+            expect(span.attributes[SEMATTRS_DB_OPERATION]).toBe('has');
+            expect(span.attributes[SEMATTRS_DB_STATEMENT]).toBe('has some-key');
             expect(span.attributes[DB_RESPONSE]).toBe(false);
         });
 
@@ -78,9 +78,9 @@ describe('node-cache instrumentation', () => {
             const span = getSingleSpan();
 
             expect(span.name).toBe('node-cache take');
-            expect(span.attributes[SemanticAttributes.DB_SYSTEM]).toBe('node-cache');
-            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('take');
-            expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe('take some-key');
+            expect(span.attributes[SEMATTRS_DB_SYSTEM]).toBe('node-cache');
+            expect(span.attributes[SEMATTRS_DB_OPERATION]).toBe('take');
+            expect(span.attributes[SEMATTRS_DB_STATEMENT]).toBe('take some-key');
             expect(span.attributes[DB_RESPONSE]).toBe('some-value');
         });
 
@@ -91,9 +91,9 @@ describe('node-cache instrumentation', () => {
             const span = getSingleSpan();
 
             expect(span.name).toBe('node-cache del');
-            expect(span.attributes[SemanticAttributes.DB_SYSTEM]).toBe('node-cache');
-            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('del');
-            expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe('del some-key');
+            expect(span.attributes[SEMATTRS_DB_SYSTEM]).toBe('node-cache');
+            expect(span.attributes[SEMATTRS_DB_OPERATION]).toBe('del');
+            expect(span.attributes[SEMATTRS_DB_STATEMENT]).toBe('del some-key');
             expect(span.attributes[DB_RESPONSE]).toBe(1);
         });
 
@@ -105,9 +105,9 @@ describe('node-cache instrumentation', () => {
             const span = getSingleSpan();
 
             expect(span.name).toBe('node-cache del');
-            expect(span.attributes[SemanticAttributes.DB_SYSTEM]).toBe('node-cache');
-            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('del');
-            expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe('del some-key,some-other-key');
+            expect(span.attributes[SEMATTRS_DB_SYSTEM]).toBe('node-cache');
+            expect(span.attributes[SEMATTRS_DB_OPERATION]).toBe('del');
+            expect(span.attributes[SEMATTRS_DB_STATEMENT]).toBe('del some-key,some-other-key');
             expect(span.attributes[DB_RESPONSE]).toBe(2);
         });
 
@@ -120,9 +120,9 @@ describe('node-cache instrumentation', () => {
             const span = getSingleSpan();
 
             expect(span.name).toBe('node-cache mget');
-            expect(span.attributes[SemanticAttributes.DB_SYSTEM]).toBe('node-cache');
-            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('mget');
-            expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe('mget a,b,c');
+            expect(span.attributes[SEMATTRS_DB_SYSTEM]).toBe('node-cache');
+            expect(span.attributes[SEMATTRS_DB_OPERATION]).toBe('mget');
+            expect(span.attributes[SEMATTRS_DB_STATEMENT]).toBe('mget a,b,c');
             expect(JSON.parse(span.attributes[DB_RESPONSE] as string)).toEqual({ a: 'x', b: 'y' });
         });
 
@@ -134,9 +134,9 @@ describe('node-cache instrumentation', () => {
             const span = getSingleSpan();
 
             expect(span.name).toBe('node-cache mset');
-            expect(span.attributes[SemanticAttributes.DB_SYSTEM]).toBe('node-cache');
-            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('mset');
-            expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe('mset a,b');
+            expect(span.attributes[SEMATTRS_DB_SYSTEM]).toBe('node-cache');
+            expect(span.attributes[SEMATTRS_DB_OPERATION]).toBe('mset');
+            expect(span.attributes[SEMATTRS_DB_STATEMENT]).toBe('mset a,b');
             expect(span.attributes[DB_RESPONSE]).toEqual(true);
         });
 
@@ -145,9 +145,9 @@ describe('node-cache instrumentation', () => {
             const span = getSingleSpan();
 
             expect(span.name).toBe('node-cache getTtl');
-            expect(span.attributes[SemanticAttributes.DB_SYSTEM]).toBe('node-cache');
-            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('getTtl');
-            expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe('getTtl some-key');
+            expect(span.attributes[SEMATTRS_DB_SYSTEM]).toBe('node-cache');
+            expect(span.attributes[SEMATTRS_DB_OPERATION]).toBe('getTtl');
+            expect(span.attributes[SEMATTRS_DB_STATEMENT]).toBe('getTtl some-key');
         });
 
         it('ttl', () => {
@@ -155,9 +155,9 @@ describe('node-cache instrumentation', () => {
             const span = getSingleSpan();
 
             expect(span.name).toBe('node-cache ttl');
-            expect(span.attributes[SemanticAttributes.DB_SYSTEM]).toBe('node-cache');
-            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('ttl');
-            expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe('ttl some-key 12345');
+            expect(span.attributes[SEMATTRS_DB_SYSTEM]).toBe('node-cache');
+            expect(span.attributes[SEMATTRS_DB_OPERATION]).toBe('ttl');
+            expect(span.attributes[SEMATTRS_DB_STATEMENT]).toBe('ttl some-key 12345');
         });
 
         it('flushAll', () => {
@@ -165,9 +165,9 @@ describe('node-cache instrumentation', () => {
             const span = getSingleSpan();
 
             expect(span.name).toBe('node-cache flushAll');
-            expect(span.attributes[SemanticAttributes.DB_SYSTEM]).toBe('node-cache');
-            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('flushAll');
-            expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe('flushAll');
+            expect(span.attributes[SEMATTRS_DB_SYSTEM]).toBe('node-cache');
+            expect(span.attributes[SEMATTRS_DB_OPERATION]).toBe('flushAll');
+            expect(span.attributes[SEMATTRS_DB_STATEMENT]).toBe('flushAll');
         });
     });
 

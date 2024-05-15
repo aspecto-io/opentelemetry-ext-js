@@ -1,6 +1,6 @@
 import { Span, SpanKind, SpanStatusCode, trace, context, diag } from '@opentelemetry/api';
 import { suppressTracing } from '@opentelemetry/core';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import { SEMATTRS_DB_NAME, SEMATTRS_DB_OPERATION, SEMATTRS_DB_SQL_TABLE, SEMATTRS_DB_STATEMENT, SEMATTRS_DB_SYSTEM, SEMATTRS_DB_USER, SEMATTRS_NET_PEER_NAME, SEMATTRS_NET_PEER_PORT, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { ExtendedDatabaseAttribute, TypeormInstrumentationConfig } from './types';
 import { getParamNames, isTypeormInternalTracingSuppressed, suppressTypeormInternalTracing } from './utils';
 import { VERSION } from './version';
@@ -167,13 +167,13 @@ export class TypeormInstrumentation extends InstrumentationBase {
                 }
                 const connectionOptions = this?.connection?.options ?? {};
                 const attributes = {
-                    [SemanticAttributes.DB_SYSTEM]: connectionOptions.type,
-                    [SemanticAttributes.DB_USER]: connectionOptions.username,
-                    [SemanticAttributes.NET_PEER_NAME]: connectionOptions.host,
-                    [SemanticAttributes.NET_PEER_PORT]: connectionOptions.port,
-                    [SemanticAttributes.DB_NAME]: connectionOptions.database,
-                    [SemanticAttributes.DB_OPERATION]: opName,
-                    [SemanticAttributes.DB_STATEMENT]: JSON.stringify(buildStatement(original, args)),
+                    [SEMATTRS_DB_SYSTEM]: connectionOptions.type,
+                    [SEMATTRS_DB_USER]: connectionOptions.username,
+                    [SEMATTRS_NET_PEER_NAME]: connectionOptions.host,
+                    [SEMATTRS_NET_PEER_PORT]: connectionOptions.port,
+                    [SEMATTRS_DB_NAME]: connectionOptions.database,
+                    [SEMATTRS_DB_OPERATION]: opName,
+                    [SEMATTRS_DB_STATEMENT]: JSON.stringify(buildStatement(original, args)),
                 };
 
                 if (self._config.moduleVersionAttributeName && moduleVersion) {
@@ -183,13 +183,13 @@ export class TypeormInstrumentation extends InstrumentationBase {
                 //ignore EntityMetadataNotFoundError
                 try {
                     if (this.metadata) {
-                        attributes[SemanticAttributes.DB_SQL_TABLE] = this.metadata.tableName;
+                        attributes[SEMATTRS_DB_SQL_TABLE] = this.metadata.tableName;
                     } else {
                         const entity = args[0];
                         const name = typeof entity === 'object' ? entity?.constructor?.name : entity;
                         const metadata = this.connection.getMetadata(name);
                         if (metadata?.tableName) {
-                            attributes[SemanticAttributes.DB_SQL_TABLE] = metadata.tableName;
+                            attributes[SEMATTRS_DB_SQL_TABLE] = metadata.tableName;
                         }
                     }
                 } catch {}
@@ -234,14 +234,14 @@ export class TypeormInstrumentation extends InstrumentationBase {
                 const operation = queryBuilder.expressionMap.queryType;
                 const connectionOptions: any = queryBuilder?.connection?.options;
                 const attributes = {
-                    [SemanticAttributes.DB_SYSTEM]: connectionOptions.type,
-                    [SemanticAttributes.DB_USER]: connectionOptions.username,
-                    [SemanticAttributes.NET_PEER_NAME]: connectionOptions.host,
-                    [SemanticAttributes.NET_PEER_PORT]: connectionOptions.port,
-                    [SemanticAttributes.DB_NAME]: connectionOptions.database,
-                    [SemanticAttributes.DB_OPERATION]: operation,
-                    [SemanticAttributes.DB_STATEMENT]: sql,
-                    [SemanticAttributes.DB_SQL_TABLE]: mainTableName,
+                    [SEMATTRS_DB_SYSTEM]: connectionOptions.type,
+                    [SEMATTRS_DB_USER]: connectionOptions.username,
+                    [SEMATTRS_NET_PEER_NAME]: connectionOptions.host,
+                    [SEMATTRS_NET_PEER_PORT]: connectionOptions.port,
+                    [SEMATTRS_DB_NAME]: connectionOptions.database,
+                    [SEMATTRS_DB_OPERATION]: operation,
+                    [SEMATTRS_DB_STATEMENT]: sql,
+                    [SEMATTRS_DB_SQL_TABLE]: mainTableName,
                 };
                 if (self._config.collectParameters) {
                     try {
@@ -294,13 +294,13 @@ export class TypeormInstrumentation extends InstrumentationBase {
                 const operation = self.getOperationName(sql);
                 const connectionOptions: any = conn.options;
                 const attributes = {
-                    [SemanticAttributes.DB_SYSTEM]: connectionOptions.type,
-                    [SemanticAttributes.DB_USER]: connectionOptions.username,
-                    [SemanticAttributes.NET_PEER_NAME]: connectionOptions.host,
-                    [SemanticAttributes.NET_PEER_PORT]: connectionOptions.port,
-                    [SemanticAttributes.DB_NAME]: connectionOptions.database,
-                    [SemanticAttributes.DB_OPERATION]: operation,
-                    [SemanticAttributes.DB_STATEMENT]: sql,
+                    [SEMATTRS_DB_SYSTEM]: connectionOptions.type,
+                    [SEMATTRS_DB_USER]: connectionOptions.username,
+                    [SEMATTRS_NET_PEER_NAME]: connectionOptions.host,
+                    [SEMATTRS_NET_PEER_PORT]: connectionOptions.port,
+                    [SEMATTRS_DB_NAME]: connectionOptions.database,
+                    [SEMATTRS_DB_OPERATION]: operation,
+                    [SEMATTRS_DB_STATEMENT]: sql,
                 };
 
                 const span: Span = self.tracer.startSpan(`TypeORM ${operation}`, {
