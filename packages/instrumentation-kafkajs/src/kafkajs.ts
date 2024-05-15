@@ -53,7 +53,12 @@ export class KafkaJsInstrumentation extends InstrumentationBase {
     }
 
     protected init(): InstrumentationModuleDefinition {
-        const module: InstrumentationModuleDefinition = new InstrumentationNodeModuleDefinition(KafkaJsInstrumentation.component, ['*'], this.patch.bind(this), this.unpatch.bind(this));
+        const module: InstrumentationModuleDefinition = new InstrumentationNodeModuleDefinition(
+            KafkaJsInstrumentation.component,
+            ['*'],
+            this.patch.bind(this),
+            this.unpatch.bind(this)
+        );
         module.includePrerelease = true;
         return module;
     }
