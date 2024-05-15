@@ -39,7 +39,7 @@ import {
     isWrapped,
 } from '@opentelemetry/instrumentation';
 
-export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> {
+export class KafkaJsInstrumentation extends InstrumentationBase {
     static readonly component = 'kafkajs';
     protected override _config!: KafkaJsInstrumentationConfig;
     private moduleVersion: string;
@@ -52,10 +52,8 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
         this._config = Object.assign({}, config);
     }
 
-    protected init(): InstrumentationModuleDefinition<typeof kafkaJs> {
-        const module: InstrumentationModuleDefinition<typeof kafkaJs> = new InstrumentationNodeModuleDefinition<
-            typeof kafkaJs
-        >(KafkaJsInstrumentation.component, ['*'], this.patch.bind(this), this.unpatch.bind(this));
+    protected init(): InstrumentationModuleDefinition {
+        const module: InstrumentationModuleDefinition = new InstrumentationNodeModuleDefinition(KafkaJsInstrumentation.component, ['*'], this.patch.bind(this), this.unpatch.bind(this));
         module.includePrerelease = true;
         return module;
     }

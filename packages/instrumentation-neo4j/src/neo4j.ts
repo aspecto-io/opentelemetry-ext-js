@@ -14,7 +14,7 @@ import { getAttributesFromNeo4jSession } from './utils';
 
 type Neo4J = typeof neo4j;
 
-export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
+export class Neo4jInstrumentation extends InstrumentationBase {
     protected override _config!: Neo4jInstrumentationConfig;
 
     constructor(config: Neo4jInstrumentationConfig = {}) {
@@ -25,17 +25,17 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
         this._config = config;
     }
 
-    protected init(): InstrumentationModuleDefinition<Neo4J>[] {
+    protected init(): InstrumentationModuleDefinition[] {
         return [
             this.getModuleDefinition('neo4j-driver-core', ['>=4.3.0 <5']),
             this.getModuleDefinition('neo4j-driver', ['>=4.0.0 <4.3.0']),
         ];
     }
 
-    private getModuleDefinition(name: string, supportedVersions: string[]): InstrumentationNodeModuleDefinition<Neo4J> {
+    private getModuleDefinition(name: string, supportedVersions: string[]): InstrumentationNodeModuleDefinition {
         const apiModuleFiles = ['session', 'transaction'].map(
             (file) =>
-                new InstrumentationNodeModuleFile<neo4j.Session>(
+                new InstrumentationNodeModuleFile(
                     `${name}/lib/${file}.js`,
                     supportedVersions,
                     this.patchSessionOrTransaction.bind(this),
@@ -43,7 +43,7 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
                 )
         );
 
-        const module = new InstrumentationNodeModuleDefinition<Neo4J>(
+        const module = new InstrumentationNodeModuleDefinition(
             name,
             supportedVersions,
             undefined,

@@ -12,7 +12,7 @@ import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 
 type NodeCacheType = typeof NodeCache;
 
-export class NodeCacheInstrumentation extends InstrumentationBase<NodeCacheType> {
+export class NodeCacheInstrumentation extends InstrumentationBase {
     constructor(protected override _config: NodeCacheInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-node-cache', VERSION, _config);
     }
@@ -21,8 +21,8 @@ export class NodeCacheInstrumentation extends InstrumentationBase<NodeCacheType>
         this._config = config;
     }
 
-    protected init(): InstrumentationModuleDefinition<NodeCacheType> {
-        const module = new InstrumentationNodeModuleDefinition<NodeCacheType>(
+    protected init(): InstrumentationModuleDefinition{
+        const module = new InstrumentationNodeModuleDefinition(
             'node-cache',
             ['>=5.0.0'],
             this.patch.bind(this)

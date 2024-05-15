@@ -14,7 +14,7 @@ import {
     safeExecuteInTheMiddle,
 } from '@opentelemetry/instrumentation';
 
-export class SequelizeInstrumentation extends InstrumentationBase<typeof sequelize> {
+export class SequelizeInstrumentation extends InstrumentationBase {
     static readonly component = 'sequelize';
     protected override _config!: SequelizeInstrumentationConfig;
     private moduleVersion: string;
@@ -27,15 +27,15 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
         this._config = Object.assign({}, config);
     }
 
-    protected init(): InstrumentationModuleDefinition<typeof sequelize> {
-        const connectionManagerInstrumentation = new InstrumentationNodeModuleFile<any>(
+    protected init(): InstrumentationModuleDefinition {
+        const connectionManagerInstrumentation = new InstrumentationNodeModuleFile(
             'sequelize/lib/dialects/abstract/connection-manager.js',
             ['*'],
             this.patchConnectionManager.bind(this),
             this.unpatchConnectionManager.bind(this)
         );
 
-        const module = new InstrumentationNodeModuleDefinition<typeof sequelize>(
+        const module = new InstrumentationNodeModuleDefinition(
             SequelizeInstrumentation.component,
             ['*'],
             this.patch.bind(this),

@@ -49,14 +49,14 @@ const entityManagerMethods: EntityManagerMethods[] = [
     ...functionsUsingQueryBuilder,
 ];
 
-export class TypeormInstrumentation extends InstrumentationBase<any> {
+export class TypeormInstrumentation extends InstrumentationBase {
     protected override _config!: TypeormInstrumentationConfig;
     constructor(config: TypeormInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-typeorm', VERSION, Object.assign({}, config));
     }
 
-    protected init(): InstrumentationModuleDefinition<any> {
-        const selectQueryBuilder = new InstrumentationNodeModuleFile<any>(
+    protected init(): InstrumentationModuleDefinition {
+        const selectQueryBuilder = new InstrumentationNodeModuleFile(
             'typeorm/query-builder/SelectQueryBuilder.js',
             ['>0.2.28'],
             (moduleExports, moduleVersion) => {
@@ -83,7 +83,7 @@ export class TypeormInstrumentation extends InstrumentationBase<any> {
             }
         );
 
-        const connection = new InstrumentationNodeModuleFile<any>(
+        const connection = new InstrumentationNodeModuleFile(
             'typeorm/connection/Connection.js',
             ['>0.2.28 <0.3.0'],
             (moduleExports, moduleVersion) => {
@@ -102,7 +102,7 @@ export class TypeormInstrumentation extends InstrumentationBase<any> {
             }
         );
 
-        const dataSource = new InstrumentationNodeModuleFile<any>(
+        const dataSource = new InstrumentationNodeModuleFile(
             'typeorm/data-source/DataSource.js',
             ['>=0.3.0'],
             (moduleExports, moduleVersion) => {
@@ -121,7 +121,7 @@ export class TypeormInstrumentation extends InstrumentationBase<any> {
             }
         );
 
-        const entityManager = new InstrumentationNodeModuleFile<any>(
+        const entityManager = new InstrumentationNodeModuleFile(
             'typeorm/entity-manager/EntityManager.js',
             ['>0.2.28'],
             (moduleExports, moduleVersion) => {
@@ -148,7 +148,7 @@ export class TypeormInstrumentation extends InstrumentationBase<any> {
             }
         );
 
-        const module = new InstrumentationNodeModuleDefinition<any>('typeorm', ['>0.2.28'], null, null, [
+        const module = new InstrumentationNodeModuleDefinition('typeorm', ['>0.2.28'], null, null, [
             selectQueryBuilder,
             entityManager,
             connection,
