@@ -3,7 +3,7 @@ import expect from 'expect';
 import { context, ROOT_CONTEXT, SpanStatusCode, trace } from '@opentelemetry/api';
 import { Neo4jInstrumentation } from '../src';
 import { assertSpan } from './assert';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import { SEMATTRS_DB_OPERATION, SEMATTRS_DB_STATEMENT } from '@opentelemetry/semantic-conventions';
 import { normalizeResponse } from './test-utils';
 import { map, mergeMap } from 'rxjs/operators';
 import { concat } from 'rxjs';
@@ -20,7 +20,7 @@ import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
  * Tests require neo4j to run, and expose bolt port of 11011
  *
  * Use this command to run the required neo4j using docker:
- * docker run --name testneo4j -p7474:7474 -p11011:7687 -d --env NEO4J_AUTH=neo4j/test neo4j:4.2.3
+ * docker run --name testneo4j -p7474:7474 -p11011:7687 -d --env NEO4J_AUTH=neo4j/test neo4j:4.4.34
  * */
 
 describe('neo4j instrumentation', function () {
@@ -34,7 +34,7 @@ describe('neo4j instrumentation', function () {
     };
 
     before(async () => {
-        driver = neo4j.driver('bolt://localhost:11011', neo4j.auth.basic('neo4j', 'test'), {
+        driver = neo4j.driver('bolt://localhost:11011', neo4j.auth.basic('neo4j', 'your_password'), {
             disableLosslessIntegers: true,
         });
 
@@ -78,8 +78,8 @@ describe('neo4j instrumentation', function () {
             const span = getSingleSpan();
             assertSpan(span as ReadableSpan);
             expect(span.name).toBe('CREATE neo4j');
-            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('CREATE');
-            expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe('CREATE (n:MyLabel) RETURN n');
+            expect(span.attributes[SEMATTRS_DB_OPERATION]).toBe('CREATE');
+            expect(span.attributes[SEMATTRS_DB_STATEMENT]).toBe('CREATE (n:MyLabel) RETURN n');
         });
 
         it('instruments "run" with subscribe', (done) => {
@@ -90,8 +90,8 @@ describe('neo4j instrumentation', function () {
                     onCompleted: () => {
                         const span = getSingleSpan();
                         assertSpan(span as ReadableSpan);
-                        expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('CREATE');
-                        expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe('CREATE (n:MyLabel) RETURN n');
+                        expect(span.attributes[SEMATTRS_DB_OPERATION]).toBe('CREATE');
+                        expect(span.attributes[SEMATTRS_DB_STATEMENT]).toBe('CREATE (n:MyLabel) RETURN n');
                         done();
                     },
                 });
@@ -169,14 +169,14 @@ describe('neo4j instrumentation', function () {
             expect(spans.length).toBe(3);
             for (let span of spans) {
                 assertSpan(span as ReadableSpan);
-                expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('MATCH');
+                expect(span.attributes[SEMATTRS_DB_OPERATION]).toBe('MATCH');
             }
         });
 
         it('captures operation with trailing white spaces', async () => {
             await driver.session().run('  MATCH (k) RETURN k ');
             const span = getSingleSpan();
-            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('MATCH');
+            expect(span.attributes[SEMATTRS_DB_OPERATION]).toBe('MATCH');
         });
 
         it('set module versions when config is set', async () => {
@@ -288,10 +288,8 @@ describe('neo4j instrumentation', function () {
             });
             const span = getSingleSpan();
             assertSpan(span as ReadableSpan);
-            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('MATCH');
-            expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe(
-                'MATCH (person:Person) RETURN person.name AS name'
-            );
+            expect(span.attributes[SEMATTRS_DB_OPERATION]).toBe('MATCH');
+            expect(span.attributes[SEMATTRS_DB_STATEMENT]).toBe('MATCH (person:Person) RETURN person.name AS name');
         });
 
         it('instruments session writeTransaction', async () => {
@@ -300,10 +298,8 @@ describe('neo4j instrumentation', function () {
             });
             const span = getSingleSpan();
             assertSpan(span as ReadableSpan);
-            expect(span.attributes[SemanticAttributes.DB_OPERATION]).toBe('MATCH');
-            expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe(
-                'MATCH (person:Person) RETURN person.name AS name'
-            );
+            expect(span.attributes[SEMATTRS_DB_OPERATION]).toBe('MATCH');
+            expect(span.attributes[SEMATTRS_DB_STATEMENT]).toBe('MATCH (person:Person) RETURN person.name AS name');
         });
 
         it('instruments explicit transactions', async () => {
@@ -345,7 +341,7 @@ describe('neo4j instrumentation', function () {
                     complete: () => {
                         const span = getSingleSpan();
                         assertSpan(span as ReadableSpan);
-                        expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe(
+                        expect(span.attributes[SEMATTRS_DB_STATEMENT]).toBe(
                             'MERGE (james:Person {name: $nameParam}) RETURN james.name AS name'
                         );
                         done();
@@ -393,7 +389,7 @@ describe('neo4j instrumentation', function () {
                     complete: () => {
                         const span = getSingleSpan();
                         assertSpan(span as ReadableSpan);
-                        expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe(
+                        expect(span.attributes[SEMATTRS_DB_STATEMENT]).toBe(
                             'MATCH (person:Person) RETURN person.name AS name'
                         );
                         done();
@@ -416,7 +412,7 @@ describe('neo4j instrumentation', function () {
                     complete: () => {
                         const span = getSingleSpan();
                         assertSpan(span as ReadableSpan);
-                        expect(span.attributes[SemanticAttributes.DB_STATEMENT]).toBe(
+                        expect(span.attributes[SEMATTRS_DB_STATEMENT]).toBe(
                             'MATCH (person:Person) RETURN person.name AS name'
                         );
                         done();
@@ -468,7 +464,7 @@ describe('neo4j instrumentation', function () {
 
         before(() => {
             if (shouldCheck) {
-                routingDriver = neo4j.driver('neo4j://localhost:11011', neo4j.auth.basic('neo4j', 'test'));
+                routingDriver = neo4j.driver('neo4j://localhost:11011', neo4j.auth.basic('neo4j', 'your_password'));
             }
         });
 

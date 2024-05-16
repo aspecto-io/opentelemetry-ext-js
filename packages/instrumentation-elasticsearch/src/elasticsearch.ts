@@ -10,7 +10,7 @@ import {
 } from '@opentelemetry/instrumentation';
 import { VERSION } from './version';
 import { AttributeNames } from './enums';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import { SEMATTRS_DB_OPERATION, SEMATTRS_DB_STATEMENT, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import {
     startSpan,
     onError,
@@ -21,7 +21,7 @@ import {
 } from './utils';
 import { ELASTICSEARCH_API_FILES } from './helpers';
 
-export class ElasticsearchInstrumentation extends InstrumentationBase<typeof elasticsearch> {
+export class ElasticsearchInstrumentation extends InstrumentationBase {
     static readonly component = '@elastic/elasticsearch';
 
     protected override _config: ElasticsearchInstrumentationConfig;
@@ -36,10 +36,10 @@ export class ElasticsearchInstrumentation extends InstrumentationBase<typeof ela
         this._config = Object.assign({}, config);
     }
 
-    protected init(): InstrumentationModuleDefinition<typeof elasticsearch> {
+    protected init(): InstrumentationModuleDefinition {
         const apiModuleFiles = ELASTICSEARCH_API_FILES.map(
             ({ path, operationClassName }) =>
-                new InstrumentationNodeModuleFile<any>(
+                new InstrumentationNodeModuleFile(
                     `@elastic/elasticsearch/api/${path}`,
                     ['>=5 <8'],
                     this.patch.bind(this, operationClassName),
@@ -47,7 +47,7 @@ export class ElasticsearchInstrumentation extends InstrumentationBase<typeof ela
                 )
         );
 
-        const module = new InstrumentationNodeModuleDefinition<typeof elasticsearch>(
+        const module = new InstrumentationNodeModuleDefinition(
             ElasticsearchInstrumentation.component,
             ['*'],
             undefined,
@@ -120,11 +120,13 @@ export class ElasticsearchInstrumentation extends InstrumentationBase<typeof ela
             const span = startSpan({
                 tracer: self.tracer,
                 attributes: {
-                    [SemanticAttributes.DB_OPERATION]: operation,
+                    [SEMATTRS_DB_OPERATION]: operation,
                     [AttributeNames.ELASTICSEARCH_INDICES]: getIndexName(params),
-                    [SemanticAttributes.DB_STATEMENT]: (
-                        self._config.dbStatementSerializer || defaultDbStatementSerializer
-                    )(operation, params, options),
+                    [SEMATTRS_DB_STATEMENT]: (self._config.dbStatementSerializer || defaultDbStatementSerializer)(
+                        operation,
+                        params,
+                        options
+                    ),
                 },
             });
             self._addModuleVersionIfNeeded(span);

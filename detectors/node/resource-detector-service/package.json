@@ -33,22 +33,22 @@
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
     },
     "peerDependencies": {
-        "@opentelemetry/api": "^1.6.0"
+        "@opentelemetry/api": "^1.8.0"
     },
     "dependencies": {
-        "@opentelemetry/resources": "~1.17.1",
-        "@opentelemetry/semantic-conventions": "^1.17.1",
+        "@opentelemetry/resources": "~1.24.1",
+        "@opentelemetry/semantic-conventions": "^1.24.1",
         "opentelemetry-resource-detector-sync-api": "^0.29.0",
         "uuid": "^8.3.2"
     },
     "devDependencies": {
-        "@opentelemetry/api": "^1.6.0",
+        "@opentelemetry/api": "^1.8.0",
         "@types/mocha": "^8.2.2",
         "expect": "^26.6.2",
         "mocha": "^8.4.0",
-        "opentelemetry-instrumentation-mocha": "0.0.7-alpha.1",
-        "ts-node": "^9.1.1",
-        "typescript": "4.3.4"
+        "aspecto-opentelemetry-instrumentation-mocha": "0.0.9-alpha.0",
+        "ts-node": "^10.9.2",
+        "typescript": "5.4.5"
     },
     "mocha": {
         "extension": [
@@ -57,7 +57,7 @@
         "spec": "test/**/*.spec.ts",
         "require": [
             "ts-node/register",
-            "opentelemetry-instrumentation-mocha"
+            "aspecto-opentelemetry-instrumentation-mocha"
         ]
     }
 }

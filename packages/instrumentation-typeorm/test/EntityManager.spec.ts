@@ -1,7 +1,14 @@
 import 'mocha';
 import expect from 'expect';
 import { SpanStatusCode } from '@opentelemetry/api';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import {
+    SemanticAttributes,
+    SEMATTRS_DB_NAME,
+    SEMATTRS_DB_OPERATION,
+    SEMATTRS_DB_SQL_TABLE,
+    SEMATTRS_DB_STATEMENT,
+    SEMATTRS_DB_SYSTEM,
+} from '@opentelemetry/semantic-conventions';
 import { TypeormInstrumentation } from '../src';
 import { getTestSpans } from '@opentelemetry/contrib-test-utils';
 
@@ -31,11 +38,11 @@ describe('EntityManager', () => {
             expect(typeOrmSpans.length).toBe(1);
             expect(typeOrmSpans[0].status.code).toBe(SpanStatusCode.UNSET);
             const attributes = typeOrmSpans[0].attributes;
-            expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
-            expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(options.type);
-            expect(attributes[SemanticAttributes.DB_NAME]).toBe(options.database);
-            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('save');
-            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(JSON.stringify({ targetOrEntity: user }));
+            expect(attributes[SEMATTRS_DB_SQL_TABLE]).toBe('user');
+            expect(attributes[SEMATTRS_DB_SYSTEM]).toBe(options.type);
+            expect(attributes[SEMATTRS_DB_NAME]).toBe(options.database);
+            expect(attributes[SEMATTRS_DB_OPERATION]).toBe('save');
+            expect(attributes[SEMATTRS_DB_STATEMENT]).toBe(JSON.stringify({ targetOrEntity: user }));
             await connection.close();
         });
 
@@ -50,11 +57,11 @@ describe('EntityManager', () => {
             expect(typeOrmSpans.length).toBe(1);
             expect(typeOrmSpans[0].status.code).toBe(SpanStatusCode.UNSET);
             const attributes = typeOrmSpans[0].attributes;
-            expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
-            expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(options.type);
-            expect(attributes[SemanticAttributes.DB_NAME]).toBe(options.database);
-            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('save');
-            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(JSON.stringify({ targetOrEntity: user }));
+            expect(attributes[SEMATTRS_DB_SQL_TABLE]).toBe('user');
+            expect(attributes[SEMATTRS_DB_SYSTEM]).toBe(options.type);
+            expect(attributes[SEMATTRS_DB_NAME]).toBe(options.database);
+            expect(attributes[SEMATTRS_DB_OPERATION]).toBe('save');
+            expect(attributes[SEMATTRS_DB_STATEMENT]).toBe(JSON.stringify({ targetOrEntity: user }));
             await connection.close();
         });
 
@@ -71,11 +78,11 @@ describe('EntityManager', () => {
             expect(typeOrmSpans.length).toBe(2);
             expect(typeOrmSpans[1].status.code).toBe(SpanStatusCode.UNSET);
             const attributes = typeOrmSpans[1].attributes;
-            expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
-            expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(options.type);
-            expect(attributes[SemanticAttributes.DB_NAME]).toBe(options.database);
-            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('remove');
-            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
+            expect(attributes[SEMATTRS_DB_SQL_TABLE]).toBe('user');
+            expect(attributes[SEMATTRS_DB_SYSTEM]).toBe(options.type);
+            expect(attributes[SEMATTRS_DB_NAME]).toBe(options.database);
+            expect(attributes[SEMATTRS_DB_OPERATION]).toBe('remove');
+            expect(attributes[SEMATTRS_DB_STATEMENT]).toBe(
                 JSON.stringify({ targetOrEntity: { id: 56, firstName: 'aspecto', lastName: 'io' } })
             );
             await connection.close();
@@ -94,11 +101,11 @@ describe('EntityManager', () => {
             expect(typeOrmSpans.length).toBe(2);
             expect(typeOrmSpans[1].status.code).toBe(SpanStatusCode.UNSET);
             const attributes = typeOrmSpans[1].attributes;
-            expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
-            expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(options.type);
-            expect(attributes[SemanticAttributes.DB_NAME]).toBe(options.database);
-            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('update');
-            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
+            expect(attributes[SEMATTRS_DB_SQL_TABLE]).toBe('user');
+            expect(attributes[SEMATTRS_DB_SYSTEM]).toBe(options.type);
+            expect(attributes[SEMATTRS_DB_NAME]).toBe(options.database);
+            expect(attributes[SEMATTRS_DB_OPERATION]).toBe('update');
+            expect(attributes[SEMATTRS_DB_STATEMENT]).toBe(
                 JSON.stringify({ target: 'User', criteria: 56, partialEntity })
             );
             await connection.close();
@@ -142,15 +149,15 @@ describe('EntityManager', () => {
             const sqlite1Span = spans[0];
             const sqlite2Span = spans[1];
 
-            expect(sqlite1Span.attributes[SemanticAttributes.DB_SYSTEM]).toBe(defaultOptions.type);
-            expect(sqlite1Span.attributes[SemanticAttributes.DB_NAME]).toBe(defaultOptions.database);
-            expect(sqlite1Span.attributes[SemanticAttributes.DB_OPERATION]).toBe('save');
-            expect(sqlite1Span.attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
+            expect(sqlite1Span.attributes[SEMATTRS_DB_SYSTEM]).toBe(defaultOptions.type);
+            expect(sqlite1Span.attributes[SEMATTRS_DB_NAME]).toBe(defaultOptions.database);
+            expect(sqlite1Span.attributes[SEMATTRS_DB_OPERATION]).toBe('save');
+            expect(sqlite1Span.attributes[SEMATTRS_DB_SQL_TABLE]).toBe('user');
 
-            expect(sqlite2Span.attributes[SemanticAttributes.DB_SYSTEM]).toBe(options2.type);
-            expect(sqlite2Span.attributes[SemanticAttributes.DB_NAME]).toBe(options2.database);
-            expect(sqlite2Span.attributes[SemanticAttributes.DB_OPERATION]).toBe('remove');
-            expect(sqlite2Span.attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
+            expect(sqlite2Span.attributes[SEMATTRS_DB_SYSTEM]).toBe(options2.type);
+            expect(sqlite2Span.attributes[SEMATTRS_DB_NAME]).toBe(options2.database);
+            expect(sqlite2Span.attributes[SEMATTRS_DB_OPERATION]).toBe('remove');
+            expect(sqlite2Span.attributes[SEMATTRS_DB_SQL_TABLE]).toBe('user');
             await sqlite1.close();
             await sqlite2.close();
         });

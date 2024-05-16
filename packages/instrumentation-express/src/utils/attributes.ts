@@ -1,5 +1,15 @@
 import { SpanAttributes, SpanStatus, SpanStatusCode } from '@opentelemetry/api';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import {
+    SEMATTRS_HTTP_FLAVOR,
+    SEMATTRS_HTTP_HOST,
+    SEMATTRS_HTTP_METHOD,
+    SEMATTRS_HTTP_ROUTE,
+    SEMATTRS_HTTP_SCHEME,
+    SEMATTRS_HTTP_STATUS_CODE,
+    SEMATTRS_HTTP_TARGET,
+    SEMATTRS_NET_PEER_IP,
+    SemanticAttributes,
+} from '@opentelemetry/semantic-conventions';
 import { ExpressConsumedRouteState, ExpressInstrumentationAttributes } from '../types';
 import type express from 'express';
 
@@ -8,7 +18,7 @@ export const getRouteAttributes = (routeState: ExpressConsumedRouteState): SpanA
 
     const resolvedRoute = getResolvedRoute(routeState);
     if (resolvedRoute != null) {
-        attributes[SemanticAttributes.HTTP_ROUTE] = resolvedRoute;
+        attributes[SEMATTRS_HTTP_ROUTE] = resolvedRoute;
     }
 
     const fullRoute = getFullRoute(routeState);
@@ -55,7 +65,7 @@ export const getResolvedRoute = (expressRoutContext: ExpressConsumedRouteState):
 
 export const getHttpSpanAttributeFromRes = (res: express.Response): SpanAttributes => {
     return {
-        [SemanticAttributes.HTTP_STATUS_CODE]: res.statusCode,
+        [SEMATTRS_HTTP_STATUS_CODE]: res.statusCode,
     };
 };
 
@@ -83,12 +93,12 @@ export const createHostAttribute = (req: express.Request): string => {
 
 export const getHttpSpanAttributesFromReq = (req: express.Request): SpanAttributes => {
     return {
-        [SemanticAttributes.HTTP_METHOD]: req.method.toUpperCase(),
-        [SemanticAttributes.HTTP_TARGET]: req.originalUrl,
-        [SemanticAttributes.HTTP_FLAVOR]: req.httpVersion,
-        [SemanticAttributes.HTTP_HOST]: createHostAttribute(req),
-        [SemanticAttributes.HTTP_SCHEME]: req.protocol,
-        [SemanticAttributes.NET_PEER_IP]: req.ip,
+        [SEMATTRS_HTTP_METHOD]: req.method.toUpperCase(),
+        [SEMATTRS_HTTP_TARGET]: req.originalUrl,
+        [SEMATTRS_HTTP_FLAVOR]: req.httpVersion,
+        [SEMATTRS_HTTP_HOST]: createHostAttribute(req),
+        [SEMATTRS_HTTP_SCHEME]: req.protocol,
+        [SEMATTRS_NET_PEER_IP]: req.ip,
     };
 };
 

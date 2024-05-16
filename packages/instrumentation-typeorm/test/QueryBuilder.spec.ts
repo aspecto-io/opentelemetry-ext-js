@@ -1,7 +1,16 @@
 import 'mocha';
 import expect from 'expect';
 import { SpanStatusCode } from '@opentelemetry/api';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import {
+    SEMATTRS_DB_NAME,
+    SEMATTRS_DB_SQL_TABLE,
+    SEMATTRS_DB_STATEMENT,
+    SEMATTRS_DB_SYSTEM,
+    SEMATTRS_DB_USER,
+    SEMATTRS_NET_PEER_NAME,
+    SEMATTRS_NET_PEER_PORT,
+    SemanticAttributes,
+} from '@opentelemetry/semantic-conventions';
 import { TypeormInstrumentation } from '../src';
 import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 const instrumentation = registerInstrumentationTesting(new TypeormInstrumentation());
@@ -27,13 +36,13 @@ describe('QueryBuilder', () => {
         expect(typeOrmSpans.length).toBe(1);
         expect(typeOrmSpans[0].status.code).toBe(SpanStatusCode.UNSET);
         const attributes = typeOrmSpans[0].attributes;
-        expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(connectionOptions.type);
-        expect(attributes[SemanticAttributes.DB_USER]).toBe(connectionOptions.username);
-        expect(attributes[SemanticAttributes.NET_PEER_NAME]).toBe(connectionOptions.host);
-        expect(attributes[SemanticAttributes.NET_PEER_PORT]).toBe(connectionOptions.port);
-        expect(attributes[SemanticAttributes.DB_NAME]).toBe(connectionOptions.database);
-        expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
-        expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
+        expect(attributes[SEMATTRS_DB_SYSTEM]).toBe(connectionOptions.type);
+        expect(attributes[SEMATTRS_DB_USER]).toBe(connectionOptions.username);
+        expect(attributes[SEMATTRS_NET_PEER_NAME]).toBe(connectionOptions.host);
+        expect(attributes[SEMATTRS_NET_PEER_PORT]).toBe(connectionOptions.port);
+        expect(attributes[SEMATTRS_DB_NAME]).toBe(connectionOptions.database);
+        expect(attributes[SEMATTRS_DB_SQL_TABLE]).toBe('user');
+        expect(attributes[SEMATTRS_DB_STATEMENT]).toBe(
             'SELECT "user"."id" AS "user_id", "user"."firstName" AS "user_firstName", "user"."lastName" AS "user_lastName" FROM "user" "user" WHERE "user"."id" = :userId'
         );
         await connection.close();

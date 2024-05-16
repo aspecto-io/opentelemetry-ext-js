@@ -4,7 +4,16 @@ import { SpanKind, trace } from '@opentelemetry/api';
 import { ExpressInstrumentation } from '../src';
 import { AddressInfo } from 'net';
 import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import {
+    SEMATTRS_HTTP_FLAVOR,
+    SEMATTRS_HTTP_HOST,
+    SEMATTRS_HTTP_METHOD,
+    SEMATTRS_HTTP_ROUTE,
+    SEMATTRS_HTTP_SCHEME,
+    SEMATTRS_HTTP_STATUS_CODE,
+    SEMATTRS_HTTP_TARGET,
+    SEMATTRS_NET_PEER_IP,
+} from '@opentelemetry/semantic-conventions';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 import * as bodyParser from 'body-parser';
@@ -74,19 +83,19 @@ describe('opentelemetry-express', () => {
                 expect(span.name).toBe('POST /toto/:id');
 
                 // HTTP Attributes
-                expect(span.attributes[SemanticAttributes.HTTP_METHOD]).toBeUndefined();
-                expect(span.attributes[SemanticAttributes.HTTP_TARGET]).toBeUndefined();
-                expect(span.attributes[SemanticAttributes.HTTP_SCHEME]).toBeUndefined();
-                expect(span.attributes[SemanticAttributes.HTTP_STATUS_CODE]).toBeUndefined();
-                expect(span.attributes[SemanticAttributes.HTTP_HOST]).toBeUndefined();
-                expect(span.attributes[SemanticAttributes.HTTP_FLAVOR]).toBeUndefined();
-                expect(span.attributes[SemanticAttributes.NET_PEER_IP]).toBeUndefined();
+                expect(span.attributes[SEMATTRS_HTTP_METHOD]).toBeUndefined();
+                expect(span.attributes[SEMATTRS_HTTP_TARGET]).toBeUndefined();
+                expect(span.attributes[SEMATTRS_HTTP_SCHEME]).toBeUndefined();
+                expect(span.attributes[SEMATTRS_HTTP_STATUS_CODE]).toBeUndefined();
+                expect(span.attributes[SEMATTRS_HTTP_HOST]).toBeUndefined();
+                expect(span.attributes[SEMATTRS_HTTP_FLAVOR]).toBeUndefined();
+                expect(span.attributes[SEMATTRS_NET_PEER_IP]).toBeUndefined();
 
                 // http span route
                 const [incomingHttpSpan] = getTestSpans().filter(
                     (s) => s.kind === SpanKind.SERVER && s.instrumentationLibrary.name.includes('http')
                 );
-                expect(incomingHttpSpan.attributes[SemanticAttributes.HTTP_ROUTE]).toMatch('/toto/:id');
+                expect(incomingHttpSpan.attributes[SEMATTRS_HTTP_ROUTE]).toMatch('/toto/:id');
                 done();
             } catch (error) {
                 done(error);
@@ -131,15 +140,13 @@ describe('opentelemetry-express', () => {
             const span: ReadableSpan = expressSpans[0];
 
             // HTTP Attributes
-            expect(span.attributes[SemanticAttributes.HTTP_METHOD]).toBe('POST');
-            expect(span.attributes[SemanticAttributes.HTTP_TARGET]).toBe(
-                '/toto/tata?req-query-param-key=req-query-param-val'
-            );
-            expect(span.attributes[SemanticAttributes.HTTP_SCHEME]).toBe('http');
-            expect(span.attributes[SemanticAttributes.HTTP_STATUS_CODE]).toBe(200);
-            expect(span.attributes[SemanticAttributes.HTTP_HOST]).toBe(`localhost:${port}`);
-            expect(span.attributes[SemanticAttributes.HTTP_FLAVOR]).toBe('1.1');
-            expect(span.attributes[SemanticAttributes.NET_PEER_IP]).toBe('::ffff:127.0.0.1');
+            expect(span.attributes[SEMATTRS_HTTP_METHOD]).toBe('POST');
+            expect(span.attributes[SEMATTRS_HTTP_TARGET]).toBe('/toto/tata?req-query-param-key=req-query-param-val');
+            expect(span.attributes[SEMATTRS_HTTP_SCHEME]).toBe('http');
+            expect(span.attributes[SEMATTRS_HTTP_STATUS_CODE]).toBe(200);
+            expect(span.attributes[SEMATTRS_HTTP_HOST]).toBe(`localhost:${port}`);
+            expect(span.attributes[SEMATTRS_HTTP_FLAVOR]).toBe('1.1');
+            expect(span.attributes[SEMATTRS_NET_PEER_IP]).toBe('::ffff:127.0.0.1');
 
             server.close();
             done();

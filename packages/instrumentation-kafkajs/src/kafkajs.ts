@@ -14,6 +14,10 @@ import {
     SemanticAttributes,
     MessagingOperationValues,
     MessagingDestinationKindValues,
+    SEMATTRS_MESSAGING_SYSTEM,
+    SEMATTRS_MESSAGING_DESTINATION_KIND,
+    SEMATTRS_MESSAGING_DESTINATION,
+    SEMATTRS_MESSAGING_OPERATION,
 } from '@opentelemetry/semantic-conventions';
 import * as kafkaJs from 'kafkajs';
 import {
@@ -39,7 +43,7 @@ import {
     isWrapped,
 } from '@opentelemetry/instrumentation';
 
-export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> {
+export class KafkaJsInstrumentation extends InstrumentationBase {
     static readonly component = 'kafkajs';
     protected override _config!: KafkaJsInstrumentationConfig;
     private moduleVersion: string;
@@ -52,10 +56,13 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
         this._config = Object.assign({}, config);
     }
 
-    protected init(): InstrumentationModuleDefinition<typeof kafkaJs> {
-        const module: InstrumentationModuleDefinition<typeof kafkaJs> = new InstrumentationNodeModuleDefinition<
-            typeof kafkaJs
-        >(KafkaJsInstrumentation.component, ['*'], this.patch.bind(this), this.unpatch.bind(this));
+    protected init(): InstrumentationModuleDefinition {
+        const module: InstrumentationModuleDefinition = new InstrumentationNodeModuleDefinition(
+            KafkaJsInstrumentation.component,
+            ['*'],
+            this.patch.bind(this),
+            this.unpatch.bind(this)
+        );
         module.includePrerelease = true;
         return module;
     }
@@ -247,10 +254,10 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
             {
                 kind: SpanKind.CONSUMER,
                 attributes: {
-                    [SemanticAttributes.MESSAGING_SYSTEM]: 'kafka',
-                    [SemanticAttributes.MESSAGING_DESTINATION]: topic,
-                    [SemanticAttributes.MESSAGING_DESTINATION_KIND]: MessagingDestinationKindValues.TOPIC,
-                    [SemanticAttributes.MESSAGING_OPERATION]: operation,
+                    [SEMATTRS_MESSAGING_SYSTEM]: 'kafka',
+                    [SEMATTRS_MESSAGING_DESTINATION]: topic,
+                    [SEMATTRS_MESSAGING_DESTINATION_KIND]: MessagingDestinationKindValues.TOPIC,
+                    [SEMATTRS_MESSAGING_OPERATION]: operation,
                 },
                 links: link ? [link] : [],
             },
@@ -278,9 +285,9 @@ export class KafkaJsInstrumentation extends InstrumentationBase<typeof kafkaJs> 
         const span = this.tracer.startSpan(topic, {
             kind: SpanKind.PRODUCER,
             attributes: {
-                [SemanticAttributes.MESSAGING_SYSTEM]: 'kafka',
-                [SemanticAttributes.MESSAGING_DESTINATION]: topic,
-                [SemanticAttributes.MESSAGING_DESTINATION_KIND]: MessagingDestinationKindValues.TOPIC,
+                [SEMATTRS_MESSAGING_SYSTEM]: 'kafka',
+                [SEMATTRS_MESSAGING_DESTINATION]: topic,
+                [SEMATTRS_MESSAGING_DESTINATION_KIND]: MessagingDestinationKindValues.TOPIC,
             },
         });
 

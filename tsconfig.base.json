@@ -13,6 +13,7 @@
         "types": ["node"],
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true,
-        "noImplicitOverride": true
+        "noImplicitOverride": true,
+        "skipLibCheck": true
     }
 }

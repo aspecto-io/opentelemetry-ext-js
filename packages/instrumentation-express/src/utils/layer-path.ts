@@ -37,8 +37,8 @@ const getLayerPathAlternativeFromFirstArg = (
                 typeof alternativePath === 'string'
                     ? pathStringToDisplayValue(alternativePath, options)
                     : alternativePath instanceof RegExp
-                    ? alternativePath.toString()
-                    : undefined,
+                      ? alternativePath.toString()
+                      : undefined,
             regexp: pathRegexp(alternativePath, [], options),
         }));
     }

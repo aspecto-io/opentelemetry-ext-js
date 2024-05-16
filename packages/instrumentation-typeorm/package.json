@@ -35,28 +35,28 @@
         "url": "https://github.com/aspecto-io/opentelemetry-ext-js/issues"
     },
     "peerDependencies": {
-        "@opentelemetry/api": "^1.6.0"
+        "@opentelemetry/api": "^1.8.0"
     },
     "dependencies": {
-        "@opentelemetry/core": "^1.17.1",
-        "@opentelemetry/instrumentation": "^0.44.0",
-        "@opentelemetry/semantic-conventions": "^1.17.1",
+        "@opentelemetry/core": "^1.24.1",
+        "@opentelemetry/instrumentation": "^0.51.1",
+        "@opentelemetry/semantic-conventions": "^1.24.1",
         "is-promise": "^4.0.0"
     },
     "devDependencies": {
-        "@opentelemetry/api": "^1.6.0",
-        "@opentelemetry/contrib-test-utils": "^0.34.2",
-        "@opentelemetry/sdk-trace-base": "^1.17.1",
+        "@opentelemetry/api": "^1.8.0",
+        "@opentelemetry/contrib-test-utils": "^0.39.0",
+        "@opentelemetry/sdk-trace-base": "^1.24.1",
         "@types/mocha": "^8.2.2",
         "expect": "^26.6.2",
         "mocha": "^8.4.0",
-        "opentelemetry-instrumentation-mocha": "0.0.7-alpha.1",
+        "aspecto-opentelemetry-instrumentation-mocha": "0.0.9-alpha.0",
         "reflect-metadata": "^0.1.13",
         "sqlite3": "^5.0.2",
         "test-all-versions": "^5.0.1",
-        "ts-node": "^9.1.1",
+        "ts-node": "^10.9.2",
         "typeorm": "^0.2.26",
-        "typescript": "4.3.4"
+        "typescript": "5.4.5"
     },
     "mocha": {
         "extension": [
@@ -65,7 +65,7 @@
         "spec": "test/**/*.spec.ts",
         "require": [
             "ts-node/register",
-            "opentelemetry-instrumentation-mocha"
+            "aspecto-opentelemetry-instrumentation-mocha"
         ]
     }
 }

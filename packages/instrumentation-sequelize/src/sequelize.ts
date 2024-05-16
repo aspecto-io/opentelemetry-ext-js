@@ -1,6 +1,18 @@
 import { context, Span, SpanKind, SpanStatusCode, trace, diag } from '@opentelemetry/api';
 import { suppressTracing } from '@opentelemetry/core';
-import { NetTransportValues, SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import {
+    NetTransportValues,
+    SEMATTRS_NET_TRANSPORT,
+    SEMATTRS_DB_NAME,
+    SEMATTRS_DB_OPERATION,
+    SEMATTRS_DB_SQL_TABLE,
+    SEMATTRS_DB_STATEMENT,
+    SEMATTRS_DB_SYSTEM,
+    SEMATTRS_DB_USER,
+    SEMATTRS_NET_PEER_NAME,
+    SEMATTRS_NET_PEER_PORT,
+    SemanticAttributes,
+} from '@opentelemetry/semantic-conventions';
 import * as sequelize from 'sequelize';
 import { SequelizeInstrumentationConfig } from './types';
 import { VERSION } from './version';
@@ -14,7 +26,7 @@ import {
     safeExecuteInTheMiddle,
 } from '@opentelemetry/instrumentation';
 
-export class SequelizeInstrumentation extends InstrumentationBase<typeof sequelize> {
+export class SequelizeInstrumentation extends InstrumentationBase {
     static readonly component = 'sequelize';
     protected override _config!: SequelizeInstrumentationConfig;
     private moduleVersion: string;
@@ -27,15 +39,15 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
         this._config = Object.assign({}, config);
     }
 
-    protected init(): InstrumentationModuleDefinition<typeof sequelize> {
-        const connectionManagerInstrumentation = new InstrumentationNodeModuleFile<any>(
+    protected init(): InstrumentationModuleDefinition {
+        const connectionManagerInstrumentation = new InstrumentationNodeModuleFile(
             'sequelize/lib/dialects/abstract/connection-manager.js',
             ['*'],
             this.patchConnectionManager.bind(this),
             this.unpatchConnectionManager.bind(this)
         );
 
-        const module = new InstrumentationNodeModuleDefinition<typeof sequelize>(
+        const module = new InstrumentationNodeModuleDefinition(
             SequelizeInstrumentation.component,
             ['*'],
             this.patch.bind(this),
@@ -115,16 +127,16 @@ export class SequelizeInstrumentation extends InstrumentationBase<typeof sequeli
             }
 
             const attributes = {
-                [SemanticAttributes.DB_SYSTEM]: sequelizeInstance.getDialect(),
-                [SemanticAttributes.DB_USER]: config?.username,
-                [SemanticAttributes.NET_PEER_NAME]: config?.host,
-                [SemanticAttributes.NET_PEER_PORT]: config?.port ? Number(config?.port) : undefined,
-                [SemanticAttributes.NET_TRANSPORT]: self._getNetTransport(config?.protocol),
-                [SemanticAttributes.DB_NAME]: config?.database,
-                [SemanticAttributes.DB_OPERATION]: operation,
-                [SemanticAttributes.DB_STATEMENT]: statement,
-                [SemanticAttributes.DB_SQL_TABLE]: tableName,
-                // [SemanticAttributes.NET_PEER_IP]: '?', // Part of protocol
+                [SEMATTRS_DB_SYSTEM]: sequelizeInstance.getDialect(),
+                [SEMATTRS_DB_USER]: config?.username,
+                [SEMATTRS_NET_PEER_NAME]: config?.host,
+                [SEMATTRS_NET_PEER_PORT]: config?.port ? Number(config?.port) : undefined,
+                [SEMATTRS_NET_TRANSPORT]: self._getNetTransport(config?.protocol),
+                [SEMATTRS_DB_NAME]: config?.database,
+                [SEMATTRS_DB_OPERATION]: operation,
+                [SEMATTRS_DB_STATEMENT]: statement,
+                [SEMATTRS_DB_SQL_TABLE]: tableName,
+                // [SEMATTRS_NET_PEER_IPPEER_IP]: '?', // Part of protocol
             };
 
             if (self._config.moduleVersionAttributeName) {

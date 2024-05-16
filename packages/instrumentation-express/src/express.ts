@@ -31,11 +31,11 @@ import {
 } from './utils/attributes';
 import { consumeLayerPathAndUpdateState, createInitialRouteState } from './utils/route-context';
 import { getLayerPathFromFirstArg } from './utils/layer-path';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import { SEMATTRS_HTTP_ROUTE, SemanticAttributes } from '@opentelemetry/semantic-conventions';
 
 const originalLayerStore = Symbol('otel.express-plugins.orig-layer-export');
 
-export class ExpressInstrumentation extends InstrumentationBase<typeof express> {
+export class ExpressInstrumentation extends InstrumentationBase {
     static readonly supportedVersions = ['^4.9.0'];
     protected override _config: ExpressInstrumentationConfig;
 
@@ -47,15 +47,15 @@ export class ExpressInstrumentation extends InstrumentationBase<typeof express> 
         this._config = Object.assign({}, config);
     }
 
-    protected init(): InstrumentationModuleDefinition<typeof express> {
-        const layerModule = new InstrumentationNodeModuleFile<ExpressLayer>(
+    protected init(): InstrumentationModuleDefinition {
+        const layerModule = new InstrumentationNodeModuleFile(
             'express/lib/router/layer.js',
             ExpressInstrumentation.supportedVersions,
             this._patchExpressLayer.bind(this),
             this._unpatchExpressLayer.bind(this)
         );
 
-        const module = new InstrumentationNodeModuleDefinition<typeof express>(
+        const module = new InstrumentationNodeModuleDefinition(
             'express',
             ExpressInstrumentation.supportedVersions,
             this.patch.bind(this),
@@ -226,7 +226,7 @@ export class ExpressInstrumentation extends InstrumentationBase<typeof express> 
             res.end = function () {
                 const routeState = plugin.getCurrentRouteState(req);
                 const routeAttributes = getRouteAttributes(routeState);
-                const route = routeAttributes[SemanticAttributes.HTTP_ROUTE] as string;
+                const route = routeAttributes[SEMATTRS_HTTP_ROUTE] as string;
                 if (route) {
                     const rpcMetadata = getRPCMetadata(context.active());
                     if (rpcMetadata) {

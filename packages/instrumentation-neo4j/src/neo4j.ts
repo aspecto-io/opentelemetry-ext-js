@@ -1,5 +1,10 @@
 import { SpanStatusCode, diag, trace, context, SpanKind } from '@opentelemetry/api';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import {
+    SEMATTRS_DB_NAME,
+    SEMATTRS_DB_OPERATION,
+    SEMATTRS_DB_STATEMENT,
+    SEMATTRS_DB_SYSTEM,
+} from '@opentelemetry/semantic-conventions';
 import { VERSION } from './version';
 import type * as neo4j from 'neo4j-driver';
 import {
@@ -14,7 +19,7 @@ import { getAttributesFromNeo4jSession } from './utils';
 
 type Neo4J = typeof neo4j;
 
-export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
+export class Neo4jInstrumentation extends InstrumentationBase {
     protected override _config!: Neo4jInstrumentationConfig;
 
     constructor(config: Neo4jInstrumentationConfig = {}) {
@@ -25,17 +30,17 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
         this._config = config;
     }
 
-    protected init(): InstrumentationModuleDefinition<Neo4J>[] {
+    protected init(): InstrumentationModuleDefinition[] {
         return [
             this.getModuleDefinition('neo4j-driver-core', ['>=4.3.0 <5']),
             this.getModuleDefinition('neo4j-driver', ['>=4.0.0 <4.3.0']),
         ];
     }
 
-    private getModuleDefinition(name: string, supportedVersions: string[]): InstrumentationNodeModuleDefinition<Neo4J> {
+    private getModuleDefinition(name: string, supportedVersions: string[]): InstrumentationNodeModuleDefinition {
         const apiModuleFiles = ['session', 'transaction'].map(
             (file) =>
-                new InstrumentationNodeModuleFile<neo4j.Session>(
+                new InstrumentationNodeModuleFile(
                     `${name}/lib/${file}.js`,
                     supportedVersions,
                     this.patchSessionOrTransaction.bind(this),
@@ -43,7 +48,7 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
                 )
         );
 
-        const module = new InstrumentationNodeModuleDefinition<Neo4J>(
+        const module = new InstrumentationNodeModuleDefinition(
             name,
             supportedVersions,
             undefined,
@@ -67,12 +72,12 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4J> {
 
                 const connectionAttributes = getAttributesFromNeo4jSession(this);
                 const operation = query.trim().split(/\s+/)[0];
-                const span = self.tracer.startSpan(`${operation} ${connectionAttributes[SemanticAttributes.DB_NAME]}`, {
+                const span = self.tracer.startSpan(`${operation} ${connectionAttributes[SEMATTRS_DB_NAME]}`, {
                     attributes: {
                         ...connectionAttributes,
-                        [SemanticAttributes.DB_SYSTEM]: 'neo4j',
-                        [SemanticAttributes.DB_OPERATION]: operation,
-                        [SemanticAttributes.DB_STATEMENT]: query,
+                        [SEMATTRS_DB_SYSTEM]: 'neo4j',
+                        [SEMATTRS_DB_OPERATION]: operation,
+                        [SEMATTRS_DB_STATEMENT]: query,
                     },
                     kind: SpanKind.CLIENT,
                 });

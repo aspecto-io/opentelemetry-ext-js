@@ -6,7 +6,7 @@ import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/con
 const instrumentation = registerInstrumentationTesting(new TypeormInstrumentation());
 import { defaultOptions, User } from './utils';
 import * as typeorm from 'typeorm';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import { SEMATTRS_DB_SQL_TABLE } from '@opentelemetry/semantic-conventions';
 
 describe('Repository', () => {
     beforeEach(() => {
@@ -28,7 +28,7 @@ describe('Repository', () => {
         expect(spans.length).toEqual(2);
         const span = spans[0];
         const attributes = span.attributes;
-        expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('user');
+        expect(attributes[SEMATTRS_DB_SQL_TABLE]).toBe('user');
         await connection.close();
     });
 });

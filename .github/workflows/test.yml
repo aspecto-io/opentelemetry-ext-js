@@ -23,12 +23,12 @@ jobs:
           - 27017:27017
 
       neo4j:
-        image: neo4j:4.2.3
+        image: neo4j:4.4.34
         ports:
           - 7474:7474
           - 11011:7687
         env:
-          NEO4J_AUTH: neo4j/test
+          NEO4J_AUTH: neo4j/your_password
 
     steps:
 
@@ -39,10 +39,10 @@ jobs:
       - name: Fetch all history for all tags and branches
         run: git fetch
 
-      - name: Use Node.js 14
+      - name: Use Node.js 18
         uses: actions/setup-node@v1
         with:
-          node-version: 14
+          node-version: 18
 
       - name: Install Dependencies
         run: yarn install

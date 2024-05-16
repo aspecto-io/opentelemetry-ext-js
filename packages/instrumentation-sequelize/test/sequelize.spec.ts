@@ -4,7 +4,17 @@ import { SequelizeInstrumentation } from '../src';
 import { extractTableFromQuery } from '../src/utils';
 import { ReadableSpan, Span } from '@opentelemetry/sdk-trace-base';
 import { context, diag, SpanStatusCode, DiagConsoleLogger, ROOT_CONTEXT } from '@opentelemetry/api';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import {
+    SEMATTRS_DB_NAME,
+    SEMATTRS_DB_OPERATION,
+    SEMATTRS_DB_SQL_TABLE,
+    SEMATTRS_DB_STATEMENT,
+    SEMATTRS_DB_SYSTEM,
+    SEMATTRS_DB_USER,
+    SEMATTRS_NET_PEER_NAME,
+    SEMATTRS_NET_PEER_PORT,
+    SemanticAttributes,
+} from '@opentelemetry/semantic-conventions';
 import { getTestSpans, registerInstrumentationTesting } from '@opentelemetry/contrib-test-utils';
 
 // should be available in node_modules from sequelize installation
@@ -54,14 +64,14 @@ describe('instrumentation-sequelize', () => {
             expect(spans[0].status.code).toBe(SpanStatusCode.ERROR);
             const attributes = spans[0].attributes;
 
-            expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(DB_SYSTEM);
-            expect(attributes[SemanticAttributes.DB_USER]).toBe(DB_USER);
-            expect(attributes[SemanticAttributes.NET_PEER_NAME]).toBe(NET_PEER_NAME);
-            expect(attributes[SemanticAttributes.NET_PEER_PORT]).toBe(NET_PEER_PORT);
-            expect(attributes[SemanticAttributes.DB_NAME]).toBe(DB_NAME);
-            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('INSERT');
-            expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('Users');
-            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
+            expect(attributes[SEMATTRS_DB_SYSTEM]).toBe(DB_SYSTEM);
+            expect(attributes[SEMATTRS_DB_USER]).toBe(DB_USER);
+            expect(attributes[SEMATTRS_NET_PEER_NAME]).toBe(NET_PEER_NAME);
+            expect(attributes[SEMATTRS_NET_PEER_PORT]).toBe(NET_PEER_PORT);
+            expect(attributes[SEMATTRS_DB_NAME]).toBe(DB_NAME);
+            expect(attributes[SEMATTRS_DB_OPERATION]).toBe('INSERT');
+            expect(attributes[SEMATTRS_DB_SQL_TABLE]).toBe('Users');
+            expect(attributes[SEMATTRS_DB_STATEMENT]).toBe(
                 'INSERT INTO "Users" ("id","firstName","createdAt","updatedAt") VALUES (DEFAULT,$1,$2,$3) RETURNING *;'
             );
         });
@@ -72,9 +82,9 @@ describe('instrumentation-sequelize', () => {
             expect(spans.length).toBe(1);
             const attributes = spans[0].attributes;
 
-            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('SELECT');
-            expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('Users');
-            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
+            expect(attributes[SEMATTRS_DB_OPERATION]).toBe('SELECT');
+            expect(attributes[SEMATTRS_DB_SQL_TABLE]).toBe('Users');
+            expect(attributes[SEMATTRS_DB_STATEMENT]).toBe(
                 'SELECT "id", "firstName", "createdAt", "updatedAt" FROM "Users" AS "User";'
             );
         });
@@ -85,9 +95,9 @@ describe('instrumentation-sequelize', () => {
             expect(spans.length).toBe(1);
             const attributes = spans[0].attributes;
 
-            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('BULKDELETE');
-            expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('Users');
-            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe('TRUNCATE "Users"');
+            expect(attributes[SEMATTRS_DB_OPERATION]).toBe('BULKDELETE');
+            expect(attributes[SEMATTRS_DB_SQL_TABLE]).toBe('Users');
+            expect(attributes[SEMATTRS_DB_STATEMENT]).toBe('TRUNCATE "Users"');
         });
 
         it('count is instrumented', async () => {
@@ -96,11 +106,9 @@ describe('instrumentation-sequelize', () => {
             expect(spans.length).toBe(1);
             const attributes = spans[0].attributes;
 
-            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('SELECT');
-            expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('Users');
-            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
-                'SELECT count(*) AS "count" FROM "Users" AS "User";'
-            );
+            expect(attributes[SEMATTRS_DB_OPERATION]).toBe('SELECT');
+            expect(attributes[SEMATTRS_DB_SQL_TABLE]).toBe('Users');
+            expect(attributes[SEMATTRS_DB_STATEMENT]).toBe('SELECT count(*) AS "count" FROM "Users" AS "User";');
         });
 
         it('handled complex query', async () => {
@@ -125,9 +133,9 @@ describe('instrumentation-sequelize', () => {
             expect(spans.length).toBe(1);
             const attributes = spans[0].attributes;
 
-            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('SELECT');
-            expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('Users');
-            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
+            expect(attributes[SEMATTRS_DB_OPERATION]).toBe('SELECT');
+            expect(attributes[SEMATTRS_DB_SQL_TABLE]).toBe('Users');
+            expect(attributes[SEMATTRS_DB_STATEMENT]).toBe(
                 `SELECT "id", "username" FROM "Users" AS "User" WHERE "User"."username" = 'Shlomi' AND ("User"."rank" < 1000 OR "User"."rank" IS NULL) ORDER BY "User"."username" DESC LIMIT 10 OFFSET 5;`
             );
         });
@@ -141,7 +149,7 @@ describe('instrumentation-sequelize', () => {
             const spans = getSequelizeSpans();
             expect(spans.length).toBe(1);
             const attributes = spans[0].attributes;
-            expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe(expectedTableName);
+            expect(attributes[SEMATTRS_DB_SQL_TABLE]).toBe(expectedTableName);
         });
 
         it('handles JOIN queries', async () => {
@@ -171,9 +179,9 @@ describe('instrumentation-sequelize', () => {
             expect(spans.length).toBe(1);
             const attributes = spans[0].attributes;
 
-            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('SELECT');
-            expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('Dogs,Users');
-            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
+            expect(attributes[SEMATTRS_DB_OPERATION]).toBe('SELECT');
+            expect(attributes[SEMATTRS_DB_SQL_TABLE]).toBe('Dogs,Users');
+            expect(attributes[SEMATTRS_DB_STATEMENT]).toBe(
                 `SELECT "Dog"."id", "Dog"."firstName", "Dog"."owner", "User"."id" AS "User.id", "User"."firstName" AS "User.firstName" FROM "Dogs" AS "Dog" INNER JOIN "Users" AS "User" ON "Dog"."firstName" = "User"."id" LIMIT 1;`
             );
         });
@@ -201,14 +209,14 @@ describe('instrumentation-sequelize', () => {
             expect(spans[0].status.code).toBe(SpanStatusCode.ERROR);
             const attributes = spans[0].attributes;
 
-            expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe(DB_SYSTEM);
-            expect(attributes[SemanticAttributes.DB_USER]).toBe(DB_USER);
-            expect(attributes[SemanticAttributes.NET_PEER_NAME]).toBe(NET_PEER_NAME);
-            expect(attributes[SemanticAttributes.NET_PEER_PORT]).toBe(NET_PEER_PORT);
-            expect(attributes[SemanticAttributes.DB_NAME]).toBe(DB_NAME);
-            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('INSERT');
-            expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('Users');
-            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
+            expect(attributes[SEMATTRS_DB_SYSTEM]).toBe(DB_SYSTEM);
+            expect(attributes[SEMATTRS_DB_USER]).toBe(DB_USER);
+            expect(attributes[SEMATTRS_NET_PEER_NAME]).toBe(NET_PEER_NAME);
+            expect(attributes[SEMATTRS_NET_PEER_PORT]).toBe(NET_PEER_PORT);
+            expect(attributes[SEMATTRS_DB_NAME]).toBe(DB_NAME);
+            expect(attributes[SEMATTRS_DB_OPERATION]).toBe('INSERT');
+            expect(attributes[SEMATTRS_DB_SQL_TABLE]).toBe('Users');
+            expect(attributes[SEMATTRS_DB_STATEMENT]).toBe(
                 'INSERT INTO `Users` (`id`,`firstName`,`createdAt`,`updatedAt`) VALUES (DEFAULT,$1,$2,$3);'
             );
         });
@@ -219,9 +227,9 @@ describe('instrumentation-sequelize', () => {
             expect(spans.length).toBe(1);
             const attributes = spans[0].attributes;
 
-            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('SELECT');
-            expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('Users');
-            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
+            expect(attributes[SEMATTRS_DB_OPERATION]).toBe('SELECT');
+            expect(attributes[SEMATTRS_DB_SQL_TABLE]).toBe('Users');
+            expect(attributes[SEMATTRS_DB_STATEMENT]).toBe(
                 'SELECT `id`, `firstName`, `createdAt`, `updatedAt` FROM `Users` AS `User`;'
             );
         });
@@ -237,8 +245,8 @@ describe('instrumentation-sequelize', () => {
                 expect(spans.length).toBe(1);
                 const attributes = spans[0].attributes;
 
-                expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('SELECT');
-                expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe('SELECT 1 + 1');
+                expect(attributes[SEMATTRS_DB_OPERATION]).toBe('SELECT');
+                expect(attributes[SEMATTRS_DB_STATEMENT]).toBe('SELECT 1 + 1');
             });
             it('with type not specified in options', async () => {
                 try {
@@ -250,8 +258,8 @@ describe('instrumentation-sequelize', () => {
                 expect(spans.length).toBe(1);
                 const attributes = spans[0].attributes;
 
-                expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('SELECT');
-                expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe('SELECT 1 + 1');
+                expect(attributes[SEMATTRS_DB_OPERATION]).toBe('SELECT');
+                expect(attributes[SEMATTRS_DB_STATEMENT]).toBe('SELECT 1 + 1');
             });
 
             it('with type specified in options', async () => {
@@ -264,8 +272,8 @@ describe('instrumentation-sequelize', () => {
                 expect(spans.length).toBe(1);
                 const attributes = spans[0].attributes;
 
-                expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('RAW');
-                expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe('SELECT 1 + 1');
+                expect(attributes[SEMATTRS_DB_OPERATION]).toBe('RAW');
+                expect(attributes[SEMATTRS_DB_STATEMENT]).toBe('SELECT 1 + 1');
             });
         });
     });
@@ -281,11 +289,11 @@ describe('instrumentation-sequelize', () => {
             const spans = getSequelizeSpans();
             expect(spans.length).toBe(1);
             const attributes = spans[0].attributes;
-            expect(attributes[SemanticAttributes.DB_SYSTEM]).toBe('sqlite');
-            expect(attributes[SemanticAttributes.NET_PEER_NAME]).toBe('memory');
-            expect(attributes[SemanticAttributes.DB_OPERATION]).toBe('INSERT');
-            expect(attributes[SemanticAttributes.DB_SQL_TABLE]).toBe('Users');
-            expect(attributes[SemanticAttributes.DB_STATEMENT]).toBe(
+            expect(attributes[SEMATTRS_DB_SYSTEM]).toBe('sqlite');
+            expect(attributes[SEMATTRS_NET_PEER_NAME]).toBe('memory');
+            expect(attributes[SEMATTRS_DB_OPERATION]).toBe('INSERT');
+            expect(attributes[SEMATTRS_DB_SQL_TABLE]).toBe('Users');
+            expect(attributes[SEMATTRS_DB_STATEMENT]).toBe(
                 'INSERT INTO `Users` (`id`,`firstName`,`createdAt`,`updatedAt`) VALUES (NULL,$1,$2,$3);'
             );
         });

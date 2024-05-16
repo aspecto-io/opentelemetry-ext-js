@@ -8,11 +8,16 @@ import { NodeCacheInstrumentationConfig } from './types';
 import { VERSION } from './version';
 import { diag, SpanKind, SpanStatusCode, context, trace } from '@opentelemetry/api';
 import { suppressTracing } from '@opentelemetry/core';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import {
+    SEMATTRS_DB_OPERATION,
+    SEMATTRS_DB_STATEMENT,
+    SEMATTRS_DB_SYSTEM,
+    SemanticAttributes,
+} from '@opentelemetry/semantic-conventions';
 
 type NodeCacheType = typeof NodeCache;
 
-export class NodeCacheInstrumentation extends InstrumentationBase<NodeCacheType> {
+export class NodeCacheInstrumentation extends InstrumentationBase {
     constructor(protected override _config: NodeCacheInstrumentationConfig = {}) {
         super('opentelemetry-instrumentation-node-cache', VERSION, _config);
     }
@@ -21,12 +26,8 @@ export class NodeCacheInstrumentation extends InstrumentationBase<NodeCacheType>
         this._config = config;
     }
 
-    protected init(): InstrumentationModuleDefinition<NodeCacheType> {
-        const module = new InstrumentationNodeModuleDefinition<NodeCacheType>(
-            'node-cache',
-            ['>=5.0.0'],
-            this.patch.bind(this)
-        );
+    protected init(): InstrumentationModuleDefinition {
+        const module = new InstrumentationNodeModuleDefinition('node-cache', ['>=5.0.0'], this.patch.bind(this));
         return module;
     }
 
@@ -84,9 +85,9 @@ export class NodeCacheInstrumentation extends InstrumentationBase<NodeCacheType>
                 const span = self.tracer.startSpan(`node-cache ${opName}`, {
                     kind: SpanKind.INTERNAL,
                     attributes: {
-                        [SemanticAttributes.DB_SYSTEM]: 'node-cache',
-                        [SemanticAttributes.DB_OPERATION]: opName,
-                        [SemanticAttributes.DB_STATEMENT]: toStatement(arguments),
+                        [SEMATTRS_DB_SYSTEM]: 'node-cache',
+                        [SEMATTRS_DB_OPERATION]: opName,
+                        [SEMATTRS_DB_STATEMENT]: toStatement(arguments),
                     },
                 });
 
