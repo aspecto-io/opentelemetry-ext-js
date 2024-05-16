@@ -6,7 +6,7 @@ import {
     SEMATTRS_DB_USER,
     SEMATTRS_NET_PEER_NAME,
     SEMATTRS_NET_PEER_PORT,
-    SemanticAttributes,
+    SEMATTRS_NET_TRANSPORT,
 } from '@opentelemetry/semantic-conventions';
 import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
 
@@ -18,5 +18,5 @@ export const assertSpan = (span: ReadableSpan) => {
     expect(span.attributes[SEMATTRS_DB_USER]).toEqual('neo4j');
     expect(span.attributes[SEMATTRS_NET_PEER_NAME]).toEqual('localhost');
     expect(span.attributes[SEMATTRS_NET_PEER_PORT]).toEqual(11011);
-    expect(span.attributes[SEMATTRS_NET_PEER_PORT]).toEqual('IP.TCP');
+    expect(span.attributes[SEMATTRS_NET_TRANSPORT]).toEqual('IP.TCP');
 };

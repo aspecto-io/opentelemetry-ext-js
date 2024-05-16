@@ -3,7 +3,7 @@ import expect from 'expect';
 import { context, ROOT_CONTEXT, SpanStatusCode, trace } from '@opentelemetry/api';
 import { Neo4jInstrumentation } from '../src';
 import { assertSpan } from './assert';
-import { SemanticAttributes, SEMATTRS_DB_OPERATION, SEMATTRS_DB_STATEMENT } from '@opentelemetry/semantic-conventions';
+import { SEMATTRS_DB_OPERATION, SEMATTRS_DB_STATEMENT } from '@opentelemetry/semantic-conventions';
 import { normalizeResponse } from './test-utils';
 import { map, mergeMap } from 'rxjs/operators';
 import { concat } from 'rxjs';
@@ -34,7 +34,7 @@ describe('neo4j instrumentation', function () {
     };
 
     before(async () => {
-        driver = neo4j.driver('bolt://localhost:11011', neo4j.auth.basic('neo4j', 'test'), {
+        driver = neo4j.driver('bolt://localhost:11011', neo4j.auth.basic('neo4j', 'your_password'), {
             disableLosslessIntegers: true,
         });
 

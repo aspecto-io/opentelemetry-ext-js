@@ -4,7 +4,6 @@ import {
     SEMATTRS_DB_OPERATION,
     SEMATTRS_DB_STATEMENT,
     SEMATTRS_DB_SYSTEM,
-    SemanticAttributes,
 } from '@opentelemetry/semantic-conventions';
 import { VERSION } from './version';
 import type * as neo4j from 'neo4j-driver';
