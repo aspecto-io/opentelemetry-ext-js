@@ -56,7 +56,7 @@
         "aspecto-opentelemetry-instrumentation-mocha": "0.0.9-alpha.0",
         "test-all-versions": "^5.0.1",
         "ts-node": "^9.1.1",
-        "typescript": "4.3.4"
+        "typescript": "5.4.5"
     },
     "mocha": {
         "extension": [
