@@ -23,12 +23,12 @@ jobs:
           - 27017:27017
 
       neo4j:
-        image: neo4j:4.2.3
+        image: neo4j:4.4.34
         ports:
           - 7474:7474
           - 11011:7687
         env:
-          NEO4J_AUTH: neo4j/test
+          NEO4J_AUTH: neo4j/your_password
 
     steps:
 
