@@ -59,7 +59,7 @@
         "expect": "^26.6.2",
         "mocha": "^8.4.0",
         "nock": "^13.0.9",
-        "opentelemetry-instrumentation-mocha": "0.0.7-alpha.1",
+        "aspecto-opentelemetry-instrumentation-mocha": "0.0.9-alpha.0",
         "sinon": "^9.2.4",
         "test-all-versions": "^5.0.1",
         "ts-node": "^9.1.1",
@@ -72,7 +72,7 @@
         "spec": "test/**/*.spec.ts",
         "require": [
             "ts-node/register",
-            "opentelemetry-instrumentation-mocha"
+            "aspecto-opentelemetry-instrumentation-mocha"
         ]
     }
 }

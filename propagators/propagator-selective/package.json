@@ -46,7 +46,7 @@
         "spec": "test/**/*.spec.ts",
         "require": [
             "ts-node/register",
-            "opentelemetry-instrumentation-mocha"
+            "aspecto-opentelemetry-instrumentation-mocha"
         ]
     }
 }

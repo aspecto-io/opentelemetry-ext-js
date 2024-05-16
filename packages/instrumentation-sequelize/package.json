@@ -54,7 +54,7 @@
         "expect": "^26.6.2",
         "mocha": "^8.4.0",
         "mysql2": "^2.2.5",
-        "opentelemetry-instrumentation-mocha": "0.0.7-alpha.1",
+        "aspecto-opentelemetry-instrumentation-mocha": "0.0.9-alpha.0",
         "pg": "^8.4.2",
         "sequelize": "^5.22.0",
         "sqlite3": "^5.0.2",
@@ -68,7 +68,7 @@
         "spec": "test/**/*.spec.ts",
         "require": [
             "ts-node/register",
-            "opentelemetry-instrumentation-mocha"
+            "aspecto-opentelemetry-instrumentation-mocha"
         ]
     }
 }
