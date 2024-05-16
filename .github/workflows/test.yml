@@ -39,10 +39,10 @@ jobs:
       - name: Fetch all history for all tags and branches
         run: git fetch
 
-      - name: Use Node.js 14
+      - name: Use Node.js 18
         uses: actions/setup-node@v1
         with:
-          node-version: 14
+          node-version: 18
 
       - name: Install Dependencies
         run: yarn install
