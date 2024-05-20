@@ -1,5 +1,14 @@
 # opentelemetry-ext-js
 
+## ⚠️ Deprecation Notice ⚠️
+This repository is no longer actively maintained. We are in the process of moving all instrumentation packages to the [opentelemetry-js-contrib](https://github.com/open-telemetry/opentelemetry-js-contrib) repository.
+
+For the latest updates and contributions, please refer to the respective packages in the `opentelemetry-js-contrib` repository. We recommend transitioning your projects to use the instrumentation packages from the new repository.
+
+Thank you for your understanding and continued support!
+
+---
+
 <p>
     <a href="https://github.com/aspecto-io/opentelemetry-ext-js/actions?query=workflow%3ABuild">
         <img alt="Build" src="https://github.com/aspecto-io/opentelemetry-ext-js/workflows/Build/badge.svg">
@@ -33,7 +42,7 @@ The instrumentations in this repo are:
 ## Instrumentations
 | Instrumentation Package                                                               | Instrumented Lib                                                                 | NPM |
 |---------------------------------------------------------------------------------------|----------------------------------------------------------------------------------| --- |
-| [opentelemetry-instrumentation-kafkajs](./packages/instrumentation-kafkajs)           | [`kafkajs`](https://kafka.js.org)                                                | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-kafkajs.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-kafkajs) [![kafka-js downloads](https://img.shields.io/npm/dm/opentelemetry-instrumentation-kafkajs.svg)]()|
+| [opentelemetry-instrumentation-kafkajs](./packages/instrumentation-kafkajs)           | [`kafkajs`](https://kafka.js.org)                                                | Deprecated in favor of [@opentelemetry/instrumentation-kafkajs](https://www.npmjs.com/package/@opentelemetry/instrumentation-kafkajs) |
 | opentelemetry-instrumentation-aws-sdk                                                 | [`aws-sdk`](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/)                | Deprecated in favor of [@opentelemetry/instrumentation-aws-sdk](https://www.npmjs.com/package/@opentelemetry/instrumentation-aws-sdk) 
 | [opentelemetry-instrumentation-typeorm](./packages/instrumentation-typeorm)           | [`TypeORM`](https://typeorm.io/)                                                 | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-typeorm.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-typeorm) [![typeorm downloads](https://img.shields.io/npm/dm/opentelemetry-instrumentation-typeorm.svg)]() |
 | [opentelemetry-instrumentation-sequelize](./packages/instrumentation-sequelize)       | [`Sequelize`](https://sequelize.org/)                                            | [![NPM version](https://img.shields.io/npm/v/opentelemetry-instrumentation-sequelize.svg)](https://www.npmjs.com/package/opentelemetry-instrumentation-sequelize) [![sequelize downloads](https://img.shields.io/npm/dm/opentelemetry-instrumentation-sequelize.svg)]() |
