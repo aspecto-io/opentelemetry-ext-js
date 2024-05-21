@@ -1,6 +1,6 @@
 {
     "name": "opentelemetry-instrumentation-kafkajs",
-    "version": "0.40.0",
+    "version": "0.41.0",
     "description": "open telemetry instrumentation for the `kafkajs` kafka client",
     "keywords": [
         "kafka",
@@ -46,10 +46,10 @@
         "@opentelemetry/contrib-test-utils": "^0.39.0",
         "@opentelemetry/sdk-trace-base": "^1.24.1",
         "@types/mocha": "^8.2.2",
+        "aspecto-opentelemetry-instrumentation-mocha": "0.0.9-alpha.0",
         "expect": "^26.6.2",
         "kafkajs": "^1.16.0",
         "mocha": "^8.4.0",
-        "aspecto-opentelemetry-instrumentation-mocha": "0.0.9-alpha.0",
         "ts-node": "^10.9.2",
         "typescript": "5.4.5"
     },
